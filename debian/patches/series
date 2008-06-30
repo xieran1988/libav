@@ -1,0 +1,6 @@
+010_proper_rpath.diff
+013_strip_unneeded_linker_flags.diff
+015_reenable-img_convert.diff
+020_fix_libswscale_pic_code
+300_c++_compliant_headers.diff
+900_doxyfile

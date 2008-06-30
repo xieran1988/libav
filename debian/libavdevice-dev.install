@@ -1,0 +1,4 @@
+usr/lib/pkgconfig/libavdevice.pc
+usr/include/ffmpeg/avdevice.h
+usr/lib/libavdevice.a
+usr/lib/{,*/,*/*/}libavdevice.so
