@@ -8,7 +8,6 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
            Fabian Greffrath <fabian@debian-unofficial.org>
 Build-Depends: debhelper (>= 5.0.0),
                doxygen,
-               liba52-0.7.4-dev | liba52-dev,
                libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386] | libdc1394-13-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libfaad-dev | libfaad2-dev,
                libfreetype6-dev,
@@ -168,7 +167,6 @@ Section: libdevel
 Architecture: any
 Depends: libavcodec51 (= ${binary:Version}),
          libavutil-dev (= ${binary:Version}),
-         liba52-dev,
          libgsm1-dev,
          libogg-dev,
          libtheora-dev (>> 0.0.0.alpha4),

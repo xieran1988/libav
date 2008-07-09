@@ -95,6 +95,11 @@ install: build
 
 binary-indep: build-doxy install
 
+define call_dh_makeshlibs
+	dh_makeshlibs -p $(1)$(2) \
+	    -V "$(1)$(2) (>= $(SRC_VERSION)-8) | $(1)-unstripped-$(2) (>= $(SRC_VERSION)-8)"
+endef
+
 binary-arch: build install
 	dh_testdir
 	dh_testroot
@@ -108,7 +113,13 @@ binary-arch: build install
 	dh_strip --dbg-package=ffmpeg-dbg
 	dh_compress
 	dh_fixperms
-	dh_makeshlibs -V
+#	NB: The following is pretty whitespace sensitive
+	$(call call_dh_makeshlibs,libavutil,49)
+	$(call call_dh_makeshlibs,libavcodec,51)
+	$(call call_dh_makeshlibs,libavdevice,52)
+	$(call call_dh_makeshlibs,libpostproc,51)
+	$(call call_dh_makeshlibs,libavformat,52)
+	$(call call_dh_makeshlibs,libswscale,0)
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"

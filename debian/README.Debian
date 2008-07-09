@@ -90,9 +90,10 @@ packages are:
     'multiverse' (ubuntu) component will be named as above without the
     '-stripped-' marker in the name.
   
-  * Only Until the next SONAME bump happens: an unstripped replacement package
-    for the stripped 'libavcodec51' will can provided e.g. in ubuntu multiverse
-    with the name 'libavcodec-unstripped-51'.
+  * Only until the next SONAME bump happens: an unstripped replacement package
+    for the stripped 'libavcodec51' can provided e.g. in ubuntu multiverse with
+    the name 'libavcodec-unstripped-51'. This is implemented by generating an
+    shlibs file containing an alternative depedency.
 
   * Ubuntu will track the ffmpeg packages in Debian and tries to minimize the
     diff for maintenance reason.

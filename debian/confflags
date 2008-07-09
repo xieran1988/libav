@@ -19,7 +19,6 @@ endif
 
 # Comment out the following lines for LGPL versions of the libraries
 gpl_confflags := --enable-gpl
-gpl_confflags += --enable-liba52
 gpl_confflags += --enable-libfaad
 gpl_confflags += --enable-pp
 gpl_confflags += --enable-swscaler
@@ -43,13 +42,13 @@ else
 endif
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-  CFLAGS := -O0
+  CFLAGS :=
 # Various parts of ffmpeg (and swscale) FTBFS when compiling with -fPIC
 # and with mmx code enabled.
   confflags += --disable-optimizations
   confflags += --disable-mmx
 else
-  CFLAGS := -O2
+  CFLAGS :=
 endif
 
 # Support for additional external codecs
@@ -73,10 +72,7 @@ endif
 
 # Disable architecture-specific optimizations for default shared build
 nooptflags += --disable-armv5te --disable-armv6
-nooptflags += --disable-iwmmxt
-nooptflags += --disable-mmx
 nooptflags += --disable-altivec
-nooptflags += --disable-ssse3
 nooptflags += --disable-vis
 
 # Configuration flags for the static libraries
@@ -94,10 +90,6 @@ shared_build_confflags += $(nooptflags)
 endif
 shared_build_confflags += --enable-shared
 shared_build_confflags += --disable-static
-# i386 does just fine without -fPIC
-ifneq      ($(DEB_HOST_ARCH),i386)
-shared_build_confflags += --extra-cflags="-fPIC -DPIC"
-endif
 
 ## i386 architecture specific
 # Configuration flags for the optimized shared libraries

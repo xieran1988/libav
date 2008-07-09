@@ -1,3 +1,23 @@
+ffmpeg-debian (0.svn20080206-10) unstable; urgency=high
+
+  * enable mmx and sse3 in builds. These CPU features are autodetected 
+    at runtime on amd64 and i386 using the 'cpuid' instrcution.
+    (Closes: #489732)
+  * disable support for liba52-dev. ffmpeg has its own implementation.
+  * don't add -fPIC -DPIC forcefully to ./configure. upstream claim that
+    the configure script gets this right on all architectures itself.
+  * Add patch 020_bug489965_bufferoverflow_str_demuxer.diff. Fixes a
+    buffer overflow in the STR demuxer. Thanks to Moritz Muehlenhoff for
+    reporting the issue. (Closes: #489965)
+  * Raising severity to high because of security issue.
+  * rework the shlibs file. Make applications linking against libraries
+    produced by this source package generate an alternate dependency on
+    the 'unstripped' variants of this package. They actually do not exist
+    yet at this point, but this way reverse dependencies are enabled to
+    use them when they eventually appear.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Wed, 09 Jul 2008 14:04:06 +0200
+
 ffmpeg-debian (0.svn20080206-9) unstable; urgency=low
 
   [ Reinhard Tartler ]
