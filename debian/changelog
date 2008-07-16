@@ -1,3 +1,19 @@
+ffmpeg-debian (0.svn20080206-11) unstable; urgency=low
+
+  [ Reinhard Tartler ]
+  * new patch: patches/010_fix_ftbfs_hppa.diff: On hppa shared objects
+    do required object files to be build "-fPIC -DPIC". Patch taken
+    from upstream svn.
+  * bugfix: libraries linked with libX11 on GNU/kFreeBSD. Thanks to
+    Aurelien Jarno for the patch. (Closes: #487252)
+
+  [ Fabian Greffrath ]
+  * debian/confflags, debian/control:
+    + Build-Depend on libdc1394-22-dev explicitely and add
+      Build-Conflicts on libdc1394-13-dev (Closes: #490319).
+
+ -- Reinhard Tartler <siretart@tauware.de>  Wed, 16 Jul 2008 10:41:49 +0200
+
 ffmpeg-debian (0.svn20080206-10) unstable; urgency=high
 
   * enable mmx and sse3 in builds. These CPU features are autodetected 

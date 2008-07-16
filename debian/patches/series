@@ -1,3 +1,5 @@
+010_fix_ftbfs_hppa.diff
+10_fix_kfreebsd_libx11_linkage.diff
 010_proper_rpath.diff
 013_strip_unneeded_linker_flags.diff
 015_reenable-img_convert.diff

@@ -36,7 +36,7 @@ confflags += --disable-strip
 # Enable IEEE 1394 (FireWire) support on Linux only
 ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
   confflags += --enable-libdc1394
-  lib1394-dev = libraw1394-dev, libdc1394-22-dev | libdc1394-13-dev
+  lib1394-dev = libraw1394-dev, libdc1394-22-dev
 else
   lib1394-dev =
 endif

@@ -8,7 +8,7 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
            Fabian Greffrath <fabian@debian-unofficial.org>
 Build-Depends: debhelper (>= 5.0.0),
                doxygen,
-               libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386] | libdc1394-13-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+               libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libfaad-dev | libfaad2-dev,
                libfreetype6-dev,
                libgsm1-dev,
@@ -22,6 +22,7 @@ Build-Depends: debhelper (>= 5.0.0),
                quilt,
                texi2html,
                zlib1g-dev
+Build-Conflicts: libdc1394-13-dev
 Standards-Version: 3.7.3
 Vcs-Svn: svn://svn.debian.org/pkg-multimedia/unstable/ffmpeg/debian/
 Vcs-Browser: http://svn.debian.org/wsvn/pkg-multimedia/unstable/ffmpeg/debian/
