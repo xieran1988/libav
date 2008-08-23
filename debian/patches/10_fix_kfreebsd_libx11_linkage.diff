@@ -15,6 +15,8 @@ Please find below a patch to fix that.
 
 For full details c.f. http://bugs.debian.org/487252
 
+Submitted upstream at http://thread.gmane.org/gmane.comp.video.ffmpeg.devel/71087
+
 --- a/configure
 +++ b/configure
 @@ -1289,6 +1289,9 @@ case $targetos in

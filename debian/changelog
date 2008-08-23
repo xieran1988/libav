@@ -1,3 +1,10 @@
+ffmpeg-debian (0.svn20080206-12) unstable; urgency=low
+
+  * enable vhook in all flavors. (Closes: #490272, LP: #260296)
+  * make ffmpeg output a proper version number. (Closes: #496133, #483923)
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 23 Aug 2008 10:49:10 +0200
+
 ffmpeg-debian (0.svn20080206-11) unstable; urgency=low
 
   [ Reinhard Tartler ]

@@ -1,5 +1,5 @@
 etc/ffserver.conf
-usr/lib/vhook
+usr/lib/{,*/,*/*/}vhook
 usr/bin/ffmpeg
 usr/bin/ffserver
 usr/bin/ffplay
