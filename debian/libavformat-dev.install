@@ -1,7 +1,4 @@
-usr/lib/pkgconfig/libavformat.pc
-usr/include/ffmpeg/avformat.h
-usr/include/ffmpeg/avio.h
-usr/include/ffmpeg/rtsp.h
-usr/include/ffmpeg/rtspcodes.h
+usr/include/libavformat
 usr/lib/libavformat.a
 usr/lib/{,*/,*/*/}libavformat.so
+usr/lib/pkgconfig/libavformat.pc

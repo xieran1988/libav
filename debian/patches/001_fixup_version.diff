@@ -7,7 +7,7 @@
 +# check for debian package branch
 +if test -f "$1"/debian/control; then
 +    debrevision=`cd "$1" && dpkg-parsechangelog | awk '/^Version/ {print $2}'`
-+    revision="r11872+debian_${debrevision}"
++    revision="r15219+debian_${debrevision}"
 +fi
 +
  # check for git short hash

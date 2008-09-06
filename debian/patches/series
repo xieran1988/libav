@@ -1,11 +1,3 @@
 001_fixup_version.diff
-010_fix_ftbfs_hppa.diff
-011_fix_pic_mips.diff
-10_fix_kfreebsd_libx11_linkage.diff
-010_proper_rpath.diff
-013_strip_unneeded_linker_flags.diff
-015_reenable-img_convert.diff
-020_fix_libswscale_pic_code
-020_bug489965_bufferoverflow_str_demuxer.diff
-300_c++_compliant_headers.diff
+#015_reenable-img_convert.diff
 900_doxyfile

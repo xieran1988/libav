@@ -1,30 +1,53 @@
-ffmpeg-debian (0.svn20080206-14) unstable; urgency=low
+ffmpeg-debian (3:0.svn20080925-1) experimental; urgency=low
 
   [ Loic Minier ]
+  * Tweak sed versions regexps to deal with epochs and upstream revisions with
+    dashes and be generally stricter.
+  * Large cleanup to rules logic: drop some cruft, rewrite some small chunks
+    in a slightly more readable manner, whitespaces, .PHONY fixes,
+    internalencoders handling, shlibs logic...
+  * Rename SRC_VERSION to UPSTREAM_VERSION in rules.
+  * Use DEB_SOURCE from the Source: field of dpkg-parsechangelog's output
+    instead of hardcoding the name of the source.
+
+  [ Reinhard Tartler ]
+  * new svn snapshot (svn revision 15404, libswscale revision 27636).
+  * SONAME change: libavcodec51 -> libavcodec52
+  * drop old scaler (imgres/imgconvert). Upstream is about to remove it
+    completely.
+    - reporter claims that a newer snapshot fixes a crash in the dca decoder.
+      Thanks to "Alexander E. Patrakov" <patrakov@gmail.com> (Closes: #496612)
+  * reenable h261 encoder (Closes: #459073)
+
+  [ Fabian Greffrath ]
+  * debian/{ffmpeg,lib*-dev}.install:
+    + Simplified, e.g. install the whole /usr/include/ sub-directory for each
+      particular library instead of single header files one by one.
+  * debian/control, debian/confflags:
+    + Enabled Dirac support via libschroedinger. (Closes: #499785)
+  * debian/changelog:
+    + Added an epoch needed for Ubuntu.
+  * debian/control:
+    + Removed Conflicts and Replaces against packages that either aren't even
+      in Debian 4.0 "Etch" anymore or that use the deprecated naming scheme
+      from <http://www.debian-multimedia.org>.
+    + Since ffmpeg-config has been removed from our packages, all inter-package
+      Conflicts and Replaces may be removed, too.
+    + Removed Build-Conflicts against libdc1394-13-dev, because
+      libdc1394-22-dev already does this for us.
+    + Updated inter-package dependencies and demoted Depends on external
+      library packages to Suggests, since we shouldn't encourage package
+      maintainers to link statically against libav*.
+  * debian/confflags, debian/control, debian/rules, debian/libavfilter*:
+    + Built libavfilter and disabled vhook in turn (Closes: #499787).
+
+  [ Loic Minier ]
+  * Remove debug echo which broke shlibs, sorry.
   * Fix Vcs-* control fields; thanks Gerfried Fuchs.
   * Mention upstream SVN in debian/copyright; thanks Gerfried Fuchs;
     closes: #499914.
 
-  [ Reinhard Tartler ]
-  * don't disable ffserver in cmov, altivec and vis build. (Closes: #501002)
-
- -- Reinhard Tartler <siretart@tauware.de>  Fri, 03 Oct 2008 14:13:54 +0200
-
-ffmpeg-debian (0.svn20080206-13) unstable; urgency=low
-
-  [Thiemo Seufer]
-  * compile shared libavcodec explicitly with $(PIC), since gcc-4.3
-    mips/mipsel needs an explicit PIC flag for shared library
-    code.
-  
-    Until gcc-4.2 Linux/MIPS always used PIC code, even for executables.
-    This changed with gcc-4.3, and with it the compiler default changed
-    to non-PIC. As a result, -fPIC now needs to be explicitly supplied
-    for shared library builds.
-  
-    (Closes: #498216, 498647, 498397)
-
- -- Reinhard Tartler <siretart@tauware.de>  Sun, 21 Sep 2008 17:03:50 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 06 Sep 2008 20:07:01 +0200
 
 ffmpeg-debian (0.svn20080206-12) unstable; urgency=low
 

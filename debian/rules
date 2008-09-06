@@ -2,76 +2,75 @@
 
 include /usr/share/quilt/quilt.make
 
-#export DH_VERBOSE=1
+DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
+DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
+UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
+SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+\.svn([0-9]+)$$/\1/p')
+SHLIBS_VERSION := 3:0.svn20080925-1
 
-DEB_VERSION := $(shell dpkg-parsechangelog | sed -ne 's/^Version: //p')
-SRC_VERSION := $(shell echo $(DEB_VERSION) | cut -d '-' -f 1)
-SVN_VERSION := $(shell echo $(SRC_VERSION) | sed -ne 's/^[0-9]\.[a-z]*//p')
+LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 
-LIBS := libavutil libavcodec libpostproc libavformat libavdevice libswscale
+internalencoders := $(findstring internalencoders,$(DEB_BUILD_OPTIONS))
 
 include debian/confflags
 
-$(info Building FFmpeg for flavors: $(FLAVORS))
-$(info DEB_BUILD_OPTIONS are: $(DEB_BUILD_OPTIONS))
-$(info Using as CFLAGS: $(CFLAGS))
+$(info FLAVORS = $(FLAVORS))
+$(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
+$(info CFLAGS = $(CFLAGS))
+$(info internalencoders = $(internalencoders))
 
 config-extra-includes.h:
 	sh debian/fixup-config.sh > $@
 
-configure-%: configure-%-stamp
-configure-%-stamp: $(QUILT_STAMPFN) config-extra-includes.h
+configure-%: configure-stamp-%
+configure-stamp-%: $(QUILT_STAMPFN) config-extra-includes.h
 	dh_testdir
 	mkdir -p debian-$*
-	cd debian-$* && CFLAGS="$(CFLAGS)" ../configure $($*_build_confflags)
-ifeq (,$(findstring internalencoders,$(DEB_BUILD_OPTIONS)))
+	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure $($*_build_confflags)
+ifeq ($(internalencoders),)
 	echo "#include \"config-extra-includes.h\"" >> debian-$*/config.h
 endif
 	touch $@
 
-build-%: build-%-stamp
-build-%-stamp: configure-%-stamp
+build-%: build-stamp-%
+build-stamp-%: configure-stamp-%
 	dh_testdir
 	$(MAKE) -C debian-$* -j $(NJOBS)
 	touch $@
 
-debian-shared/tools/qt-faststart: build-shared-stamp
+debian-shared/tools/qt-faststart: build-stamp-shared
 	$(MAKE) -C debian-shared tools/qt-faststart
 
 build-doxy: build-doxy-stamp
-build-doxy-stamp: $(QUILT_STAMPFN) 
+build-doxy-stamp: $(QUILT_STAMPFN)
 	dh_testdir
 	doxygen
 	touch $@
 
-BUILD_STAMPS=$(foreach flavor,$(FLAVORS),build-$(flavor)-stamp)
 build: build-stamp
-build-stamp: $(BUILD_STAMPS) debian-shared/tools/qt-faststart
+build-stamp: $(addprefix build-stamp-, $(FLAVORS)) debian-shared/tools/qt-faststart
 	touch $@
 
 clean: clean-real unpatch
 clean-real:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp build-*-stamp configure-*-stamp patch-stamp
-	rm -rf $(foreach flavor,$(FLAVORS),debian-$(flavor)) doxy
+	rm -f build-stamp $(addprefix build-stamp-, $(FLAVORS)) \
+	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp
+	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
 	dh_clean config-extra-includes.h debian/tmp.debhelper.log
 
 get-orig-source:
 	dh_testdir
-ifeq (,$(findstring internalencoders,$(DEB_BUILD_OPTIONS)))
-        # Disable potentially dangerous patented code
+	# strip patented code
 	chmod +x debian/strip.sh
 	sh debian/get-orig-source.sh -r{$(SVN_VERSION)} \
-	    -c $(CURDIR)/debian/strip.sh \
-	    -o ../ffmpeg-debian_$(SRC_VERSION).orig.tar.gz
-else
-	sh debian/get-orig-source.sh -r{$(SVN_VERSION)} \
-	    -o ../ffmpeg_$(SRC_VERSION).orig.tar.gz
-endif
+	    $(if $(internalencoders),, -c $(CURDIR)/debian/strip.sh) \
+	    -o ../$(DEB_SOURCE)_$(UPSTREAM_VERSION).orig.tar.gz
 
+# The trailing newline is important!
 define install_flavor
-	$(MAKE) -C debian-$(1) install DESTDIR=$(CURDIR)/debian/tmp/ \
+	$(MAKE) -C debian-$(1) install DESTDIR=$(CURDIR)/debian/tmp \
 	    mandir=$(CURDIR)/debian/tmp/usr/share/man
 
 endef
@@ -83,22 +82,15 @@ install: build
 	dh_installdirs -ptmp usr/share/doc/ffmpeg/html etc
 	dh_installdirs -ptmp usr/share/doc/ffmpeg-doc/html
 	$(foreach flavor,$(FLAVORS),$(call install_flavor,$(flavor)))
-	cp -a libavcodec/dsputil.h debian/tmp/usr/include/ffmpeg
+	cp -a libavcodec/dsputil.h debian/tmp/usr/include/libavcodec
 	cp debian-shared/doc/*.html debian/tmp/usr/share/doc/ffmpeg/html/
-#	dont fail on binary-indep only builds.
-	if test -d doxy; then \
-		cp doxy/html/* debian/tmp/usr/share/doc/ffmpeg-doc/html/; \
-	fi
+	# don't fail on binary-indep only builds.
+	[ ! -d doxy ] || cp doxy/html/* debian/tmp/usr/share/doc/ffmpeg-doc/html
 	cp doc/ffserver.conf debian/tmp/etc/
 	cp debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
 	dh_install --fail-missing --sourcedir=debian/tmp
 
 binary-indep: build-doxy install
-
-define call_dh_makeshlibs
-	dh_makeshlibs -p $(1)$(2) \
-	    -V "$(1)$(2) (>= $(SRC_VERSION)-8) | $(1)-unstripped-$(2) (>= $(SRC_VERSION)-8)"
-endef
 
 binary-arch: build install
 	dh_testdir
@@ -113,13 +105,10 @@ binary-arch: build install
 	dh_strip --dbg-package=ffmpeg-dbg
 	dh_compress
 	dh_fixperms
-#	NB: The following is pretty whitespace sensitive
-	$(call call_dh_makeshlibs,libavutil,49)
-	$(call call_dh_makeshlibs,libavcodec,51)
-	$(call call_dh_makeshlibs,libavdevice,52)
-	$(call call_dh_makeshlibs,libpostproc,51)
-	$(call call_dh_makeshlibs,libavformat,52)
-	$(call call_dh_makeshlibs,libswscale,0)
+	for pkg in $(LIB_PKGS); do \
+	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-unstripped-\1/'); \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION)) | $$upkg (>= $(SHLIBS_VERSION))"; \
+	done
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"
@@ -128,9 +117,9 @@ binary-arch: build install
 
 binary: binary-indep binary-arch
 
-.PHONY: build build-shared build-static build-doxy \
+.PHONY: build $(addprefix build-, $(FLAVORS)) build-doxy \
 	clean clean-real \
-	configure configure-shared configure-static \
+	configure $(addprefix configure-, $(FLAVORS)) \
 	binary binary-indep binary-arch \
 	install \
-	patch
+	get-orig-source

@@ -6,7 +6,7 @@
 # This script fixes up the build by adding adding required #defines to
 # config.h
 
-EXPECTED_CODECS="H261 H263 H263P MSMPEG4V1 MSMPEG4V2 MSMPEG4V3 MPEG4 MPEG2VIDEO"
+EXPECTED_CODECS="H263 H263P MSMPEG4V1 MSMPEG4V2 MSMPEG4V3 MPEG4 MPEG2VIDEO"
 echo "#ifndef FIXUP_CONFIG_"
 echo "#define FIXUP_CONFIG_"
 for codec in $EXPECTED_CODECS; do
