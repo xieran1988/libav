@@ -1,3 +1,19 @@
+ffmpeg-debian (0.svn20080206-13) unstable; urgency=low
+
+  [Thiemo Seufer]
+  * compile shared libavcodec explicitly with $(PIC), since gcc-4.3
+    mips/mipsel needs an explicit PIC flag for shared library
+    code.
+  
+    Until gcc-4.2 Linux/MIPS always used PIC code, even for executables.
+    This changed with gcc-4.3, and with it the compiler default changed
+    to non-PIC. As a result, -fPIC now needs to be explicitly supplied
+    for shared library builds.
+  
+    (Closes: #498216, 498647, 498397)
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 21 Sep 2008 17:03:50 +0200
+
 ffmpeg-debian (0.svn20080206-12) unstable; urgency=low
 
   * enable vhook in all flavors. (Closes: #490272, LP: #260296)

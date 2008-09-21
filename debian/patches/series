@@ -1,5 +1,6 @@
 001_fixup_version.diff
 010_fix_ftbfs_hppa.diff
+011_fix_pic_mips.diff
 10_fix_kfreebsd_libx11_linkage.diff
 010_proper_rpath.diff
 013_strip_unneeded_linker_flags.diff
