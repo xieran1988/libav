@@ -18,6 +18,13 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+/**
+ * @file udp.c
+ * UDP protocol
+ */
+
+#define _BSD_SOURCE     /* Needed for using struct ip_mreq with recent glibc */
 #include "avformat.h"
 #include <unistd.h>
 #include "network.h"
@@ -26,6 +33,12 @@
 #ifndef IPV6_ADD_MEMBERSHIP
 #define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
 #define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
+#endif
+#ifndef IN_MULTICAST
+#define IN_MULTICAST(a) ((((uint32_t)(a)) & 0xf0000000) == 0xe0000000)
+#endif
+#ifndef IN6_IS_ADDR_MULTICAST
+#define IN6_IS_ADDR_MULTICAST(a) (((uint8_t *) (a))[0] == 0xff)
 #endif
 
 typedef struct {
@@ -39,7 +52,7 @@ typedef struct {
 #else
     struct sockaddr_storage dest_addr;
 #endif
-    size_t dest_addr_len;
+    int dest_addr_len;
 } UDPContext;
 
 #define UDP_TX_BUF_SIZE 32768
@@ -159,6 +172,18 @@ static int udp_set_url(struct sockaddr_storage *addr, const char *hostname, int 
     return addr_len;
 }
 
+static int is_multicast_address(struct sockaddr_storage *addr)
+{
+    if (addr->ss_family == AF_INET) {
+        return IN_MULTICAST(ntohl(((struct sockaddr_in *)addr)->sin_addr.s_addr));
+    }
+    if (addr->ss_family == AF_INET6) {
+        return IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6 *)addr)->sin6_addr);
+    }
+
+    return 0;
+}
+
 static int udp_socket_create(UDPContext *s, struct sockaddr_storage *addr, int *addr_len)
 {
     int udp_fd = -1;
@@ -196,10 +221,9 @@ static int udp_socket_create(UDPContext *s, struct sockaddr_storage *addr, int *
 
 static int udp_port(struct sockaddr_storage *addr, int addr_len)
 {
-    char sbuf[NI_MAXSERV];
-    char hbuf[NI_MAXHOST];
+    char sbuf[sizeof(int)*3+1];
 
-    if (getnameinfo((struct sockaddr *)addr, addr_len, hbuf, sizeof(hbuf),  sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
+    if (getnameinfo((struct sockaddr *)addr, addr_len, NULL, 0,  sbuf, sizeof(sbuf), NI_NUMERICSERV) != 0) {
         av_log(NULL, AV_LOG_ERROR, "getnameinfo: %s\n", strerror(errno));
         return -1;
     }
@@ -218,6 +242,11 @@ static int udp_set_url(struct sockaddr_in *addr, const char *hostname, int port)
     addr->sin_port = htons(port);
 
     return sizeof(struct sockaddr_in);
+}
+
+static int is_multicast_address(struct sockaddr_in *addr)
+{
+    return IN_MULTICAST(ntohl(addr->sin_addr.s_addr));
 }
 
 static int udp_socket_create(UDPContext *s, struct sockaddr_in *addr, int *addr_len)
@@ -249,8 +278,7 @@ static int udp_port(struct sockaddr_in *addr, int len)
  * the remote server address.
  *
  * url syntax: udp://host:port[?option=val...]
- * option: 'multicast=1' : enable multicast
- *         'ttl=n'       : set the ttl value (for multicast only)
+ * option: 'ttl=n'       : set the ttl value (for multicast only)
  *         'localport=n' : set the local port
  *         'pkt_size=n'  : set max packet size
  *         'reuse=1'     : enable reusing the socket
@@ -272,6 +300,7 @@ int udp_set_remote_url(URLContext *h, const char *uri)
     if (s->dest_addr_len < 0) {
         return AVERROR(EIO);
     }
+    s->is_multicast = is_multicast_address(&s->dest_addr);
 
     return 0;
 }
@@ -320,6 +349,9 @@ static int udp_open(URLContext *h, const char *uri, int flags)
 
     is_output = (flags & URL_WRONLY);
 
+    if(!ff_network_init())
+        return AVERROR(EIO);
+
     s = av_mallocz(sizeof(UDPContext));
     if (!s)
         return AVERROR(ENOMEM);
@@ -328,7 +360,6 @@ static int udp_open(URLContext *h, const char *uri, int flags)
     s->ttl = 16;
     p = strchr(uri, '?');
     if (p) {
-        s->is_multicast = find_info_tag(buf, sizeof(buf), "multicast", p);
         s->reuse_socket = find_info_tag(buf, sizeof(buf), "reuse", p);
         if (find_info_tag(buf, sizeof(buf), "ttl", p)) {
             s->ttl = strtol(buf, NULL, 10);
@@ -347,14 +378,11 @@ static int udp_open(URLContext *h, const char *uri, int flags)
     /* XXX: fix url_split */
     if (hostname[0] == '\0' || hostname[0] == '?') {
         /* only accepts null hostname if input */
-        if (s->is_multicast || (flags & URL_WRONLY))
+        if (flags & URL_WRONLY)
             goto fail;
     } else {
         udp_set_remote_url(h, uri);
     }
-
-    if(!ff_network_init())
-        return AVERROR(EIO);
 
     if (s->is_multicast && !(h->flags & URL_WRONLY))
         s->local_port = port;

@@ -21,21 +21,14 @@
  */
 
 #include <stdlib.h>
-#include "dsputil.h"
+#include "libavutil/x86_cpu.h"
+#include "libavcodec/dsputil.h"
 
 #undef printf
 
-#ifdef ARCH_X86_64
-#  define REG_b "rbx"
-#  define REG_S "rsi"
-#else
-#  define REG_b "ebx"
-#  define REG_S "esi"
-#endif
-
 /* ebx saving is necessary for PIC. gcc seems unable to see it alone */
 #define cpuid(index,eax,ebx,ecx,edx)\
-    __asm __volatile\
+    asm volatile\
         ("mov %%"REG_b", %%"REG_S"\n\t"\
          "cpuid\n\t"\
          "xchg %%"REG_b", %%"REG_S\
@@ -49,28 +42,28 @@ int mm_support(void)
     int rval = 0;
     int eax, ebx, ecx, edx;
     int max_std_level, max_ext_level, std_caps=0, ext_caps=0;
-    long a, c;
+    x86_reg a, c;
 
-    __asm__ __volatile__ (
-                          /* See if CPUID instruction is supported ... */
-                          /* ... Get copies of EFLAGS into eax and ecx */
-                          "pushf\n\t"
-                          "pop %0\n\t"
-                          "mov %0, %1\n\t"
+    asm volatile (
+        /* See if CPUID instruction is supported ... */
+        /* ... Get copies of EFLAGS into eax and ecx */
+        "pushf\n\t"
+        "pop %0\n\t"
+        "mov %0, %1\n\t"
 
-                          /* ... Toggle the ID bit in one copy and store */
-                          /*     to the EFLAGS reg */
-                          "xor $0x200000, %0\n\t"
-                          "push %0\n\t"
-                          "popf\n\t"
+        /* ... Toggle the ID bit in one copy and store */
+        /*     to the EFLAGS reg */
+        "xor $0x200000, %0\n\t"
+        "push %0\n\t"
+        "popf\n\t"
 
-                          /* ... Get the (hopefully modified) EFLAGS */
-                          "pushf\n\t"
-                          "pop %0\n\t"
-                          : "=a" (a), "=c" (c)
-                          :
-                          : "cc"
-                          );
+        /* ... Get the (hopefully modified) EFLAGS */
+        "pushf\n\t"
+        "pop %0\n\t"
+        : "=a" (a), "=c" (c)
+        :
+        : "cc"
+        );
 
     if (a == c)
         return 0; /* CPUID not supported */
@@ -82,13 +75,17 @@ int mm_support(void)
         if (std_caps & (1<<23))
             rval |= FF_MM_MMX;
         if (std_caps & (1<<25))
-            rval |= FF_MM_MMXEXT | FF_MM_SSE;
+            rval |= FF_MM_MMXEXT
+#if !defined(__GNUC__) || __GNUC__ > 2
+                  | FF_MM_SSE;
         if (std_caps & (1<<26))
             rval |= FF_MM_SSE2;
         if (ecx & 1)
             rval |= FF_MM_SSE3;
         if (ecx & 0x00000200 )
-            rval |= FF_MM_SSSE3;
+            rval |= FF_MM_SSSE3
+#endif
+                  ;
     }
 
     cpuid(0x80000000, max_ext_level, ebx, ecx, edx);
@@ -122,9 +119,9 @@ int mm_support(void)
 #ifdef TEST
 int main ( void )
 {
-  int mm_flags;
-  mm_flags = mm_support();
-  printf("mm_support = 0x%08X\n",mm_flags);
-  return 0;
+    int mm_flags;
+    mm_flags = mm_support();
+    printf("mm_support = 0x%08X\n",mm_flags);
+    return 0;
 }
 #endif

@@ -45,7 +45,6 @@
 #include <unistd.h>
 
 #include "avcodec.h"
-#include "dsputil.h"
 
 #define VMD_HEADER_SIZE 0x330
 #define PALETTE_COUNT 256
@@ -57,7 +56,6 @@
 typedef struct VmdVideoContext {
 
     AVCodecContext *avctx;
-    DSPContext dsp;
     AVFrame frame;
     AVFrame prev_frame;
 
@@ -164,13 +162,13 @@ static int rle_unpack(const unsigned char *src, unsigned char *dest,
         if (l & 0x80) {
             l = (l & 0x7F) * 2;
             if (pd + l > dest_end)
-                return (ps - src);
+                return ps - src;
             memcpy(pd, ps, l);
             ps += l;
             pd += l;
         } else {
             if (pd + i > dest_end)
-                return (ps - src);
+                return ps - src;
             for (i = 0; i < l; i++) {
                 *pd++ = ps[0];
                 *pd++ = ps[1];
@@ -180,7 +178,7 @@ static int rle_unpack(const unsigned char *src, unsigned char *dest,
         i += l;
     } while (i < src_len);
 
-    return (ps - src);
+    return ps - src;
 }
 
 static void vmd_decode(VmdVideoContext *s)
@@ -324,7 +322,7 @@ static void vmd_decode(VmdVideoContext *s)
     }
 }
 
-static int vmdvideo_decode_init(AVCodecContext *avctx)
+static av_cold int vmdvideo_decode_init(AVCodecContext *avctx)
 {
     VmdVideoContext *s = avctx->priv_data;
     int i;
@@ -336,7 +334,6 @@ static int vmdvideo_decode_init(AVCodecContext *avctx)
 
     s->avctx = avctx;
     avctx->pix_fmt = PIX_FMT_PAL8;
-    dsputil_init(&s->dsp, avctx);
 
     /* make sure the VMD header made it */
     if (s->avctx->extradata_size != VMD_HEADER_SIZE) {
@@ -401,7 +398,7 @@ static int vmdvideo_decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-static int vmdvideo_decode_end(AVCodecContext *avctx)
+static av_cold int vmdvideo_decode_end(AVCodecContext *avctx)
 {
     VmdVideoContext *s = avctx->priv_data;
 
@@ -425,7 +422,7 @@ typedef struct VmdAudioContext {
     int predictors[2];
 } VmdAudioContext;
 
-static uint16_t vmdaudio_table[128] = {
+static const uint16_t vmdaudio_table[128] = {
     0x000, 0x008, 0x010, 0x020, 0x030, 0x040, 0x050, 0x060, 0x070, 0x080,
     0x090, 0x0A0, 0x0B0, 0x0C0, 0x0D0, 0x0E0, 0x0F0, 0x100, 0x110, 0x120,
     0x130, 0x140, 0x150, 0x160, 0x170, 0x180, 0x190, 0x1A0, 0x1B0, 0x1C0,
@@ -441,14 +438,15 @@ static uint16_t vmdaudio_table[128] = {
     0xF00, 0x1000, 0x1400, 0x1800, 0x1C00, 0x2000, 0x3000, 0x4000
 };
 
-static int vmdaudio_decode_init(AVCodecContext *avctx)
+static av_cold int vmdaudio_decode_init(AVCodecContext *avctx)
 {
     VmdAudioContext *s = avctx->priv_data;
 
     s->avctx = avctx;
     s->channels = avctx->channels;
-    s->bits = avctx->bits_per_sample;
+    s->bits = avctx->bits_per_coded_sample;
     s->block_align = avctx->block_align;
+    avctx->sample_fmt = SAMPLE_FMT_S16;
 
     av_log(s->avctx, AV_LOG_DEBUG, "%d channels, %d bits/sample, block align = %d, sample rate = %d\n",
             s->channels, s->bits, s->block_align, avctx->sample_rate);
@@ -564,6 +562,7 @@ AVCodec vmdvideo_decoder = {
     vmdvideo_decode_end,
     vmdvideo_decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("Sierra VMD video"),
 };
 
 AVCodec vmdaudio_decoder = {
@@ -575,4 +574,5 @@ AVCodec vmdaudio_decoder = {
     NULL,
     NULL,
     vmdaudio_decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("Sierra VMD audio"),
 };

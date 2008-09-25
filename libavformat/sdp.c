@@ -18,10 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "avstring.h"
+#include "libavutil/avstring.h"
+#include "libavutil/base64.h"
 #include "avformat.h"
+#include "internal.h"
 #include "avc.h"
-#include "base64.h"
 #include "rtp.h"
 
 #ifdef CONFIG_RTP_MUXER
@@ -56,10 +57,10 @@ static void dest_write(char *buff, int size, const char *dest_addr, int ttl)
 static void sdp_write_header(char *buff, int size, struct sdp_session_level *s)
 {
     av_strlcatf(buff, size, "v=%d\r\n"
-                            "o=- %d %d IN IPV4 %s\r\n"
+                            "o=- %d %d IN IP4 %s\r\n"
                             "t=%d %d\r\n"
                             "s=%s\r\n"
-                            "a=tool:libavformat\r\n",
+                            "a=tool:libavformat " AV_STRINGIFY(LIBAVFORMAT_VERSION) "\r\n",
                             s->sdp_version,
                             s->id, s->version, s->src_addr,
                             s->start_time, s->end_time,
@@ -96,7 +97,7 @@ static int get_address(char *dest_addr, int size, int *ttl, const char *url)
 static char *extradata2psets(AVCodecContext *c)
 {
     char *psets, *p;
-    uint8_t *r;
+    const uint8_t *r;
     const char *pset_string = "; sprop-parameter-sets=";
 
     if (c->extradata_size > MAX_EXTRADATA_SIZE) {
@@ -114,7 +115,7 @@ static char *extradata2psets(AVCodecContext *c)
     p = psets + strlen(pset_string);
     r = ff_avc_find_startcode(c->extradata, c->extradata + c->extradata_size);
     while (r < c->extradata + c->extradata_size) {
-        uint8_t *r1;
+        const uint8_t *r1;
 
         while (!*(r++));
         r1 = ff_avc_find_startcode(r, c->extradata + c->extradata_size);
@@ -123,7 +124,7 @@ static char *extradata2psets(AVCodecContext *c)
             p++;
         }
         if (av_base64_encode(p, MAX_PSET_SIZE - (p - psets), r, r1 - r) == NULL) {
-            av_log(c, AV_LOG_ERROR, "Cannot BASE64 encode %d %d!\n", MAX_PSET_SIZE - (p - psets), r1 - r);
+            av_log(c, AV_LOG_ERROR, "Cannot BASE64 encode %td %td!\n", MAX_PSET_SIZE - (p - psets), r1 - r);
             av_free(psets);
 
             return NULL;
@@ -133,27 +134,6 @@ static char *extradata2psets(AVCodecContext *c)
     }
 
     return psets;
-}
-
-static void digit_to_char(char *dst, uint8_t src)
-{
-    if (src < 10) {
-        *dst = '0' + src;
-    } else {
-        *dst = 'A' + src - 10;
-    }
-}
-
-static char *data_to_hex(char *buff, const uint8_t *src, int s)
-{
-    int i;
-
-    for(i = 0; i < s; i++) {
-        digit_to_char(buff + 2 * i, src[i] >> 4);
-        digit_to_char(buff + 2 * i + 1, src[i] & 0xF);
-    }
-
-    return buff;
 }
 
 static char *extradata2config(AVCodecContext *c)
@@ -171,7 +151,7 @@ static char *extradata2config(AVCodecContext *c)
         return NULL;
     }
     memcpy(config, "; config=", 9);
-    data_to_hex(config + 9, c->extradata, c->extradata_size);
+    ff_data_to_hex(config + 9, c->extradata, c->extradata_size);
     config[9 + c->extradata_size * 2] = 0;
 
     return config;
@@ -267,6 +247,9 @@ static void sdp_write_media(char *buff, int size, AVCodecContext *c, const char 
 
     av_strlcatf(buff, size, "m=%s %d RTP/AVP %d\r\n", type, port, payload_type);
     dest_write(buff, size, dest_addr, ttl);
+    if (c->bit_rate) {
+        av_strlcatf(buff, size, "b=AS:%d\r\n", c->bit_rate / 1000);
+    }
 
     sdp_media_attributes(buff, size, c, payload_type);
 }

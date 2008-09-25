@@ -118,6 +118,8 @@ typedef struct {
 
     int nmodes;
     vorbis_mode_t * modes;
+
+    int64_t sample_count;
 } venc_context_t;
 
 typedef struct {
@@ -915,7 +917,7 @@ static int apply_window_and_mdct(venc_context_t * venc, signed short * audio, in
     }
 
     for (channel = 0; channel < venc->channels; channel++) {
-        ff_mdct_calc(&venc->mdct[0], venc->coeffs + channel*window_len, venc->samples + channel*window_len*2, venc->floor/*tmp*/);
+        ff_mdct_calc(&venc->mdct[0], venc->coeffs + channel*window_len, venc->samples + channel*window_len*2);
     }
 
     if (samples) {
@@ -932,7 +934,7 @@ static int apply_window_and_mdct(venc_context_t * venc, signed short * audio, in
     return 1;
 }
 
-static int vorbis_encode_init(AVCodecContext * avccontext)
+static av_cold int vorbis_encode_init(AVCodecContext * avccontext)
 {
     venc_context_t * venc = avccontext->priv_data;
 
@@ -1010,12 +1012,14 @@ static int vorbis_encode_frame(AVCodecContext * avccontext, unsigned char * pack
 
     residue_encode(venc, &venc->residues[mapping->residue[mapping->mux[0]]], &pb, venc->coeffs, samples, venc->channels);
 
+    avccontext->coded_frame->pts = venc->sample_count;
+    venc->sample_count += avccontext->frame_size;
     flush_put_bits(&pb);
     return (put_bits_count(&pb) + 7) / 8;
 }
 
 
-static int vorbis_encode_close(AVCodecContext * avccontext)
+static av_cold int vorbis_encode_close(AVCodecContext * avccontext)
 {
     venc_context_t * venc = avccontext->priv_data;
     int i;
@@ -1084,4 +1088,6 @@ AVCodec vorbis_encoder = {
     vorbis_encode_frame,
     vorbis_encode_close,
     .capabilities= CODEC_CAP_DELAY,
+    .sample_fmts = (enum SampleFormat[]){SAMPLE_FMT_S16,SAMPLE_FMT_NONE},
+    .long_name = NULL_IF_CONFIG_SMALL("Vorbis"),
 };

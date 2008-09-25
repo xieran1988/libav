@@ -18,10 +18,10 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#ifndef FFMPEG_RTP_H
-#define FFMPEG_RTP_H
+#ifndef AVFORMAT_RTP_H
+#define AVFORMAT_RTP_H
 
-#include "avcodec.h"
+#include "libavcodec/avcodec.h"
 #include "avformat.h"
 
 #define RTP_MIN_PACKET_LENGTH 12
@@ -110,4 +110,4 @@ typedef enum {
 } rtcp_sdes_type_t;
 #endif
 
-#endif /* FFMPEG_RTP_H */
+#endif /* AVFORMAT_RTP_H */

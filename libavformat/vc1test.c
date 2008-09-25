@@ -35,7 +35,7 @@ static int vc1t_probe(AVProbeData *p)
     if (p->buf[3] != 0xC5 && AV_RL32(&p->buf[4]) != 4)
         return 0;
 
-    return AVPROBE_SCORE_MAX;
+    return AVPROBE_SCORE_MAX/2;
 }
 
 static int vc1t_read_header(AVFormatContext *s,
@@ -103,7 +103,7 @@ static int vc1t_read_packet(AVFormatContext *s,
 
 AVInputFormat vc1t_demuxer = {
     "vc1test",
-    "VC1 test bitstream format",
+    NULL_IF_CONFIG_SMALL("VC-1 test bitstream format"),
     0,
     vc1t_probe,
     vc1t_read_header,

@@ -125,7 +125,7 @@ static int sp5x_decode_frame(AVCodecContext *avctx,
         return -1;
     }
 
-    s->picture.pict_type = I_TYPE;
+    s->picture.pict_type = FF_I_TYPE;
     s->picture.key_frame = 1;
 
     for (i = 0; i < 3; i++)
@@ -198,7 +198,8 @@ AVCodec sp5x_decoder = {
     ff_mjpeg_decode_end,
     sp5x_decode_frame,
     CODEC_CAP_DR1,
-    NULL
+    NULL,
+    .long_name = NULL_IF_CONFIG_SMALL("Sunplus JPEG (SP5X)"),
 };
 
 AVCodec amv_decoder = {
@@ -209,5 +210,6 @@ AVCodec amv_decoder = {
     ff_mjpeg_decode_init,
     NULL,
     ff_mjpeg_decode_end,
-    sp5x_decode_frame
+    sp5x_decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("AMV Video"),
 };

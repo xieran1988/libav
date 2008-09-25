@@ -1,5 +1,5 @@
 /*
- * Id RoQ (.roq) File Demuxer
+ * id RoQ (.roq) File Demuxer
  * Copyright (c) 2003 The ffmpeg Project
  *
  * This file is part of FFmpeg.
@@ -21,7 +21,7 @@
 
 /**
  * @file idroq.c
- * Id RoQ format file demuxer
+ * id RoQ format file demuxer
  * by Mike Melanson (melanson@pcisys.net)
  * for more information on the .roq file format, visit:
  *   http://www.csse.monash.edu.au/~timf/
@@ -161,10 +161,10 @@ static int roq_read_header(AVFormatContext *s,
         st->codec->codec_tag = 0;  /* no tag */
         st->codec->channels = roq->audio_channels;
         st->codec->sample_rate = RoQ_AUDIO_SAMPLE_RATE;
-        st->codec->bits_per_sample = 16;
+        st->codec->bits_per_coded_sample = 16;
         st->codec->bit_rate = st->codec->channels * st->codec->sample_rate *
-            st->codec->bits_per_sample;
-        st->codec->block_align = st->codec->channels * st->codec->bits_per_sample;
+            st->codec->bits_per_coded_sample;
+        st->codec->block_align = st->codec->channels * st->codec->bits_per_coded_sample;
     }
 
     return 0;
@@ -270,19 +270,11 @@ static int roq_read_packet(AVFormatContext *s,
     return ret;
 }
 
-static int roq_read_close(AVFormatContext *s)
-{
-//    RoqDemuxContext *roq = s->priv_data;
-
-    return 0;
-}
-
 AVInputFormat roq_demuxer = {
     "RoQ",
-    "Id RoQ format",
+    NULL_IF_CONFIG_SMALL("id RoQ format"),
     sizeof(RoqDemuxContext),
     roq_probe,
     roq_read_header,
     roq_read_packet,
-    roq_read_close,
 };

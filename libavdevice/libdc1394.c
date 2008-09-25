@@ -20,8 +20,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "avformat.h"
 #include "config.h"
+#include "libavformat/avformat.h"
 
 #if ENABLE_LIBDC1394_2
 #include <dc1394/dc1394.h>
@@ -155,7 +155,7 @@ static int dc1394_v1_read_header(AVFormatContext *c, AVFormatParameters * ap)
     if (dc1394_read_common(c,ap,&fmt,&fps) != 0)
         return -1;
 
-    /* Now lets prep the hardware */
+    /* Now let us prep the hardware. */
     dc1394->handle = dc1394_create_handle(0); /* FIXME: gotta have ap->port */
     if (!dc1394->handle) {
         av_log(c, AV_LOG_ERROR, "Can't acquire dc1394 handle on port %d\n", 0 /* ap->port */);
@@ -248,7 +248,7 @@ static int dc1394_v2_read_header(AVFormatContext *c, AVFormatParameters * ap)
     if (dc1394_read_common(c,ap,&fmt,&fps) != 0)
        return -1;
 
-    /* Now lets prep the hardware */
+    /* Now let us prep the hardware. */
     dc1394->d = dc1394_new();
     dc1394_camera_enumerate (dc1394->d, &list);
     if ( !list || list->num == 0) {
@@ -350,7 +350,7 @@ static int dc1394_v2_close(AVFormatContext * context)
 
 AVInputFormat libdc1394_demuxer = {
     .name           = "libdc1394",
-    .long_name      = "dc1394 v.2 A/V grab",
+    .long_name      = NULL_IF_CONFIG_SMALL("dc1394 v.2 A/V grab"),
     .priv_data_size = sizeof(struct dc1394_data),
     .read_header    = dc1394_v2_read_header,
     .read_packet    = dc1394_v2_read_packet,
@@ -362,7 +362,7 @@ AVInputFormat libdc1394_demuxer = {
 #if ENABLE_LIBDC1394_1
 AVInputFormat libdc1394_demuxer = {
     .name           = "libdc1394",
-    .long_name      = "dc1394 v.1 A/V grab",
+    .long_name      = NULL_IF_CONFIG_SMALL("dc1394 v.1 A/V grab"),
     .priv_data_size = sizeof(struct dc1394_data),
     .read_header    = dc1394_v1_read_header,
     .read_packet    = dc1394_v1_read_packet,

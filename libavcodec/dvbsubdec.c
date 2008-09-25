@@ -274,24 +274,25 @@ static void delete_region_display_list(DVBSubContext *ctx, DVBSubRegion *region)
         object = get_object(ctx, display->object_id);
 
         if (object) {
-            obj_disp = object->display_list;
             obj_disp_ptr = &object->display_list;
+            obj_disp = *obj_disp_ptr;
 
             while (obj_disp && obj_disp != display) {
                 obj_disp_ptr = &obj_disp->object_list_next;
-                obj_disp = obj_disp->object_list_next;
+                obj_disp = *obj_disp_ptr;
             }
 
             if (obj_disp) {
                 *obj_disp_ptr = obj_disp->object_list_next;
 
                 if (!object->display_list) {
-                    obj2 = ctx->object_list;
                     obj2_ptr = &ctx->object_list;
+                    obj2 = *obj2_ptr;
 
-                    while (obj2 && obj2 != object) {
+                    while (obj2 != object) {
+                        assert(obj2);
                         obj2_ptr = &obj2->next;
-                        obj2 = obj2->next;
+                        obj2 = *obj2_ptr;
                     }
 
                     *obj2_ptr = obj2->next;
@@ -338,7 +339,7 @@ static void delete_state(DVBSubContext *ctx)
         av_log(0, AV_LOG_ERROR, "Memory deallocation error!\n");
 }
 
-static int dvbsub_init_decoder(AVCodecContext *avctx)
+static av_cold int dvbsub_init_decoder(AVCodecContext *avctx)
 {
     int i, r, g, b, a = 0;
     DVBSubContext *ctx = (DVBSubContext*) avctx->priv_data;
@@ -411,7 +412,7 @@ static int dvbsub_init_decoder(AVCodecContext *avctx)
     return 0;
 }
 
-static int dvbsub_close_decoder(AVCodecContext *avctx)
+static av_cold int dvbsub_close_decoder(AVCodecContext *avctx)
 {
     DVBSubContext *ctx = (DVBSubContext*) avctx->priv_data;
     DVBSubRegionDisplay *display;
@@ -1429,4 +1430,5 @@ AVCodec dvbsub_decoder = {
     NULL,
     dvbsub_close_decoder,
     dvbsub_decode,
+    .long_name = NULL_IF_CONFIG_SMALL("DVB subtitles"),
 };

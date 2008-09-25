@@ -504,7 +504,8 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, const
     } else {
         c->pic.key_frame = 0;
         c->pic.pict_type = FF_P_TYPE;
-        c->decode_xor(c);
+        if(c->decomp_len)
+            c->decode_xor(c);
     }
 
     /* update frames */
@@ -588,7 +589,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, const
  * Init zmbv decoder
  *
  */
-static int decode_init(AVCodecContext *avctx)
+static av_cold int decode_init(AVCodecContext *avctx)
 {
     ZmbvContext * const c = avctx->priv_data;
     int zret; // Zlib return code
@@ -602,7 +603,7 @@ static int decode_init(AVCodecContext *avctx)
     if (avcodec_check_dimensions(avctx, avctx->width, avctx->height) < 0) {
         return 1;
     }
-    c->bpp = avctx->bits_per_sample;
+    c->bpp = avctx->bits_per_coded_sample;
 
     // Needed if zlib unused or init aborted before inflateInit
     memset(&(c->zstream), 0, sizeof(z_stream));
@@ -637,7 +638,7 @@ static int decode_init(AVCodecContext *avctx)
  * Uninit zmbv decoder
  *
  */
-static int decode_end(AVCodecContext *avctx)
+static av_cold int decode_end(AVCodecContext *avctx)
 {
     ZmbvContext * const c = avctx->priv_data;
 
@@ -660,6 +661,7 @@ AVCodec zmbv_decoder = {
     decode_init,
     NULL,
     decode_end,
-    decode_frame
+    decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("Zip Motion Blocks Video"),
 };
 

@@ -18,8 +18,25 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+#include "libavutil/avstring.h"
+#include "libavcodec/opt.h"
 #include "avformat.h"
-#include "avstring.h"
+
+#if LIBAVFORMAT_VERSION_MAJOR >= 53
+/** @name Logging context. */
+/*@{*/
+static const char *urlcontext_to_name(void *ptr)
+{
+    URLContext *h = (URLContext *)ptr;
+    if(h->prot) return h->prot->name;
+    else        return "NULL";
+}
+static const AVOption options[] = {{NULL}};
+static const AVClass urlcontext_class =
+        { "URLContext", urlcontext_to_name, options };
+/*@}*/
+#endif
 
 static int default_interrupt_cb(void);
 
@@ -42,13 +59,50 @@ int register_protocol(URLProtocol *protocol)
     return 0;
 }
 
-int url_open(URLContext **puc, const char *filename, int flags)
+int url_open_protocol (URLContext **puc, struct URLProtocol *up,
+                       const char *filename, int flags)
 {
     URLContext *uc;
+    int err;
+
+    uc = av_malloc(sizeof(URLContext) + strlen(filename) + 1);
+    if (!uc) {
+        err = AVERROR(ENOMEM);
+        goto fail;
+    }
+#if LIBAVFORMAT_VERSION_MAJOR >= 53
+    uc->av_class = &urlcontext_class;
+#endif
+    uc->filename = (char *) &uc[1];
+    strcpy(uc->filename, filename);
+    uc->prot = up;
+    uc->flags = flags;
+    uc->is_streamed = 0; /* default = not streamed */
+    uc->max_packet_size = 0; /* default: stream file */
+    err = up->url_open(uc, filename, flags);
+    if (err < 0) {
+        av_free(uc);
+        *puc = NULL;
+        return err;
+    }
+
+    //We must be carefull here as url_seek() could be slow, for example for http
+    if(   (flags & (URL_WRONLY | URL_RDWR))
+       || !strcmp(up->name, "file"))
+        if(!uc->is_streamed && url_seek(uc, 0, SEEK_SET) < 0)
+            uc->is_streamed= 1;
+    *puc = uc;
+    return 0;
+ fail:
+    *puc = NULL;
+    return err;
+}
+
+int url_open(URLContext **puc, const char *filename, int flags)
+{
     URLProtocol *up;
     const char *p;
     char proto_str[128], *q;
-    int err;
 
     p = filename;
     q = proto_str;
@@ -71,34 +125,11 @@ int url_open(URLContext **puc, const char *filename, int flags)
     up = first_protocol;
     while (up != NULL) {
         if (!strcmp(proto_str, up->name))
-            goto found;
+            return url_open_protocol (puc, up, filename, flags);
         up = up->next;
     }
-    err = AVERROR(ENOENT);
-    goto fail;
- found:
-    uc = av_malloc(sizeof(URLContext) + strlen(filename) + 1);
-    if (!uc) {
-        err = AVERROR(ENOMEM);
-        goto fail;
-    }
-    uc->filename = (char *) &uc[1];
-    strcpy(uc->filename, filename);
-    uc->prot = up;
-    uc->flags = flags;
-    uc->is_streamed = 0; /* default = not streamed */
-    uc->max_packet_size = 0; /* default: stream file */
-    err = up->url_open(uc, filename, flags);
-    if (err < 0) {
-        av_free(uc);
-        *puc = NULL;
-        return err;
-    }
-    *puc = uc;
-    return 0;
- fail:
     *puc = NULL;
-    return err;
+    return AVERROR(ENOENT);
 }
 
 int url_read(URLContext *h, unsigned char *buf, int size)

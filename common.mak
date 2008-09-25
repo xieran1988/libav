@@ -2,35 +2,24 @@
 # common bits used by all libraries
 #
 
-VPATH = $(SRC_PATH_BARE)/lib$(NAME)
-SRC_DIR = "$(VPATH)"
+all: # make "all" default target
 
-CFLAGS   += $(CFLAGS-yes)
-OBJS     += $(OBJS-yes)
-ASM_OBJS += $(ASM_OBJS-yes)
-CPP_OBJS += $(CPP_OBJS-yes)
+ifndef SUBDIR
+vpath %.c $(SRC_DIR)
+vpath %.h $(SRC_DIR)
+vpath %.S $(SRC_DIR)
+vpath %.asm $(SRC_DIR)
 
-CFLAGS += -DHAVE_AV_CONFIG_H -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE \
-          -D_ISOC9X_SOURCE -I$(BUILD_ROOT) -I$(SRC_PATH) \
-          -I$(SRC_PATH)/libavutil $(OPTFLAGS)
+ifeq ($(SRC_DIR),$(SRC_PATH_BARE))
+BUILD_ROOT_REL = .
+else
+BUILD_ROOT_REL = ..
+endif
 
-SRCS := $(OBJS:.o=.c) $(ASM_OBJS:.o=.S) $(CPPOBJS:.o=.cpp)
-OBJS := $(OBJS) $(ASM_OBJS) $(CPPOBJS)
+ALLFFLIBS = avcodec avdevice avfilter avformat avutil postproc swscale
 
-all: $(LIBNAME) $(SLIBNAME)
-
-$(LIBNAME): $(OBJS)
-	rm -f $@
-	$(AR) rc $@ $^ $(EXTRAOBJS)
-	$(RANLIB) $@
-
-$(SLIBNAME): $(SLIBNAME_WITH_MAJOR)
-	$(LN_S) $^ $@
-
-$(SLIBNAME_WITH_MAJOR): $(OBJS)
-	$(SLIB_CREATE_DEF_CMD)
-	$(CC) $(SHFLAGS) $(LDFLAGS) -o $@ $^ $(EXTRALIBS) $(EXTRAOBJS)
-	$(SLIB_EXTRA_CMD)
+CFLAGS := -DHAVE_AV_CONFIG_H -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE \
+          -I$(BUILD_ROOT_REL) -I$(SRC_PATH) $(OPTFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(LIBOBJFLAGS) -c -o $@ $<
@@ -38,71 +27,93 @@ $(SLIBNAME_WITH_MAJOR): $(OBJS)
 %.o: %.S
 	$(CC) $(CFLAGS) $(LIBOBJFLAGS) -c -o $@ $<
 
-%: %.o $(LIBNAME)
-	$(CC) $(LDFLAGS) -o $@ $^ $(EXTRALIBS)
-
 %.ho: %.h
 	$(CC) $(CFLAGS) $(LIBOBJFLAGS) -Wno-unused -c -o $@ -x c $<
 
-ALLHEADERS = $(subst $(VPATH)/,,$(wildcard $(VPATH)/*.h))
-checkheaders: $(filter-out %_template.ho,$(ALLHEADERS:.h=.ho))
+%.d: %.c
+	$(DEPEND_CMD) > $@
 
-depend dep: $(SRCS)
-	$(CC) -MM $(CFLAGS) $^ 1>.depend
+%.d: %.S
+	$(DEPEND_CMD) > $@
 
-clean::
-	rm -f *.o *~ *.a *.lib *.so *.so.* *.dylib *.dll \
-	      *.def *.dll.a *.exp *.ho *.map $(TESTS)
+%.d: %.cpp
+	$(DEPEND_CMD) > $@
 
-distclean: clean
-	rm -f .depend
+%.o: %.d
 
-INSTALL_TARGETS-$(BUILD_SHARED) += install-lib-shared
-INSTALL_TARGETS-$(BUILD_STATIC) += install-lib-static
+%$(EXESUF): %.c
+
+SVN_ENTRIES = $(SRC_PATH_BARE)/.svn/entries
+ifeq ($(wildcard $(SVN_ENTRIES)),$(SVN_ENTRIES))
+$(BUILD_ROOT_REL)/version.h: $(SVN_ENTRIES)
+endif
+
+$(BUILD_ROOT_REL)/version.h:
+	$(SRC_PATH)/version.sh $(SRC_PATH) $@
 
 install: install-libs install-headers
 
-install-libs: $(INSTALL_TARGETS-yes)
-
-install-lib-shared: $(SLIBNAME)
-	install -d "$(SHLIBDIR)"
-	install -m 755 $(SLIBNAME) "$(SHLIBDIR)/$(SLIBNAME_WITH_VERSION)"
-	$(STRIP) "$(SHLIBDIR)/$(SLIBNAME_WITH_VERSION)"
-	cd "$(SHLIBDIR)" && \
-		$(LN_S) $(SLIBNAME_WITH_VERSION) $(SLIBNAME_WITH_MAJOR)
-	cd "$(SHLIBDIR)" && \
-		$(LN_S) $(SLIBNAME_WITH_VERSION) $(SLIBNAME)
-	$(SLIB_INSTALL_EXTRA_CMD)
-
-install-lib-static: $(LIBNAME)
-	install -d "$(LIBDIR)"
-	install -m 644 $(LIBNAME) "$(LIBDIR)"
-	$(LIB_INSTALL_EXTRA_CMD)
-
-install-headers:
-	install -d "$(INCDIR)"
-	install -d "$(LIBDIR)/pkgconfig"
-	install -m 644 $(addprefix $(SRC_DIR)/,$(HEADERS)) "$(INCDIR)"
-	install -m 644 $(BUILD_ROOT)/lib$(NAME).pc "$(LIBDIR)/pkgconfig"
-
 uninstall: uninstall-libs uninstall-headers
 
-uninstall-libs:
-	-rm -f "$(SHLIBDIR)/$(SLIBNAME_WITH_MAJOR)" \
-	       "$(SHLIBDIR)/$(SLIBNAME)"            \
-	       "$(SHLIBDIR)/$(SLIBNAME_WITH_VERSION)"
-	-$(SLIB_UNINSTALL_EXTRA_CMD)
-	-rm -f "$(LIBDIR)/$(LIBNAME)"
+.PHONY: all depend dep clean distclean install* uninstall* tests
+endif
 
-uninstall-headers::
-	rm -f $(addprefix "$(INCDIR)/",$(HEADERS))
-	rm -f "$(LIBDIR)/pkgconfig/lib$(NAME).pc"
+CFLAGS   += $(CFLAGS-yes)
+OBJS     += $(OBJS-yes)
+ASM_OBJS += $(ASM_OBJS-yes)
+CPP_OBJS += $(CPP_OBJS-yes)
+FFLIBS   := $(FFLIBS-yes) $(FFLIBS)
+TESTS    += $(TESTS-yes)
+
+FFEXTRALIBS := $(addprefix -l,$(addsuffix $(BUILDSUF),$(FFLIBS))) $(EXTRALIBS)
+FFLDFLAGS   := $(addprefix -L$(BUILD_ROOT)/lib,$(FFLIBS)) $(LDFLAGS)
+
+SRCS := $(OBJS:.o=.c) $(ASM_OBJS:.o=.S) $(CPP_OBJS:.o=.cpp)
+OBJS := $(OBJS) $(ASM_OBJS) $(CPP_OBJS)
+
+SRCS  := $(addprefix $(SUBDIR),$(SRCS))
+OBJS  := $(addprefix $(SUBDIR),$(OBJS))
+TESTS := $(addprefix $(SUBDIR),$(TESTS))
+
+DEP_LIBS:=$(foreach NAME,$(FFLIBS),lib$(NAME)/$($(BUILD_SHARED:yes=S)LIBNAME))
+
+ALLHEADERS := $(subst $(SRC_DIR)/,$(SUBDIR),$(wildcard $(SRC_DIR)/*.h))
+checkheaders: $(filter-out %_template.ho,$(ALLHEADERS:.h=.ho))
+
+DEPS := $(OBJS:.o=.d)
+depend dep: $(DEPS)
+
+CLEANSUFFIXES = *.o *~ *.ho
+LIBSUFFIXES   = *.a *.lib *.so *.so.* *.dylib *.dll *.def *.dll.a *.exp *.map
+DISTCLEANSUFFIXES = *.d *.pc
+
+define RULES
+$(SUBDIR)%$(EXESUF): $(SUBDIR)%.o
+	$(CC) $(FFLDFLAGS) -o $$@ $$^ $(SUBDIR)$(LIBNAME) $(FFEXTRALIBS)
+
+$(SUBDIR)%-test.o: $(SUBDIR)%.c
+	$(CC) $(CFLAGS) -DTEST -c -o $$@ $$^
+
+$(SUBDIR)%-test.o: $(SUBDIR)%-test.c
+	$(CC) $(CFLAGS) -DTEST -c -o $$@ $$^
+
+$(SUBDIR)i386/%.o: $(SUBDIR)i386/%.asm
+	$(YASM) $(YASMFLAGS) -I $$(<D)/ -o $$@ $$<
+
+$(SUBDIR)i386/%.d: $(SUBDIR)i386/%.asm
+	$(YASM) $(YASMFLAGS) -I $$(<D)/ -M -o $$(@:%.d=%.o) $$< > $$@
+
+clean::
+	rm -f $(TESTS) $(addprefix $(SUBDIR),$(CLEANFILES) $(CLEANSUFFIXES) $(LIBSUFFIXES)) \
+	    $(addprefix $(SUBDIR), $(foreach suffix,$(CLEANSUFFIXES),$(addsuffix /$(suffix),$(DIRS))))
+
+distclean:: clean
+	rm -f  $(addprefix $(SUBDIR),$(DISTCLEANSUFFIXES)) \
+            $(addprefix $(SUBDIR), $(foreach suffix,$(DISTCLEANSUFFIXES),$(addsuffix /$(suffix),$(DIRS))))
+endef
+
+$(eval $(RULES))
 
 tests: $(TESTS)
 
-%-test$(EXESUF): %.c $(LIBNAME)
-	$(CC) $(CFLAGS) $(LDFLAGS) -DTEST -o $@ $^ $(EXTRALIBS)
-
-.PHONY: all depend dep clean distclean install* uninstall* tests
-
--include .depend
+-include $(DEPS)

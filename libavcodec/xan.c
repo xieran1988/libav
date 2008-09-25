@@ -54,7 +54,7 @@ typedef struct XanContext {
 
 } XanContext;
 
-static int xan_decode_init(AVCodecContext *avctx)
+static av_cold int xan_decode_init(AVCodecContext *avctx)
 {
     XanContext *s = avctx->priv_data;
 
@@ -435,23 +435,25 @@ static int xan_decode_frame(AVCodecContext *avctx,
     if (s->last_frame.data[0])
         avctx->release_buffer(avctx, &s->last_frame);
 
-    /* shuffle frames */
-    s->last_frame = s->current_frame;
-
     *data_size = sizeof(AVFrame);
     *(AVFrame*)data = s->current_frame;
+
+    /* shuffle frames */
+    FFSWAP(AVFrame, s->current_frame, s->last_frame);
 
     /* always report that the buffer was completely consumed */
     return buf_size;
 }
 
-static int xan_decode_end(AVCodecContext *avctx)
+static av_cold int xan_decode_end(AVCodecContext *avctx)
 {
     XanContext *s = avctx->priv_data;
 
-    /* release the last frame */
+    /* release the frames */
     if (s->last_frame.data[0])
         avctx->release_buffer(avctx, &s->last_frame);
+    if (s->current_frame.data[0])
+        avctx->release_buffer(avctx, &s->current_frame);
 
     av_free(s->buffer1);
     av_free(s->buffer2);
@@ -469,6 +471,7 @@ AVCodec xan_wc3_decoder = {
     xan_decode_end,
     xan_decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("Wing Commander III / Xan"),
 };
 
 /*

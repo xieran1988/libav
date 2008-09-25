@@ -19,8 +19,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/tree.h"
 #include "nut.h"
-#include "tree.h"
+
+const AVCodecTag ff_nut_subtitle_tags[] = {
+    { CODEC_ID_TEXT        , MKTAG('U', 'T', 'F', '8') },
+    { CODEC_ID_SSA         , MKTAG('S', 'S', 'A',  0 ) },
+    { CODEC_ID_DVD_SUBTITLE, MKTAG('D', 'V', 'D', 'S') },
+    { CODEC_ID_DVB_SUBTITLE, MKTAG('D', 'V', 'B', 'S') },
+    { CODEC_ID_NONE        , 0                         }
+};
 
 void ff_nut_reset_ts(NUTContext *nut, AVRational time_base, int64_t val){
     int i;
@@ -60,3 +68,14 @@ void ff_nut_add_sp(NUTContext *nut, int64_t pos, int64_t back_ptr, int64_t ts){
         av_free(node);
     }
 }
+
+const Dispositions ff_nut_dispositions[] = {
+    {"default"     , AV_DISPOSITION_DEFAULT},
+    {"dub"         , AV_DISPOSITION_DUB},
+    {"original"    , AV_DISPOSITION_ORIGINAL},
+    {"comment"     , AV_DISPOSITION_COMMENT},
+    {"lyrics"      , AV_DISPOSITION_LYRICS},
+    {"karaoke"     , AV_DISPOSITION_KARAOKE},
+    {""            , 0}
+};
+

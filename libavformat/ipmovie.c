@@ -446,7 +446,7 @@ static int process_ipmovie_chunk(IPMVEContext *s, ByteIOContext *pb,
             last_color = first_color + AV_RL16(&scratch[2]) - 1;
             /* sanity check (since they are 16 bit values) */
             if ((first_color > 0xFF) || (last_color > 0xFF)) {
-                debug_ipmovie("demux_ipmovie: set_palette indices out of range (%d -> %d)\n",
+                debug_ipmovie("demux_ipmovie: set_palette indexes out of range (%d -> %d)\n",
                     first_color, last_color);
                 chunk_type = CHUNK_BAD;
                 break;
@@ -574,12 +574,12 @@ static int ipmovie_read_header(AVFormatContext *s,
         st->codec->codec_tag = 0;  /* no tag */
         st->codec->channels = ipmovie->audio_channels;
         st->codec->sample_rate = ipmovie->audio_sample_rate;
-        st->codec->bits_per_sample = ipmovie->audio_bits;
+        st->codec->bits_per_coded_sample = ipmovie->audio_bits;
         st->codec->bit_rate = st->codec->channels * st->codec->sample_rate *
-            st->codec->bits_per_sample;
+            st->codec->bits_per_coded_sample;
         if (st->codec->codec_id == CODEC_ID_INTERPLAY_DPCM)
             st->codec->bit_rate /= 2;
-        st->codec->block_align = st->codec->channels * st->codec->bits_per_sample;
+        st->codec->block_align = st->codec->channels * st->codec->bits_per_coded_sample;
     }
 
     return 0;
@@ -607,19 +607,11 @@ static int ipmovie_read_packet(AVFormatContext *s,
     return ret;
 }
 
-static int ipmovie_read_close(AVFormatContext *s)
-{
-//    IPMVEContext *ipmovie = s->priv_data;
-
-    return 0;
-}
-
 AVInputFormat ipmovie_demuxer = {
     "ipmovie",
-    "Interplay MVE format",
+    NULL_IF_CONFIG_SMALL("Interplay MVE format"),
     sizeof(IPMVEContext),
     ipmovie_probe,
     ipmovie_read_header,
     ipmovie_read_packet,
-    ipmovie_read_close,
 };

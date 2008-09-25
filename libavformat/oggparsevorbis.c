@@ -23,12 +23,12 @@
 **/
 
 #include <stdlib.h>
+#include "libavutil/avstring.h"
+#include "libavutil/bswap.h"
+#include "libavcodec/bitstream.h"
+#include "libavcodec/bytestream.h"
 #include "avformat.h"
-#include "bitstream.h"
-#include "bytestream.h"
-#include "bswap.h"
 #include "oggdec.h"
-#include "avstring.h"
 
 extern int
 vorbis_comment(AVFormatContext * as, uint8_t *buf, int size)
@@ -146,7 +146,7 @@ fixup_vorbis_headers(AVFormatContext * as, oggvorbis_private_t *priv,
         memcpy(&ptr[offset], priv->packet[i], priv->len[i]);
         offset += priv->len[i];
     }
-    *buf = av_realloc(*buf, offset);
+    *buf = av_realloc(*buf, offset + FF_INPUT_BUFFER_PADDING_SIZE);
     return offset;
 }
 
@@ -219,7 +219,7 @@ vorbis_header (AVFormatContext * s, int idx)
     return os->seq < 3;
 }
 
-ogg_codec_t vorbis_codec = {
+const ogg_codec_t ff_vorbis_codec = {
     .magic = "\001vorbis",
     .magicsize = 7,
     .header = vorbis_header

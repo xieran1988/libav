@@ -1,5 +1,5 @@
 /*
- * Adaptive stream format muxer
+ * ASF muxer
  * Copyright (c) 2000, 2001 Fabrice Bellard.
  *
  * This file is part of FFmpeg.
@@ -733,11 +733,10 @@ static int asf_write_packet(AVFormatContext *s, AVPacket *pkt)
     if(codec->codec_type == CODEC_TYPE_AUDIO)
         flags &= ~PKT_FLAG_KEY;
 
-    //XXX /FIXME use duration from AVPacket (quick hack by)
     pts = (pkt->pts != AV_NOPTS_VALUE) ? pkt->pts : pkt->dts;
     assert(pts != AV_NOPTS_VALUE);
     duration = pts * 10000;
-    asf->duration= FFMAX(asf->duration, duration);
+    asf->duration= FFMAX(asf->duration, duration + pkt->duration * 10000);
 
     packet_st = asf->nb_packets;
     put_frame(s, stream, s->streams[pkt->stream_index], pkt->dts, pkt->data, pkt->size, flags);
@@ -816,7 +815,7 @@ static int asf_write_trailer(AVFormatContext *s)
 #ifdef CONFIG_ASF_MUXER
 AVOutputFormat asf_muxer = {
     "asf",
-    "asf format",
+    NULL_IF_CONFIG_SMALL("ASF format"),
     "video/x-ms-asf",
     "asf,wmv,wma",
     sizeof(ASFContext),
@@ -830,14 +829,14 @@ AVOutputFormat asf_muxer = {
     asf_write_packet,
     asf_write_trailer,
     .flags = AVFMT_GLOBALHEADER,
-    .codec_tag= (const AVCodecTag*[]){codec_asf_bmp_tags, codec_bmp_tags, codec_wav_tags, 0},
+    .codec_tag= (const AVCodecTag* const []){codec_asf_bmp_tags, codec_bmp_tags, codec_wav_tags, 0},
 };
 #endif
 
 #ifdef CONFIG_ASF_STREAM_MUXER
 AVOutputFormat asf_stream_muxer = {
     "asf_stream",
-    "asf format",
+    NULL_IF_CONFIG_SMALL("ASF format"),
     "video/x-ms-asf",
     "asf,wmv,wma",
     sizeof(ASFContext),
@@ -851,6 +850,6 @@ AVOutputFormat asf_stream_muxer = {
     asf_write_packet,
     asf_write_trailer,
     .flags = AVFMT_GLOBALHEADER,
-    .codec_tag= (const AVCodecTag*[]){codec_asf_bmp_tags, codec_bmp_tags, codec_wav_tags, 0},
+    .codec_tag= (const AVCodecTag* const []){codec_asf_bmp_tags, codec_bmp_tags, codec_wav_tags, 0},
 };
 #endif //CONFIG_ASF_STREAM_MUXER

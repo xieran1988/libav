@@ -30,7 +30,7 @@ typedef struct {
     int last_duration;
 } WAVContext;
 
-#ifdef CONFIG_MUXERS
+#ifdef CONFIG_WAV_MUXER
 static int wav_write_header(AVFormatContext *s)
 {
     WAVContext *wav = s->priv_data;
@@ -44,6 +44,8 @@ static int wav_write_header(AVFormatContext *s)
     /* format header */
     fmt = start_tag(pb, "fmt ");
     if (put_wav_header(pb, s->streams[0]->codec) < 0) {
+        av_log(s, AV_LOG_ERROR, "%s codec not supported in WAVE format\n",
+               s->streams[0]->codec->codec ? s->streams[0]->codec->codec->name : "NONE");
         av_free(wav);
         return -1;
     }
@@ -113,7 +115,7 @@ static int wav_write_trailer(AVFormatContext *s)
     }
     return 0;
 }
-#endif //CONFIG_MUXERS
+#endif /* CONFIG_WAV_MUXER */
 
 /* return the size of the found tag */
 /* XXX: > 2GB ? */
@@ -145,7 +147,12 @@ static int wav_probe(AVProbeData *p)
         p->buf[2] == 'F' && p->buf[3] == 'F' &&
         p->buf[8] == 'W' && p->buf[9] == 'A' &&
         p->buf[10] == 'V' && p->buf[11] == 'E')
-        return AVPROBE_SCORE_MAX;
+        /*
+          Since ACT demuxer has standard WAV header at top of it's own,
+          returning score is decreased to avoid probe conflict
+          between ACT and WAV.
+        */
+        return AVPROBE_SCORE_MAX - 1;
     else
         return 0;
 }
@@ -230,11 +237,6 @@ static int wav_read_packet(AVFormatContext *s,
     return ret;
 }
 
-static int wav_read_close(AVFormatContext *s)
-{
-    return 0;
-}
-
 static int wav_read_seek(AVFormatContext *s,
                          int stream_index, int64_t timestamp, int flags)
 {
@@ -257,21 +259,21 @@ static int wav_read_seek(AVFormatContext *s,
 #ifdef CONFIG_WAV_DEMUXER
 AVInputFormat wav_demuxer = {
     "wav",
-    "wav format",
+    NULL_IF_CONFIG_SMALL("WAV format"),
     sizeof(WAVContext),
     wav_probe,
     wav_read_header,
     wav_read_packet,
-    wav_read_close,
+    NULL,
     wav_read_seek,
     .flags= AVFMT_GENERIC_INDEX,
-    .codec_tag= (const AVCodecTag*[]){codec_wav_tags, 0},
+    .codec_tag= (const AVCodecTag* const []){codec_wav_tags, 0},
 };
 #endif
 #ifdef CONFIG_WAV_MUXER
 AVOutputFormat wav_muxer = {
     "wav",
-    "wav format",
+    NULL_IF_CONFIG_SMALL("WAV format"),
     "audio/x-wav",
     "wav",
     sizeof(WAVContext),
@@ -280,6 +282,6 @@ AVOutputFormat wav_muxer = {
     wav_write_header,
     wav_write_packet,
     wav_write_trailer,
-    .codec_tag= (const AVCodecTag*[]){codec_wav_tags, 0},
+    .codec_tag= (const AVCodecTag* const []){codec_wav_tags, 0},
 };
 #endif

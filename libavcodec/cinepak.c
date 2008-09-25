@@ -35,7 +35,6 @@
 #include <unistd.h>
 
 #include "avcodec.h"
-#include "dsputil.h"
 
 
 typedef struct {
@@ -56,7 +55,6 @@ typedef struct {
 typedef struct CinepakContext {
 
     AVCodecContext *avctx;
-    DSPContext dsp;
     AVFrame frame;
 
     const unsigned char *data;
@@ -387,7 +385,7 @@ static int cinepak_decode (CinepakContext *s)
     return 0;
 }
 
-static int cinepak_decode_init(AVCodecContext *avctx)
+static av_cold int cinepak_decode_init(AVCodecContext *avctx)
 {
     CinepakContext *s = avctx->priv_data;
 
@@ -397,15 +395,13 @@ static int cinepak_decode_init(AVCodecContext *avctx)
     s->sega_film_skip_bytes = -1;  /* uninitialized state */
 
     // check for paletted data
-    if ((avctx->palctrl == NULL) || (avctx->bits_per_sample == 40)) {
+    if ((avctx->palctrl == NULL) || (avctx->bits_per_coded_sample == 40)) {
         s->palette_video = 0;
         avctx->pix_fmt = PIX_FMT_YUV420P;
     } else {
         s->palette_video = 1;
         avctx->pix_fmt = PIX_FMT_PAL8;
     }
-
-    dsputil_init(&s->dsp, avctx);
 
     s->frame.data[0] = NULL;
 
@@ -447,7 +443,7 @@ static int cinepak_decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-static int cinepak_decode_end(AVCodecContext *avctx)
+static av_cold int cinepak_decode_end(AVCodecContext *avctx)
 {
     CinepakContext *s = avctx->priv_data;
 
@@ -467,4 +463,5 @@ AVCodec cinepak_decoder = {
     cinepak_decode_end,
     cinepak_decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("Cinepak"),
 };

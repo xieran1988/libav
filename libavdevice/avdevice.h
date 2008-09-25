@@ -16,12 +16,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef FFMPEG_AVDEVICE_H
-#define FFMPEG_AVDEVICE_H
+#ifndef AVDEVICE_AVDEVICE_H
+#define AVDEVICE_AVDEVICE_H
 
-#define LIBAVDEVICE_VERSION_INT ((52<<16)+(0<<8)+0)
-#define LIBAVDEVICE_VERSION     52.0.0
+#define LIBAVDEVICE_VERSION_MAJOR 52
+#define LIBAVDEVICE_VERSION_MINOR  1
+#define LIBAVDEVICE_VERSION_MICRO  0
+
+#define LIBAVDEVICE_VERSION_INT AV_VERSION_INT(LIBAVDEVICE_VERSION_MAJOR, \
+                                               LIBAVDEVICE_VERSION_MINOR, \
+                                               LIBAVDEVICE_VERSION_MICRO)
+#define LIBAVDEVICE_VERSION     AV_VERSION(LIBAVDEVICE_VERSION_MAJOR, \
+                                           LIBAVDEVICE_VERSION_MINOR, \
+                                           LIBAVDEVICE_VERSION_MICRO)
 #define LIBAVDEVICE_BUILD       LIBAVDEVICE_VERSION_INT
+
+/**
+ * Returns the LIBAVDEVICE_VERSION_INT constant.
+ */
+unsigned avdevice_version(void);
 
 /**
  * Initialize libavdevice and register all the input and output devices.
@@ -29,5 +42,5 @@
  */
 void avdevice_register_all(void);
 
-#endif /* FFMPEG_AVDEVICE_H */
+#endif /* AVDEVICE_AVDEVICE_H */
 

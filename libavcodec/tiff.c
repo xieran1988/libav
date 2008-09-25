@@ -461,7 +461,7 @@ static int decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-static int tiff_init(AVCodecContext *avctx){
+static av_cold int tiff_init(AVCodecContext *avctx){
     TiffContext *s = avctx->priv_data;
 
     s->width = 0;
@@ -475,7 +475,7 @@ static int tiff_init(AVCodecContext *avctx){
     return 0;
 }
 
-static int tiff_end(AVCodecContext *avctx)
+static av_cold int tiff_end(AVCodecContext *avctx)
 {
     TiffContext * const s = avctx->priv_data;
 
@@ -495,5 +495,6 @@ AVCodec tiff_decoder = {
     tiff_end,
     decode_frame,
     0,
-    NULL
+    NULL,
+    .long_name = NULL_IF_CONFIG_SMALL("TIFF image"),
 };

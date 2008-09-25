@@ -26,7 +26,6 @@
 #include "bitstream.h"
 #include "dnxhddata.h"
 #include "dsputil.h"
-#include "mpegvideo.h"
 
 typedef struct {
     AVCodecContext *avctx;
@@ -48,7 +47,7 @@ typedef struct {
 #define DNXHD_VLC_BITS 9
 #define DNXHD_DC_VLC_BITS 7
 
-static int dnxhd_decode_init(AVCodecContext *avctx)
+static av_cold int dnxhd_decode_init(AVCodecContext *avctx)
 {
     DNXHDContext *ctx = avctx->priv_data;
 
@@ -321,7 +320,7 @@ static int dnxhd_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     return buf_size;
 }
 
-static int dnxhd_decode_close(AVCodecContext *avctx)
+static av_cold int dnxhd_decode_close(AVCodecContext *avctx)
 {
     DNXHDContext *ctx = avctx->priv_data;
 
@@ -343,4 +342,5 @@ AVCodec dnxhd_decoder = {
     dnxhd_decode_close,
     dnxhd_decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("VC3/DNxHD"),
 };

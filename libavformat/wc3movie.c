@@ -55,7 +55,7 @@
 #define WC3_AUDIO_BITS 16
 
 /* nice, constant framerate */
-#define WC3_FRAME_PTS_INC (90000 / 15)
+#define WC3_FRAME_FPS 15
 
 #define PALETTE_SIZE (256 * 3)
 #define PALETTE_COUNT 256
@@ -239,7 +239,7 @@ static int wc3_read_header(AVFormatContext *s,
     st = av_new_stream(s, 0);
     if (!st)
         return AVERROR(ENOMEM);
-    av_set_pts_info(st, 33, 1, 90000);
+    av_set_pts_info(st, 33, 1, WC3_FRAME_FPS);
     wc3->video_stream_index = st->index;
     st->codec->codec_type = CODEC_TYPE_VIDEO;
     st->codec->codec_id = CODEC_ID_XAN_WC3;
@@ -253,16 +253,16 @@ static int wc3_read_header(AVFormatContext *s,
     st = av_new_stream(s, 0);
     if (!st)
         return AVERROR(ENOMEM);
-    av_set_pts_info(st, 33, 1, 90000);
+    av_set_pts_info(st, 33, 1, WC3_FRAME_FPS);
     wc3->audio_stream_index = st->index;
     st->codec->codec_type = CODEC_TYPE_AUDIO;
     st->codec->codec_id = CODEC_ID_PCM_S16LE;
     st->codec->codec_tag = 1;
     st->codec->channels = WC3_AUDIO_CHANNELS;
-    st->codec->bits_per_sample = WC3_AUDIO_BITS;
+    st->codec->bits_per_coded_sample = WC3_AUDIO_BITS;
     st->codec->sample_rate = WC3_SAMPLE_RATE;
     st->codec->bit_rate = st->codec->channels * st->codec->sample_rate *
-        st->codec->bits_per_sample;
+        st->codec->bits_per_coded_sample;
     st->codec->block_align = WC3_AUDIO_BITS * WC3_AUDIO_CHANNELS;
 
     return 0;
@@ -356,7 +356,7 @@ static int wc3_read_packet(AVFormatContext *s,
                 ret = AVERROR(EIO);
 
             /* time to advance pts */
-            wc3->pts += WC3_FRAME_PTS_INC;
+            wc3->pts++;
 
             packet_read = 1;
             break;
@@ -385,7 +385,7 @@ static int wc3_read_close(AVFormatContext *s)
 
 AVInputFormat wc3_demuxer = {
     "wc3movie",
-    "Wing Commander III movie format",
+    NULL_IF_CONFIG_SMALL("Wing Commander III movie format"),
     sizeof(Wc3DemuxContext),
     wc3_probe,
     wc3_read_header,

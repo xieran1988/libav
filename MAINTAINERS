@@ -28,13 +28,13 @@ ffmpeg:
     vhook/imlib2.c
 
 ffplay:
-  ffplay.c
+  ffplay.c                              Michael Niedermayer
 
 ffserver:
-  ffserver.c, ffserver.h                Alex Beregszaszi
+  ffserver.c, ffserver.h                Baptiste Coudurier
 
 Commandline utility code:
-  cmdutils.c, cmdutils.h
+  cmdutils.c, cmdutils.h                Michael Niedermayer
 
 QuickTime faststart:
   qt-faststart.c                        Mike Melanson
@@ -54,9 +54,9 @@ libavutil
 =========
 
 External Interfaces:
-  libavutil/avutil.h
+  libavutil/avutil.h                    Michael Niedermayer
 Internal Interfaces:
-  libavutil/common.h
+  libavutil/common.h                    Michael Niedermayer
 
 Other:
   intfloat*                             Michael Niedermayer
@@ -73,13 +73,13 @@ Generic Parts:
   External Interfaces:
     avcodec.h                           Michael Niedermayer
   utility code:
-    utils.c
-    mem.c
-    opt.c, opt.h
+    utils.c                             Michael Niedermayer
+    mem.c                               Michael Niedermayer
+    opt.c, opt.h                        Michael Niedermayer
   arithmetic expression evaluator:
     eval.c                              Michael Niedermayer
   audio and video frame extraction:
-    parser.c
+    parser.c                            Michael Niedermayer
   bitstream reading:
     bitstream.c, bitstream.h            Michael Niedermayer
   CABAC:
@@ -96,7 +96,7 @@ Generic Parts:
   motion estimation:
     motion*                             Michael Niedermayer
   rate control:
-    ratecontrol.c
+    ratecontrol.c                       Michael Niedermayer
     libxvid_rc.c                        Michael Niedermayer
   simple IDCT:
     simple_idct.c, simple_idct.h        Michael Niedermayer
@@ -106,12 +106,15 @@ Generic Parts:
 Codecs:
   4xm.c                                 Michael Niedermayer
   8bps.c                                Roberto Togni
+  8svx.c                                Jaikrishnan Menon
   aasc.c                                Kostya Shishkov
+  aac.[ch], aactab.[ch], aacdectab.h    Robert Swain
   ac3*                                  Justin Ruggles
+  alacenc.c                             Jaikrishnan Menon
   apedec.c                              Kostya Shishkov
   asv*                                  Michael Niedermayer
   atrac3*                               Benjamin Larsson
-  bmp.c                                 Mans Rullgard
+  bmp.c                                 Mans Rullgard, Kostya Shishkov
   cavs*                                 Stefan Gehrer
   cinepak.c                             Roberto Togni
   cljr                                  Alex Beregszaszi
@@ -145,6 +148,7 @@ Codecs:
   loco.c                                Kostya Shishkov
   lzo.h, lzo.c                          Reimar Doeffinger
   mdec.c                                Michael Niedermayer
+  mimic.c                               Ramiro Polla
   mjpeg.c                               Michael Niedermayer
   mpc*                                  Kostya Shishkov
   mpeg12.c, mpeg12data.h                Michael Niedermayer
@@ -162,6 +166,7 @@ Codecs:
   qtrle.c                               Mike Melanson
   ra144.c, ra144.h, ra288.c, ra288.h    Roberto Togni
   resample2.c                           Michael Niedermayer
+  rl2.c                                 Sascha Sommer
   rpza.c                                Roberto Togni
   rtjpeg.c, rtjpeg.h                    Reimar Doeffinger
   rv10.c                                Michael Niedermayer
@@ -201,14 +206,25 @@ Codecs:
   zmbv*                                 Kostya Shishkov
 
 
+libavdevice
+===========
+  External Interface:
+    libavdevice/avdevice.h
+
+
+  libdc1394.c                           Roman Shaposhnik
+  v4l2.c                                Luca Abeni
+  vfwcap.c                              Ramiro Polla
+
+
 libavformat
 ===========
 
 Generic parts:
   External Interface:
-    libavformat/avformat.h
+    libavformat/avformat.h              Michael Niedermayer
   Utility Code:
-    libavformat/utils.c
+    libavformat/utils.c                 Michael Niedermayer
 
 
 Muxers/Demuxers:
@@ -219,14 +235,16 @@ Muxers/Demuxers:
   avi*                                  Michael Niedermayer
   crc.c                                 Michael Niedermayer
   daud.c                                Reimar Doeffinger
-  dc1394.c, dv.c                        Roman Shaposhnik
+  dv.c                                  Roman Shaposhnik
   dxa.c                                 Kostya Shishkov
+  ffm*                                  Baptiste Coudurier
   flic.c                                Mike Melanson
   flvdec.c, flvenc.c                    Michael Niedermayer
   gxf.c                                 Reimar Doeffinger
   gxfenc.c                              Baptiste Coudurier
   idcin.c                               Mike Melanson
   idroq.c                               Mike Melanson
+  iff.c                                 Jaikrishnan Menon
   ipmovie.c                             Mike Melanson
   img2.c                                Michael Niedermayer
   libnut.c                              Oded Shimon
@@ -236,9 +254,12 @@ Muxers/Demuxers:
   mov.c                                 Michael Niedermayer, Baptiste Coudurier
   movenc.c                              Michael Niedermayer, Baptiste Coudurier
   mpc.c                                 Kostya Shishkov
+  mpeg.c                                Michael Niedermayer
+  mpegenc.c                             Michael Niedermayer
   mpegts*                               Mans Rullgard
+  msnwc_tcp.c                           Ramiro Polla
   mtv.c                                 Reynaldo H. Verdejo Pinochet
-  mxf.c                                 Baptiste Coudurier
+  mxf*                                  Baptiste Coudurier
   nsvdec.c                              Francois Revol
   nut.c                                 Michael Niedermayer
   nuv.c                                 Reimar Doeffinger
@@ -249,6 +270,7 @@ Muxers/Demuxers:
   psxstr.c                              Mike Melanson
   pva.c                                 Ivo van Poorten
   raw.c                                 Michael Niedermayer
+  rl2.c                                 Sascha Sommer
   rm.c                                  Roberto Togni
   rtp.c, rtpenc.c                       Luca Abeni
   rtp_mpv.*, rtp_aac.*                  Luca Abeni
@@ -259,7 +281,6 @@ Muxers/Demuxers:
   swf.c                                 Baptiste Coudurier
   tta.c                                 Alex Beregszaszi
   txd.c                                 Ivo van Poorten
-  v4l2.c                                Luca Abeni
   voc.c                                 Aurelien Jacobs
   wav.c                                 Michael Niedermayer
   wc3movie.c                            Mike Melanson
@@ -271,6 +292,7 @@ Operating systems / CPU architectures
 =====================================
 
 Alpha                                   Mans Rullgard, Falk Hueffner
+ARM                                     Mans Rullgard
 BeOS                                    Francois Revol
 i386                                    Michael Niedermayer
 Mac OS X / PowerPC                      Romain Dolbeau, Guillaume Poirier
@@ -279,3 +301,4 @@ Linux / PowerPC                         Luca Barbato
 Windows MinGW                           Alex Beregszaszi, Ramiro Polla
 Windows Cygwin                          Victor Paesa
 ADI/Blackfin DSP                        Marc Hoffman
+Sparc                                   Roman Shaposhnik

@@ -47,7 +47,7 @@ static int rv30_parse_slice_header(RV34DecContext *r, GetBitContext *gb, SliceIn
         return -1;
     si->quant = get_bits(gb, 5);
     skip_bits1(gb);
-    skip_bits(gb, 13); // timestamp
+    si->pts = get_bits(gb, 13);
     skip_bits(gb, r->rpr);
     si->width  = w;
     si->height = h;
@@ -105,7 +105,7 @@ static int rv30_decode_mb_info(RV34DecContext *r)
         av_log(s->avctx, AV_LOG_ERROR, "dquant needed\n");
         code -= 6;
     }
-    if(s->pict_type != B_TYPE)
+    if(s->pict_type != FF_B_TYPE)
         return rv30_p_types[code];
     else
         return rv30_b_types[code];
@@ -114,7 +114,7 @@ static int rv30_decode_mb_info(RV34DecContext *r)
 /**
  * Initialize decoder.
  */
-static int rv30_decode_init(AVCodecContext *avctx)
+static av_cold int rv30_decode_init(AVCodecContext *avctx)
 {
     RV34DecContext *r = avctx->priv_data;
 
@@ -144,4 +144,5 @@ AVCodec rv30_decoder = {
     ff_rv34_decode_end,
     ff_rv34_decode_frame,
     CODEC_CAP_DR1 | CODEC_CAP_DELAY,
+    .long_name = NULL_IF_CONFIG_SMALL("RealVideo 3.0"),
 };

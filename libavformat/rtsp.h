@@ -29,6 +29,10 @@ enum RTSPProtocol {
     RTSP_PROTOCOL_RTP_UDP = 0,
     RTSP_PROTOCOL_RTP_TCP = 1,
     RTSP_PROTOCOL_RTP_UDP_MULTICAST = 2,
+    /**
+     * This is not part of public API and shouldn't be used outside of ffmpeg.
+     */
+    RTSP_PROTOCOL_RTP_LAST
 };
 
 #define RTSP_DEFAULT_PORT   554
@@ -58,6 +62,7 @@ typedef struct RTSPHeader {
     RTSPTransportField transports[RTSP_MAX_TRANSPORTS];
     int seq; /**< sequence number */
     char session_id[512];
+    char real_challenge[64]; /**< the RealChallenge1 field from the server */
 } RTSPHeader;
 
 /** the callback can be used to extend the connection setup/teardown step */

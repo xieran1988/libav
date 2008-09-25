@@ -19,10 +19,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef FFMPEG_DSPUTIL_MMX_H
-#define FFMPEG_DSPUTIL_MMX_H
+#ifndef AVCODEC_I386_DSPUTIL_MMX_H
+#define AVCODEC_I386_DSPUTIL_MMX_H
 
 #include <stdint.h>
+#include "libavcodec/dsputil.h"
 
 typedef struct { uint64_t a, b; } xmm_t;
 
@@ -34,15 +35,17 @@ extern const uint64_t ff_pdw_80000000[2];
 extern const uint64_t ff_pw_3;
 extern const uint64_t ff_pw_4;
 extern const xmm_t    ff_pw_5;
-extern const uint64_t ff_pw_8;
+extern const xmm_t    ff_pw_8;
 extern const uint64_t ff_pw_15;
 extern const xmm_t    ff_pw_16;
 extern const uint64_t ff_pw_20;
+extern const xmm_t    ff_pw_28;
 extern const xmm_t    ff_pw_32;
 extern const uint64_t ff_pw_42;
 extern const uint64_t ff_pw_64;
 extern const uint64_t ff_pw_96;
 extern const uint64_t ff_pw_128;
+extern const uint64_t ff_pw_255;
 
 extern const uint64_t ff_pb_1;
 extern const uint64_t ff_pb_3;
@@ -53,6 +56,18 @@ extern const uint64_t ff_pb_FC;
 
 extern const double ff_pd_1[2];
 extern const double ff_pd_2[2];
+
+#define LOAD4(stride,in,a,b,c,d)\
+    "movq 0*"#stride"+"#in", "#a"\n\t"\
+    "movq 1*"#stride"+"#in", "#b"\n\t"\
+    "movq 2*"#stride"+"#in", "#c"\n\t"\
+    "movq 3*"#stride"+"#in", "#d"\n\t"
+
+#define STORE4(stride,out,a,b,c,d)\
+    "movq "#a", 0*"#stride"+"#out"\n\t"\
+    "movq "#b", 1*"#stride"+"#out"\n\t"\
+    "movq "#c", 2*"#stride"+"#out"\n\t"\
+    "movq "#d", 3*"#stride"+"#out"\n\t"
 
 /* in/out: mma=mma+mmb, mmb=mmb-mma */
 #define SUMSUB_BA( a, b ) \
@@ -111,4 +126,11 @@ extern const double ff_pd_2[2];
     "movdqa 16"#t", "#g"              \n\t"
 #endif
 
-#endif /* FFMPEG_DSPUTIL_MMX_H */
+#define MOVQ_WONE(regd) \
+    asm volatile ( \
+    "pcmpeqd %%" #regd ", %%" #regd " \n\t" \
+    "psrlw $15, %%" #regd ::)
+
+void dsputilenc_init_mmx(DSPContext* c, AVCodecContext *avctx);
+
+#endif /* AVCODEC_I386_DSPUTIL_MMX_H */

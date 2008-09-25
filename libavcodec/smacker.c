@@ -506,7 +506,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, const
  * Init smacker decoder
  *
  */
-static int decode_init(AVCodecContext *avctx)
+static av_cold int decode_init(AVCodecContext *avctx)
 {
     SmackVContext * const c = avctx->priv_data;
 
@@ -540,7 +540,7 @@ static int decode_init(AVCodecContext *avctx)
  * Uninit smacker decoder
  *
  */
-static int decode_end(AVCodecContext *avctx)
+static av_cold int decode_end(AVCodecContext *avctx)
 {
     SmackVContext * const smk = avctx->priv_data;
 
@@ -556,8 +556,9 @@ static int decode_end(AVCodecContext *avctx)
 }
 
 
-static int smka_decode_init(AVCodecContext *avctx)
+static av_cold int smka_decode_init(AVCodecContext *avctx)
 {
+    avctx->sample_fmt = SAMPLE_FMT_S16;
     return 0;
 }
 
@@ -697,7 +698,8 @@ AVCodec smacker_decoder = {
     decode_init,
     NULL,
     decode_end,
-    decode_frame
+    decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("Smacker video"),
 };
 
 AVCodec smackaud_decoder = {
@@ -708,6 +710,7 @@ AVCodec smackaud_decoder = {
     smka_decode_init,
     NULL,
     NULL,
-    smka_decode_frame
+    smka_decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("Smacker audio"),
 };
 

@@ -17,8 +17,15 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#include "avformat.h"
+
+#include "config.h"
+#include "libavformat/avformat.h"
 #include "avdevice.h"
+
+unsigned avdevice_version(void)
+{
+    return LIBAVDEVICE_VERSION_INT;
+}
 
 #define REGISTER_MUXER(X,x) { \
           extern AVOutputFormat x##_muxer; \
@@ -30,11 +37,11 @@
 
 void avdevice_register_all(void)
 {
-    static int inited;
+    static int initialized;
 
-    if (inited)
+    if (initialized)
         return;
-    inited = 1;
+    initialized = 1;
 
     /* devices */
     REGISTER_MUXDEMUX (AUDIO_BEOS, audio_beos);
@@ -43,6 +50,7 @@ void avdevice_register_all(void)
     REGISTER_MUXDEMUX (OSS, oss);
     REGISTER_DEMUXER  (V4L2, v4l2);
     REGISTER_DEMUXER  (V4L, v4l);
+    REGISTER_DEMUXER  (VFWCAP, vfwcap);
     REGISTER_DEMUXER  (X11_GRAB_DEVICE, x11_grab_device);
 
     /* external libraries */

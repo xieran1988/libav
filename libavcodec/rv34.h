@@ -24,8 +24,8 @@
  * RV30 and RV40 decoder common data declarations
  */
 
-#ifndef FFMPEG_RV34_H
-#define FFMPEG_RV34_H
+#ifndef AVCODEC_RV34_H
+#define AVCODEC_RV34_H
 
 #include "avcodec.h"
 #include "dsputil.h"
@@ -74,6 +74,7 @@ typedef struct SliceInfo{
     int start, end;        ///< start and end macroblocks of the slice
     int width;             ///< coded width
     int height;            ///< coded height
+    int pts;               ///< frame timestamp
 }SliceInfo;
 
 /** decoder context */
@@ -99,6 +100,8 @@ typedef struct RV34DecContext{
     int rv30;                ///< indicates which RV variasnt is currently decoded
     int rpr;                 ///< one field size in RV30 slice header
 
+    int cur_pts, last_pts, next_pts;
+
     uint16_t *cbp_luma;      ///< CBP values for luma subblocks
     uint8_t  *cbp_chroma;    ///< CBP values for chroma subblocks
 
@@ -119,4 +122,4 @@ int ff_rv34_decode_init(AVCodecContext *avctx);
 int ff_rv34_decode_frame(AVCodecContext *avctx, void *data, int *data_size, uint8_t *buf, int buf_size);
 int ff_rv34_decode_end(AVCodecContext *avctx);
 
-#endif /* FFMPEG_RV34_H */
+#endif /* AVCODEC_RV34_H */

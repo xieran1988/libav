@@ -79,7 +79,7 @@ static const uint16_t ape_filter_orders[5][APE_FILTER_LEVELS] = {
 };
 
 /** Filter fraction bits depending on compression level */
-static const uint16_t ape_filter_fracbits[5][APE_FILTER_LEVELS] = {
+static const uint8_t ape_filter_fracbits[5][APE_FILTER_LEVELS] = {
     {  0,  0,  0 },
     { 11,  0,  0 },
     { 11,  0,  0 },
@@ -156,34 +156,13 @@ typedef struct APEContext {
     uint8_t *data_end;                       ///< frame data end
     const uint8_t *ptr;                      ///< current position in frame data
     const uint8_t *last_ptr;                 ///< position where last 4608-sample block ended
+
+    int error;
 } APEContext;
 
 // TODO: dsputilize
-static inline void vector_add(int16_t * v1, int16_t * v2, int order)
-{
-    while (order--)
-       *v1++ += *v2++;
-}
 
-// TODO: dsputilize
-static inline void vector_sub(int16_t * v1, int16_t * v2, int order)
-{
-    while (order--)
-        *v1++ -= *v2++;
-}
-
-// TODO: dsputilize
-static inline int32_t scalarproduct(int16_t * v1, int16_t * v2, int order)
-{
-    int res = 0;
-
-    while (order--)
-        res += *v1++ * *v2++;
-
-    return res;
-}
-
-static int ape_decode_init(AVCodecContext * avctx)
+static av_cold int ape_decode_init(AVCodecContext * avctx)
 {
     APEContext *s = avctx->priv_data;
     int i;
@@ -192,7 +171,7 @@ static int ape_decode_init(AVCodecContext * avctx)
         av_log(avctx, AV_LOG_ERROR, "Incorrect extradata\n");
         return -1;
     }
-    if (avctx->bits_per_sample != 16) {
+    if (avctx->bits_per_coded_sample != 16) {
         av_log(avctx, AV_LOG_ERROR, "Only 16-bit samples are supported\n");
         return -1;
     }
@@ -219,10 +198,11 @@ static int ape_decode_init(AVCodecContext * avctx)
     }
 
     dsputil_init(&s->dsp, avctx);
+    avctx->sample_fmt = SAMPLE_FMT_S16;
     return 0;
 }
 
-static int ape_decode_close(AVCodecContext * avctx)
+static av_cold int ape_decode_close(AVCodecContext * avctx)
 {
     APEContext *s = avctx->priv_data;
     int i;
@@ -256,7 +236,10 @@ static inline void range_start_decoding(APEContext * ctx)
 static inline void range_dec_normalize(APEContext * ctx)
 {
     while (ctx->rc.range <= BOTTOM_VALUE) {
-        ctx->rc.buffer = (ctx->rc.buffer << 8) | bytestream_get_byte(&ctx->ptr);
+        ctx->rc.buffer <<= 8;
+        if(ctx->ptr < ctx->data_end)
+            ctx->rc.buffer += *ctx->ptr;
+        ctx->ptr++;
         ctx->rc.low    = (ctx->rc.low << 8)    | ((ctx->rc.buffer >> 1) & 0xFF);
         ctx->rc.range  <<= 8;
     }
@@ -311,59 +294,37 @@ static inline int range_decode_bits(APEContext * ctx, int n)
 /**
  * Fixed probabilities for symbols in Monkey Audio version 3.97
  */
-static const uint32_t counts_3970[65] = {
+static const uint16_t counts_3970[22] = {
         0, 14824, 28224, 39348, 47855, 53994, 58171, 60926,
     62682, 63786, 64463, 64878, 65126, 65276, 65365, 65419,
-    65450, 65469, 65480, 65487, 65491, 65493, 65494, 65495,
-    65496, 65497, 65498, 65499, 65500, 65501, 65502, 65503,
-    65504, 65505, 65506, 65507, 65508, 65509, 65510, 65511,
-    65512, 65513, 65514, 65515, 65516, 65517, 65518, 65519,
-    65520, 65521, 65522, 65523, 65524, 65525, 65526, 65527,
-    65528, 65529, 65530, 65531, 65532, 65533, 65534, 65535,
-    65536
+    65450, 65469, 65480, 65487, 65491, 65493,
 };
 
 /**
  * Probability ranges for symbols in Monkey Audio version 3.97
  */
-static const uint16_t counts_diff_3970[64] = {
+static const uint16_t counts_diff_3970[21] = {
     14824, 13400, 11124, 8507, 6139, 4177, 2755, 1756,
     1104, 677, 415, 248, 150, 89, 54, 31,
-    19, 11, 7, 4, 2, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1
+    19, 11, 7, 4, 2,
 };
 
 /**
  * Fixed probabilities for symbols in Monkey Audio version 3.98
  */
-static const uint32_t counts_3980[65] = {
+static const uint16_t counts_3980[22] = {
         0, 19578, 36160, 48417, 56323, 60899, 63265, 64435,
     64971, 65232, 65351, 65416, 65447, 65466, 65476, 65482,
-    65485, 65488, 65490, 65491, 65492, 65493, 65494, 65495,
-    65496, 65497, 65498, 65499, 65500, 65501, 65502, 65503,
-    65504, 65505, 65506, 65507, 65508, 65509, 65510, 65511,
-    65512, 65513, 65514, 65515, 65516, 65517, 65518, 65519,
-    65520, 65521, 65522, 65523, 65524, 65525, 65526, 65527,
-    65528, 65529, 65530, 65531, 65532, 65533, 65534, 65535,
-    65536
+    65485, 65488, 65490, 65491, 65492, 65493,
 };
 
 /**
  * Probability ranges for symbols in Monkey Audio version 3.98
  */
-static const uint16_t counts_diff_3980[64] = {
+static const uint16_t counts_diff_3980[21] = {
     19578, 16582, 12257, 7906, 4576, 2366, 1170, 536,
     261, 119, 65, 31, 19, 10, 6, 3,
-    3, 2, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1
+    3, 2, 1, 1, 1,
 };
 
 /**
@@ -372,13 +333,20 @@ static const uint16_t counts_diff_3980[64] = {
  * @param count_diffs probability range widths
  */
 static inline int range_get_symbol(APEContext * ctx,
-                                   const uint32_t counts[],
+                                   const uint16_t counts[],
                                    const uint16_t counts_diff[])
 {
     int symbol, cf;
 
     cf = range_decode_culshift(ctx, 16);
 
+    if(cf > 65492){
+        symbol= cf - 65535 + 63;
+        range_decode_update(ctx, 1, cf);
+        if(cf > 65535)
+            ctx->error=1;
+        return symbol;
+    }
     /* figure out the symbol inefficiently; a binary search would be much better */
     for (symbol = 0; counts[symbol + 1] <= cf; symbol++);
 
@@ -390,11 +358,10 @@ static inline int range_get_symbol(APEContext * ctx,
 
 static inline void update_rice(APERice *rice, int x)
 {
+    int lim = rice->k ? (1 << (rice->k + 4)) : 0;
     rice->ksum += ((x + 1) / 2) - ((rice->ksum + 16) >> 5);
 
-    if (rice->k == 0)
-        rice->k = 1;
-    else if (rice->ksum < (1 << (rice->k + 4)))
+    if (rice->ksum < lim)
         rice->k--;
     else if (rice->ksum >= (1 << (rice->k + 5)))
         rice->k++;
@@ -404,7 +371,7 @@ static inline int ape_decode_value(APEContext * ctx, APERice *rice)
 {
     int x, overflow;
 
-    if (ctx->fileversion < 3980) {
+    if (ctx->fileversion < 3990) {
         int tmpk;
 
         overflow = range_get_symbol(ctx, counts_3970, counts_diff_3970);
@@ -682,19 +649,19 @@ static void init_filter(APEContext * ctx, APEFilter *f, int16_t * buf, int order
     do_init_filter(&f[1], buf + order * 3 + HISTORY_SIZE, order);
 }
 
-static inline void do_apply_filter(int version, APEFilter *f, int32_t *data, int count, int order, int fracbits)
+static inline void do_apply_filter(APEContext * ctx, int version, APEFilter *f, int32_t *data, int count, int order, int fracbits)
 {
     int res;
     int absres;
 
     while (count--) {
         /* round fixedpoint scalar product */
-        res = (scalarproduct(f->delay - order, f->coeffs, order) + (1 << (fracbits - 1))) >> fracbits;
+        res = (ctx->dsp.scalarproduct_int16(f->delay - order, f->coeffs, order, 0) + (1 << (fracbits - 1))) >> fracbits;
 
         if (*data < 0)
-            vector_add(f->coeffs, f->adaptcoeffs - order, order);
+            ctx->dsp.add_int16(f->coeffs, f->adaptcoeffs - order, order);
         else if (*data > 0)
-            vector_sub(f->coeffs, f->adaptcoeffs - order, order);
+            ctx->dsp.sub_int16(f->coeffs, f->adaptcoeffs - order, order);
 
         res += *data;
 
@@ -746,9 +713,9 @@ static void apply_filter(APEContext * ctx, APEFilter *f,
                          int32_t * data0, int32_t * data1,
                          int count, int order, int fracbits)
 {
-    do_apply_filter(ctx->fileversion, &f[0], data0, count, order, fracbits);
+    do_apply_filter(ctx, ctx->fileversion, &f[0], data0, count, order, fracbits);
     if (data1)
-        do_apply_filter(ctx->fileversion, &f[1], data1, count, order, fracbits);
+        do_apply_filter(ctx, ctx->fileversion, &f[1], data1, count, order, fracbits);
 }
 
 static void ape_apply_filters(APEContext * ctx, int32_t * decoded0,
@@ -891,10 +858,18 @@ static int ape_decode_frame(AVCodecContext * avctx,
     nblocks = s->samples;
     blockstodecode = FFMIN(BLOCKS_PER_LOOP, nblocks);
 
+    s->error=0;
+
     if ((s->channels == 1) || (s->frameflags & APE_FRAMECODE_PSEUDO_STEREO))
         ape_unpack_mono(s, blockstodecode);
     else
         ape_unpack_stereo(s, blockstodecode);
+
+    if(s->error || s->ptr > s->data_end){
+        s->samples=0;
+        av_log(avctx, AV_LOG_ERROR, "Error decoding frame\n");
+        return -1;
+    }
 
     for (i = 0; i < blockstodecode; i++) {
         *samples++ = s->decoded0[i];
@@ -919,4 +894,5 @@ AVCodec ape_decoder = {
     NULL,
     ape_decode_close,
     ape_decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("Monkey's Audio"),
 };

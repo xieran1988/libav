@@ -18,11 +18,13 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#include "avformat.h"
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
+#include <errno.h>
 #ifdef HAVE_SOUNDCARD_H
 #include <soundcard.h>
 #else
@@ -31,8 +33,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <sys/time.h>
+
+#include "libavutil/log.h"
+#include "libavcodec/avcodec.h"
+#include "libavformat/avformat.h"
 
 #define AUDIO_BLOCK_SIZE 4096
 
@@ -42,7 +47,7 @@ typedef struct {
     int channels;
     int frame_size; /* in bytes ! */
     int codec_id;
-    int flip_left : 1;
+    unsigned int flip_left : 1;
     uint8_t buffer[AUDIO_BLOCK_SIZE];
     int buffer_ptr;
 } AudioData;
@@ -124,8 +129,6 @@ static int audio_open(AudioData *s, int is_output, const char *audio_device)
         av_log(NULL, AV_LOG_ERROR, "SNDCTL_DSP_STEREO: %s\n", strerror(errno));
         goto fail;
     }
-    if (tmp)
-        s->channels = 2;
 
     tmp = s->sample_rate;
     err = ioctl(audio_fd, SNDCTL_DSP_SPEED, &tmp);
@@ -310,7 +313,7 @@ static int audio_read_close(AVFormatContext *s1)
 #ifdef CONFIG_OSS_DEMUXER
 AVInputFormat oss_demuxer = {
     "oss",
-    "audio grab and output",
+    NULL_IF_CONFIG_SMALL("Open Sound System capture"),
     sizeof(AudioData),
     NULL,
     audio_read_header,
@@ -323,7 +326,7 @@ AVInputFormat oss_demuxer = {
 #ifdef CONFIG_OSS_MUXER
 AVOutputFormat oss_muxer = {
     "oss",
-    "audio grab and output",
+    NULL_IF_CONFIG_SMALL("Open Sound System playback"),
     "",
     "",
     sizeof(AudioData),

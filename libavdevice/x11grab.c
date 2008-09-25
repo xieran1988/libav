@@ -35,11 +35,11 @@
  * and Edouard Gomez <ed.gomez@free.fr>.
  */
 
-#include "avformat.h"
+#include "config.h"
+#include "libavformat/avformat.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <sys/time.h>
 #define _LINUX_TIME_H 1
 #include <time.h>
@@ -299,7 +299,7 @@ apply_masks(uint8_t *dst, int and, int or, int bits_per_pixel)
 /**
  * Paints a mouse pointer in an X11 image.
  *
- * @param image Image where to paint the mouse pointer
+ * @param image image to paint the mouse pointer to
  * @param s context used to retrieve original grabbing rectangle
  *          coordinates
  * @param x Mouse pointer coordinate
@@ -519,7 +519,7 @@ x11grab_read_close(AVFormatContext *s1)
 AVInputFormat x11_grab_device_demuxer =
 {
     "x11grab",
-    "X11grab",
+    NULL_IF_CONFIG_SMALL("X11grab"),
     sizeof(x11_grab_t),
     NULL,
     x11grab_read_header,
