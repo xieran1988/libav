@@ -100,7 +100,6 @@ cmov_build_confflags += --cpu='i686'
 cmov_build_confflags += --enable-shared
 cmov_build_confflags += --disable-static
 cmov_build_confflags += --disable-ffmpeg
-cmov_build_confflags += --disable-ffserver
 cmov_build_confflags += --disable-ffplay
 
 ## powerpc architecture specific
@@ -113,7 +112,6 @@ altivec_build_confflags += --disable-static
 altivec_build_confflags += --extra-cflags="-fPIC -DPIC"
 altivec_build_confflags += --enable-altivec
 altivec_build_confflags += --disable-ffmpeg
-altivec_build_confflags += --disable-ffserver
 altivec_build_confflags += --disable-ffplay
 
 ## sparc architecture specific
@@ -125,7 +123,6 @@ vis_build_confflags += --enable-shared
 vis_build_confflags += --disable-static
 vis_build_confflags += --extra-cflags="-fPIC -DPIC"
 vis_build_confflags += --disable-ffmpeg
-vis_build_confflags += --disable-ffserver
 vis_build_confflags += --disable-ffplay
 
 # Support multiple makes at once (taken from the qemu package)

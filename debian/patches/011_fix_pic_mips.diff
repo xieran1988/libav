@@ -9,6 +9,8 @@ the same as with gcc-4.2.
 
 Forwarded upstream at http://thread.gmane.org/gmane.comp.video.ffmpeg.devel/74846/
 
+fixed in r15392
+
 --- a/configure
 +++ b/configure
 @@ -1811,7 +1811,7 @@ if enabled shared; then

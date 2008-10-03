@@ -1,4 +1,5 @@
-This package was downloaded from the ffmpeg CVS by Sam Hocevar <sam@zoy.org>.
+SVN snapshots are downloaded with subversion from the ffmpeg SVN at:
+    <svn://svn.mplayerhq.hu/ffmpeg/trunk>
 
 Upstream Authors: Fabrice Bellard
                   Alex Beregszaszi

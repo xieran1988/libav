@@ -24,8 +24,8 @@ Build-Depends: debhelper (>= 5.0.0),
                zlib1g-dev
 Build-Conflicts: libdc1394-13-dev
 Standards-Version: 3.7.3
-Vcs-Svn: svn://svn.debian.org/pkg-multimedia/unstable/ffmpeg/debian/
-Vcs-Browser: http://svn.debian.org/wsvn/pkg-multimedia/unstable/ffmpeg/debian/
+Vcs-Svn: svn://svn.debian.org/pkg-multimedia/unstable/ffmpeg-debian/
+Vcs-Browser: http://svn.debian.org/wsvn/pkg-multimedia/unstable/ffmpeg-debian/
 Homepage: http://ffmpeg.mplayerhq.hu/
 
 Package: ffmpeg

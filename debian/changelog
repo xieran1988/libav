@@ -1,3 +1,15 @@
+ffmpeg-debian (0.svn20080206-14) unstable; urgency=low
+
+  [ Loic Minier ]
+  * Fix Vcs-* control fields; thanks Gerfried Fuchs.
+  * Mention upstream SVN in debian/copyright; thanks Gerfried Fuchs;
+    closes: #499914.
+
+  [ Reinhard Tartler ]
+  * don't disable ffserver in cmov, altivec and vis build. (Closes: #501002)
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 03 Oct 2008 14:13:54 +0200
+
 ffmpeg-debian (0.svn20080206-13) unstable; urgency=low
 
   [Thiemo Seufer]
