@@ -189,6 +189,7 @@ const AVCodecTag codec_wav_tags[] = {
     { CODEC_ID_ADPCM_IMA_DK3,   0x0062 },  /* rogue format number */
     { CODEC_ID_VOXWARE,         0x0075 },
     { CODEC_ID_AAC,             0x00ff },
+    { CODEC_ID_SIPR,            0x0130 },
     { CODEC_ID_WMAV1,           0x0160 },
     { CODEC_ID_WMAV2,           0x0161 },
     { CODEC_ID_WMAPRO,          0x0162 },
@@ -214,16 +215,16 @@ const AVCodecTag codec_wav_tags[] = {
 };
 
 #ifdef CONFIG_MUXERS
-offset_t start_tag(ByteIOContext *pb, const char *tag)
+int64_t start_tag(ByteIOContext *pb, const char *tag)
 {
     put_tag(pb, tag);
     put_le32(pb, 0);
     return url_ftell(pb);
 }
 
-void end_tag(ByteIOContext *pb, offset_t start)
+void end_tag(ByteIOContext *pb, int64_t start)
 {
-    offset_t pos;
+    int64_t pos;
 
     pos = url_ftell(pb);
     url_fseek(pb, start - 4, SEEK_SET);
@@ -373,7 +374,7 @@ void get_wav_header(ByteIOContext *pb, AVCodecContext *codec, int size)
         cbSize = FFMIN(size, cbSize);
         if (cbSize >= 22 && id == 0xfffe) { /* WAVEFORMATEXTENSIBLE */
             codec->bits_per_coded_sample = get_le16(pb);
-            get_le32(pb); /* dwChannelMask */
+            codec->channel_layout = get_le32(pb); /* dwChannelMask */
             id = get_le32(pb); /* 4 first bytes of GUID */
             url_fskip(pb, 12); /* skip end of GUID */
             cbSize -= 22;

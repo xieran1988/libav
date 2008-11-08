@@ -133,6 +133,7 @@ typedef struct MOVStreamContext {
     unsigned drefs_count;
     MOV_dref_t *drefs;
     int dref_id;
+    int wrong_dts; ///< dts are wrong due to negative ctts
 } MOVStreamContext;
 
 typedef struct MOVContext {
@@ -210,7 +211,7 @@ static int mov_read_default(MOVContext *c, ByteIOContext *pb, MOV_atom_t atom)
         if (mov_default_parse_table[i].type == 0) { /* skip leaf atoms data */
             url_fskip(pb, a.size);
         } else {
-            offset_t start_pos = url_ftell(pb);
+            int64_t start_pos = url_ftell(pb);
             int64_t left;
             err = mov_default_parse_table[i].parse(c, pb, a);
             if (url_is_streamed(pb) && c->found_moov && c->found_mdat)
@@ -246,7 +247,7 @@ static int mov_read_dref(MOVContext *c, ByteIOContext *pb, MOV_atom_t atom)
     for (i = 0; i < sc->drefs_count; i++) {
         MOV_dref_t *dref = &sc->drefs[i];
         uint32_t size = get_be32(pb);
-        offset_t next = url_ftell(pb) + size - 4;
+        int64_t next = url_ftell(pb) + size - 4;
 
         dref->type = get_le32(pb);
         get_be32(pb); // version + flags
@@ -675,7 +676,7 @@ static int mov_read_stco(MOVContext *c, ByteIOContext *pb, MOV_atom_t atom)
  * Compute codec id for 'lpcm' tag.
  * See CoreAudioTypes and AudioStreamBasicDescription at Apple.
  */
-static int mov_get_lpcm_codec_id(int bps, int flags)
+static enum CodecID mov_get_lpcm_codec_id(int bps, int flags)
 {
     if (flags & 1) { // floating point
         if (flags & 2) { // big endian
@@ -703,7 +704,7 @@ static int mov_get_lpcm_codec_id(int bps, int flags)
             else if (bps == 32) return CODEC_ID_PCM_S32LE;
         }
     }
-    return 0;
+    return CODEC_ID_NONE;
 }
 
 static int mov_read_stsd(MOVContext *c, ByteIOContext *pb, MOV_atom_t atom)
@@ -722,7 +723,7 @@ static int mov_read_stsd(MOVContext *c, ByteIOContext *pb, MOV_atom_t atom)
         enum CodecID id;
         int dref_id;
         MOV_atom_t a = { 0, 0, 0 };
-        offset_t start_pos = url_ftell(pb);
+        int64_t start_pos = url_ftell(pb);
         int size = get_be32(pb); /* size */
         uint32_t format = get_le32(pb); /* data format */
 
@@ -990,6 +991,11 @@ static int mov_read_stsd(MOVContext *c, ByteIOContext *pb, MOV_atom_t atom)
     case CODEC_ID_AMR_WB:
         st->codec->frame_size= sc->samples_per_frame;
         st->codec->channels= 1; /* really needed */
+        /* force sample rate for amr, stsd in 3gp does not store sample rate */
+        if (st->codec->codec_id == CODEC_ID_AMR_NB)
+            st->codec->sample_rate = 8000;
+        else if (st->codec->codec_id == CODEC_ID_AMR_WB)
+            st->codec->sample_rate = 16000;
         break;
     case CODEC_ID_MP2:
     case CODEC_ID_MP3:
@@ -1166,15 +1172,13 @@ static int mov_read_ctts(MOVContext *c, ByteIOContext *pb, MOV_atom_t atom)
         int duration =get_be32(pb);
 
         if (duration < 0) {
-            av_log(c->fc, AV_LOG_WARNING, "negative ctts, ignoring\n");
-            sc->ctts_count = 0;
-            url_fskip(pb, 8 * (entries - i - 1));
-            break;
+            sc->wrong_dts = 1;
+            st->codec->has_b_frames = 1;
         }
         sc->ctts_data[i].count   = count;
         sc->ctts_data[i].duration= duration;
 
-        sc->time_rate= ff_gcd(sc->time_rate, duration);
+        sc->time_rate= ff_gcd(sc->time_rate, FFABS(duration));
     }
     return 0;
 }
@@ -1182,7 +1186,7 @@ static int mov_read_ctts(MOVContext *c, ByteIOContext *pb, MOV_atom_t atom)
 static void mov_build_index(MOVContext *mov, AVStream *st)
 {
     MOVStreamContext *sc = st->priv_data;
-    offset_t current_offset;
+    int64_t current_offset;
     int64_t current_dts = 0;
     unsigned int stts_index = 0;
     unsigned int stsc_index = 0;
@@ -1882,6 +1886,8 @@ static int mov_read_packet(AVFormatContext *s, AVPacket *pkt)
             sc->sample_to_ctime_index++;
             sc->sample_to_ctime_sample = 0;
         }
+        if (sc->wrong_dts)
+            pkt->dts = AV_NOPTS_VALUE;
     } else {
         AVStream *st = s->streams[sc->ffindex];
         int64_t next_dts = (sc->current_sample < sc->sample_count) ?

@@ -30,6 +30,9 @@
 #include "vorbis.h"
 #include "vorbis_enc_data.h"
 
+#define BITSTREAM_WRITER_LE
+#include "bitstream.h"
+
 #undef NDEBUG
 #include <assert.h>
 
@@ -122,52 +125,6 @@ typedef struct {
     int64_t sample_count;
 } venc_context_t;
 
-typedef struct {
-    int total;
-    int total_pos;
-    int pos;
-    uint8_t * buf_ptr;
-} PutBitContext;
-
-static inline void init_put_bits(PutBitContext * pb, uint8_t * buf, int buffer_len) {
-    pb->total = buffer_len * 8;
-    pb->total_pos = 0;
-    pb->pos = 0;
-    pb->buf_ptr = buf;
-}
-
-static void put_bits(PutBitContext * pb, int bits, uint64_t val) {
-    if ((pb->total_pos += bits) >= pb->total) return;
-    if (!bits) return;
-    if (pb->pos) {
-        if (pb->pos > bits) {
-            *pb->buf_ptr |= val << (8 - pb->pos);
-            pb->pos -= bits;
-            bits = 0;
-        } else {
-            *pb->buf_ptr++ |= (val << (8 - pb->pos)) & 0xFF;
-            val >>= pb->pos;
-            bits -= pb->pos;
-            pb->pos = 0;
-        }
-    }
-    for (; bits >= 8; bits -= 8) {
-        *pb->buf_ptr++ = val & 0xFF;
-        val >>= 8;
-    }
-    if (bits) {
-        *pb->buf_ptr = val;
-        pb->pos = 8 - bits;
-    }
-}
-
-static inline void flush_put_bits(PutBitContext * pb) {
-}
-
-static inline int put_bits_count(PutBitContext * pb) {
-    return pb->total_pos;
-}
-
 static inline void put_codeword(PutBitContext * pb, codebook_t * cb, int entry) {
     assert(entry >= 0);
     assert(entry < cb->nentries);
@@ -256,7 +213,7 @@ static void create_vorbis_context(venc_context_t * venc, AVCodecContext * avccon
     venc->sample_rate = avccontext->sample_rate;
     venc->log2_blocksize[0] = venc->log2_blocksize[1] = 11;
 
-    venc->ncodebooks = sizeof(cvectors)/sizeof(cvectors[0]);
+    venc->ncodebooks = FF_ARRAY_ELEMS(cvectors);
     venc->codebooks = av_malloc(sizeof(codebook_t) * venc->ncodebooks);
 
     // codebook 0..14 - floor1 book, values 0..255

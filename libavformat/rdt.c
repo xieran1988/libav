@@ -34,13 +34,44 @@
 #include "rm.h"
 #include "internal.h"
 
-typedef struct rdt_data {
+struct RDTDemuxContext {
+    AVFormatContext *ic;
+    AVStream *st;
+    void *dynamic_protocol_context;
+    DynamicPayloadPacketHandlerProc parse_packet;
+    uint32_t prev_sn, prev_ts;
+};
+
+RDTDemuxContext *
+ff_rdt_parse_open(AVFormatContext *ic, AVStream *st,
+                  void *priv_data, RTPDynamicProtocolHandler *handler)
+{
+    RDTDemuxContext *s = av_mallocz(sizeof(RDTDemuxContext));
+    if (!s)
+        return NULL;
+
+    s->ic = ic;
+    s->st = st;
+    s->prev_sn = -1;
+    s->prev_ts = -1;
+    s->parse_packet = handler->parse_packet;
+    s->dynamic_protocol_context = priv_data;
+
+    return s;
+}
+
+void
+ff_rdt_parse_close(RDTDemuxContext *s)
+{
+    av_free(s);
+}
+
+struct PayloadContext {
     AVFormatContext *rmctx;
     uint8_t *mlti_data;
     unsigned int mlti_data_size;
-    uint32_t prev_sn, prev_ts;
     char buffer[RTP_MAX_PACKET_LENGTH + FF_INPUT_BUFFER_PADDING_SIZE];
-} rdt_data;
+};
 
 void
 ff_rdt_calc_response_and_checksum(char response[41], char chksum[9],
@@ -82,7 +113,7 @@ ff_rdt_calc_response_and_checksum(char response[41], char chksum[9],
 }
 
 static int
-rdt_load_mdpr (rdt_data *rdt, AVStream *st, int rule_nr)
+rdt_load_mdpr (PayloadContext *rdt, AVStream *st, int rule_nr)
 {
     ByteIOContext *pb;
     int size;
@@ -140,39 +171,36 @@ rdt_load_mdpr (rdt_data *rdt, AVStream *st, int rule_nr)
  * Actual data handling.
  */
 
-static int rdt_parse_header(struct RTPDemuxContext *s, const uint8_t *buf,
-                            int len, int *seq, uint32_t *timestamp, int *flags)
+int
+ff_rdt_parse_header(const uint8_t *buf, int len,
+                    int *sn, int *seq, int *rn, uint32_t *ts)
 {
-    rdt_data *rdt = s->dynamic_protocol_context;
-    int consumed = 0, sn;
+    int consumed = 10;
 
-    if (buf[0] < 0x40 || buf[0] > 0x42) {
+    if (len > 0 && (buf[0] < 0x40 || buf[0] > 0x42)) {
         buf += 9;
         len -= 9;
         consumed += 9;
     }
-    sn = (buf[0]>>1) & 0x1f;
-    *seq = AV_RB16(buf+1);
-    *timestamp = AV_RB32(buf+4);
-    if (!(buf[3] & 1) && (sn != rdt->prev_sn || *timestamp != rdt->prev_ts)) {
-        *flags |= PKT_FLAG_KEY;
-        rdt->prev_sn = sn;
-        rdt->prev_ts = *timestamp;
-    }
+    if (len < 10)
+        return -1;
+    if (sn)  *sn  = (buf[0]>>1) & 0x1f;
+    if (seq) *seq = AV_RB16(buf+1);
+    if (ts)  *ts  = AV_RB32(buf+4);
+    if (rn)  *rn  = buf[3] & 0x3f;
 
-    return consumed + 10;
+    return consumed;
 }
 
 /**< return 0 on packet, no more left, 1 on packet, 1 on partial packet... */
 static int
-rdt_parse_packet (RTPDemuxContext *s, AVPacket *pkt, uint32_t *timestamp,
+rdt_parse_packet (PayloadContext *rdt, AVStream *st,
+                  AVPacket *pkt, uint32_t *timestamp,
                   const uint8_t *buf, int len, int flags)
 {
-    rdt_data *rdt = s->dynamic_protocol_context;
     int seq = 1, res;
     ByteIOContext *pb = rdt->rmctx->pb;
     RMContext *rm = rdt->rmctx->priv_data;
-    AVStream *st = s->st;
 
     if (rm->audio_pkt_cnt == 0) {
         int pos;
@@ -205,44 +233,58 @@ rdt_parse_packet (RTPDemuxContext *s, AVPacket *pkt, uint32_t *timestamp,
 }
 
 int
-ff_rdt_parse_packet(RTPDemuxContext *s, AVPacket *pkt,
+ff_rdt_parse_packet(RDTDemuxContext *s, AVPacket *pkt,
                     const uint8_t *buf, int len)
 {
-    int seq, flags = 0;
+    int seq, flags = 0, rule, sn;
     uint32_t timestamp;
     int rv= 0;
+
+    if (!s->parse_packet)
+        return -1;
 
     if (!buf) {
         /* return the next packets, if any */
         timestamp= 0; ///< Should not be used if buf is NULL, but should be set to the timestamp of the packet returned....
-        rv= rdt_parse_packet(s, pkt, &timestamp, NULL, 0, flags);
+        rv= s->parse_packet(s->dynamic_protocol_context,
+                            s->st, pkt, &timestamp, NULL, 0, flags);
         return rv;
     }
 
     if (len < 12)
         return -1;
-    rv = rdt_parse_header(s, buf, len, &seq, &timestamp, &flags);
+    rv = ff_rdt_parse_header(buf, len, &sn, &seq, &rule, &timestamp);
     if (rv < 0)
         return rv;
+    if (!(rule & 1) && (sn != s->prev_sn || timestamp != s->prev_ts)) {
+        flags |= PKT_FLAG_KEY;
+        s->prev_sn = sn;
+        s->prev_ts = timestamp;
+    }
     buf += rv;
     len -= rv;
-    s->seq = seq;
 
-    rv = rdt_parse_packet(s, pkt, &timestamp, buf, len, flags);
+    rv = s->parse_packet(s->dynamic_protocol_context,
+                         s->st, pkt, &timestamp, buf, len, flags);
 
     return rv;
 }
 
 void
-ff_rdt_subscribe_rule (RTPDemuxContext *s, char *cmd, int size,
+ff_rdt_subscribe_rule (char *cmd, int size,
                        int stream_nr, int rule_nr)
 {
-    rdt_data *rdt = s->dynamic_protocol_context;
-
     av_strlcatf(cmd, size, "stream=%d;rule=%d,stream=%d;rule=%d",
-                stream_nr, rule_nr, stream_nr, rule_nr + 1);
+                stream_nr, rule_nr * 2, stream_nr, rule_nr * 2 + 1);
+}
 
-    rdt_load_mdpr(rdt, s->st, 0);
+void
+ff_rdt_subscribe_rule2 (RDTDemuxContext *s, char *cmd, int size,
+                        int stream_nr, int rule_nr)
+{
+    PayloadContext *rdt = s->dynamic_protocol_context;
+
+    rdt_load_mdpr(rdt, s->st, rule_nr * 2);
 }
 
 static unsigned char *
@@ -261,9 +303,8 @@ rdt_parse_b64buf (unsigned int *target_len, const char *p)
 }
 
 static int
-rdt_parse_sdp_line (AVStream *stream, void *d, const char *line)
+rdt_parse_sdp_line (AVStream *stream, PayloadContext *rdt, const char *line)
 {
-    rdt_data *rdt = d;
     const char *p = line;
 
     if (av_strstart(p, "OpaqueData:buffer;", &p)) {
@@ -274,23 +315,19 @@ rdt_parse_sdp_line (AVStream *stream, void *d, const char *line)
     return 0;
 }
 
-static void *
+static PayloadContext *
 rdt_new_extradata (void)
 {
-    rdt_data *rdt = av_mallocz(sizeof(rdt_data));
+    PayloadContext *rdt = av_mallocz(sizeof(PayloadContext));
 
     av_open_input_stream(&rdt->rmctx, NULL, "", &rdt_demuxer, NULL);
-    rdt->prev_ts = -1;
-    rdt->prev_sn = -1;
 
     return rdt;
 }
 
 static void
-rdt_free_extradata (void *d)
+rdt_free_extradata (PayloadContext *rdt)
 {
-    rdt_data *rdt = d;
-
     if (rdt->rmctx)
         av_close_input_stream(rdt->rmctx);
     av_freep(&rdt->mlti_data);
@@ -304,7 +341,8 @@ static RTPDynamicProtocolHandler ff_rdt_ ## n ## _handler = { \
     CODEC_ID_NONE, \
     rdt_parse_sdp_line, \
     rdt_new_extradata, \
-    rdt_free_extradata \
+    rdt_free_extradata, \
+    rdt_parse_packet \
 };
 
 RDT_HANDLER(live_video, "x-pn-multirate-realvideo-live", CODEC_TYPE_VIDEO);

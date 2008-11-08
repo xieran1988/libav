@@ -30,7 +30,7 @@
 #include "libavutil/avutil.h"
 
 #define LIBAVCODEC_VERSION_MAJOR 52
-#define LIBAVCODEC_VERSION_MINOR  0
+#define LIBAVCODEC_VERSION_MINOR  2
 #define LIBAVCODEC_VERSION_MICRO  0
 
 #define LIBAVCODEC_VERSION_INT  AV_VERSION_INT(LIBAVCODEC_VERSION_MAJOR, \
@@ -304,6 +304,7 @@ enum CodecID {
     CODEC_ID_WMALOSSLESS,
     CODEC_ID_ATRAC3P,
     CODEC_ID_EAC3,
+    CODEC_ID_SIPR,
 
     /* subtitle codecs */
     CODEC_ID_DVD_SUBTITLE= 0x17000,
@@ -344,6 +345,41 @@ enum SampleFormat {
     SAMPLE_FMT_DBL,             ///< double
     SAMPLE_FMT_NB               ///< Number of sample formats. DO NOT USE if dynamically linking to libavcodec
 };
+
+/* Audio channel masks */
+#define CH_FRONT_LEFT             0x00000001
+#define CH_FRONT_RIGHT            0x00000002
+#define CH_FRONT_CENTER           0x00000004
+#define CH_LOW_FREQUENCY          0x00000008
+#define CH_BACK_LEFT              0x00000010
+#define CH_BACK_RIGHT             0x00000020
+#define CH_FRONT_LEFT_OF_CENTER   0x00000040
+#define CH_FRONT_RIGHT_OF_CENTER  0x00000080
+#define CH_BACK_CENTER            0x00000100
+#define CH_SIDE_LEFT              0x00000200
+#define CH_SIDE_RIGHT             0x00000400
+#define CH_TOP_CENTER             0x00000800
+#define CH_TOP_FRONT_LEFT         0x00001000
+#define CH_TOP_FRONT_CENTER       0x00002000
+#define CH_TOP_FRONT_RIGHT        0x00004000
+#define CH_TOP_BACK_LEFT          0x00008000
+#define CH_TOP_BACK_CENTER        0x00010000
+#define CH_TOP_BACK_RIGHT         0x00020000
+#define CH_STEREO_LEFT            0x20000000  ///< Stereo downmix.
+#define CH_STEREO_RIGHT           0x40000000  ///< See CH_STEREO_LEFT.
+
+/* Audio channel convenience macros */
+#define CH_LAYOUT_MONO              (CH_FRONT_CENTER)
+#define CH_LAYOUT_STEREO            (CH_FRONT_LEFT|CH_FRONT_RIGHT)
+#define CH_LAYOUT_SURROUND          (CH_LAYOUT_STEREO|CH_FRONT_CENTER)
+#define CH_LAYOUT_QUAD              (CH_LAYOUT_STEREO|CH_BACK_LEFT|CH_BACK_RIGHT)
+#define CH_LAYOUT_5POINT0           (CH_LAYOUT_SURROUND|CH_SIDE_LEFT|CH_SIDE_RIGHT)
+#define CH_LAYOUT_5POINT1           (CH_LAYOUT_5POINT0|CH_LOW_FREQUENCY)
+#define CH_LAYOUT_7POINT1           (CH_LAYOUT_5POINT1|CH_BACK_LEFT|CH_BACK_RIGHT)
+#define CH_LAYOUT_7POINT1_WIDE      (CH_LAYOUT_SURROUND|CH_LOW_FREQUENCY|\
+                                          CH_BACK_LEFT|CH_BACK_RIGHT|\
+                                          CH_FRONT_LEFT_OF_CENTER|CH_FRONT_RIGHT_OF_CENTER)
+#define CH_LAYOUT_STEREO_DOWNMIX    (CH_STEREO_LEFT|CH_STEREO_RIGHT)
 
 /* in bytes */
 #define AVCODEC_MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio
@@ -1395,6 +1431,7 @@ typedef struct AVCodecContext {
 #define FF_MM_SSE3     0x0040 ///< Prescott SSE3 functions
 #define FF_MM_SSSE3    0x0080 ///< Conroe SSSE3 functions
 #define FF_MM_IWMMXT   0x0100 ///< XScale IWMMXT
+#define FF_MM_ALTIVEC  0x0001 ///< standard AltiVec
 
     /**
      * bits per sample/pixel from the demuxer (needed for huffyuv).
@@ -2103,7 +2140,7 @@ typedef struct AVCodecContext {
 #define X264_PART_B8X8 0x100  /* Analyze b16x8, b8x16 and b8x8 */
 
     /**
-     * direct MV prediction mode - 0 (none), 1 (spatial), 2 (temporal)
+     * direct MV prediction mode - 0 (none), 1 (spatial), 2 (temporal), 3 (auto)
      * - encoding: Set by user.
      * - decoding: unused
      */
@@ -2197,12 +2234,15 @@ typedef struct AVCodecContext {
      */
     int64_t timecode_frame_start;
 
+#if LIBAVCODEC_VERSION_MAJOR < 53
     /**
      * Decoder should decode to this many channels if it can (0 for default)
      * - encoding: unused
      * - decoding: Set by user.
+     * @deprecated Deprecated in favor of request_channel_layout.
      */
     int request_channels;
+#endif
 
     /**
      * Percentage of dynamic range compression to be applied by the decoder.
@@ -2227,6 +2267,20 @@ typedef struct AVCodecContext {
      * - decoding: set by libavcodec.
      */
     int bits_per_raw_sample;
+
+    /**
+     * Audio channel layout.
+     * - encoding: set by user.
+     * - decoding: set by libavcodec.
+     */
+    int64_t channel_layout;
+
+    /**
+     * Request decoder to use this channel layout if it can (0 for default)
+     * - encoding: unused
+     * - decoding: Set by user.
+     */
+    int64_t request_channel_layout;
 } AVCodecContext;
 
 /**
@@ -2268,6 +2322,7 @@ typedef struct AVCodec {
     const char *long_name;
     const int *supported_samplerates;       ///< array of supported audio samplerates, or NULL if unknown, array is terminated by 0
     const enum SampleFormat *sample_fmts;   ///< array of supported sample formats, or NULL if unknown, array is terminated by -1
+    const int64_t *channel_layouts;         ///< array of support channel layouts, or NULL if unknown. array is terminated by 0
 } AVCodec;
 
 /**

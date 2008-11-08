@@ -28,12 +28,18 @@
  */
 
 #ifdef __MINGW32__
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#  define usleep(t)    Sleep((t) / 1000)
 #  include <fcntl.h>
 #  define lseek(f,p,w) _lseeki64((f), (p), (w))
 #endif
+
+static inline int is_dos_path(const char *path)
+{
+#ifdef HAVE_DOS_PATHS
+    if (path[0] && path[1] == ':')
+        return 1;
+#endif
+    return 0;
+}
 
 #ifdef __BEOS__
 #  include <sys/socket.h>

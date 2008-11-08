@@ -116,6 +116,7 @@
 #define FFMIN3(a,b,c) FFMIN(FFMIN(a,b),c)
 
 #define FFSWAP(type,a,b) do{type SWAP_tmp= b; b= a; a= SWAP_tmp;}while(0)
+#define FF_ARRAY_ELEMS(a) (sizeof(a) / sizeof((a)[0]))
 
 /* misc math functions */
 extern const uint8_t ff_log2_tab[256];
@@ -153,7 +154,7 @@ static inline av_const int mid_pred(int a, int b, int c)
 {
 #ifdef HAVE_CMOV
     int i=b;
-    asm volatile(
+    __asm__ volatile(
         "cmp    %2, %1 \n\t"
         "cmovg  %1, %0 \n\t"
         "cmovg  %2, %1 \n\t"
@@ -322,21 +323,13 @@ static inline av_pure int ff_get_fourcc(const char *s){
 
 #if defined(ARCH_X86) || defined(ARCH_POWERPC) || defined(ARCH_BFIN)
 #define AV_READ_TIME read_time
-#if defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 static inline uint64_t read_time(void)
 {
-    uint64_t a, d;
-    asm volatile("rdtsc\n\t"
+    uint32_t a, d;
+    __asm__ volatile("rdtsc\n\t"
                  : "=a" (a), "=d" (d));
-    return (d << 32) | (a & 0xffffffff);
-}
-#elif defined(ARCH_X86_32)
-static inline long long read_time(void)
-{
-    long long l;
-    asm volatile("rdtsc\n\t"
-                 : "=A" (l));
-    return l;
+    return ((uint64_t)d << 32) + a;
 }
 #elif ARCH_BFIN
 static inline uint64_t read_time(void)
@@ -348,7 +341,7 @@ static inline uint64_t read_time(void)
         } p;
         unsigned long long c;
     } t;
-    asm volatile ("%0=cycles; %1=cycles2;" : "=d" (t.p.lo), "=d" (t.p.hi));
+    __asm__ volatile ("%0=cycles; %1=cycles2;" : "=d" (t.p.lo), "=d" (t.p.hi));
     return t.c;
 }
 #else //FIXME check ppc64
@@ -357,7 +350,7 @@ static inline uint64_t read_time(void)
     uint32_t tbu, tbl, temp;
 
      /* from section 2.2.1 of the 32-bit PowerPC PEM */
-     asm volatile(
+     __asm__ volatile(
          "1:\n"
          "mftbu  %2\n"
          "mftb   %0\n"

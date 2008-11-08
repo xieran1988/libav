@@ -20,7 +20,7 @@
  */
 
 /* needed for gethostname() */
-#define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE 600
 
 #include "libavcodec/bitstream.h"
 #include "avformat.h"
@@ -311,6 +311,14 @@ RTPDemuxContext *rtp_parse_open(AVFormatContext *s1, AVStream *st, URLContext *r
     return s;
 }
 
+void
+rtp_parse_set_dynamic_protocol(RTPDemuxContext *s, PayloadContext *ctx,
+                               RTPDynamicProtocolHandler *handler)
+{
+    s->dynamic_protocol_context = ctx;
+    s->parse_packet = handler->parse_packet;
+}
+
 static int rtp_parse_mp4_au(RTPDemuxContext *s, const uint8_t *buf)
 {
     int au_headers_length, au_header_size, i;
@@ -399,7 +407,8 @@ int rtp_parse_packet(RTPDemuxContext *s, AVPacket *pkt,
         /* return the next packets, if any */
         if(s->st && s->parse_packet) {
             timestamp= 0; ///< Should not be used if buf is NULL, but should be set to the timestamp of the packet returned....
-            rv= s->parse_packet(s, pkt, &timestamp, NULL, 0, flags);
+            rv= s->parse_packet(s->dynamic_protocol_context,
+                                s->st, pkt, &timestamp, NULL, 0, flags);
             finalize_packet(s, pkt, timestamp);
             return rv;
         } else {
@@ -463,7 +472,8 @@ int rtp_parse_packet(RTPDemuxContext *s, AVPacket *pkt,
             return 1;
         }
     } else if (s->parse_packet) {
-        rv = s->parse_packet(s, pkt, &timestamp, buf, len, flags);
+        rv = s->parse_packet(s->dynamic_protocol_context,
+                             s->st, pkt, &timestamp, buf, len, flags);
     } else {
         // at this point, the RTP header has been stripped;  This is ASSUMING that there is only 1 CSRC, which in't wise.
         switch(st->codec->codec_id) {

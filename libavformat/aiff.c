@@ -46,7 +46,7 @@ static const AVCodecTag codec_aiff_tags[] = {
 #define AIFF                    0
 #define AIFF_C_VERSION1         0xA2805140
 
-static int aiff_codec_get_id(int bps)
+static enum CodecID aiff_codec_get_id(int bps)
 {
     if (bps <= 8)
         return CODEC_ID_PCM_S8;
@@ -58,7 +58,7 @@ static int aiff_codec_get_id(int bps)
         return CODEC_ID_PCM_S32BE;
 
     /* bigger than 32 isn't allowed  */
-    return 0;
+    return CODEC_ID_NONE;
 }
 
 /* returns the size of the found tag */
@@ -172,9 +172,9 @@ static unsigned int get_aiff_header(ByteIOContext *pb, AVCodecContext *codec,
 
 #ifdef CONFIG_AIFF_MUXER
 typedef struct {
-    offset_t form;
-    offset_t frames;
-    offset_t ssnd;
+    int64_t form;
+    int64_t frames;
+    int64_t ssnd;
 } AIFFOutputContext;
 
 static int aiff_write_header(AVFormatContext *s)
@@ -265,7 +265,7 @@ static int aiff_write_trailer(AVFormatContext *s)
     AVCodecContext *enc = s->streams[0]->codec;
 
     /* Chunks sizes must be even */
-    offset_t file_size, end_size;
+    int64_t file_size, end_size;
     end_size = file_size = url_ftell(pb);
     if (file_size & 1) {
         put_byte(pb, 0);
@@ -312,7 +312,7 @@ static int aiff_read_header(AVFormatContext *s,
                             AVFormatParameters *ap)
 {
     int size, filesize;
-    offset_t offset = 0;
+    int64_t offset = 0;
     uint32_t tag;
     unsigned version = AIFF_C_VERSION1;
     ByteIOContext *pb = s->pb;

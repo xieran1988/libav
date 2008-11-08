@@ -124,6 +124,8 @@ X264_close(AVCodecContext *avctx)
 {
     X264Context *x4 = avctx->priv_data;
 
+    av_freep(&avctx->extradata);
+
     if(x4->enc)
         x264_encoder_close(x4->enc);
 
@@ -227,8 +229,6 @@ X264_init(AVCodecContext *avctx)
     x4->params.analyse.i_me_range = avctx->me_range;
     x4->params.analyse.i_subpel_refine = avctx->me_subpel_quality;
 
-    x4->params.analyse.b_bidir_me = avctx->bidir_refine > 0;
-    x4->params.analyse.b_bframe_rdo = avctx->flags2 & CODEC_FLAG2_BRDO;
     x4->params.analyse.b_mixed_references =
         avctx->flags2 & CODEC_FLAG2_MIXED_REFS;
     x4->params.analyse.b_chroma_me = avctx->me_cmp & FF_CMP_CHROMA;

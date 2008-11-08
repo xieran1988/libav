@@ -870,7 +870,7 @@ int ff_get_plane_bytewidth(enum PixelFormat pix_fmt, int width, int plane)
         break;
     case FF_PIXEL_PLANAR:
             if (plane == 1 || plane == 2)
-                width >>= pf->x_chroma_shift;
+                width= -((-width)>>pf->x_chroma_shift);
 
             return (width * pf->depth + 7) >> 3;
         break;
@@ -894,13 +894,11 @@ void av_picture_copy(AVPicture *dst, const AVPicture *src,
     case FF_PIXEL_PACKED:
     case FF_PIXEL_PLANAR:
         for(i = 0; i < pf->nb_channels; i++) {
-            int w, h;
+            int h;
             int bwidth = ff_get_plane_bytewidth(pix_fmt, width, i);
-            w = width;
             h = height;
             if (i == 1 || i == 2) {
-                w >>= pf->x_chroma_shift;
-                h >>= pf->y_chroma_shift;
+                h= -((-height)>>pf->y_chroma_shift);
             }
             ff_img_copy_plane(dst->data[i], dst->linesize[i],
                            src->data[i], src->linesize[i],
@@ -1416,7 +1414,7 @@ static inline unsigned int bitcopy_n(unsigned int a, int n)
 
 #define BPP 2
 
-#include "imgconvert_template.h"
+#include "imgconvert_template.c"
 
 /* rgb565 handling */
 
@@ -1437,7 +1435,7 @@ static inline unsigned int bitcopy_n(unsigned int a, int n)
 
 #define BPP 2
 
-#include "imgconvert_template.h"
+#include "imgconvert_template.c"
 
 /* bgr24 handling */
 
@@ -1459,7 +1457,7 @@ static inline unsigned int bitcopy_n(unsigned int a, int n)
 
 #define BPP 3
 
-#include "imgconvert_template.h"
+#include "imgconvert_template.c"
 
 #undef RGB_IN
 #undef RGB_OUT
@@ -1486,7 +1484,7 @@ static inline unsigned int bitcopy_n(unsigned int a, int n)
 
 #define BPP 3
 
-#include "imgconvert_template.h"
+#include "imgconvert_template.c"
 
 /* rgb32 handling */
 
@@ -1517,7 +1515,7 @@ static inline unsigned int bitcopy_n(unsigned int a, int n)
 
 #define BPP 4
 
-#include "imgconvert_template.h"
+#include "imgconvert_template.c"
 
 static void mono_to_gray(AVPicture *dst, const AVPicture *src,
                          int width, int height, int xor_mask)

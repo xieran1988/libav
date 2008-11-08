@@ -21,6 +21,7 @@
 
 #include "libavutil/avstring.h"
 #include "libavcodec/opt.h"
+#include "os_support.h"
 #include "avformat.h"
 
 #if LIBAVFORMAT_VERSION_MAJOR >= 53
@@ -115,7 +116,7 @@ int url_open(URLContext **puc, const char *filename, int flags)
         p++;
     }
     /* if the protocol has length 1, we consider it is a dos drive */
-    if (*p == '\0' || (q - proto_str) <= 1) {
+    if (*p == '\0' || is_dos_path(filename)) {
     file_proto:
         strcpy(proto_str, "file");
     } else {
@@ -153,9 +154,9 @@ int url_write(URLContext *h, unsigned char *buf, int size)
     return ret;
 }
 
-offset_t url_seek(URLContext *h, offset_t pos, int whence)
+int64_t url_seek(URLContext *h, int64_t pos, int whence)
 {
-    offset_t ret;
+    int64_t ret;
 
     if (!h->prot->url_seek)
         return AVERROR(EPIPE);
@@ -183,9 +184,9 @@ int url_exist(const char *filename)
     return 1;
 }
 
-offset_t url_filesize(URLContext *h)
+int64_t url_filesize(URLContext *h)
 {
-    offset_t pos, size;
+    int64_t pos, size;
 
     size= url_seek(h, 0, AVSEEK_SIZE);
     if(size<0){
@@ -228,7 +229,7 @@ int av_url_read_pause(URLContext *h, int pause)
     return h->prot->url_read_pause(h, pause);
 }
 
-offset_t av_url_read_seek(URLContext *h,
+int64_t av_url_read_seek(URLContext *h,
         int stream_index, int64_t timestamp, int flags)
 {
     if (!h->prot->url_read_seek)

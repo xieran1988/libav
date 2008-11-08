@@ -746,6 +746,7 @@ static int is_intra_only(AVCodecContext *enc){
         case CODEC_ID_ASV1:
         case CODEC_ID_ASV2:
         case CODEC_ID_VCR1:
+        case CODEC_ID_DNXHD:
             return 1;
         default: break;
         }
@@ -824,9 +825,26 @@ static void compute_pkt_fields(AVFormatContext *s, AVStream *st,
     int num, den, presentation_delayed, delay, i;
     int64_t offset;
 
+    /* do we have a video B-frame ? */
+    delay= st->codec->has_b_frames;
+    presentation_delayed = 0;
+    /* XXX: need has_b_frame, but cannot get it if the codec is
+        not initialized */
+    if (delay &&
+        pc && pc->pict_type != FF_B_TYPE)
+        presentation_delayed = 1;
+
     if(pkt->pts != AV_NOPTS_VALUE && pkt->dts != AV_NOPTS_VALUE && pkt->dts > pkt->pts && st->pts_wrap_bits<63
        /*&& pkt->dts-(1LL<<st->pts_wrap_bits) < pkt->pts*/){
         pkt->dts -= 1LL<<st->pts_wrap_bits;
+    }
+
+    // some mpeg2 in mpeg-ps lack dts (issue171 / input_file.mpg)
+    // we take the conservative approach and discard both
+    // Note, if this is misbehaving for a H.264 file then possibly presentation_delayed is not set correctly.
+    if(delay==1 && pkt->dts == pkt->pts && pkt->dts != AV_NOPTS_VALUE && presentation_delayed){
+        av_log(s, AV_LOG_ERROR, "invalid dts/pts combination\n");
+        pkt->dts= pkt->pts= AV_NOPTS_VALUE;
     }
 
     if (pkt->duration == 0) {
@@ -850,14 +868,6 @@ static void compute_pkt_fields(AVFormatContext *s, AVStream *st,
             pkt->dts += offset;
     }
 
-    /* do we have a video B-frame ? */
-    delay= st->codec->has_b_frames;
-    presentation_delayed = 0;
-    /* XXX: need has_b_frame, but cannot get it if the codec is
-        not initialized */
-    if (delay &&
-        pc && pc->pict_type != FF_B_TYPE)
-        presentation_delayed = 1;
     /* This may be redundant, but it should not hurt. */
     if(pkt->dts != AV_NOPTS_VALUE && pkt->pts != AV_NOPTS_VALUE && pkt->pts > pkt->dts)
         presentation_delayed = 1;
@@ -1701,7 +1711,7 @@ static void av_estimate_timings_from_bit_rate(AVFormatContext *ic)
 #define DURATION_MAX_READ_SIZE 250000
 
 /* only usable for MPEG-PS streams */
-static void av_estimate_timings_from_pts(AVFormatContext *ic, offset_t old_offset)
+static void av_estimate_timings_from_pts(AVFormatContext *ic, int64_t old_offset)
 {
     AVPacket pkt1, *pkt = &pkt1;
     AVStream *st;
@@ -1794,7 +1804,7 @@ static void av_estimate_timings_from_pts(AVFormatContext *ic, offset_t old_offse
     }
 }
 
-static void av_estimate_timings(AVFormatContext *ic, offset_t old_offset)
+static void av_estimate_timings(AVFormatContext *ic, int64_t old_offset)
 {
     int64_t file_size;
 
@@ -2003,7 +2013,7 @@ int av_find_stream_info(AVFormatContext *ic)
     int64_t last_dts[MAX_STREAMS];
     int duration_count[MAX_STREAMS]={0};
     double (*duration_error)[MAX_STD_TIMEBASES];
-    offset_t old_offset = url_ftell(ic->pb);
+    int64_t old_offset = url_ftell(ic->pb);
     int64_t codec_info_duration[MAX_STREAMS]={0};
     int codec_info_nb_frames[MAX_STREAMS]={0};
 
@@ -2853,9 +2863,6 @@ int parse_frame_rate(int *frame_rate_num, int *frame_rate_den, const char *arg)
     return ret;
 }
 
-/**
- * Gets the current time in microseconds.
- */
 int64_t av_gettime(void)
 {
     struct timeval tv;
@@ -2898,7 +2905,7 @@ int64_t parse_date(const char *datestr, int duration)
     q = NULL;
     if (!duration) {
         /* parse the year-month-day part */
-        for (i = 0; i < sizeof(date_fmt) / sizeof(date_fmt[0]); i++) {
+        for (i = 0; i < FF_ARRAY_ELEMS(date_fmt); i++) {
             q = small_strptime(p, date_fmt[i], &dt);
             if (q) {
                 break;
@@ -2922,7 +2929,7 @@ int64_t parse_date(const char *datestr, int duration)
             p++;
 
         /* parse the hour-minute-second part */
-        for (i = 0; i < sizeof(time_fmt) / sizeof(time_fmt[0]); i++) {
+        for (i = 0; i < FF_ARRAY_ELEMS(time_fmt); i++) {
             q = small_strptime(p, time_fmt[i], &dt);
             if (q) {
                 break;

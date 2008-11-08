@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/select.h>
 
 #include "libavutil/log.h"
 #include "libavcodec/avcodec.h"
@@ -46,7 +47,7 @@ typedef struct {
     int sample_rate;
     int channels;
     int frame_size; /* in bytes ! */
-    int codec_id;
+    enum CodecID codec_id;
     unsigned int flip_left : 1;
     uint8_t buffer[AUDIO_BLOCK_SIZE];
     int buffer_ptr;

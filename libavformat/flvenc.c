@@ -48,8 +48,8 @@ static const AVCodecTag flv_audio_codec_ids[] = {
 
 typedef struct FLVContext {
     int reserved;
-    offset_t duration_offset;
-    offset_t filesize_offset;
+    int64_t duration_offset;
+    int64_t filesize_offset;
     int64_t duration;
     int delay; ///< first dts delay for AVC
 } FLVContext;
@@ -103,7 +103,11 @@ static int get_audio_flags(AVCodecContext *enc){
         flags |= FLV_CODECID_ADPCM | FLV_SAMPLESSIZE_16BIT;
         break;
     case CODEC_ID_NELLYMOSER:
-        flags |= FLV_CODECID_NELLYMOSER | FLV_SAMPLESSIZE_16BIT;
+        if (enc->sample_rate == 8000) {
+            flags |= FLV_CODECID_NELLYMOSER_8KHZ_MONO | FLV_SAMPLESSIZE_16BIT;
+        } else {
+            flags |= FLV_CODECID_NELLYMOSER | FLV_SAMPLESSIZE_16BIT;
+        }
         break;
     case 0:
         flags |= enc->codec_tag<<4;
@@ -250,7 +254,7 @@ static int flv_write_header(AVFormatContext *s)
     for (i = 0; i < s->nb_streams; i++) {
         AVCodecContext *enc = s->streams[i]->codec;
         if (enc->codec_id == CODEC_ID_AAC || enc->codec_id == CODEC_ID_H264) {
-            offset_t pos;
+            int64_t pos;
             put_byte(pb, enc->codec_type == CODEC_TYPE_VIDEO ?
                      FLV_TAG_TYPE_VIDEO : FLV_TAG_TYPE_AUDIO);
             put_be24(pb, 0); // size patched later

@@ -46,7 +46,7 @@ $(PROGS): %$(EXESUF): %_g$(EXESUF)
 	cp -p $< $@
 	$(STRIP) $@
 
-SUBDIR_VARS := OBJS ASM_OBJS CPP_OBJS FFLIBS CLEANFILES DIRS TESTS
+SUBDIR_VARS := OBJS FFLIBS CLEANFILES DIRS TESTS
 
 define RESET
 $(1) :=
@@ -74,6 +74,8 @@ tools/%$(EXESUF): tools/%.c
 	$(CC) $(CFLAGS) $(FF_LDFLAGS) -o $@ $< $(FF_EXTRALIBS)
 
 ffplay.o ffplay.d: CFLAGS += $(SDL_CFLAGS)
+
+alltools: $(addsuffix $(EXESUF),$(addprefix tools/, cws2fws pktdumper qt-faststart trasher))
 
 VHOOKCFLAGS += $(filter-out -mdynamic-no-pic,$(CFLAGS))
 
@@ -159,6 +161,8 @@ distclean::
 	rm -f version.h config.* vhook/*.d
 
 # regression tests
+
+check: test checkheaders
 
 fulltest test: codectest libavtest seektest
 
@@ -329,6 +333,6 @@ tests/seek_test$(EXESUF): tests/seek_test.c $(FF_DEP_LIBS)
 	$(CC) $(FF_LDFLAGS) $(CFLAGS) -o $@ $< $(FF_EXTRALIBS)
 
 
-.PHONY: lib videohook documentation *test regtest-* swscale-error
+.PHONY: lib videohook documentation *test regtest-* swscale-error alltools check
 
 -include $(VHOOK_DEPS)
