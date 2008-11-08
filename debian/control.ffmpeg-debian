@@ -1,15 +1,3 @@
-Source: ffmpeg-debian
-Section: libs
-Priority: optional
-Maintainer: Debian multimedia packages maintainers <pkg-multimedia-maintainers@lists.alioth.debian.org>
-Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
-           Loic Minier <lool@dooz.org>,
-           Reinhard Tartler <siretart@tauware.de>,
-           Fabian Greffrath <fabian@debian-unofficial.org>
-Standards-Version: 3.7.3
-Vcs-Svn: svn://svn.debian.org/pkg-multimedia/unstable/ffmpeg-debian/
-Vcs-Browser: http://svn.debian.org/wsvn/pkg-multimedia/unstable/ffmpeg-debian/
-Homepage: http://ffmpeg.mplayerhq.hu/
 Build-Depends: debhelper (>= 5.0.0),
                doxygen,
                libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],

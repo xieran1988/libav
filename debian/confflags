@@ -1,9 +1,12 @@
 # -*- mode: makefile -*-
 # vim:syntax=make
 #
-# build a static version on every architecture
+# build a static version on every architecture in the ffmpeg-debian package
 # shared is generic, i.e. without arch specific opcodes
-FLAVORS := static shared
+FLAVORS := shared
+ifeq ($(DEB_SOURCE),ffmpeg-debian)
+FLAVORS += static
+endif
 
 export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
@@ -28,6 +31,7 @@ gpl_confflags += --enable-x11grab
 # Common configuration flags; comment out following line for LGPL versions of
 # the libraries
 confflags += $(gpl_confflags)
+confflags += --extra-version='svn15761+$(DEB_VERSION)'
 confflags += --prefix=/usr
 confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf

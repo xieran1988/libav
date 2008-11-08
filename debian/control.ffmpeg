@@ -1,0 +1,111 @@
+Build-Depends: debhelper (>= 5.0.0),
+               doxygen,
+               libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+               libfaad-dev | libfaad2-dev,
+               libfreetype6-dev,
+               libgsm1-dev,
+               libimlib2-dev,
+               libraw1394-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+               libsdl1.2-dev,
+               libschroedinger-dev,
+               libtheora-dev (>> 0.0.0.alpha4),
+               libvorbis-dev,
+               libx11-dev,
+               libxext-dev,
+               quilt,
+               texi2html,
+               zlib1g-dev
+
+Package: libavutil-unstripped-49
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Conflicts: libavutilcvs49, libavutil49
+Replaces: libavutilcvs49, libavutil49
+Description: ffmpeg utility library
+ This is the common utility library from the ffmpeg project. It is required
+ by all other ffmpeg libraries.
+ .
+ This package contains a unrestricted version of the libavutil shared
+ object that should only be used by Debian packages.
+
+Package: libavcodec-unstripped-52
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Suggests: liba52-0.7.4, libfaad0
+Conflicts: libavcodec52
+Replaces: libavcodec52
+Description: ffmpeg codec library
+ This is the codec library from the ffmpeg project. It supports most existing
+ encoding formats (MPEG, DivX, MPEG4, AC3, DV...).
+ .
+ This package contains a unrestricted version of the libavcodec shared
+ object that should only be used by Debian packages.
+
+Package: libavdevice-unstripped-52
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Conflicts: libavdevicecvs52, libavdevice52
+Replaces: libavdevicecvs52, libavdevice52
+Description: ffmpeg device handling library
+ This is the device handling library from the ffmpeg project.
+ .
+ This package contains a unrestricted version of the libavdevice shared
+ object that should only be used by Debian packages.
+
+Package: libavfilter-unstripped-0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: ffmpeg video filtering library
+ This is the video filtering library from the ffmpeg project.
+ .
+ This package contains a unrestricted version of the libavfilter shared
+ object that should only be used by Debian packages.
+
+Package: libpostproc-unstripped-51
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Conflicts: libpostproccvs51, libpostproc51
+Replaces: libpostproccvs51, libpostproc51
+Description: ffmpeg video postprocessing library
+ This is the video postprocessing library from the ffmpeg project.
+ .
+ This package contains a unrestricted version of the libpostproc shared
+ object that should only be used by Debian packages.
+
+Package: libavformat-unstripped-52
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Conflicts: libavformatcvs52, libavformat52
+Replaces: libavformatcvs52, libavformat52
+Description: ffmpeg file format library
+ This is the demuxer library from the ffmpeg project. It supports most
+ existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
+ .
+ This package contains a unrestricted version of the libavformat shared
+ object that should only be used by Debian packages.
+
+Package: libswscale-unstripped-0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Conflicts: libswscalecvs0, libswscale0
+Replaces: libswscalecvs0, libswscale0
+Description: ffmpeg video scaling library
+ This is the video scaling library from the ffmpeg project.
+ .
+ This package contains a unrestricted version of the libswscale shared
+ object that should only be used by Debian packages.
+

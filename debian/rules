@@ -6,13 +6,24 @@ DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
 DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
 SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+\.svn([0-9]+)$$/\1/p')
-SHLIBS_VERSION := 3:0.svn20080925-1
+SHLIBS_VERSION := 3:0.svn20081101-1
 
-LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)[0-9]+)[[:space:]]*$$/\1/p' debian/control)
+LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-unstripped-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
+
+# we don't need to strip if we are not building the package ffmpeg-debian
+ifneq ($(DEB_SOURCE),ffmpeg-debian)
+DEB_BUILD_OPTIONS += ,internalencoders
+endif
 
 internalencoders := $(findstring internalencoders,$(DEB_BUILD_OPTIONS))
 
 include debian/confflags
+
+debian/control: debian/changelog $(wildcard debian/control.*)
+	dh_testdir
+	dpkg-parsechangelog | head -1 > $@
+	cat debian/control.common >> $@
+	cat debian/control.$(DEB_SOURCE) >> $@
 
 $(info FLAVORS = $(FLAVORS))
 $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
@@ -88,9 +99,17 @@ install: build
 	[ ! -d doxy ] || cp doxy/html/* debian/tmp/usr/share/doc/ffmpeg-doc/html
 	cp doc/ffserver.conf debian/tmp/etc/
 	cp debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
+ifneq ($(DEB_SOURCE),ffmpeg-debian)
+	dh_install --list-missing --sourcedir=debian/tmp
+else
 	dh_install --fail-missing --sourcedir=debian/tmp
+endif
 
+ifneq ($(DEB_SOURCE),ffmpeg-debian)
+binary-indep: install
+else
 binary-indep: build-doxy install
+endif
 
 binary-arch: build install
 	dh_testdir
@@ -102,7 +121,11 @@ binary-arch: build install
 	dh_installexamples -plibavcodec-dev libavcodec/apiexample.c
 	dh_installchangelogs Changelog
 	dh_link
+ifneq ($(DEB_SOURCE),ffmpeg-debian)
+	dh_strip
+else
 	dh_strip --dbg-package=ffmpeg-dbg
+endif
 	dh_compress
 	dh_fixperms
 	for pkg in $(LIB_PKGS); do \
@@ -110,6 +133,7 @@ binary-arch: build install
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION)) | $$upkg (>= $(SHLIBS_VERSION))"; \
 	done
 	dh_installdeb
+	env LD_LIBRARY_PATH=$(CURDIR)/debian/tmp/usr/lib \
 	dh_shlibdeps
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"
 	dh_md5sums

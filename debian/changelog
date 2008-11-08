@@ -1,3 +1,15 @@
+ffmpeg-debian (3:0.svn20081108-1) experimental; urgency=low
+
+  * upstream svn snapshot (svn revision 15786, libswscale revision 27900).
+  * apply visibility patch from ffmpeg-devel mailing list. This reduces the 
+    number of symbols that are exposed to other applications. Please file
+    bugs if applications fail to link against ffmpeg because of that.
+  * remove 001_fixup_version.diff patch and use upstream --extra-version
+    configure flag instead.
+  * now really remove 015_img_convert.patch from source package.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 08 Nov 2008 16:38:23 +0100
+
 ffmpeg-debian (3:0.svn20080925-1) experimental; urgency=low
 
   [ Loic Minier ]

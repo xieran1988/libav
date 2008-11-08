@@ -1,3 +1,2 @@
-001_fixup_version.diff
-#015_reenable-img_convert.diff
+020_visibility_patch
 900_doxyfile

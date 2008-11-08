@@ -1,0 +1,1402 @@
+patch by Uoti Urpala <uoti.urpala@pp1.inet.fi> and Diego Biurrun <diego@biurrun.de>
+
+The attached patch adds visibility information for lots of symbols in
+libavcodec.
+
+It is not yet applied to ffmpeg, but it is expected that this happens soon.
+
+
+--- a/configure
++++ b/configure
+@@ -148,6 +148,7 @@ show_help(){
+   echo "  --enable-small           optimize for size instead of speed"
+   echo "  --enable-hardcoded-tables use hardcoded tables instead of runtime generation"
+   echo "  --enable-memalign-hack   emulate memalign, interferes with memory debuggers"
++  echo "  --enable-symbol_hiding   enable symbol hiding support"
+   echo "  --disable-encoder=NAME   disables encoder NAME"
+   echo "  --enable-encoder=NAME    enables encoder NAME"
+   echo "  --disable-decoder=NAME   disables decoder NAME"
+@@ -756,6 +757,7 @@ CONFIG_LIST="
+     small
+     swscale
+     vhook
++    symbol_hiding
+     x11grab
+     zlib
+ "
+--- a/libavcodec/aac_ac3_parser.h
++++ b/libavcodec/aac_ac3_parser.h
+@@ -27,6 +27,8 @@
+ #include "avcodec.h"
+ #include "parser.h"
+ 
++START_HIDDEN
++
+ typedef struct AACAC3ParseContext {
+     ParseContext pc;
+     int frame_size;
+@@ -50,4 +52,6 @@ int ff_aac_ac3_parse(AVCodecParserContex
+                      const uint8_t **poutbuf, int *poutbuf_size,
+                      const uint8_t *buf, int buf_size);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_AAC_AC3_PARSER_H */
+--- a/libavcodec/ac3.h
++++ b/libavcodec/ac3.h
+@@ -29,6 +29,8 @@
+ 
+ #include "ac3tab.h"
+ 
++START_HIDDEN
++
+ #define AC3_MAX_CODED_FRAME_SIZE 3840 /* in bytes */
+ #define AC3_MAX_CHANNELS 6 /* including LFE channel */
+ 
+@@ -182,4 +184,6 @@ void ac3_parametric_bit_allocation(AC3Bi
+                                    uint8_t *dba_offsets, uint8_t *dba_lengths,
+                                    uint8_t *dba_values);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_AC3_H */
+--- a/libavcodec/ac3_parser.h
++++ b/libavcodec/ac3_parser.h
+@@ -26,6 +26,8 @@
+ #include "ac3.h"
+ #include "bitstream.h"
+ 
++START_HIDDEN
++
+ typedef enum {
+     AC3_PARSE_ERROR_SYNC        = -1,
+     AC3_PARSE_ERROR_BSID        = -2,
+@@ -45,7 +47,7 @@ typedef enum {
+  * -2 if the bsid (version) element is invalid, -3 if the fscod (sample rate)
+  * element is invalid, or -4 if the frmsizecod (bit rate) element is invalid.
+  */
+-int ff_ac3_parse_header(GetBitContext *gbc, AC3HeaderInfo *hdr);
++attribute_visible int ff_ac3_parse_header(GetBitContext *gbc, AC3HeaderInfo *hdr);
+ 
+ /**
+  * Parses AC-3 frame header and sets channel_map
+@@ -58,4 +60,6 @@ int ff_ac3_parse_header(GetBitContext *g
+  */
+ int ff_ac3_parse_header_full(GetBitContext *gbc, AC3HeaderInfo *hdr);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_AC3_PARSER_H */
+--- a/libavcodec/ac3dec.h
++++ b/libavcodec/ac3dec.h
+@@ -32,6 +32,8 @@
+ #include "bitstream.h"
+ #include "dsputil.h"
+ 
++START_HIDDEN
++
+ /* override ac3.h to include coupling channel */
+ #undef AC3_MAX_CHANNELS
+ #define AC3_MAX_CHANNELS 7
+@@ -179,4 +181,6 @@ int ff_eac3_parse_header(AC3DecodeContex
+  */
+ void ff_eac3_decode_transform_coeffs_aht_ch(AC3DecodeContext *s, int ch);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_AC3DEC_H */
+--- a/libavcodec/ac3dec_data.h
++++ b/libavcodec/ac3dec_data.h
+@@ -24,6 +24,8 @@
+ 
+ #include "libavutil/common.h"
+ 
++START_HIDDEN
++
+ extern const uint8_t ff_ac3_ungroup_3_in_5_bits_tab[32][3];
+ extern const uint8_t ff_eac3_hebap_tab[64];
+ extern const uint8_t ff_eac3_bits_vs_hebap[20];
+@@ -37,4 +39,6 @@ extern const uint8_t ff_eac3_default_cpl
+ 
+ extern const uint8_t ff_ac3_rematrix_band_tab[5];
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_AC3DEC_DATA_H */
+--- a/libavcodec/ac3tab.h
++++ b/libavcodec/ac3tab.h
+@@ -24,6 +24,8 @@
+ 
+ #include "libavutil/common.h"
+ 
++START_HIDDEN
++
+ extern const uint16_t ff_ac3_frame_size_tab[38][3];
+ extern const uint8_t  ff_ac3_channels_tab[8];
+ extern const uint16_t ff_ac3_sample_rate_tab[3];
+@@ -56,4 +58,6 @@ enum CustomChannelMapLocation{
+     AC3_CHMAP_LFE =     1<<(15-15)
+ };
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_AC3TAB_H */
+--- a/libavcodec/acelp_filters.h
++++ b/libavcodec/acelp_filters.h
+@@ -25,6 +25,8 @@
+ 
+ #include <stdint.h>
+ 
++START_HIDDEN
++
+ /**
+  * low-pass Finite Impulse Response filter coefficients.
+  *
+@@ -90,4 +92,6 @@ void ff_acelp_high_pass_filter(
+         const int16_t* in,
+         int length);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_ACELP_FILTERS_H */
+--- a/libavcodec/acelp_pitch_delay.h
++++ b/libavcodec/acelp_pitch_delay.h
+@@ -25,6 +25,8 @@
+ 
+ #include <stdint.h>
+ 
++START_HIDDEN
++
+ #define PITCH_DELAY_MIN             20
+ #define PITCH_DELAY_MAX             143
+ 
+@@ -217,4 +219,6 @@ int16_t ff_acelp_decode_gain_code(
+     int subframe_size,
+     int max_pred_order);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_ACELP_PITCH_DELAY_H */
+--- a/libavcodec/acelp_vectors.h
++++ b/libavcodec/acelp_vectors.h
+@@ -25,6 +25,8 @@
+ 
+ #include <stdint.h>
+ 
++START_HIDDEN
++
+ /**
+  * Track|Pulse|        Positions
+  * -------------------------------------------------------------------------
+@@ -150,4 +152,6 @@ void ff_acelp_weighted_vector_sum(
+         int shift,
+         int length);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_ACELP_VECTORS_H */
+--- a/libavcodec/allcodecs.c
++++ b/libavcodec/allcodecs.c
+@@ -27,18 +27,18 @@
+ #include "avcodec.h"
+ 
+ #define REGISTER_ENCODER(X,x) { \
+-          extern AVCodec x##_encoder; \
++          extern attribute_hidden AVCodec x##_encoder; \
+           if(ENABLE_##X##_ENCODER)  register_avcodec(&x##_encoder); }
+ #define REGISTER_DECODER(X,x) { \
+-          extern AVCodec x##_decoder; \
++          extern attribute_hidden AVCodec x##_decoder; \
+           if(ENABLE_##X##_DECODER)  register_avcodec(&x##_decoder); }
+ #define REGISTER_ENCDEC(X,x)  REGISTER_ENCODER(X,x); REGISTER_DECODER(X,x)
+ 
+ #define REGISTER_PARSER(X,x) { \
+-          extern AVCodecParser x##_parser; \
++          extern attribute_hidden AVCodecParser x##_parser; \
+           if(ENABLE_##X##_PARSER)  av_register_codec_parser(&x##_parser); }
+ #define REGISTER_BSF(X,x) { \
+-          extern AVBitStreamFilter x##_bsf; \
++          extern attribute_hidden AVBitStreamFilter x##_bsf; \
+           if(ENABLE_##X##_BSF)     av_register_bitstream_filter(&x##_bsf); }
+ 
+ /**
+--- a/libavcodec/bitstream.h
++++ b/libavcodec/bitstream.h
+@@ -34,6 +34,8 @@
+ #include "libavutil/intreadwrite.h"
+ #include "libavutil/log.h"
+ 
++START_HIDDEN
++
+ #if defined(ALT_BITSTREAM_READER_LE) && !defined(ALT_BITSTREAM_READER)
+ #   define ALT_BITSTREAM_READER
+ #endif
+@@ -954,4 +956,6 @@ static inline int decode210(GetBitContex
+         return 2 - get_bits1(gb);
+ }
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_BITSTREAM_H */
+--- a/libavcodec/cabac.h
++++ b/libavcodec/cabac.h
+@@ -33,6 +33,8 @@
+ #include <assert.h>
+ #include "libavutil/x86_cpu.h"
+ 
++START_HIDDEN
++
+ #define CABAC_BITS 16
+ #define CABAC_MASK ((1<<CABAC_BITS)-1)
+ #define BRANCHLESS_CABAC_DECODER 1
+@@ -755,4 +757,6 @@ static int get_cabac_ueg(CABACContext *c
+ }
+ #endif /* 0 */
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_CABAC_H */
+--- a/libavcodec/cavs.h
++++ b/libavcodec/cavs.h
+@@ -25,6 +25,8 @@
+ #include "dsputil.h"
+ #include "mpegvideo.h"
+ 
++START_HIDDEN
++
+ #define SLICE_MIN_START_CODE    0x00000101
+ #define SLICE_MAX_START_CODE    0x000001af
+ #define EXT_START_CODE          0x000001b5
+@@ -311,4 +313,6 @@ void ff_cavs_init_top_lines(AVSContext *
+ int ff_cavs_init(AVCodecContext *avctx);
+ int ff_cavs_end (AVCodecContext *avctx);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_CAVS_H */
+--- a/libavcodec/cavsdata.h
++++ b/libavcodec/cavsdata.h
+@@ -24,6 +24,8 @@
+ 
+ #include "cavs.h"
+ 
++START_HIDDEN
++
+ const uint8_t ff_cavs_partition_flags[30] = {
+   0,                                 //I_8X8
+   0,                                 //P_SKIP
+@@ -502,4 +504,6 @@ const int_fast8_t ff_top_modifier_l[8]  
+ const int_fast8_t ff_left_modifier_c[7] = { 5,-1, 2,-1, 6, 5, 6};
+ const int_fast8_t ff_top_modifier_c[7]  = { 4, 1,-1,-1, 4, 6, 6};
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_CAVSDATA_H */
+--- a/libavcodec/celp_math.h
++++ b/libavcodec/celp_math.h
+@@ -25,6 +25,8 @@
+ 
+ #include <stdint.h>
+ 
++START_HIDDEN
++
+ /**
+  * fixed-point implementation of cosine in [0; PI) domain.
+  * @param arg fixed-point cosine argument, 0 <= arg < 0x4000
+@@ -93,4 +95,6 @@ static inline int bidir_sal(int value, i
+  */
+ extern float ff_dot_productf(const float* a, const float* b, int length);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_CELP_MATH_H */
+--- a/libavcodec/dnxhddata.h
++++ b/libavcodec/dnxhddata.h
+@@ -25,6 +25,8 @@
+ #include <stdint.h>
+ #include "avcodec.h"
+ 
++START_HIDDEN
++
+ typedef struct {
+     int cid;
+     unsigned int width, height;
+@@ -48,4 +50,6 @@ extern const CIDEntry ff_dnxhd_cid_table
+ int ff_dnxhd_get_cid_table(int cid);
+ int ff_dnxhd_find_cid(AVCodecContext *avctx);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_DNXHDDATA_H */
+--- a/libavcodec/dsputil.c
++++ b/libavcodec/dsputil.c
+@@ -45,7 +45,7 @@ void vorbis_inverse_coupling(float *mag,
+ void ff_ac3_downmix_c(float (*samples)[256], float (*matrix)[2], int out_ch, int in_ch, int len);
+ 
+ /* flacenc.c */
+-void ff_flac_compute_autocorr(const int32_t *data, int len, int lag, double *autoc);
++attribute_hidden void ff_flac_compute_autocorr(const int32_t *data, int len, int lag, double *autoc);
+ 
+ /* pngdec.c */
+ void ff_add_png_paeth_prediction(uint8_t *dst, uint8_t *src, uint8_t *top, int w, int bpp);
+@@ -82,7 +82,7 @@ const uint8_t ff_zigzag248_direct[64] = 
+ };
+ 
+ /* not permutated inverse zigzag_direct + 1 for MMX quantizer */
+-DECLARE_ALIGNED_8(uint16_t, inv_zigzag_direct16[64]) = {0, };
++DECLARE_ALIGNED_8(attribute_hidden uint16_t, inv_zigzag_direct16[64]) = {0, };
+ 
+ const uint8_t ff_alternate_horizontal_scan[64] = {
+     0,  1,   2,  3,  8,  9, 16, 17,
+@@ -107,7 +107,7 @@ const uint8_t ff_alternate_vertical_scan
+ };
+ 
+ /* a*inverse[b]>>32 == a/b for all 0<=a<=65536 && 2<=b<=255 */
+-const uint32_t ff_inverse[256]={
++attribute_hidden const uint32_t ff_inverse[256]={
+          0, 4294967295U,2147483648U,1431655766, 1073741824,  858993460,  715827883,  613566757,
+  536870912,  477218589,  429496730,  390451573,  357913942,  330382100,  306783379,  286331154,
+  268435456,  252645136,  238609295,  226050911,  214748365,  204522253,  195225787,  186737709,
+--- a/libavcodec/dsputil.h
++++ b/libavcodec/dsputil.h
+@@ -33,6 +33,8 @@
+ #include "avcodec.h"
+ 
+ 
++START_HIDDEN
++
+ //#define DEBUG
+ /* dct code */
+ typedef short DCTELEM;
+@@ -79,7 +81,7 @@ extern const uint8_t ff_zigzag248_direct
+ 
+ /* temporary */
+ extern uint32_t ff_squareTbl[512];
+-extern uint8_t ff_cropTbl[256 + 2 * MAX_NEG_CROP];
++extern attribute_visible uint8_t ff_cropTbl[256 + 2 * MAX_NEG_CROP];
+ 
+ /* VP3 DSP functions */
+ void ff_vp3_idct_c(DCTELEM *block/* align 16*/);
+@@ -830,4 +832,6 @@ static inline void copy_block17(uint8_t 
+     }
+ }
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_DSPUTIL_H */
+--- a/libavcodec/elbg.h
++++ b/libavcodec/elbg.h
+@@ -21,8 +21,11 @@
+ #ifndef AVCODEC_ELBG_H
+ #define AVCODEC_ELBG_H
+ 
++#include "libavutil/common.h"
+ #include "libavutil/random.h"
+ 
++START_HIDDEN
++
+ /**
+  * Implementation of the Enhanced LBG Algorithm
+  * Based on the paper "Neural Networks 14:1219-1237" that can be found in
+@@ -52,4 +55,6 @@ void ff_init_elbg(int *points, int dim, 
+                   int numCB, int num_steps, int *closest_cb,
+                   AVRandomState *rand_state);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_ELBG_H */
+--- a/libavcodec/eval.h
++++ b/libavcodec/eval.h
+@@ -28,6 +28,8 @@
+ #ifndef AVCODEC_EVAL_H
+ #define AVCODEC_EVAL_H
+ 
++START_HIDDEN
++
+ /**
+  * Parses and evaluates an expression.
+  * Note, this is significantly slower than ff_parse_eval()
+@@ -74,4 +76,6 @@ AVEvalExpr * ff_parse(const char *s, con
+ double ff_parse_eval(AVEvalExpr * e, double *const_value, void *opaque);
+ void ff_eval_free(AVEvalExpr * e);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_EVAL_H */
+--- a/libavcodec/faandct.h
++++ b/libavcodec/faandct.h
+@@ -31,9 +31,13 @@
+ 
+ #include "dsputil.h"
+ 
++START_HIDDEN
++
+ #define FAAN_POSTSCALE
+ 
+ void ff_faandct(DCTELEM * data);
+ void ff_faandct248(DCTELEM * data);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_FAANDCT_H */
+--- a/libavcodec/faanidct.h
++++ b/libavcodec/faanidct.h
+@@ -25,8 +25,12 @@
+ #include <stdint.h>
+ #include "dsputil.h"
+ 
++START_HIDDEN
++
+ void ff_faanidct(DCTELEM block[64]);
+ void ff_faanidct_add(uint8_t *dest, int line_size, DCTELEM block[64]);
+ void ff_faanidct_put(uint8_t *dest, int line_size, DCTELEM block[64]);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_FAANIDCT_H */
+--- a/libavcodec/flacenc.c
++++ b/libavcodec/flacenc.c
+@@ -610,8 +610,8 @@ static void apply_welch_window(const int
+  * Calculates autocorrelation data from audio samples
+  * A Welch window function is applied before calculation.
+  */
+-void ff_flac_compute_autocorr(const int32_t *data, int len, int lag,
+-                              double *autoc)
++attribute_hidden void ff_flac_compute_autocorr(const int32_t *data, int len,
++                                               int lag, double *autoc)
+ {
+     int i, j;
+     double tmp[len + lag + 1];
+--- a/libavcodec/golomb.h
++++ b/libavcodec/golomb.h
+@@ -33,6 +33,8 @@
+ #include <stdint.h>
+ #include "bitstream.h"
+ 
++START_HIDDEN
++
+ #define INVALID_VLC           0x80000000
+ 
+ extern const uint8_t ff_golomb_vlc_len[512];
+@@ -504,4 +506,6 @@ static inline void set_sr_golomb_flac(Pu
+     set_ur_golomb_jpegls(pb, v, k, limit, esc_len);
+ }
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_GOLOMB_H */
+--- a/libavcodec/h263data.h
++++ b/libavcodec/h263data.h
+@@ -32,6 +32,8 @@
+ #include <stdint.h>
+ #include "mpegvideo.h"
+ 
++START_HIDDEN
++
+ /* intra MCBPC, mb_type = (intra), then (intraq) */
+ const uint8_t intra_MCBPC_code[9] = { 1, 1, 2, 3, 1, 1, 2, 3, 1 };
+ const uint8_t intra_MCBPC_bits[9] = { 1, 3, 3, 3, 4, 6, 6, 6, 9 };
+@@ -311,4 +313,6 @@ const uint8_t ff_h263_loop_filter_streng
+     0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9,10,10,10,11,11,11,12,12,12
+ };
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_H263DATA_H */
+--- a/libavcodec/h264.h
++++ b/libavcodec/h264.h
+@@ -33,6 +33,8 @@
+ #include "mpegvideo.h"
+ #include "h264pred.h"
+ 
++START_HIDDEN
++
+ #define interlaced_dct interlaced_dct_is_a_bad_name
+ #define mb_intra mb_intra_is_not_initialized_see_mb_type
+ 
+@@ -462,4 +464,6 @@ typedef struct H264Context{
+     uint32_t svq3_watermark_key;
+ }H264Context;
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_H264_H */
+--- a/libavcodec/h264_parser.h
++++ b/libavcodec/h264_parser.h
+@@ -30,10 +30,14 @@
+ 
+ #include "h264.h"
+ 
++START_HIDDEN
++
+ /**
+  * finds the end of the current frame in the bitstream.
+  * @return the position of the first byte of the next frame, or -1
+  */
+ int ff_h264_find_frame_end(H264Context *h, const uint8_t *buf, int buf_size);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_H264_PARSER_H */
+--- a/libavcodec/h264pred.h
++++ b/libavcodec/h264pred.h
+@@ -30,6 +30,8 @@
+ 
+ #include "libavutil/common.h"
+ 
++START_HIDDEN
++
+ /**
+  * Prediction types
+  */
+@@ -79,4 +81,6 @@ typedef struct H264PredContext{
+ 
+ void ff_h264_pred_init(H264PredContext *h, int codec_id);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_H264PRED_H */
+--- a/libavcodec/huffman.h
++++ b/libavcodec/huffman.h
+@@ -26,6 +26,8 @@
+ #include "avcodec.h"
+ #include "bitstream.h"
+ 
++START_HIDDEN
++
+ typedef struct {
+     int16_t  sym;
+     int16_t  n0;
+@@ -39,4 +41,6 @@ typedef int (*huff_cmp_t)(const void *va
+ int ff_huff_build_tree(AVCodecContext *avctx, VLC *vlc, int nb_codes,
+                        Node *nodes, huff_cmp_t cmp, int flags);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_HUFFMAN_H */
+--- a/libavcodec/i386/dsputil_mmx.h
++++ b/libavcodec/i386/dsputil_mmx.h
+@@ -25,6 +25,8 @@
+ #include <stdint.h>
+ #include "libavcodec/dsputil.h"
+ 
++START_HIDDEN
++
+ typedef struct { uint64_t a, b; } xmm_t;
+ 
+ extern const uint64_t ff_bone;
+@@ -151,4 +153,6 @@ extern const double ff_pd_2[2];
+ 
+ void dsputilenc_init_mmx(DSPContext* c, AVCodecContext *avctx);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_I386_DSPUTIL_MMX_H */
+--- a/libavcodec/i386/dsputilenc_mmx.c
++++ b/libavcodec/i386/dsputilenc_mmx.c
+@@ -1348,8 +1348,9 @@ static int ssd_int8_vs_int16_mmx(const i
+ 
+ 
+ /* FLAC specific */
+-void ff_flac_compute_autocorr_sse2(const int32_t *data, int len, int lag,
+-                                   double *autoc);
++attribute_hidden void ff_flac_compute_autocorr_sse2(const int32_t *data,
++                                                    int len, int lag,
++                                                    double *autoc);
+ 
+ 
+ void dsputilenc_init_mmx(DSPContext* c, AVCodecContext *avctx)
+--- a/libavcodec/i386/flacdsp_mmx.c
++++ b/libavcodec/i386/flacdsp_mmx.c
+@@ -65,8 +65,9 @@ static void apply_welch_window_sse2(cons
+ #undef WELCH
+ }
+ 
+-void ff_flac_compute_autocorr_sse2(const int32_t *data, int len, int lag,
+-                                   double *autoc)
++attribute_hidden void ff_flac_compute_autocorr_sse2(const int32_t *data,
++                                                    int len, int lag,
++                                                    double *autoc)
+ {
+     double tmp[len + lag + 2];
+     double *data1 = tmp + lag;
+--- a/libavcodec/i386/idct_xvid.h
++++ b/libavcodec/i386/idct_xvid.h
+@@ -28,10 +28,14 @@
+ 
+ #include <stdint.h>
+ 
++START_HIDDEN
++
+ void ff_idct_xvid_mmx(short *block);
+ void ff_idct_xvid_mmx2(short *block);
+ void ff_idct_xvid_sse2(short *block);
+ void ff_idct_xvid_sse2_put(uint8_t *dest, int line_size, short *block);
+ void ff_idct_xvid_sse2_add(uint8_t *dest, int line_size, short *block);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_I386_IDCT_XVID_H */
+--- a/libavcodec/i386/mpegvideo_mmx.c
++++ b/libavcodec/i386/mpegvideo_mmx.c
+@@ -28,7 +28,7 @@
+ #include "libavcodec/mpegvideo.h"
+ #include "dsputil_mmx.h"
+ 
+-extern uint16_t inv_zigzag_direct16[64];
++extern attribute_hidden uint16_t inv_zigzag_direct16[64];
+ 
+ 
+ static void dct_unquantize_h263_intra_mmx(MpegEncContext *s,
+--- a/libavcodec/i386/vp3dsp_mmx.h
++++ b/libavcodec/i386/vp3dsp_mmx.h
+@@ -25,6 +25,8 @@
+ #include <stdint.h>
+ #include "libavcodec/dsputil.h"
+ 
++START_HIDDEN
++
+ void ff_vp3_idct_mmx(int16_t *data);
+ void ff_vp3_idct_put_mmx(uint8_t *dest, int line_size, DCTELEM *block);
+ void ff_vp3_idct_add_mmx(uint8_t *dest, int line_size, DCTELEM *block);
+@@ -32,4 +34,6 @@ void ff_vp3_idct_add_mmx(uint8_t *dest, 
+ void ff_vp3_v_loop_filter_mmx2(uint8_t *src, int stride, int *bounding_values);
+ void ff_vp3_h_loop_filter_mmx2(uint8_t *src, int stride, int *bounding_values);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_I386_VP3DSP_MMX_H */
+--- a/libavcodec/i386/vp3dsp_sse2.h
++++ b/libavcodec/i386/vp3dsp_sse2.h
+@@ -24,8 +24,12 @@
+ 
+ #include "libavcodec/dsputil.h"
+ 
++START_HIDDEN
++
+ void ff_vp3_idct_sse2(int16_t *input_data);
+ void ff_vp3_idct_put_sse2(uint8_t *dest, int line_size, DCTELEM *block);
+ void ff_vp3_idct_add_sse2(uint8_t *dest, int line_size, DCTELEM *block);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_I386_VP3DSP_SSE2_H */
+--- a/libavcodec/intrax8.h
++++ b/libavcodec/intrax8.h
+@@ -22,6 +22,8 @@
+ #include "bitstream.h"
+ #include "mpegvideo.h"
+ 
++START_HIDDEN
++
+ typedef struct{
+     VLC * j_ac_vlc[4];//they point to the static j_mb_vlc
+     VLC * j_orient_vlc;
+@@ -54,4 +56,6 @@ void ff_intrax8_common_init(IntraX8Conte
+ void ff_intrax8_common_end(IntraX8Context * w);
+ int  ff_intrax8_decode_picture(IntraX8Context * w, int quant, int halfpq);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_INTRAX8_H */
+--- a/libavcodec/jpegls.h
++++ b/libavcodec/jpegls.h
+@@ -30,6 +30,8 @@
+ 
+ #include "avcodec.h"
+ 
++START_HIDDEN
++
+ typedef struct JpeglsContext{
+     AVCodecContext *avctx;
+     AVFrame picture;
+@@ -108,4 +110,6 @@ static inline int ff_jpegls_update_state
+ #define R(a, i   ) (bits == 8 ?  ((uint8_t*)(a))[i]    :  ((uint16_t*)(a))[i]  )
+ #define W(a, i, v) (bits == 8 ? (((uint8_t*)(a))[i]=v) : (((uint16_t*)(a))[i]=v))
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_JPEGLS_H */
+--- a/libavcodec/jpeglsdec.h
++++ b/libavcodec/jpeglsdec.h
+@@ -31,6 +31,8 @@
+ #include "mjpeg.h"
+ #include "mjpegdec.h"
+ 
++START_HIDDEN
++
+ /**
+  * Decode LSE block with initialization parameters
+  */
+@@ -38,4 +40,6 @@ int ff_jpegls_decode_lse(MJpegDecodeCont
+ 
+ int ff_jpegls_decode_picture(MJpegDecodeContext *s, int near, int point_transform, int ilv);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_JPEGLSDEC_H */
+--- a/libavcodec/lzw.h
++++ b/libavcodec/lzw.h
+@@ -32,6 +32,8 @@
+ 
+ #include "bitstream.h"
+ 
++START_HIDDEN
++
+ enum FF_LZW_MODES{
+     FF_LZW_GIF,
+     FF_LZW_TIFF
+@@ -56,4 +58,6 @@ void ff_lzw_encode_init(struct LZWEncode
+ int ff_lzw_encode(struct LZWEncodeState * s, const uint8_t * inbuf, int insize);
+ int ff_lzw_encode_flush(struct LZWEncodeState * s);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_LZW_H */
+--- a/libavcodec/mjpeg.h
++++ b/libavcodec/mjpeg.h
+@@ -37,6 +37,8 @@
+ #include "bitstream.h"
+ 
+ 
++START_HIDDEN
++
+ /* JPEG marker codes */
+ typedef enum {
+     /* start of frame */
+@@ -152,4 +154,6 @@ void ff_mjpeg_build_huffman_codes(uint8_
+                                   const uint8_t *bits_table,
+                                   const uint8_t *val_table);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MJPEG_H */
+--- a/libavcodec/mjpegdec.h
++++ b/libavcodec/mjpegdec.h
+@@ -33,6 +33,8 @@
+ #include "bitstream.h"
+ #include "dsputil.h"
+ 
++START_HIDDEN
++
+ #define MAX_COMPONENTS 4
+ 
+ typedef struct MJpegDecodeContext {
+@@ -108,4 +110,6 @@ int ff_mjpeg_decode_dht(MJpegDecodeConte
+ int ff_mjpeg_decode_sof(MJpegDecodeContext *s);
+ int ff_mjpeg_decode_sos(MJpegDecodeContext *s);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MJPEGDEC_H */
+--- a/libavcodec/mjpegenc.h
++++ b/libavcodec/mjpegenc.h
+@@ -36,6 +36,8 @@
+ #include "dsputil.h"
+ #include "mpegvideo.h"
+ 
++START_HIDDEN
++
+ typedef struct MJpegContext {
+     uint8_t huff_size_dc_luminance[12]; //FIXME use array [3] instead of lumi / chrom, for easier addressing
+     uint16_t huff_code_dc_luminance[12];
+@@ -57,4 +59,6 @@ void ff_mjpeg_encode_dc(MpegEncContext *
+                         uint8_t *huff_size, uint16_t *huff_code);
+ void ff_mjpeg_encode_mb(MpegEncContext *s, DCTELEM block[6][64]);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MJPEGENC_H */
+--- a/libavcodec/mpeg12.h
++++ b/libavcodec/mpeg12.h
+@@ -24,6 +24,8 @@
+ 
+ #include "mpegvideo.h"
+ 
++START_HIDDEN
++
+ #define DC_VLC_BITS 9
+ #define TEX_VLC_BITS 9
+ 
+@@ -56,4 +58,6 @@ static inline int decode_dc(GetBitContex
+     return diff;
+ }
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MPEG12_H */
+--- a/libavcodec/mpeg12data.h
++++ b/libavcodec/mpeg12data.h
+@@ -32,6 +32,8 @@
+ #include "libavutil/rational.h"
+ #include "rl.h"
+ 
++START_HIDDEN
++
+ extern const uint16_t ff_mpeg1_default_intra_matrix[64];
+ extern const uint16_t ff_mpeg1_default_non_intra_matrix[64];
+ 
+@@ -48,9 +50,11 @@ extern const uint8_t ff_mpeg12_mbPatTabl
+ 
+ extern const uint8_t ff_mpeg12_mbMotionVectorTable[17][2];
+ 
+-extern const AVRational ff_frame_rate_tab[];
++extern attribute_visible const AVRational ff_frame_rate_tab[];
+ 
+ extern const float ff_mpeg1_aspect[16];
+ extern const AVRational ff_mpeg2_aspect[16];
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MPEG12DATA_H */
+--- a/libavcodec/mpeg4audio.h
++++ b/libavcodec/mpeg4audio.h
+@@ -24,6 +24,8 @@
+ 
+ #include <stdint.h>
+ 
++START_HIDDEN
++
+ typedef struct {
+     int object_type;
+     int sampling_index;
+@@ -35,8 +37,8 @@ typedef struct {
+     int ext_sample_rate;
+ } MPEG4AudioConfig;
+ 
+-extern const int ff_mpeg4audio_sample_rates[16];
+-extern const uint8_t ff_mpeg4audio_channels[8];
++extern attribute_visible const int ff_mpeg4audio_sample_rates[16];
++extern attribute_visible const uint8_t ff_mpeg4audio_channels[8];
+ /**
+  * Parse MPEG-4 systems extradata to retrieve audio configuration.
+  * @param[in] c        MPEG4AudioConfig structure to fill.
+@@ -44,6 +46,8 @@ extern const uint8_t ff_mpeg4audio_chann
+  * @param[in] buf_size Extradata size.
+  * @return On error -1 is returned, on success AudioSpecificConfig bit index in extradata.
+  */
+-int ff_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf, int buf_size);
++attribute_visible int ff_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf, int buf_size);
++
++END_HIDDEN
+ 
+ #endif /* AVCODEC_MPEG4AUDIO_H */
+--- a/libavcodec/mpeg4data.h
++++ b/libavcodec/mpeg4data.h
+@@ -31,6 +31,8 @@
+ #include <stdint.h>
+ #include "mpegvideo.h"
+ 
++START_HIDDEN
++
+ // shapes
+ #define RECT_SHAPE       0
+ #define BIN_SHAPE        1
+@@ -429,4 +431,6 @@ static const uint8_t mpeg4_dc_threshold[
+     99, 13, 15, 17, 19, 21, 23, 0
+ };
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MPEG4DATA_H */
+--- a/libavcodec/mpegaudio.h
++++ b/libavcodec/mpegaudio.h
+@@ -30,6 +30,8 @@
+ #include "bitstream.h"
+ #include "dsputil.h"
+ 
++START_HIDDEN
++
+ /* max frame size, in samples */
+ #define MPA_FRAME_SIZE 1152
+ 
+@@ -128,7 +130,7 @@ typedef struct HuffTable {
+ } HuffTable;
+ 
+ int ff_mpa_l2_select_table(int bitrate, int nb_channels, int freq, int lsf);
+-int ff_mpa_decode_header(AVCodecContext *avctx, uint32_t head, int *sample_rate);
++attribute_visible int ff_mpa_decode_header(AVCodecContext *avctx, uint32_t head, int *sample_rate);
+ void ff_mpa_synth_init(MPA_INT *window);
+ void ff_mpa_synth_filter(MPA_INT *synth_buf_ptr, int *synth_buf_offset,
+                          MPA_INT *window, int *dither_state,
+@@ -152,4 +154,6 @@ static inline int ff_mpa_check_header(ui
+     return 0;
+ }
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MPEGAUDIO_H */
+--- a/libavcodec/mpegaudiodata.h
++++ b/libavcodec/mpegaudiodata.h
+@@ -29,15 +29,19 @@
+ 
+ #include "libavutil/common.h"
+ 
++START_HIDDEN
++
+ #define MODE_EXT_MS_STEREO 2
+ #define MODE_EXT_I_STEREO  1
+ 
+-extern const uint16_t ff_mpa_bitrate_tab[2][3][15];
+-extern const uint16_t ff_mpa_freq_tab[3];
++extern attribute_visible const uint16_t ff_mpa_bitrate_tab[2][3][15];
++extern attribute_visible const uint16_t ff_mpa_freq_tab[3];
+ extern const int32_t ff_mpa_enwindow[257];
+ extern const int ff_mpa_sblimit_table[5];
+ extern const int ff_mpa_quant_steps[17];
+ extern const int ff_mpa_quant_bits[17];
+ extern const unsigned char * const ff_mpa_alloc_tables[5];
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MPEGAUDIODATA_H */
+--- a/libavcodec/mpegvideo.h
++++ b/libavcodec/mpegvideo.h
+@@ -35,6 +35,8 @@
+ #include "mpeg12data.h"
+ #include "rl.h"
+ 
++START_HIDDEN
++
+ #define FRAME_SKIPPED 100 ///< return value for header parsers if frame is not coded
+ 
+ enum OutputFormat {
+@@ -690,7 +692,7 @@ void ff_write_quant_matrix(PutBitContext
+ int ff_find_unused_picture(MpegEncContext *s, int shared);
+ void ff_denoise_dct(MpegEncContext *s, DCTELEM *block);
+ void ff_update_duplicate_context(MpegEncContext *dst, MpegEncContext *src);
+-const uint8_t *ff_find_start_code(const uint8_t *p, const uint8_t *end, uint32_t *state);
++attribute_visible const uint8_t *ff_find_start_code(const uint8_t *p, const uint8_t *end, uint32_t *state);
+ 
+ void ff_er_frame_start(MpegEncContext *s);
+ void ff_er_frame_end(MpegEncContext *s);
+@@ -865,5 +867,7 @@ void ff_wmv2_encode_mb(MpegEncContext * 
+                        DCTELEM block[6][64],
+                        int motion_x, int motion_y);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MPEGVIDEO_H */
+ 
+--- a/libavcodec/mpegvideo_common.h
++++ b/libavcodec/mpegvideo_common.h
+@@ -38,6 +38,8 @@
+ #include "faandct.h"
+ #include <limits.h>
+ 
++START_HIDDEN
++
+ int dct_quantize_c(MpegEncContext *s, DCTELEM *block, int n, int qscale, int *overflow);
+ int dct_quantize_trellis_c(MpegEncContext *s, DCTELEM *block, int n, int qscale, int *overflow);
+ void  denoise_dct_c(MpegEncContext *s, DCTELEM *block);
+@@ -897,4 +899,7 @@ static inline void MPV_motion(MpegEncCon
+         MPV_motion_internal(s, dest_y, dest_cb, dest_cr, dir,
+                             ref_picture, pix_op, qpix_op, 0);
+ }
++
++END_HIDDEN
++
+ #endif /* AVCODEC_MPEGVIDEO_COMMON_H */
+--- a/libavcodec/msmpeg4.c
++++ b/libavcodec/msmpeg4.c
+@@ -70,7 +70,7 @@ static int msmpeg4v12_decode_mb(MpegEncC
+ static int msmpeg4v34_decode_mb(MpegEncContext *s, DCTELEM block[6][64]);
+ 
+ /* vc1 externs */
+-extern const uint8_t wmv3_dc_scale_table[32];
++extern attribute_hidden const uint8_t wmv3_dc_scale_table[32];
+ 
+ #ifdef DEBUG
+ int intra_count = 0;
+--- a/libavcodec/msmpeg4.h
++++ b/libavcodec/msmpeg4.h
+@@ -31,6 +31,8 @@
+ #include "dsputil.h"
+ #include "mpegvideo.h"
+ 
++START_HIDDEN
++
+ #define INTER_INTRA_VLC_BITS 3
+ #define MB_NON_INTRA_VLC_BITS 9
+ #define MB_INTRA_VLC_BITS 9
+@@ -62,4 +64,6 @@ int ff_wmv2_decode_mb(MpegEncContext *s,
+ #define ENABLE_WMV_DECODER (ENABLE_WMV1_DECODER || ENABLE_WMV2_DECODER)
+ #define ENABLE_WMV_ENCODER (ENABLE_WMV1_ENCODER || ENABLE_WMV2_ENCODER)
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MSMPEG4_H */
+--- a/libavcodec/msmpeg4data.c
++++ b/libavcodec/msmpeg4data.c
+@@ -592,13 +592,13 @@ static const int8_t table4_run[168] = {
+  29, 30, 31, 32, 33, 34, 35, 36,
+ };
+ 
+-extern const uint16_t inter_vlc[103][2];
+-extern const int8_t inter_level[102];
+-extern const int8_t inter_run[102];
+-
+-extern const uint16_t intra_vlc[103][2];
+-extern const int8_t intra_level[102];
+-extern const int8_t intra_run[102];
++extern attribute_hidden const uint16_t inter_vlc[103][2];
++extern attribute_hidden const int8_t inter_level[102];
++extern attribute_hidden const int8_t inter_run[102];
++
++extern attribute_hidden const uint16_t intra_vlc[103][2];
++extern attribute_hidden const int8_t intra_level[102];
++extern attribute_hidden const int8_t intra_run[102];
+ 
+ RLTable rl_table[NB_RL_TABLES] = {
+     /* intra luminance tables */
+--- a/libavcodec/msmpeg4data.h
++++ b/libavcodec/msmpeg4data.h
+@@ -34,6 +34,8 @@
+ #include "bitstream.h"
+ #include "rl.h"
+ 
++START_HIDDEN
++
+ /* motion vector table */
+ typedef struct MVTable {
+     int n;
+@@ -96,4 +98,6 @@ extern const uint32_t (* const wmv2_inte
+ extern const uint8_t wmv2_scantableA[64];
+ extern const uint8_t wmv2_scantableB[64];
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_MSMPEG4DATA_H */
+--- a/libavcodec/parser.h
++++ b/libavcodec/parser.h
+@@ -25,6 +25,8 @@
+ 
+ #include "avcodec.h"
+ 
++START_HIDDEN
++
+ typedef struct ParseContext{
+     uint8_t *buffer;
+     int index;
+@@ -67,4 +69,6 @@ void ff_parse1_close(AVCodecParserContex
+  */
+ void ff_fetch_timestamp(AVCodecParserContext *s, int off, int remove);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_PARSER_H */
+--- a/libavcodec/png.h
++++ b/libavcodec/png.h
+@@ -24,6 +24,8 @@
+ 
+ #include <stdint.h>
+ 
++START_HIDDEN
++
+ #define PNG_COLOR_MASK_PALETTE    1
+ #define PNG_COLOR_MASK_COLOR      2
+ #define PNG_COLOR_MASK_ALPHA      4
+@@ -74,4 +76,6 @@ extern int ff_png_get_nb_channels(int co
+ /* compute the row size of an interleaved pass */
+ extern int ff_png_pass_row_size(int pass, int bits_per_pixel, int width);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_PNG_H */
+--- a/libavcodec/rangecoder.h
++++ b/libavcodec/rangecoder.h
+@@ -31,6 +31,8 @@
+ #include <assert.h>
+ #include "libavutil/common.h"
+ 
++START_HIDDEN
++
+ typedef struct RangeCoder{
+     int low;
+     int range;
+@@ -138,4 +140,6 @@ static inline int get_rac(RangeCoder *c,
+ #endif
+ }
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_RANGECODER_H */
+--- a/libavcodec/ratecontrol.h
++++ b/libavcodec/ratecontrol.h
+@@ -32,6 +32,8 @@
+ #include <stdint.h>
+ #include "eval.h"
+ 
++START_HIDDEN
++
+ typedef struct Predictor{
+     double coeff;
+     double count;
+@@ -101,5 +103,6 @@ int ff_xvid_rate_control_init(struct Mpe
+ void ff_xvid_rate_control_uninit(struct MpegEncContext *s);
+ float ff_xvid_rate_estimate_qscale(struct MpegEncContext *s, int dry_run);
+ 
+-#endif /* AVCODEC_RATECONTROL_H */
++END_HIDDEN
+ 
++#endif /* AVCODEC_RATECONTROL_H */
+--- a/libavcodec/roqvideo.h
++++ b/libavcodec/roqvideo.h
+@@ -26,6 +26,8 @@
+ #include "avcodec.h"
+ #include "dsputil.h"
+ 
++START_HIDDEN
++
+ typedef struct {
+     unsigned char y[4];
+     unsigned char u, v;
+@@ -89,4 +91,6 @@ void ff_apply_motion_4x4(RoqContext *ri,
+ 
+ void ff_apply_motion_8x8(RoqContext *ri, int x, int y, int deltax, int deltay);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_ROQVIDEO_H */
+--- a/libavcodec/simple_idct.h
++++ b/libavcodec/simple_idct.h
+@@ -31,6 +31,8 @@
+ #include <stdint.h>
+ #include "dsputil.h"
+ 
++START_HIDDEN
++
+ void ff_simple_idct_put(uint8_t *dest, int line_size, DCTELEM *block);
+ void ff_simple_idct_add(uint8_t *dest, int line_size, DCTELEM *block);
+ void ff_simple_idct_mmx(int16_t *block);
+@@ -44,4 +46,6 @@ void ff_simple_idct84_add(uint8_t *dest,
+ void ff_simple_idct48_add(uint8_t *dest, int line_size, DCTELEM *block);
+ void ff_simple_idct44_add(uint8_t *dest, int line_size, DCTELEM *block);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_SIMPLE_IDCT_H */
+--- a/libavcodec/snow.h
++++ b/libavcodec/snow.h
+@@ -24,6 +24,8 @@
+ 
+ #include "dsputil.h"
+ 
++START_HIDDEN
++
+ #define MID_STATE 128
+ 
+ #define MAX_DECOMPOSITIONS 8
+@@ -171,4 +173,6 @@ static av_always_inline void snow_horizo
+         }
+ }
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_SNOW_H */
+--- a/libavcodec/svq1.h
++++ b/libavcodec/svq1.h
+@@ -37,6 +37,10 @@
+ 
+ #include <stdint.h>
+ 
++#include "libavutil/common.h"
++
++START_HIDDEN
++
+ #define SVQ1_BLOCK_SKIP         0
+ #define SVQ1_BLOCK_INTER        1
+ #define SVQ1_BLOCK_INTER_4V     2
+@@ -61,4 +65,6 @@ extern const uint16_t ff_svq1_inter_mean
+ 
+ extern const svq1_frame_size_t ff_svq1_frame_size_table[8];
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_SVQ1_H */
+--- a/libavcodec/vc1.h
++++ b/libavcodec/vc1.h
+@@ -27,6 +27,8 @@
+ #include "mpegvideo.h"
+ #include "intrax8.h"
+ 
++START_HIDDEN
++
+ /** Markers used in VC-1 AP frame data */
+ //@{
+ enum VC1Code{
+@@ -308,4 +310,6 @@ typedef struct VC1Context{
+     uint32_t *cbp_base, *cbp;
+ } VC1Context;
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_VC1_H */
+--- a/libavcodec/vc1data.h
++++ b/libavcodec/vc1data.h
+@@ -32,6 +32,8 @@
+ #include "libavutil/rational.h"
+ #include "bitstream.h"
+ 
++START_HIDDEN
++
+ /** Table for conversion between TTBLK and TTMB */
+ extern const int ff_vc1_ttblk_to_tt[3][8];
+ 
+@@ -154,4 +156,6 @@ extern const int8_t ff_vc1_adv_interlace
+ /* DQScale as specified in 8.1.3.9 - almost identical to 0x40000/i */
+ extern const int32_t ff_vc1_dqscale[63];
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_VC1DATA_H */
+--- a/libavcodec/vorbis.h
++++ b/libavcodec/vorbis.h
+@@ -23,6 +23,8 @@
+ 
+ #include "avcodec.h"
+ 
++START_HIDDEN
++
+ extern const float ff_vorbis_floor1_inverse_db_table[256];
+ extern const float * const ff_vorbis_vwin[8];
+ 
+@@ -40,4 +42,6 @@ void ff_vorbis_floor1_render_list(floor1
+ 
+ #define ilog(i) av_log2(2*(i))
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_VORBIS_H */
+--- a/libavcodec/vorbis_enc_data.h
++++ b/libavcodec/vorbis_enc_data.h
+@@ -23,6 +23,8 @@
+ 
+ #include <stdint.h>
+ 
++START_HIDDEN
++
+ static const uint8_t codebook0[] = {
+    2, 10,  8, 14,  7, 12, 11, 14,  1,  5,  3,  7,  4,  9,  7,
+   13,
+@@ -502,4 +504,6 @@ static const struct {
+     { 3, 2, 3, (const int[]){ -1, 12, 13, 14 } },
+ };
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_VORBIS_ENC_DATA_H */
+--- a/libavcodec/vp56.h
++++ b/libavcodec/vp56.h
+@@ -30,6 +30,8 @@
+ #include "bytestream.h"
+ 
+ 
++START_HIDDEN
++
+ typedef struct vp56_context vp56_context_t;
+ typedef struct vp56_mv vp56_mv_t;
+ 
+@@ -265,4 +267,6 @@ static inline int vp56_rac_get_tree(vp56
+     return -tree->val;
+ }
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_VP56_H */
+--- a/libavcodec/vp56data.h
++++ b/libavcodec/vp56data.h
+@@ -26,6 +26,8 @@
+ 
+ #include "libavutil/common.h"
+ 
++START_HIDDEN
++
+ typedef enum {
+     VP56_FRAME_NONE     =-1,
+     VP56_FRAME_CURRENT  = 0,
+@@ -249,4 +251,6 @@ static const int8_t vp56_candidate_predi
+     {  2, -2 },
+ };
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_VP56DATA_H */
+--- a/libavcodec/wma.h
++++ b/libavcodec/wma.h
+@@ -25,6 +25,8 @@
+ #include "bitstream.h"
+ #include "dsputil.h"
+ 
++START_HIDDEN
++
+ /* size of blocks */
+ #define BLOCK_MIN_BITS 7
+ #define BLOCK_MAX_BITS 11
+@@ -146,4 +148,6 @@ int ff_wma_init(AVCodecContext * avctx, 
+ int ff_wma_total_gain_to_bits(int total_gain);
+ int ff_wma_end(AVCodecContext *avctx);
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_WMA_H */
+--- a/libavcodec/wmadata.h
++++ b/libavcodec/wmadata.h
+@@ -30,6 +30,8 @@
+ #include <stdint.h>
+ #include "wma.h"
+ 
++START_HIDDEN
++
+ static const uint16_t wma_critical_freqs[25] = {
+     100,   200,  300, 400,   510,  630,  770,    920,
+     1080, 1270, 1480, 1720, 2000, 2320, 2700,   3150,
+@@ -1438,4 +1440,6 @@ static const CoefVLCTable coef_vlcs[6] =
+     },
+ };
+ 
++END_HIDDEN
++
+ #endif /* AVCODEC_WMADATA_H */
+--- a/libavutil/internal.h
++++ b/libavutil/internal.h
+@@ -50,6 +50,30 @@
+ #endif
+ #endif
+ 
++#ifndef attribute_hidden
++#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
++#    define attribute_hidden __attribute__((visibility("hidden")))
++#else
++#    define attribute_hidden
++#endif
++#endif
++
++#ifndef attribute_visible
++#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
++#    define attribute_visible __attribute__((visibility("default")))
++#else
++#    define attribute_visible
++#endif
++#endif
++
++#ifdef CONFIG_SYMBOL_HIDING
++#    define START_HIDDEN _Pragma("GCC visibility push(hidden)")
++#    define END_HIDDEN   _Pragma("GCC visibility pop")
++#else
++#    define START_HIDDEN
++#    define END_HIDDEN
++#endif
++
+ #ifndef INT16_MIN
+ #define INT16_MIN       (-0x7fff-1)
+ #endif
+@@ -124,7 +148,7 @@
+ 
+ /* math */
+ 
+-extern const uint32_t ff_inverse[256];
++extern attribute_hidden const uint32_t ff_inverse[256];
+ 
+ #if defined(ARCH_X86)
+ #    define FASTDIV(a,b) \
