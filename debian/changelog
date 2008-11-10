@@ -1,3 +1,14 @@
+ffmpeg-debian (3:0.svn20081108-1ubuntu1) jaunty; urgency=low
+
+  * merge from debian.
+  * keep myself in the maintainer field. If you are touching this or the
+    'ffmpeg' package in multiverse, please get in touch with me. Both
+    source packages come from the same packaging branch.
+  * drop dependency on faad.
+  * import patches from old packaging to dlopen libfaad at runtime.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 10 Nov 2008 07:31:16 +0100
+
 ffmpeg-debian (3:0.svn20081108-1) experimental; urgency=low
 
   * upstream svn snapshot (svn revision 15786, libswscale revision 27900).

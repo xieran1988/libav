@@ -1,0 +1,17 @@
+Adjust sonames on libfaad
+
+In debian and ubuntu, the sonames used by upstream are too tight,
+because they are only provided by the development patches. Using tighter
+names enables their use if only the library packages are installed.
+
+--- a/libavcodec/libfaad.c
++++ b/libavcodec/libfaad.c
+@@ -42,7 +42,7 @@
+ 
+ #ifdef CONFIG_LIBFAADBIN
+ #include <dlfcn.h>
+-static const char* const libfaadname = "libfaad.so";
++static const char* const libfaadname = "libfaad.so.0";
+ #else
+ #define dlopen(a)
+ #define dlclose(a)
