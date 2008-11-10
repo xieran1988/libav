@@ -1,3 +1,11 @@
+ffmpeg-debian (3:0.svn20081108-1ubuntu2) jaunty; urgency=low
+
+  * drop the patch to dlopen faad at runtime for now. it needs more
+    polishing, and we can have that functionality easier with the 'ffmpeg'
+    source package that will appear in multiverse.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 10 Nov 2008 10:31:47 +0100
+
 ffmpeg-debian (3:0.svn20081108-1ubuntu1) jaunty; urgency=low
 
   * merge from debian.

@@ -1,4 +1,2 @@
 020_visibility_patch
-050_disable_faad_test.diff
-051_dlopen_correct_libfaad_so.diff
 900_doxyfile
