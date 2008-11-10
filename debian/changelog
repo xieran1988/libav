@@ -1,3 +1,9 @@
+ffmpeg-debian (3:0.svn20081108-1ubuntu3) jaunty; urgency=low
+
+  * really disable faad support completely.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 10 Nov 2008 10:58:01 +0100
+
 ffmpeg-debian (3:0.svn20081108-1ubuntu2) jaunty; urgency=low
 
   * drop the patch to dlopen faad at runtime for now. it needs more

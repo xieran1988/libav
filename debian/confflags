@@ -23,7 +23,6 @@ endif
 
 # Configuration flags causing the libs to be GPL tainted
 gpl_confflags += --enable-gpl
-gpl_confflags += --enable-libfaad
 gpl_confflags += --enable-postproc
 gpl_confflags += --enable-swscale
 gpl_confflags += --enable-x11grab
