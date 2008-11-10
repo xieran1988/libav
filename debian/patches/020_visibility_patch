@@ -339,7 +339,7 @@ It is not yet applied to ffmpeg, but it is expected that this happens soon.
  
  /* pngdec.c */
  void ff_add_png_paeth_prediction(uint8_t *dst, uint8_t *src, uint8_t *top, int w, int bpp);
-@@ -82,7 +82,7 @@ const uint8_t ff_zigzag248_direct[64] = 
+@@ -85,7 +85,7 @@ const uint8_t ff_zigzag248_direct[64] = 
  };
  
  /* not permutated inverse zigzag_direct + 1 for MMX quantizer */
@@ -348,7 +348,7 @@ It is not yet applied to ffmpeg, but it is expected that this happens soon.
  
  const uint8_t ff_alternate_horizontal_scan[64] = {
      0,  1,   2,  3,  8,  9, 16, 17,
-@@ -107,7 +107,7 @@ const uint8_t ff_alternate_vertical_scan
+@@ -110,7 +110,7 @@ const uint8_t ff_alternate_vertical_scan
  };
  
  /* a*inverse[b]>>32 == a/b for all 0<=a<=65536 && 2<=b<=255 */
@@ -377,7 +377,7 @@ It is not yet applied to ffmpeg, but it is expected that this happens soon.
  
  /* VP3 DSP functions */
  void ff_vp3_idct_c(DCTELEM *block/* align 16*/);
-@@ -830,4 +832,6 @@ static inline void copy_block17(uint8_t 
+@@ -817,4 +819,6 @@ static inline void copy_block17(uint8_t 
      }
  }
  
@@ -514,8 +514,8 @@ It is not yet applied to ffmpeg, but it is expected that this happens soon.
  #define interlaced_dct interlaced_dct_is_a_bad_name
  #define mb_intra mb_intra_is_not_initialized_see_mb_type
  
-@@ -462,4 +464,6 @@ typedef struct H264Context{
-     uint32_t svq3_watermark_key;
+@@ -488,4 +490,6 @@ typedef struct H264Context{
+     SEI_PicStructType sei_pic_struct;
  }H264Context;
  
 +END_HIDDEN
@@ -961,7 +961,7 @@ It is not yet applied to ffmpeg, but it is expected that this happens soon.
  #define FRAME_SKIPPED 100 ///< return value for header parsers if frame is not coded
  
  enum OutputFormat {
-@@ -690,7 +692,7 @@ void ff_write_quant_matrix(PutBitContext
+@@ -691,7 +693,7 @@ void ff_write_quant_matrix(PutBitContext
  int ff_find_unused_picture(MpegEncContext *s, int shared);
  void ff_denoise_dct(MpegEncContext *s, DCTELEM *block);
  void ff_update_duplicate_context(MpegEncContext *dst, MpegEncContext *src);
@@ -970,7 +970,7 @@ It is not yet applied to ffmpeg, but it is expected that this happens soon.
  
  void ff_er_frame_start(MpegEncContext *s);
  void ff_er_frame_end(MpegEncContext *s);
-@@ -865,5 +867,7 @@ void ff_wmv2_encode_mb(MpegEncContext * 
+@@ -866,5 +868,7 @@ void ff_wmv2_encode_mb(MpegEncContext * 
                         DCTELEM block[6][64],
                         int motion_x, int motion_y);
  

@@ -1,3 +1,12 @@
+ffmpeg-debian (3:0.svn20081115-1) experimental; urgency=low
+
+  * new upstream svn snapshot (svn revision 15824, libswscale revision 27910)
+  * bump standards version to version 3.8.0, no changes needed
+  * Adjust pkg-files to no longer put unnecessary dependencies in the generated
+    .pc files. Closes: #504220
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 10 Nov 2008 21:37:16 +0100
+
 ffmpeg-debian (3:0.svn20081108-1) experimental; urgency=low
 
   * upstream svn snapshot (svn revision 15786, libswscale revision 27900).

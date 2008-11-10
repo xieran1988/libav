@@ -31,7 +31,7 @@ gpl_confflags += --enable-x11grab
 # Common configuration flags; comment out following line for LGPL versions of
 # the libraries
 confflags += $(gpl_confflags)
-confflags += --extra-version='svn15761+$(DEB_VERSION)'
+confflags += --extra-version='svn15824+$(DEB_VERSION)'
 confflags += --prefix=/usr
 confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf
