@@ -711,6 +711,68 @@ static void ac3_upmix_delay(AC3DecodeContext *s)
 }
 
 /**
+ * Decode band structure for coupling, spectral extension, or enhanced coupling.
+ * @param[in] gbc bit reader context
+ * @param[in] blk block number
+ * @param[in] eac3 flag to indicate E-AC-3
+ * @param[in] ecpl flag to indicate enhanced coupling
+ * @param[in] start_subband subband number for start of range
+ * @param[in] end_subband subband number for end of range
+ * @param[in] default_band_struct default band structure table
+ * @param[out] band_struct decoded band structure
+ * @param[out] num_subbands number of subbands (optionally NULL)
+ * @param[out] num_bands number of bands (optionally NULL)
+ * @param[out] band_sizes array containing the number of bins in each band (optionally NULL)
+ */
+static void decode_band_structure(GetBitContext *gbc, int blk, int eac3,
+                                  int ecpl, int start_subband, int end_subband,
+                                  const uint8_t *default_band_struct,
+                                  uint8_t *band_struct, int *num_subbands,
+                                  int *num_bands, int *band_sizes)
+{
+    int subbnd, bnd, n_subbands, n_bands, bnd_sz[22];
+
+    n_subbands = end_subband - start_subband;
+
+    /* decode band structure from bitstream or use default */
+    if (!eac3 || get_bits1(gbc)) {
+        for (subbnd = 0; subbnd < n_subbands - 1; subbnd++) {
+            band_struct[subbnd] = get_bits1(gbc);
+        }
+    } else if (!blk) {
+        memcpy(band_struct,
+               &default_band_struct[start_subband+1],
+               n_subbands-1);
+    }
+    band_struct[n_subbands-1] = 0;
+
+    /* calculate number of bands and band sizes based on band structure.
+       note that the first 4 subbands in enhanced coupling span only 6 bins
+       instead of 12. */
+    if (num_bands || band_sizes ) {
+        n_bands = n_subbands;
+        bnd_sz[0] = ecpl ? 6 : 12;
+        for (bnd = 0, subbnd = 1; subbnd < n_subbands; subbnd++) {
+            int subbnd_size = (ecpl && subbnd < 4) ? 6 : 12;
+            if (band_struct[subbnd-1]) {
+                n_bands--;
+                bnd_sz[bnd] += subbnd_size;
+            } else {
+                bnd_sz[++bnd] = subbnd_size;
+            }
+        }
+    }
+
+    /* set optional output params */
+    if (num_subbands)
+        *num_subbands = n_subbands;
+    if (num_bands)
+        *num_bands = n_bands;
+    if (band_sizes)
+        memcpy(band_sizes, bnd_sz, sizeof(int)*n_bands);
+}
+
+/**
  * Decode a single audio block from the AC-3 bitstream.
  */
 static int decode_audio_block(AC3DecodeContext *s, int blk)
@@ -772,7 +834,7 @@ static int decode_audio_block(AC3DecodeContext *s, int blk)
             s->cpl_in_use[blk] = get_bits1(gbc);
         if (s->cpl_in_use[blk]) {
             /* coupling in use */
-            int cpl_begin_freq, cpl_end_freq;
+            int cpl_start_subband, cpl_end_subband;
 
             if (channel_mode < AC3_CHMODE_STEREO) {
                 av_log(s->avctx, AV_LOG_ERROR, "coupling not allowed in mono or dual-mono\n");
@@ -801,32 +863,22 @@ static int decode_audio_block(AC3DecodeContext *s, int blk)
 
             /* coupling frequency range */
             /* TODO: modify coupling end freq if spectral extension is used */
-            cpl_begin_freq = get_bits(gbc, 4);
-            cpl_end_freq = get_bits(gbc, 4);
-            if (3 + cpl_end_freq - cpl_begin_freq < 0) {
-                av_log(s->avctx, AV_LOG_ERROR, "3+cplendf = %d < cplbegf = %d\n", 3+cpl_end_freq, cpl_begin_freq);
+            cpl_start_subband = get_bits(gbc, 4);
+            cpl_end_subband   = get_bits(gbc, 4) + 3;
+            s->num_cpl_subbands = cpl_end_subband - cpl_start_subband;
+            if (s->num_cpl_subbands < 0) {
+                av_log(s->avctx, AV_LOG_ERROR, "invalid coupling range (%d > %d)\n",
+                       cpl_start_subband, cpl_end_subband);
                 return -1;
             }
-            s->num_cpl_bands = s->num_cpl_subbands = 3 + cpl_end_freq - cpl_begin_freq;
-            s->start_freq[CPL_CH] = cpl_begin_freq * 12 + 37;
-            s->end_freq[CPL_CH] = cpl_end_freq * 12 + 73;
+            s->start_freq[CPL_CH] = cpl_start_subband * 12 + 37;
+            s->end_freq[CPL_CH]   = cpl_end_subband   * 12 + 37;
 
-            /* coupling band structure */
-            if (!s->eac3 || get_bits1(gbc)) {
-                for (bnd = 0; bnd < s->num_cpl_subbands - 1; bnd++) {
-                    s->cpl_band_struct[bnd] = get_bits1(gbc);
-                }
-            } else if (!blk) {
-                memcpy(s->cpl_band_struct,
-                       &ff_eac3_default_cpl_band_struct[cpl_begin_freq+1],
-                       s->num_cpl_subbands-1);
-            }
-            s->cpl_band_struct[s->num_cpl_subbands-1] = 0;
-
-            /* calculate number of coupling bands based on band structure */
-            for (bnd = 0; bnd < s->num_cpl_subbands-1; bnd++) {
-                s->num_cpl_bands -= s->cpl_band_struct[bnd];
-            }
+           decode_band_structure(gbc, blk, s->eac3, 0,
+                                 cpl_start_subband, cpl_end_subband,
+                                 ff_eac3_default_cpl_band_struct,
+                                 s->cpl_band_struct, &s->num_cpl_subbands,
+                                 &s->num_cpl_bands, NULL);
         } else {
             /* coupling not in use */
             for (ch = 1; ch <= fbw_channels; ch++) {
@@ -916,7 +968,7 @@ static int decode_audio_block(AC3DecodeContext *s, int blk)
             else {
                 int bandwidth_code = get_bits(gbc, 6);
                 if (bandwidth_code > 60) {
-                    av_log(s->avctx, AV_LOG_ERROR, "bandwidth code = %d > 60", bandwidth_code);
+                    av_log(s->avctx, AV_LOG_ERROR, "bandwidth code = %d > 60\n", bandwidth_code);
                     return -1;
                 }
                 s->end_freq[ch] = bandwidth_code * 3 + 73;

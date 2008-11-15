@@ -722,7 +722,7 @@ static void rv34_mc_2mv(RV34DecContext *r, const int block_type)
 
 static void rv34_mc_2mv_skip(RV34DecContext *r)
 {
-    int i, j, k;
+    int i, j;
     for(j = 0; j < 2; j++)
         for(i = 0; i < 2; i++){
              rv34_mc(r, RV34_MB_P_8x8, i*8, j*8, i+j*r->s.b8_stride, 1, 1, 0, r->rv30,
@@ -1082,21 +1082,23 @@ static int is_mv_diff_gt_3(int16_t (*motion_val)[2], int step)
 static int rv34_set_deblock_coef(RV34DecContext *r)
 {
     MpegEncContext *s = &r->s;
-    int mvmask = 0, i, j;
+    int hmvmask = 0, vmvmask = 0, i, j;
     int midx = s->mb_x * 2 + s->mb_y * 2 * s->b8_stride;
     int16_t (*motion_val)[2] = s->current_picture_ptr->motion_val[0][midx];
-    if(s->pict_type == FF_I_TYPE)
-        return 0;
     for(j = 0; j < 16; j += 8){
         for(i = 0; i < 2; i++){
             if(is_mv_diff_gt_3(motion_val + i, 1))
-                mvmask |= 0x11 << (j + i*2);
+                vmvmask |= 0x11 << (j + i*2);
             if(is_mv_diff_gt_3(motion_val + i, s->b8_stride))
-                mvmask |= 0x03 << (j + i*2);
+                hmvmask |= 0x03 << (j + i*2);
         }
         motion_val += s->b8_stride;
     }
-    return mvmask;
+    if(s->first_slice_line)
+        hmvmask &= ~0x000F;
+    if(!s->mb_x)
+        vmvmask &= ~0x1111;
+    return hmvmask | vmvmask; //XXX: should be stored separately for RV3
 }
 
 static int rv34_decode_macroblock(RV34DecContext *r, int8_t *intra_types)

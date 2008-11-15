@@ -30,6 +30,11 @@
 #include "libavutil/rational.h"
 #include "avcodec.h"
 
+typedef struct DVwork_chunk {
+    uint16_t  buf_offset;
+    uint16_t  mb_coordinates[5];
+} DVwork_chunk;
+
 /*
  * DVprofile is used to express the differences between various
  * DV flavors. For now it's primarily used for differentiating
@@ -47,6 +52,7 @@ typedef struct DVprofile {
     int              height;                /* picture height in pixels */
     int              width;                 /* picture width in pixels */
     AVRational       sar[2];                /* sample aspect ratios for 4:3 and 16:9 */
+    DVwork_chunk    *work_chunks;           /* each thread gets its own chunk of frame to work on */
     const uint16_t  *video_place;           /* positions of all DV macroblocks */
     enum PixelFormat pix_fmt;               /* picture pixel format */
     int              bpm;                   /* blocks per macroblock */
@@ -6159,6 +6165,16 @@ static const uint8_t block_sizes_dv100[8] = {
     80, 80, 80, 80, 80, 80, 64, 64,
 };
 
+static DVwork_chunk work_chunks_dv25pal   [1*12*27];
+static DVwork_chunk work_chunks_dv25pal411[1*12*27];
+static DVwork_chunk work_chunks_dv25ntsc  [1*10*27];
+static DVwork_chunk work_chunks_dv50pal   [2*12*27];
+static DVwork_chunk work_chunks_dv50ntsc  [2*10*27];
+static DVwork_chunk work_chunks_dv100palp [2*12*27];
+static DVwork_chunk work_chunks_dv100ntscp[2*10*27];
+static DVwork_chunk work_chunks_dv100pali [4*12*27];
+static DVwork_chunk work_chunks_dv100ntsci[4*10*27];
+
 static const DVprofile dv_profiles[] = {
     { .dsf = 0,
       .video_stype = 0x0,
@@ -6171,6 +6187,7 @@ static const DVprofile dv_profiles[] = {
       .width = 720,
       .sar = {{10, 11}, {40, 33}},
       .video_place = dv_place_411,
+      .work_chunks = &work_chunks_dv25ntsc[0],
       .pix_fmt = PIX_FMT_YUV411P,
       .bpm = 6,
       .block_sizes = block_sizes_dv2550,
@@ -6190,6 +6207,7 @@ static const DVprofile dv_profiles[] = {
       .width = 720,
       .sar = {{59, 54}, {118, 81}},
       .video_place = dv_place_420,
+      .work_chunks = &work_chunks_dv25pal[0],
       .pix_fmt = PIX_FMT_YUV420P,
       .bpm = 6,
       .block_sizes = block_sizes_dv2550,
@@ -6209,6 +6227,7 @@ static const DVprofile dv_profiles[] = {
       .width = 720,
       .sar = {{59, 54}, {118, 81}},
       .video_place = dv_place_411P,
+      .work_chunks = &work_chunks_dv25pal411[0],
       .pix_fmt = PIX_FMT_YUV411P,
       .bpm = 6,
       .block_sizes = block_sizes_dv2550,
@@ -6228,6 +6247,7 @@ static const DVprofile dv_profiles[] = {
       .width = 720,
       .sar = {{10, 11}, {40, 33}},
       .video_place = dv_place_422_525,
+      .work_chunks = &work_chunks_dv50ntsc[0],
       .pix_fmt = PIX_FMT_YUV422P,
       .bpm = 6,
       .block_sizes = block_sizes_dv2550,
@@ -6247,6 +6267,7 @@ static const DVprofile dv_profiles[] = {
       .width = 720,
       .sar = {{59, 54}, {118, 81}},
       .video_place = dv_place_422_625,
+      .work_chunks = &work_chunks_dv50pal[0],
       .pix_fmt = PIX_FMT_YUV422P,
       .bpm = 6,
       .block_sizes = block_sizes_dv2550,
@@ -6266,6 +6287,7 @@ static const DVprofile dv_profiles[] = {
       .width = 1280,
       .sar = {{1, 1}, {1, 1}},
       .video_place = dv_place_1080i60,
+      .work_chunks = &work_chunks_dv100ntsci[0],
       .pix_fmt = PIX_FMT_YUV422P,
       .bpm = 8,
       .block_sizes = block_sizes_dv100,
@@ -6285,6 +6307,7 @@ static const DVprofile dv_profiles[] = {
       .width = 1440,
       .sar = {{1, 1}, {1, 1}},
       .video_place = dv_place_1080i50,
+      .work_chunks = &work_chunks_dv100pali[0],
       .pix_fmt = PIX_FMT_YUV422P,
       .bpm = 8,
       .block_sizes = block_sizes_dv100,
@@ -6304,6 +6327,7 @@ static const DVprofile dv_profiles[] = {
       .width = 960,
       .sar = {{1, 1}, {1, 1}},
       .video_place = dv_place_720p60,
+      .work_chunks = &work_chunks_dv100ntscp[0],
       .pix_fmt = PIX_FMT_YUV422P,
       .bpm = 8,
       .block_sizes = block_sizes_dv100,
@@ -6323,6 +6347,7 @@ static const DVprofile dv_profiles[] = {
       .width = 960,
       .sar = {{1, 1}, {1, 1}},
       .video_place = dv_place_720p50,
+      .work_chunks = &work_chunks_dv100palp[0],
       .pix_fmt = PIX_FMT_YUV422P,
       .bpm = 8,
       .block_sizes = block_sizes_dv100,
