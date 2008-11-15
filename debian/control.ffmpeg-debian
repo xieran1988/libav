@@ -1,6 +1,5 @@
 Build-Depends: debhelper (>= 5.0.0),
                libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
-               libfaad-dev | libfaad2-dev,
                libfreetype6-dev,
                libgsm1-dev,
                libimlib2-dev,

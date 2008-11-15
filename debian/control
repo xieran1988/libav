@@ -7,13 +7,12 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
            Reinhard Tartler <siretart@tauware.de>,
            Fabian Greffrath <fabian@debian-unofficial.org>
 Standards-Version: 3.8.0
-Vcs-Svn: svn://svn.debian.org/pkg-multimedia/unstable/ffmpeg-debian/
-Vcs-Browser: http://svn.debian.org/wsvn/pkg-multimedia/unstable/ffmpeg-debian/
+Vcs-Svn: https://code.launchpad.net/~siretart/ffmpeg/ffmpeg.jaunty
+Vcs-Browser: https://code.launchpad.net/~siretart/ffmpeg/ffmpeg.jaunty
 Homepage: http://ffmpeg.mplayerhq.hu/
 Build-Depends-Indep: doxygen
 Build-Depends: debhelper (>= 5.0.0),
                libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
-               libfaad-dev | libfaad2-dev,
                libfreetype6-dev,
                libgsm1-dev,
                libimlib2-dev,

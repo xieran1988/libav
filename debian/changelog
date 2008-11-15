@@ -1,3 +1,13 @@
+ffmpeg-debian (3:0.svn20081115-1ubuntu1) jaunty; urgency=low
+
+  * merge from debian.
+  * keep myself in the maintainer field. If you are touching this or the
+    'ffmpeg' package in multiverse, please get in touch with me. Both
+    source packages come from the same packaging branch.
+  * drop dependency on faad.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 15 Nov 2008 19:44:29 +0100
+
 ffmpeg-debian (3:0.svn20081115-1) experimental; urgency=low
 
   * new upstream svn snapshot (svn revision 15824, libswscale revision 27910)
@@ -6,6 +16,31 @@ ffmpeg-debian (3:0.svn20081115-1) experimental; urgency=low
     .pc files. Closes: #504220
 
  -- Reinhard Tartler <siretart@tauware.de>  Mon, 10 Nov 2008 21:37:16 +0100
+
+ffmpeg-debian (3:0.svn20081108-1ubuntu3) jaunty; urgency=low
+
+  * really disable faad support completely.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 10 Nov 2008 10:58:01 +0100
+
+ffmpeg-debian (3:0.svn20081108-1ubuntu2) jaunty; urgency=low
+
+  * drop the patch to dlopen faad at runtime for now. it needs more
+    polishing, and we can have that functionality easier with the 'ffmpeg'
+    source package that will appear in multiverse.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 10 Nov 2008 10:31:47 +0100
+
+ffmpeg-debian (3:0.svn20081108-1ubuntu1) jaunty; urgency=low
+
+  * merge from debian.
+  * keep myself in the maintainer field. If you are touching this or the
+    'ffmpeg' package in multiverse, please get in touch with me. Both
+    source packages come from the same packaging branch.
+  * drop dependency on faad.
+  * import patches from old packaging to dlopen libfaad at runtime.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 10 Nov 2008 07:31:16 +0100
 
 ffmpeg-debian (3:0.svn20081108-1) experimental; urgency=low
 
