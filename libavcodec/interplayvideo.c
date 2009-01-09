@@ -804,7 +804,6 @@ static void ipvideo_decode_opcodes(IpvideoContext *s)
     s->line_inc = s->stride - 8;
     s->upper_motion_limit_offset = (s->avctx->height - 8) * s->stride
         + s->avctx->width - 8;
-    s->dsp = s->dsp;
 
     for (y = 0; y < (s->stride * s->avctx->height); y += s->stride * 8) {
         for (x = y; x < y + s->avctx->width; x += 8) {
@@ -836,7 +835,7 @@ static void ipvideo_decode_opcodes(IpvideoContext *s)
     }
 }
 
-static int ipvideo_decode_init(AVCodecContext *avctx)
+static av_cold int ipvideo_decode_init(AVCodecContext *avctx)
 {
     IpvideoContext *s = avctx->priv_data;
 
@@ -920,7 +919,7 @@ static int ipvideo_decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-static int ipvideo_decode_end(AVCodecContext *avctx)
+static av_cold int ipvideo_decode_end(AVCodecContext *avctx)
 {
     IpvideoContext *s = avctx->priv_data;
 
@@ -943,4 +942,5 @@ AVCodec interplay_video_decoder = {
     ipvideo_decode_end,
     ipvideo_decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("Interplay MVE Video"),
 };

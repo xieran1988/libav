@@ -18,9 +18,10 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+#include "libavutil/avstring.h"
 #include "avformat.h"
 #include "rm.h"
-#include "avstring.h"
 
 static inline void get_strl(ByteIOContext *pb, char *buf, int buf_size, int len)
 {
@@ -189,14 +190,14 @@ static int rm_read_audio_stream_info(AVFormatContext *s, AVStream *st,
 }
 
 int
-ff_rm_read_mdpr_codecdata (AVFormatContext *s, AVStream *st)
+ff_rm_read_mdpr_codecdata (AVFormatContext *s, AVStream *st, int codec_data_size)
 {
     ByteIOContext *pb = s->pb;
     unsigned int v;
-    int codec_data_size, size;
+    int size;
     int64_t codec_pos;
 
-    codec_data_size = get_be32(pb);
+    av_set_pts_info(st, 64, 1, 1000);
     codec_pos = url_ftell(pb);
     v = get_be32(pb);
     if (v == MKTAG(0xfd, 'a', 'r', '.')) {
@@ -215,7 +216,8 @@ ff_rm_read_mdpr_codecdata (AVFormatContext *s, AVStream *st)
         if (   st->codec->codec_tag != MKTAG('R', 'V', '1', '0')
             && st->codec->codec_tag != MKTAG('R', 'V', '2', '0')
             && st->codec->codec_tag != MKTAG('R', 'V', '3', '0')
-            && st->codec->codec_tag != MKTAG('R', 'V', '4', '0'))
+            && st->codec->codec_tag != MKTAG('R', 'V', '4', '0')
+            && st->codec->codec_tag != MKTAG('R', 'V', 'T', 'R'))
             goto fail1;
         st->codec->width = get_be16(pb);
         st->codec->height = get_be16(pb);
@@ -234,6 +236,8 @@ ff_rm_read_mdpr_codecdata (AVFormatContext *s, AVStream *st)
             return -1;
         }
         st->codec->extradata= av_mallocz(st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+        if (!st->codec->extradata)
+            return AVERROR(ENOMEM);
         get_buffer(pb, st->codec->extradata, st->codec->extradata_size);
 
 //        av_log(NULL, AV_LOG_DEBUG, "fps= %d fps2= %d\n", fps, fps2);
@@ -274,7 +278,7 @@ static int rm_read_header(AVFormatContext *s, AVFormatParameters *ap)
     AVStream *st;
     ByteIOContext *pb = s->pb;
     unsigned int tag;
-    int tag_size, i;
+    int tag_size;
     unsigned int start_time, duration;
     char buf[128];
     int flags = 0;
@@ -294,7 +298,7 @@ static int rm_read_header(AVFormatContext *s, AVFormatParameters *ap)
 
     for(;;) {
         if (url_feof(pb))
-            goto fail;
+            return -1;
         tag = get_le32(pb);
         tag_size = get_be32(pb);
         get_be16(pb);
@@ -308,7 +312,7 @@ static int rm_read_header(AVFormatContext *s, AVFormatParameters *ap)
                tag_size);
 #endif
         if (tag_size < 10 && tag != MKTAG('D', 'A', 'T', 'A'))
-            goto fail;
+            return -1;
         switch(tag) {
         case MKTAG('P', 'R', 'O', 'P'):
             /* file header */
@@ -333,7 +337,7 @@ static int rm_read_header(AVFormatContext *s, AVFormatParameters *ap)
         case MKTAG('M', 'D', 'P', 'R'):
             st = av_new_stream(s, 0);
             if (!st)
-                goto fail;
+                return AVERROR(ENOMEM);
             st->id = get_be16(pb);
             get_be32(pb); /* max bit rate */
             st->codec->bit_rate = get_be32(pb); /* bit rate */
@@ -347,8 +351,7 @@ static int rm_read_header(AVFormatContext *s, AVFormatParameters *ap)
             get_str8(pb, buf, sizeof(buf)); /* desc */
             get_str8(pb, buf, sizeof(buf)); /* mimetype */
             st->codec->codec_type = CODEC_TYPE_DATA;
-            av_set_pts_info(st, 64, 1, 1000);
-            if (ff_rm_read_mdpr_codecdata(s, st) < 0)
+            if (ff_rm_read_mdpr_codecdata(s, st, get_be32(pb)) < 0)
                 return -1;
             break;
         case MKTAG('D', 'A', 'T', 'A'):
@@ -366,12 +369,6 @@ static int rm_read_header(AVFormatContext *s, AVFormatParameters *ap)
     get_be32(pb); /* next data header */
     rm->curpic_num = -1;
     return 0;
-
- fail:
-    for(i=0;i<s->nb_streams;i++) {
-        av_free(s->streams[i]);
-    }
-    return AVERROR(EIO);
 }
 
 static int get_num(ByteIOContext *pb, int *len)
@@ -401,7 +398,7 @@ static int sync(AVFormatContext *s, int64_t *timestamp, int *flags, int *stream_
     uint32_t state=0xFFFFFFFF;
 
     while(!url_feof(pb)){
-        *pos= url_ftell(pb);
+        *pos= url_ftell(pb) - 3;
         if(rm->remaining_len > 0){
             num= rm->current_stream;
             len= rm->remaining_len;
@@ -790,7 +787,7 @@ static int64_t rm_read_dts(AVFormatContext *s, int stream_index,
 
 AVInputFormat rm_demuxer = {
     "rm",
-    "rm format",
+    NULL_IF_CONFIG_SMALL("RM format"),
     sizeof(RMContext),
     rm_probe,
     rm_read_header,
@@ -798,4 +795,11 @@ AVInputFormat rm_demuxer = {
     rm_read_close,
     NULL,
     rm_read_dts,
+};
+
+AVInputFormat rdt_demuxer = {
+    "rdt",
+    NULL_IF_CONFIG_SMALL("RDT demuxer"),
+    sizeof(RMContext),
+    NULL, NULL, NULL, rm_read_close, NULL, NULL
 };

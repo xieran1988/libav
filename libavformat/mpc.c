@@ -18,8 +18,9 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+#include "libavcodec/bitstream.h"
 #include "avformat.h"
-#include "bitstream.h"
 
 #define MPC_FRAMESIZE  1152
 #define DELAY_FRAMES   32
@@ -96,7 +97,7 @@ static int mpc_read_header(AVFormatContext *s, AVFormatParameters *ap)
     st->codec->codec_type = CODEC_TYPE_AUDIO;
     st->codec->codec_id = CODEC_ID_MUSEPACK7;
     st->codec->channels = 2;
-    st->codec->bits_per_sample = 16;
+    st->codec->bits_per_coded_sample = 16;
 
     st->codec->extradata_size = 16;
     st->codec->extradata = av_mallocz(st->codec->extradata_size+FF_INPUT_BUFFER_PADDING_SIZE);
@@ -218,7 +219,7 @@ static int mpc_read_seek(AVFormatContext *s, int stream_index, int64_t timestamp
 
 AVInputFormat mpc_demuxer = {
     "mpc",
-    "musepack",
+    NULL_IF_CONFIG_SMALL("Musepack"),
     sizeof(MPCContext),
     mpc_probe,
     mpc_read_header,

@@ -308,7 +308,7 @@ typedef struct {
     AVFrame picture;
 } GIFContext;
 
-static int gif_encode_init(AVCodecContext *avctx)
+static av_cold int gif_encode_init(AVCodecContext *avctx)
 {
     GIFContext *s = avctx->priv_data;
 
@@ -340,5 +340,6 @@ AVCodec gif_encoder = {
     gif_encode_init,
     gif_encode_frame,
     NULL, //encode_end,
-    .pix_fmts= (enum PixelFormat[]){PIX_FMT_PAL8, -1},
+    .pix_fmts= (enum PixelFormat[]){PIX_FMT_PAL8, PIX_FMT_NONE},
+    .long_name= NULL_IF_CONFIG_SMALL("GIF (Graphics Interchange Format)"),
 };

@@ -249,7 +249,6 @@ static int avi_write_header(AVFormatContext *s)
             break;
         case CODEC_TYPE_AUDIO:
             if (put_wav_header(pb, stream) < 0) {
-                av_free(avi);
                 return -1;
             }
             break;
@@ -281,6 +280,38 @@ static int avi_write_header(AVFormatContext *s)
             for (j=0; j < AVI_MASTER_INDEX_SIZE * 2; j++)
                  put_le64(pb, 0);
             end_tag(pb, avi->indexes[i].indx_start);
+        }
+
+        if(   stream->codec_type == CODEC_TYPE_VIDEO
+           && s->streams[i]->sample_aspect_ratio.num>0
+           && s->streams[i]->sample_aspect_ratio.den>0){
+            int vprp= start_tag(pb, "vprp");
+            AVRational dar = av_mul_q(s->streams[i]->sample_aspect_ratio,
+                                      (AVRational){stream->width, stream->height});
+            int num, den;
+            av_reduce(&num, &den, dar.num, dar.den, 0xFFFF);
+
+            put_le32(pb, 0); //video format  = unknown
+            put_le32(pb, 0); //video standard= unknown
+            put_le32(pb, lrintf(1.0/av_q2d(stream->time_base)));
+            put_le32(pb, stream->width );
+            put_le32(pb, stream->height);
+            put_le16(pb, den);
+            put_le16(pb, num);
+            put_le32(pb, stream->width );
+            put_le32(pb, stream->height);
+            put_le32(pb, 1); //progressive FIXME
+
+            put_le32(pb, stream->height);
+            put_le32(pb, stream->width );
+            put_le32(pb, stream->height);
+            put_le32(pb, stream->width );
+            put_le32(pb, 0);
+            put_le32(pb, 0);
+
+            put_le32(pb, 0);
+            put_le32(pb, 0);
+            end_tag(pb, vprp);
         }
 
         end_tag(pb, list2);
@@ -561,7 +592,7 @@ static int avi_write_trailer(AVFormatContext *s)
 
 AVOutputFormat avi_muxer = {
     "avi",
-    "avi format",
+    NULL_IF_CONFIG_SMALL("AVI format"),
     "video/x-msvideo",
     "avi",
     sizeof(AVIContext),
@@ -570,6 +601,6 @@ AVOutputFormat avi_muxer = {
     avi_write_header,
     avi_write_packet,
     avi_write_trailer,
-    .codec_tag= (const AVCodecTag*[]){codec_bmp_tags, codec_wav_tags, 0},
+    .codec_tag= (const AVCodecTag* const []){codec_bmp_tags, codec_wav_tags, 0},
 };
 #endif //CONFIG_AVI_MUXER

@@ -20,7 +20,6 @@
  */
 
 #include "avformat.h"
-#include "riff.h"
 
 enum SIFFTags{
     TAG_SIFF = MKTAG('S', 'I', 'F', 'F'),
@@ -76,7 +75,7 @@ static int create_audio_stream(AVFormatContext *s, SIFFContext *c)
     ast->codec->codec_type      = CODEC_TYPE_AUDIO;
     ast->codec->codec_id        = CODEC_ID_PCM_U8;
     ast->codec->channels        = 1;
-    ast->codec->bits_per_sample = c->bits;
+    ast->codec->bits_per_coded_sample = c->bits;
     ast->codec->sample_rate     = c->rate;
     ast->codec->frame_size      = c->block_align;
     av_set_pts_info(ast, 16, 1, c->rate);
@@ -228,7 +227,7 @@ static int siff_read_packet(AVFormatContext *s, AVPacket *pkt)
 
 AVInputFormat siff_demuxer = {
     "siff",
-    "Beam Software SIFF",
+    NULL_IF_CONFIG_SMALL("Beam Software SIFF"),
     sizeof(SIFFContext),
     siff_probe,
     siff_read_header,

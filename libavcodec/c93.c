@@ -45,13 +45,13 @@ typedef enum {
 #define C93_HAS_PALETTE 0x01
 #define C93_FIRST_FRAME 0x02
 
-static int decode_init(AVCodecContext *avctx)
+static av_cold int decode_init(AVCodecContext *avctx)
 {
     avctx->pix_fmt = PIX_FMT_PAL8;
     return 0;
 }
 
-static int decode_end(AVCodecContext *avctx)
+static av_cold int decode_end(AVCodecContext *avctx)
 {
     C93DecoderContext * const c93 = avctx->priv_data;
 
@@ -250,4 +250,5 @@ AVCodec c93_decoder = {
     decode_end,
     decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("Interplay C93"),
 };

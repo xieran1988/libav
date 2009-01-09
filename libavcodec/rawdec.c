@@ -46,6 +46,7 @@ static const PixelFormatTag pixelFormatBpsAVI[] = {
 static const PixelFormatTag pixelFormatBpsMOV[] = {
     /* FIXME fix swscaler to support those */
     /* http://developer.apple.com/documentation/QuickTime/QTFF/QTFFChap3/chapter_4_section_2.html */
+    { PIX_FMT_PAL8,      4 },
     { PIX_FMT_PAL8,      8 },
     { PIX_FMT_BGR555,   16 },
     { PIX_FMT_RGB24,    24 },
@@ -63,16 +64,16 @@ static int findPixelFormat(const PixelFormatTag *tags, unsigned int fourcc)
     return PIX_FMT_YUV420P;
 }
 
-static int raw_init_decoder(AVCodecContext *avctx)
+static av_cold int raw_init_decoder(AVCodecContext *avctx)
 {
     RawVideoContext *context = avctx->priv_data;
 
     if (avctx->codec_tag == MKTAG('r','a','w',' '))
-        avctx->pix_fmt = findPixelFormat(pixelFormatBpsMOV, avctx->bits_per_sample);
+        avctx->pix_fmt = findPixelFormat(pixelFormatBpsMOV, avctx->bits_per_coded_sample);
     else if (avctx->codec_tag)
         avctx->pix_fmt = findPixelFormat(ff_raw_pixelFormatTags, avctx->codec_tag);
-    else if (avctx->bits_per_sample)
-        avctx->pix_fmt = findPixelFormat(pixelFormatBpsAVI, avctx->bits_per_sample);
+    else if (avctx->bits_per_coded_sample)
+        avctx->pix_fmt = findPixelFormat(pixelFormatBpsAVI, avctx->bits_per_coded_sample);
 
     context->length = avpicture_get_size(avctx->pix_fmt, avctx->width, avctx->height);
     context->buffer = av_malloc(context->length);
@@ -88,7 +89,7 @@ static int raw_init_decoder(AVCodecContext *avctx)
 }
 
 static void flip(AVCodecContext *avctx, AVPicture * picture){
-    if(!avctx->codec_tag && avctx->bits_per_sample && picture->linesize[2]==0){
+    if(!avctx->codec_tag && avctx->bits_per_coded_sample && picture->linesize[2]==0){
         picture->data[0] += picture->linesize[0] * (avctx->height-1);
         picture->linesize[0] *= -1;
     }
@@ -106,8 +107,9 @@ static int raw_decode(AVCodecContext *avctx,
     frame->interlaced_frame = avctx->coded_frame->interlaced_frame;
     frame->top_field_first = avctx->coded_frame->top_field_first;
 
-    //4bpp raw in avi (yes this is ugly ...)
-    if(avctx->bits_per_sample == 4 && avctx->pix_fmt==PIX_FMT_PAL8 && !avctx->codec_tag){
+    //4bpp raw in avi and mov (yes this is ugly ...)
+    if(avctx->bits_per_coded_sample == 4 && avctx->pix_fmt==PIX_FMT_PAL8 &&
+       (!avctx->codec_tag || avctx->codec_tag == MKTAG('r','a','w',' '))){
         int i;
         for(i=256*2; i+1 < context->length>>1; i++){
             context->buffer[2*i+0]= buf[i-256*2]>>4;
@@ -143,7 +145,7 @@ static int raw_decode(AVCodecContext *avctx,
     return buf_size;
 }
 
-static int raw_close_decoder(AVCodecContext *avctx)
+static av_cold int raw_close_decoder(AVCodecContext *avctx)
 {
     RawVideoContext *context = avctx->priv_data;
 
@@ -160,4 +162,5 @@ AVCodec rawvideo_decoder = {
     NULL,
     raw_close_decoder,
     raw_decode,
+    .long_name = NULL_IF_CONFIG_SMALL("raw video"),
 };

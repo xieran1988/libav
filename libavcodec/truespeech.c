@@ -50,10 +50,11 @@ typedef struct {
     int16_t filters[32]; // filters for every subframe
 } TSContext;
 
-static int truespeech_decode_init(AVCodecContext * avctx)
+static av_cold int truespeech_decode_init(AVCodecContext * avctx)
 {
 //    TSContext *c = avctx->priv_data;
 
+    avctx->sample_fmt = SAMPLE_FMT_S16;
     return 0;
 }
 
@@ -380,4 +381,5 @@ AVCodec truespeech_decoder = {
     NULL,
     NULL,
     truespeech_decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("DSP Group TrueSpeech"),
 };

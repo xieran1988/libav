@@ -18,9 +18,10 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+#include "libavutil/crc.h"
 #include "avformat.h"
 #include "avio.h"
-#include "crc.h"
 #include <stdarg.h>
 
 #define IO_BUFFER_SIZE 32768
@@ -162,14 +163,13 @@ offset_t url_fseek(ByteIOContext *s, offset_t offset, int whence)
         if (s->write_flag) {
             flush_buffer(s);
             s->must_flush = 1;
-        } else
-#endif /* defined(CONFIG_MUXERS) || defined(CONFIG_NETWORK) */
-        {
-            s->buf_end = s->buffer;
         }
-        s->buf_ptr = s->buffer;
+#endif /* defined(CONFIG_MUXERS) || defined(CONFIG_NETWORK) */
         if (!s->seek || (res = s->seek(s->opaque, offset, SEEK_SET)) < 0)
             return res;
+        if (!s->write_flag)
+            s->buf_end = s->buffer;
+        s->buf_ptr = s->buffer;
         s->pos = offset;
     }
     s->eof_reached = 0;

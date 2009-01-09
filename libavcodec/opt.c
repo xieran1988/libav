@@ -62,8 +62,8 @@ static const AVOption *av_set_number(void *obj, const char *name, double num, in
 
     switch(o->type){
     case FF_OPT_TYPE_FLAGS:
-    case FF_OPT_TYPE_INT:   *(int       *)dst= lrintf(num/den)*intnum; break;
-    case FF_OPT_TYPE_INT64: *(int64_t   *)dst= lrintf(num/den)*intnum; break;
+    case FF_OPT_TYPE_INT:   *(int       *)dst= llrint(num/den)*intnum; break;
+    case FF_OPT_TYPE_INT64: *(int64_t   *)dst= llrint(num/den)*intnum; break;
     case FF_OPT_TYPE_FLOAT: *(float     *)dst= num*intnum/den;         break;
     case FF_OPT_TYPE_DOUBLE:*(double    *)dst= num*intnum/den;         break;
     case FF_OPT_TYPE_RATIONAL:
@@ -94,14 +94,14 @@ static const AVOption *set_all_opt(void *v, const char *unit, double d){
     return ret;
 }
 
-static double const_values[]={
+static const double const_values[]={
     M_PI,
     M_E,
     FF_QP2LAMBDA,
     0
 };
 
-static const char *const_names[]={
+static const char * const const_names[]={
     "PI",
     "E",
     "QP2LAMBDA",
@@ -115,7 +115,7 @@ static int hexchar2int(char c) {
     return -1;
 }
 
-const AVOption *av_set_string(void *obj, const char *name, const char *val){
+const AVOption *av_set_string2(void *obj, const char *name, const char *val, int alloc){
     const AVOption *o= av_find_opt(obj, name, NULL, 0, 0);
     if(o && o->offset==0 && o->type == FF_OPT_TYPE_CONST && o->unit){
         return set_all_opt(obj, o->unit, o->default_val);
@@ -146,12 +146,13 @@ const AVOption *av_set_string(void *obj, const char *name, const char *val){
         return o;
     }
     if(o->type != FF_OPT_TYPE_STRING){
+        int notfirst=0;
         for(;;){
             int i;
             char buf[256];
             int cmd=0;
             double d;
-            char *error = NULL;
+            const char *error = NULL;
 
             if(*val == '+' || *val == '-')
                 cmd= *(val++);
@@ -159,7 +160,6 @@ const AVOption *av_set_string(void *obj, const char *name, const char *val){
             for(i=0; i<sizeof(buf)-1 && val[i] && val[i]!='+' && val[i]!='-'; i++)
                 buf[i]= val[i];
             buf[i]=0;
-            val+= i;
 
             d = ff_eval2(buf, const_values, const_names, NULL, NULL, NULL, NULL, NULL, &error);
             if(isnan(d)) {
@@ -172,7 +172,7 @@ const AVOption *av_set_string(void *obj, const char *name, const char *val){
                 else if(!strcmp(buf, "none"   )) d= 0;
                 else if(!strcmp(buf, "all"    )) d= ~0;
                 else {
-                    if (!error)
+                    if (error)
                         av_log(NULL, AV_LOG_ERROR, "Unable to parse option value \"%s\": %s\n", val, error);
                     return NULL;
                 }
@@ -180,18 +180,32 @@ const AVOption *av_set_string(void *obj, const char *name, const char *val){
             if(o->type == FF_OPT_TYPE_FLAGS){
                 if     (cmd=='+') d= av_get_int(obj, name, NULL) | (int64_t)d;
                 else if(cmd=='-') d= av_get_int(obj, name, NULL) &~(int64_t)d;
-            }else if(cmd=='-')
-                d= -d;
+            }else{
+                if     (cmd=='+') d= notfirst*av_get_double(obj, name, NULL) + d;
+                else if(cmd=='-') d= notfirst*av_get_double(obj, name, NULL) - d;
+            }
 
-            av_set_number(obj, name, d, 1, 1);
+            if (!av_set_number(obj, name, d, 1, 1))
+                return NULL;
+            val+= i;
             if(!*val)
                 return o;
+            notfirst=1;
         }
         return NULL;
     }
 
+    if(alloc){
+        av_free(*(void**)(((uint8_t*)obj) + o->offset));
+        val= av_strdup(val);
+    }
+
     memcpy(((uint8_t*)obj) + o->offset, &val, sizeof(val));
     return o;
+}
+
+const AVOption *av_set_string(void *obj, const char *name, const char *val){
+    return av_set_string2(obj, name, val, 0);
 }
 
 const AVOption *av_set_double(void *obj, const char *name, double n){
@@ -254,7 +268,7 @@ static int av_get_number(void *obj, const char *name, const AVOption **o_out, do
     if(o_out) *o_out= o;
 
     switch(o->type){
-    case FF_OPT_TYPE_FLAGS:
+    case FF_OPT_TYPE_FLAGS:     *intnum= *(unsigned int*)dst;return 0;
     case FF_OPT_TYPE_INT:       *intnum= *(int    *)dst;return 0;
     case FF_OPT_TYPE_INT64:     *intnum= *(int64_t*)dst;return 0;
     case FF_OPT_TYPE_FLOAT:     *num=    *(float  *)dst;return 0;

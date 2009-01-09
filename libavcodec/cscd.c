@@ -26,7 +26,7 @@
 #ifdef CONFIG_ZLIB
 #include <zlib.h>
 #endif
-#include "lzo.h"
+#include "libavutil/lzo.h"
 
 typedef struct {
     AVFrame pic;
@@ -212,24 +212,24 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     return buf_size;
 }
 
-static int decode_init(AVCodecContext *avctx) {
+static av_cold int decode_init(AVCodecContext *avctx) {
     CamStudioContext *c = avctx->priv_data;
     if (avcodec_check_dimensions(avctx, avctx->height, avctx->width) < 0) {
         return 1;
     }
-    switch (avctx->bits_per_sample) {
+    switch (avctx->bits_per_coded_sample) {
         case 16: avctx->pix_fmt = PIX_FMT_RGB555; break;
         case 24: avctx->pix_fmt = PIX_FMT_BGR24; break;
         case 32: avctx->pix_fmt = PIX_FMT_RGB32; break;
         default:
             av_log(avctx, AV_LOG_ERROR,
                    "CamStudio codec error: invalid depth %i bpp\n",
-                   avctx->bits_per_sample);
+                   avctx->bits_per_coded_sample);
              return 1;
     }
-    c->bpp = avctx->bits_per_sample;
+    c->bpp = avctx->bits_per_coded_sample;
     c->pic.data[0] = NULL;
-    c->linelen = avctx->width * avctx->bits_per_sample / 8;
+    c->linelen = avctx->width * avctx->bits_per_coded_sample / 8;
     c->height = avctx->height;
     c->decomp_size = c->height * c->linelen;
     c->decomp_buf = av_malloc(c->decomp_size + LZO_OUTPUT_PADDING);
@@ -240,7 +240,7 @@ static int decode_init(AVCodecContext *avctx) {
     return 0;
 }
 
-static int decode_end(AVCodecContext *avctx) {
+static av_cold int decode_end(AVCodecContext *avctx) {
     CamStudioContext *c = avctx->priv_data;
     av_freep(&c->decomp_buf);
     if (c->pic.data[0])
@@ -258,5 +258,6 @@ AVCodec cscd_decoder = {
     decode_end,
     decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("CamStudio"),
 };
 

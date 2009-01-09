@@ -37,6 +37,7 @@ typedef struct avs_format {
 } avs_format_t;
 
 typedef enum avs_block_type {
+    AVS_NONE      = 0x00,
     AVS_VIDEO     = 0x01,
     AVS_AUDIO     = 0x02,
     AVS_PALETTE   = 0x03,
@@ -142,7 +143,7 @@ static int avs_read_packet(AVFormatContext * s, AVPacket * pkt)
 {
     avs_format_t *avs = s->priv_data;
     int sub_type = 0, size = 0;
-    avs_block_type_t type = 0;
+    avs_block_type_t type = AVS_NONE;
     int palette_size = 0;
     uint8_t palette[4 + 3 * 256];
     int ret;
@@ -181,7 +182,7 @@ static int avs_read_packet(AVFormatContext * s, AVPacket * pkt)
                     avs->st_video->codec->codec_id = CODEC_ID_AVS;
                     avs->st_video->codec->width = avs->width;
                     avs->st_video->codec->height = avs->height;
-                    avs->st_video->codec->bits_per_sample=avs->bits_per_sample;
+                    avs->st_video->codec->bits_per_coded_sample=avs->bits_per_sample;
                     avs->st_video->nb_frames = avs->nb_frames;
                     avs->st_video->codec->time_base = (AVRational) {
                     1, avs->fps};
@@ -216,7 +217,7 @@ static int avs_read_close(AVFormatContext * s)
 
 AVInputFormat avs_demuxer = {
     "avs",
-    "avs format",
+    NULL_IF_CONFIG_SMALL("AVS format"),
     sizeof(avs_format_t),
     avs_probe,
     avs_read_header,

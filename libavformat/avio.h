@@ -18,8 +18,8 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#ifndef FFMPEG_AVIO_H
-#define FFMPEG_AVIO_H
+#ifndef AVFORMAT_AVIO_H
+#define AVFORMAT_AVIO_H
 
 #include <stdint.h>
 
@@ -37,6 +37,9 @@ typedef int64_t offset_t;
  * sizeof(URLContext) must not be used outside libav*.
  */
 struct URLContext {
+#if LIBAVFORMAT_VERSION_MAJOR >= 53
+    const AVClass *av_class; ///< information for av_log(). Set by url_open().
+#endif
     struct URLProtocol *prot;
     int flags;
     int is_streamed;  /**< true if streamed (no seek possible), default = false */
@@ -59,6 +62,8 @@ typedef struct URLPollEntry {
 
 typedef int URLInterruptCB(void);
 
+int url_open_protocol (URLContext **puc, struct URLProtocol *up,
+                       const char *filename, int flags);
 int url_open(URLContext **h, const char *filename, int flags);
 int url_read(URLContext *h, unsigned char *buf, int size);
 int url_write(URLContext *h, unsigned char *buf, int size);
@@ -204,11 +209,36 @@ void put_tag(ByteIOContext *s, const char *tag);
 
 void put_strz(ByteIOContext *s, const char *buf);
 
+/**
+ * fseek() equivalent for ByteIOContext.
+ * @return new position or AVERROR.
+ */
 offset_t url_fseek(ByteIOContext *s, offset_t offset, int whence);
+
+/**
+ * Skip given number of bytes forward.
+ * @param offset number of bytes
+ */
 void url_fskip(ByteIOContext *s, offset_t offset);
+
+/**
+ * ftell() equivalent for ByteIOContext.
+ * @return position or AVERROR.
+ */
 offset_t url_ftell(ByteIOContext *s);
+
+/**
+ * Gets the filesize.
+ * @return filesize or AVERROR
+ */
 offset_t url_fsize(ByteIOContext *s);
+
+/**
+ * feof() equivalent for ByteIOContext.
+ * @return non zero if and only if end of file
+ */
 int url_feof(ByteIOContext *s);
+
 int url_ferror(ByteIOContext *s);
 
 int av_url_read_fpause(ByteIOContext *h, int pause);
@@ -232,7 +262,19 @@ char *url_fgets(ByteIOContext *s, char *buf, int buf_size);
 
 void put_flush_packet(ByteIOContext *s);
 
+
+/**
+ * Reads size bytes from ByteIOContext into buf.
+ * @returns number of bytes read or AVERROR
+ */
 int get_buffer(ByteIOContext *s, unsigned char *buf, int size);
+
+/**
+ * Reads size bytes from ByteIOContext into buf.
+ * This reads at most 1 packet. If that is not enough fewer bytes will be
+ * returned.
+ * @returns number of bytes read or AVERROR
+ */
 int get_partial_buffer(ByteIOContext *s, unsigned char *buf, int size);
 
 /** @note return 0 if EOF, so you cannot use it if EOF handling is
@@ -326,4 +368,4 @@ int udp_set_remote_url(URLContext *h, const char *uri);
 int udp_get_local_port(URLContext *h);
 int udp_get_file_handle(URLContext *h);
 
-#endif /* FFMPEG_AVIO_H */
+#endif /* AVFORMAT_AVIO_H */

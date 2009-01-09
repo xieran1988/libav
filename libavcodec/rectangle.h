@@ -25,10 +25,10 @@
  * @author Michael Niedermayer <michaelni@gmx.at>
  */
 
-#ifndef FFMPEG_RECTANGLE_H
-#define FFMPEG_RECTANGLE_H
+#ifndef AVCODEC_RECTANGLE_H
+#define AVCODEC_RECTANGLE_H
 
-#include "common.h"
+#include "libavutil/common.h"
 
 /**
  * fill a rectangle.
@@ -64,7 +64,7 @@ static av_always_inline void fill_rectangle(void *vp, int w, int h, int stride, 
         *(uint32_t*)(p + 3*stride)= v;
     }else if(w==8){
     //gcc can't optimize 64bit math on x86_32
-#if defined(ARCH_X86_64) || (defined(MP_WORDSIZE) && MP_WORDSIZE >= 64)
+#ifdef HAVE_FAST_64BIT
         const uint64_t v= val*0x0100000001ULL;
         *(uint64_t*)(p + 0*stride)= v;
         if(h==1) return;
@@ -118,4 +118,4 @@ static av_always_inline void fill_rectangle(void *vp, int w, int h, int stride, 
     assert(h==4);
 }
 
-#endif /* FFMPEG_RECTANGLE_H */
+#endif /* AVCODEC_RECTANGLE_H */

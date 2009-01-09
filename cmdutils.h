@@ -24,6 +24,47 @@
 
 #include <inttypes.h>
 
+/**
+ * program name, defined by the program for show_version().
+ */
+extern const char program_name[];
+
+/**
+ * program birth year, defined by the program for show_banner()
+ */
+extern const int program_birth_year;
+
+/**
+ * Parses a string and returns its corresponding value as a double.
+ * Exits from the application if the string cannot be correctly
+ * parsed or the corresponding value is invalid.
+ *
+ * @param context the context of the value to be set (e.g. the
+ * corresponding commandline option name)
+ * @param numstr the string to be parsed
+ * @param type the type (OPT_INT64 or OPT_FLOAT) as which the
+ * string should be parsed
+ * @param min the minimum valid accepted value
+ * @param max the maximum valid accepted value
+ */
+double parse_number_or_die(const char *context, const char *numstr, int type, double min, double max);
+
+/**
+ * Parses a string specifying a time and returns its corresponding
+ * value as a number of microseconds. Exits from the application if
+ * the string cannot be correctly parsed.
+ *
+ * @param context the context of the value to be set (e.g. the
+ * corresponding commandline option name)
+ * @param timestr the string to be parsed
+ * @param is_duration a flag which tells how to interpret \p timestr, if
+ * not zero \p timestr is interpreted as a duration, otherwise as a
+ * date
+ *
+ * @see parse_date()
+ */
+int64_t parse_time_or_die(const char *context, const char *timestr, int is_duration);
+
 typedef struct {
     const char *name;
     int flags;
@@ -39,6 +80,7 @@ typedef struct {
 #define OPT_SUBTITLE 0x0200
 #define OPT_FUNC2  0x0400
 #define OPT_INT64  0x0800
+#define OPT_EXIT   0x1000
      union {
         void (*func_arg)(const char *); //FIXME passing error code as int return would be nicer then exit() in the func
         int *int_arg;
@@ -67,26 +109,29 @@ void parse_options(int argc, char **argv, const OptionDef *options,
 void print_error(const char *filename, int err);
 
 /**
- * Prints the banner of the program on stderr. The banner message
- * depends on the current versions of the repository and of the libav*
- * libraries.
- * @param program_name Name of the program.
- * @param program_birth_year Year of birth of the program.
+ * Prints the program banner to stderr. The banner contents depend on the
+ * current version of the repository and of the libav* libraries used by
+ * the program.
  */
-void show_banner(const char *program_name, int program_birth_year);
+void show_banner(void);
 
 /**
- * Prints the version of the program on stdout. The version message
+ * Prints the version of the program to stdout. The version message
  * depends on the current versions of the repository and of the libav*
  * libraries.
- * @param program_name Name of the program.
  */
-void show_version(const char *program_name);
+void show_version(void);
 
 /**
- * Prints on stdout the license of the program, which depends on the license of
- * the compiled libav* libraries.
+ * Prints the license of the program to stdout. The license depends on
+ * the license of the libraries compiled into the program.
  */
 void show_license(void);
+
+/**
+ * Prints a listing containing all the formats supported by the
+ * program.
+ */
+void show_formats(void);
 
 #endif /* FFMPEG_CMDUTILS_H */

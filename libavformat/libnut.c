@@ -44,7 +44,7 @@ static const AVCodecTag nut_tags[] = {
     { 0, 0 },
 };
 
-#ifdef CONFIG_MUXERS
+#ifdef CONFIG_LIBNUT_MUXER
 static int av_write(void * h, size_t len, const uint8_t * buf) {
     ByteIOContext * bc = h;
     put_buffer(bc, buf, len);
@@ -163,7 +163,7 @@ AVOutputFormat libnut_muxer = {
     nut_write_trailer,
     .flags = AVFMT_GLOBALHEADER,
 };
-#endif //CONFIG_MUXERS
+#endif /* CONFIG_LIBNUT_MUXER */
 
 static int nut_probe(AVProbeData *p) {
     if (!memcmp(p->buf, ID_STRING, ID_LENGTH)) return AVPROBE_SCORE_MAX;
@@ -246,8 +246,8 @@ static int nut_read_header(AVFormatContext * avf, AVFormatParameters * ap) {
 
             st->codec->width = s[i].width;
             st->codec->height = s[i].height;
-            st->codec->sample_aspect_ratio.num = s[i].sample_width;
-            st->codec->sample_aspect_ratio.den = s[i].sample_height;
+            st->sample_aspect_ratio.num = s[i].sample_width;
+            st->sample_aspect_ratio.den = s[i].sample_height;
             break;
         }
         if (st->codec->codec_id == CODEC_ID_NONE) av_log(avf, AV_LOG_ERROR, "Unknown codec?!\n");
@@ -299,7 +299,7 @@ static int nut_read_close(AVFormatContext *s) {
 
 AVInputFormat libnut_demuxer = {
     "libnut",
-    "nut format",
+    NULL_IF_CONFIG_SMALL("NUT format"),
     sizeof(NUTContext),
     nut_probe,
     nut_read_header,

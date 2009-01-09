@@ -19,10 +19,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/crc.h"
+#include "libavcodec/xiph.h"
+#include "libavcodec/bytestream.h"
 #include "avformat.h"
-#include "crc.h"
-#include "xiph.h"
-#include "bytestream.h"
 
 typedef struct {
     int64_t duration;
@@ -88,8 +88,8 @@ static int ogg_build_flac_headers(const uint8_t *extradata, int extradata_size,
     uint8_t *p;
     if (extradata_size != 34)
         return -1;
-    oggstream->header_len[0] = 79;
-    oggstream->header[0] = av_mallocz(79); // per ogg flac specs
+    oggstream->header_len[0] = 51;
+    oggstream->header[0] = av_mallocz(51); // per ogg flac specs
     p = oggstream->header[0];
     bytestream_put_byte(&p, 0x7F);
     bytestream_put_buffer(&p, "FLAC", 4);
@@ -225,7 +225,7 @@ int ogg_interleave_per_granule(AVFormatContext *s, AVPacket *out, AVPacket *pkt,
             next_granule = av_rescale_q(next_pkt->pts + next_pkt->duration,
                                         st2->time_base, AV_TIME_BASE_Q);
             cur_granule = av_rescale_q(pkt->pts + pkt->duration,
-                                        st->time_base, AV_TIME_BASE_Q);
+                                       st->time_base, AV_TIME_BASE_Q);
             if (next_granule > cur_granule)
                 break;
             next_point= &(*next_point)->next;
@@ -279,9 +279,9 @@ static int ogg_write_trailer(AVFormatContext *s)
 
 AVOutputFormat ogg_muxer = {
     "ogg",
-    "Ogg format",
+    NULL_IF_CONFIG_SMALL("Ogg"),
     "application/ogg",
-    "ogg",
+    "ogg,ogv",
     0,
     CODEC_ID_FLAC,
     CODEC_ID_THEORA,

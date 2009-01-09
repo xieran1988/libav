@@ -86,7 +86,7 @@ static const int16_t cinaudio_delta16_table[256] = {
 };
 
 
-static int cinvideo_decode_init(AVCodecContext *avctx)
+static av_cold int cinvideo_decode_init(AVCodecContext *avctx)
 {
     CinVideoContext *cin = avctx->priv_data;
     unsigned int i;
@@ -284,7 +284,7 @@ static int cinvideo_decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-static int cinvideo_decode_end(AVCodecContext *avctx)
+static av_cold int cinvideo_decode_end(AVCodecContext *avctx)
 {
     CinVideoContext *cin = avctx->priv_data;
     int i;
@@ -298,13 +298,14 @@ static int cinvideo_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-static int cinaudio_decode_init(AVCodecContext *avctx)
+static av_cold int cinaudio_decode_init(AVCodecContext *avctx)
 {
     CinAudioContext *cin = avctx->priv_data;
 
     cin->avctx = avctx;
     cin->initial_decode_frame = 1;
     cin->delta = 0;
+    avctx->sample_fmt = SAMPLE_FMT_S16;
 
     return 0;
 }
@@ -348,6 +349,7 @@ AVCodec dsicinvideo_decoder = {
     cinvideo_decode_end,
     cinvideo_decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("Delphine Software International CIN video"),
 };
 
 AVCodec dsicinaudio_decoder = {
@@ -359,4 +361,5 @@ AVCodec dsicinaudio_decoder = {
     NULL,
     NULL,
     cinaudio_decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("Delphine Software International CIN audio"),
 };

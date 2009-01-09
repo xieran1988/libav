@@ -20,8 +20,8 @@
  */
 #include <stdio.h>
 
-#include "framehook.h"
-#include "swscale.h"
+#include "libavformat/framehook.h"
+#include "libswscale/swscale.h"
 
 static int sws_flags = SWS_BICUBIC;
 
@@ -50,7 +50,7 @@ void Release(void *ctx)
 
 int Configure(void **ctxp, int argc, char *argv[])
 {
-    fprintf(stderr, "Called with argc=%d\n", argc);
+    av_log(NULL, AV_LOG_DEBUG, "Called with argc=%d\n", argc);
 
     *ctxp = av_mallocz(sizeof(ContextInfo));
     return 0;

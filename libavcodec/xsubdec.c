@@ -22,7 +22,7 @@
 #include "bitstream.h"
 #include "bytestream.h"
 
-static int decode_init(AVCodecContext *avctx) {
+static av_cold int decode_init(AVCodecContext *avctx) {
     avctx->pix_fmt = PIX_FMT_PAL8;
     return 0;
 }
@@ -133,4 +133,5 @@ AVCodec xsub_decoder = {
     NULL,
     NULL,
     decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("XSUB"),
 };

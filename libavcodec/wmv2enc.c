@@ -51,7 +51,7 @@ static int encode_ext_header(Wmv2Context *w){
     return 0;
 }
 
-static int wmv2_encode_init(AVCodecContext *avctx){
+static av_cold int wmv2_encode_init(AVCodecContext *avctx){
     Wmv2Context * const w= avctx->priv_data;
 
     if(MPV_encode_init(avctx) < 0)
@@ -67,7 +67,7 @@ static int wmv2_encode_init(AVCodecContext *avctx){
 }
 
 #if 0 /* unused, remove? */
-static int wmv2_encode_end(AVCodecContext *avctx){
+static av_cold int wmv2_encode_end(AVCodecContext *avctx){
 
     if(MPV_encode_end(avctx) < 0)
         return -1;
@@ -84,7 +84,7 @@ int ff_wmv2_encode_picture_header(MpegEncContext * s, int picture_number)
     Wmv2Context * const w= (Wmv2Context*)s;
 
     put_bits(&s->pb, 1, s->pict_type - 1);
-    if(s->pict_type == I_TYPE){
+    if(s->pict_type == FF_I_TYPE){
         put_bits(&s->pb, 7, 0);
     }
     put_bits(&s->pb, 5, s->qscale);
@@ -100,7 +100,7 @@ int ff_wmv2_encode_picture_header(MpegEncContext * s, int picture_number)
 
     assert(s->flipflop_rounding);
 
-    if (s->pict_type == I_TYPE) {
+    if (s->pict_type == FF_I_TYPE) {
         assert(s->no_rounding==1);
         if(w->j_type_bit) put_bits(&s->pb, 1, w->j_type);
 
@@ -208,7 +208,7 @@ void ff_wmv2_encode_mb(MpegEncContext * s,
             printf("cbp=%x %x\n", cbp, coded_cbp);
 #endif
 
-        if (s->pict_type == I_TYPE) {
+        if (s->pict_type == FF_I_TYPE) {
             put_bits(&s->pb,
                      ff_msmp4_mb_i_table[coded_cbp][1], ff_msmp4_mb_i_table[coded_cbp][0]);
         } else {
@@ -236,5 +236,6 @@ AVCodec wmv2_encoder = {
     wmv2_encode_init,
     MPV_encode_picture,
     MPV_encode_end,
-    .pix_fmts= (enum PixelFormat[]){PIX_FMT_YUV420P, -1},
+    .pix_fmts= (enum PixelFormat[]){PIX_FMT_YUV420P, PIX_FMT_NONE},
+    .long_name= NULL_IF_CONFIG_SMALL("Windows Media Video 8"),
 };

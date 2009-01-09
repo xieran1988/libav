@@ -26,13 +26,12 @@
  * MJPEG decoder.
  */
 
-#ifndef FFMPEG_MJPEGDEC_H
-#define FFMPEG_MJPEGDEC_H
+#ifndef AVCODEC_MJPEGDEC_H
+#define AVCODEC_MJPEGDEC_H
 
 #include "avcodec.h"
 #include "bitstream.h"
 #include "dsputil.h"
-#include "mpegvideo.h"
 
 #define MAX_COMPONENTS 4
 
@@ -83,7 +82,7 @@ typedef struct MJpegDecodeContext {
     AVFrame picture; /* picture structure */
     int linesize[MAX_COMPONENTS];                   ///< linesize << interlaced
     int8_t *qscale_table;
-    DECLARE_ALIGNED_8(DCTELEM, block[64]);
+    DECLARE_ALIGNED_16(DCTELEM, block[64]);
     ScanTable scantable;
     DSPContext dsp;
 
@@ -109,4 +108,4 @@ int ff_mjpeg_decode_dht(MJpegDecodeContext *s);
 int ff_mjpeg_decode_sof(MJpegDecodeContext *s);
 int ff_mjpeg_decode_sos(MJpegDecodeContext *s);
 
-#endif /* FFMPEG_MJPEGDEC_H */
+#endif /* AVCODEC_MJPEGDEC_H */

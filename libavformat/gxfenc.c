@@ -19,10 +19,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/fifo.h"
 #include "avformat.h"
 #include "gxf.h"
 #include "riff.h"
-#include "fifo.h"
 
 #define GXF_AUDIO_PACKET_SIZE 65536
 
@@ -793,7 +793,7 @@ static int gxf_interleave_packet(AVFormatContext *s, AVPacket *out, AVPacket *pk
         GXFStreamContext *sc = &gxf->streams[i];
         if (st->codec->codec_type == CODEC_TYPE_AUDIO) {
             if (pkt && pkt->stream_index == i) {
-                av_fifo_write(&sc->audio_buffer, pkt->data, pkt->size);
+                av_fifo_generic_write(&sc->audio_buffer, pkt->data, pkt->size, NULL);
                 pkt = NULL;
             }
             if (flush || av_fifo_size(&sc->audio_buffer) >= GXF_AUDIO_PACKET_SIZE) {
@@ -813,7 +813,7 @@ static int gxf_interleave_packet(AVFormatContext *s, AVPacket *out, AVPacket *pk
 
 AVOutputFormat gxf_muxer = {
     "gxf",
-    "GXF format",
+    NULL_IF_CONFIG_SMALL("GXF format"),
     NULL,
     "gxf",
     sizeof(GXFContext),

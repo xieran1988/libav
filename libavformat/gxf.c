@@ -18,8 +18,9 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+#include "libavutil/common.h"
 #include "avformat.h"
-#include "common.h"
 #include "gxf.h"
 
 typedef struct {
@@ -81,6 +82,8 @@ static int get_sindex(AVFormatContext *s, int id, int format) {
             return i;
     }
     st = av_new_stream(s, id);
+    if (!st)
+        return AVERROR(ENOMEM);
     switch (format) {
         case 3:
         case 4:
@@ -117,7 +120,7 @@ static int get_sindex(AVFormatContext *s, int id, int format) {
             st->codec->sample_rate = 48000;
             st->codec->bit_rate = 3 * 1 * 48000 * 8;
             st->codec->block_align = 3 * 1;
-            st->codec->bits_per_sample = 24;
+            st->codec->bits_per_coded_sample = 24;
             break;
         case 10:
             st->codec->codec_type = CODEC_TYPE_AUDIO;
@@ -126,7 +129,7 @@ static int get_sindex(AVFormatContext *s, int id, int format) {
             st->codec->sample_rate = 48000;
             st->codec->bit_rate = 2 * 1 * 48000 * 8;
             st->codec->block_align = 2 * 1;
-            st->codec->bits_per_sample = 16;
+            st->codec->bits_per_coded_sample = 16;
             break;
         case 17:
             st->codec->codec_type = CODEC_TYPE_AUDIO;
@@ -414,6 +417,7 @@ static int gxf_packet(AVFormatContext *s, AVPacket *pkt) {
     while (!url_feof(pb)) {
         int track_type, track_id, ret;
         int field_nr;
+        int stream_index;
         if (!parse_packet_header(pb, &pkt_type, &pkt_len)) {
             if (!url_feof(pb))
                 av_log(s, AV_LOG_ERROR, "GXF: sync lost\n");
@@ -434,6 +438,9 @@ static int gxf_packet(AVFormatContext *s, AVPacket *pkt) {
         pkt_len -= 16;
         track_type = get_byte(pb);
         track_id = get_byte(pb);
+        stream_index = get_sindex(s, track_id, track_type);
+        if (stream_index < 0)
+            return stream_index;
         field_nr = get_be32(pb);
         get_be32(pb); // field information
         get_be32(pb); // "timeline" field number
@@ -443,7 +450,7 @@ static int gxf_packet(AVFormatContext *s, AVPacket *pkt) {
         // field information, it might be better to take this into account
         // as well.
         ret = av_get_packet(pb, pkt, pkt_len);
-        pkt->stream_index = get_sindex(s, track_id, track_type);
+        pkt->stream_index = stream_index;
         pkt->dts = field_nr;
         return ret;
     }
@@ -485,7 +492,7 @@ static int64_t gxf_read_timestamp(AVFormatContext *s, int stream_index,
 
 AVInputFormat gxf_demuxer = {
     "gxf",
-    "GXF format",
+    NULL_IF_CONFIG_SMALL("GXF format"),
     0,
     gxf_probe,
     gxf_header,

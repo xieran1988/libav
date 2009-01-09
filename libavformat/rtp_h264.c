@@ -36,9 +36,11 @@
  *
  */
 
+#include "libavutil/base64.h"
+#include "libavutil/avstring.h"
+#include "libavcodec/bitstream.h"
 #include "avformat.h"
 #include "mpegts.h"
-#include "bitstream.h"
 
 #include <unistd.h>
 #include "network.h"
@@ -46,8 +48,6 @@
 
 #include "rtp_internal.h"
 #include "rtp_h264.h"
-#include "base64.h"
-#include "avstring.h"
 
 /**
     RTP/H264 specific private data.
@@ -173,8 +173,10 @@ static int h264_handle_packet(RTPDemuxContext * s,
     int result= 0;
     uint8_t start_sequence[]= {0, 0, 1};
 
+#ifdef DEBUG
     assert(data);
     assert(data->cookie == MAGIC_COOKIE);
+#endif
     assert(buf);
 
     if (type >= 1 && type <= 23)

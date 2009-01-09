@@ -25,8 +25,8 @@
  */
 
 #include "avcodec.h"
-#include "swscale.h"
 #include "dsputil.h"
+#include "libswscale/swscale.h"
 
 #ifdef HAVE_ALTIVEC
 #include "ppc/imgresample_altivec.h"
@@ -48,12 +48,12 @@
 #define LINE_BUF_HEIGHT (NB_TAPS * 4)
 
 struct SwsContext {
-    AVClass *av_class;
+    const AVClass *av_class;
     struct ImgReSampleContext *resampling_ctx;
     enum PixelFormat src_pix_fmt, dst_pix_fmt;
 };
 
-struct ImgReSampleContext {
+typedef struct ImgReSampleContext {
     int iwidth, iheight, owidth, oheight;
     int topBand, bottomBand, leftBand, rightBand;
     int padtop, padbottom, padleft, padright;
@@ -62,7 +62,7 @@ struct ImgReSampleContext {
     DECLARE_ALIGNED_8(int16_t, h_filters[NB_PHASES][NB_TAPS]); /* horizontal filters */
     DECLARE_ALIGNED_8(int16_t, v_filters[NB_PHASES][NB_TAPS]); /* vertical filters */
     uint8_t *line_buf;
-};
+} ImgReSampleContext;
 
 void av_build_filter(int16_t *filter, double factor, int tap_count, int phase_count, int scale, int type);
 
@@ -408,10 +408,10 @@ static void component_resample(ImgReSampleContext *s,
         else
 #endif
 #ifdef HAVE_ALTIVEC
-            if ((mm_flags & MM_ALTIVEC) && NB_TAPS == 4 && FILTER_BITS <= 6)
-                v_resample16_altivec(output, owidth,
-                                s->line_buf + (ring_y - NB_TAPS + 1) * owidth, owidth,
-                                &s->v_filters[phase_y][0]);
+        if ((mm_flags & MM_ALTIVEC) && NB_TAPS == 4 && FILTER_BITS <= 6)
+            v_resample16_altivec(output, owidth,
+                                 s->line_buf + (ring_y - NB_TAPS + 1) * owidth,
+                                 owidth, &s->v_filters[phase_y][0]);
         else
 #endif
             v_resample(output, owidth,
@@ -422,13 +422,6 @@ static void component_resample(ImgReSampleContext *s,
 
         output += owrap;
     }
-}
-
-ImgReSampleContext *img_resample_init(int owidth, int oheight,
-                                      int iwidth, int iheight)
-{
-    return img_resample_full_init(owidth, oheight, iwidth, iheight,
-            0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 ImgReSampleContext *img_resample_full_init(int owidth, int oheight,
@@ -447,7 +440,7 @@ ImgReSampleContext *img_resample_full_init(int owidth, int oheight,
     if (!s)
         return NULL;
     if((unsigned)owidth >= UINT_MAX / (LINE_BUF_HEIGHT + NB_TAPS))
-        return NULL;
+        goto fail;
     s->line_buf = av_mallocz(owidth * (LINE_BUF_HEIGHT + NB_TAPS));
     if (!s->line_buf)
         goto fail;
@@ -484,6 +477,13 @@ fail:
     return NULL;
 }
 
+ImgReSampleContext *img_resample_init(int owidth, int oheight,
+                                      int iwidth, int iheight)
+{
+    return img_resample_full_init(owidth, oheight, iwidth, iheight,
+            0, 0, 0, 0, 0, 0, 0, 0);
+}
+
 void img_resample(ImgReSampleContext *s,
                   AVPicture *output, const AVPicture *input)
 {
@@ -512,6 +512,13 @@ void img_resample_close(ImgReSampleContext *s)
     av_free(s);
 }
 
+static const char *context_to_name(void* ptr)
+{
+    return "imgconvert";
+}
+
+static const AVClass context_class = { "imgresample", context_to_name, NULL };
+
 struct SwsContext *sws_getContext(int srcW, int srcH, int srcFormat,
                                   int dstW, int dstH, int dstFormat,
                                   int flags, SwsFilter *srcFilter,
@@ -520,17 +527,16 @@ struct SwsContext *sws_getContext(int srcW, int srcH, int srcFormat,
     struct SwsContext *ctx;
 
     ctx = av_malloc(sizeof(struct SwsContext));
-    if (ctx)
-        ctx->av_class = av_mallocz(sizeof(AVClass));
-    if (!ctx || !ctx->av_class) {
+    if (!ctx) {
         av_log(NULL, AV_LOG_ERROR, "Cannot allocate a resampling context!\n");
 
         return NULL;
     }
+    ctx->av_class = &context_class;
 
     if ((srcH != dstH) || (srcW != dstW)) {
         if ((srcFormat != PIX_FMT_YUV420P) || (dstFormat != PIX_FMT_YUV420P)) {
-            av_log(NULL, AV_LOG_INFO, "PIX_FMT_YUV420P will be used as an intermediate format for rescaling\n");
+            av_log(ctx, AV_LOG_INFO, "PIX_FMT_YUV420P will be used as an intermediate format for rescaling\n");
         }
         ctx->resampling_ctx = img_resample_init(dstW, dstH, srcW, srcH);
     } else {
@@ -556,7 +562,6 @@ void sws_freeContext(struct SwsContext *ctx)
     } else {
         av_free(ctx->resampling_ctx);
     }
-    av_free(ctx->av_class);
     av_free(ctx);
 }
 
@@ -634,7 +639,7 @@ int sws_scale(struct SwsContext *ctx, uint8_t* src[], int srcStride[],
                             &src_pict, ctx->src_pix_fmt,
                             ctx->resampling_ctx->iwidth, ctx->resampling_ctx->iheight) < 0) {
 
-                av_log(NULL, AV_LOG_ERROR, "pixel format conversion not handled\n");
+                av_log(ctx, AV_LOG_ERROR, "pixel format conversion not handled\n");
                 res = -1;
                 goto the_end;
             }
@@ -673,7 +678,7 @@ int sws_scale(struct SwsContext *ctx, uint8_t* src[], int srcStride[],
                         resampled_picture, current_pix_fmt,
                         ctx->resampling_ctx->owidth, ctx->resampling_ctx->oheight) < 0) {
 
-            av_log(NULL, AV_LOG_ERROR, "pixel format conversion not handled\n");
+            av_log(ctx, AV_LOG_ERROR, "pixel format conversion not handled\n");
 
             res = -1;
             goto the_end;

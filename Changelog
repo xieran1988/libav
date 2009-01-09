@@ -1,6 +1,7 @@
 version <next>
 - The "device" muxers and demuxers are now in a new libavdevice library
 - DV50 AKA DVCPRO50 encoder, decoder, muxer and demuxer
+- DV100 AKA DVCPRO HD decoder and demuxer
 - TechSmith Camtasia (TSCC) video decoder
 - IBM Ultimotion (ULTI) video decoder
 - Sierra Online audio file demuxer and decoder
@@ -110,6 +111,31 @@ version <next>
 - TechnoTrend PVA demuxer
 - Linux Media Labs MPEG-4 (LMLM4) demuxer
 - AVM2 (Flash 9) SWF muxer
+- QT variant of IMA ADPCM encoder
+- VFW grabber
+- Ipod/Iphone compatible mp4 muxer
+- Mimic decoder
+- MSN TCP Webcam stream demuxer
+- RL2 demuxer / decoder
+- IFF demuxer
+- 8SVX audio decoder
+- BFI demuxer
+- MAXIS EA XA (.xa) demuxer / decoder
+- BFI video decoder
+- OMA demuxer
+- MLP/TrueHD decoder
+- Electronic Arts CMV decoder
+- Motion Pixels Video decoder
+- Motion Pixels MVI demuxer
+- removed animated GIF decoder/demuxer
+- D-Cinema audio muxer
+- Electronic Arts TGV decoder
+- Apple Lossless Audio Codec (ALAC) encoder
+- AAC decoder
+- floating point PCM encoder/decoder
+- MXF muxer
+- E-AC-3 support added to AC-3 decoder
+- Nellymoser ASAO encoder
 
 version 0.4.9-pre1:
 

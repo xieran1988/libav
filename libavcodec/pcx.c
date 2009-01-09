@@ -30,7 +30,7 @@ typedef struct PCXContext {
     AVFrame picture;
 } PCXContext;
 
-static int pcx_init(AVCodecContext *avctx) {
+static av_cold int pcx_init(AVCodecContext *avctx) {
     PCXContext *s = avctx->priv_data;
 
     avcodec_get_frame_defaults(&s->picture);
@@ -42,7 +42,7 @@ static int pcx_init(AVCodecContext *avctx) {
 /**
  * @return advanced src pointer
  */
-static const char *pcx_rle_decode(const uint8_t *src, uint8_t *dst,
+static const uint8_t *pcx_rle_decode(const uint8_t *src, uint8_t *dst,
                             unsigned int bytes_per_scanline) {
     unsigned int i = 0;
     unsigned char run, value;
@@ -224,7 +224,7 @@ static int pcx_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     return buf - bufstart;
 }
 
-static int pcx_end(AVCodecContext *avctx) {
+static av_cold int pcx_end(AVCodecContext *avctx) {
     PCXContext *s = avctx->priv_data;
 
     if(s->picture.data[0])
@@ -243,5 +243,6 @@ AVCodec pcx_decoder = {
     pcx_end,
     pcx_decode_frame,
     0,
-    NULL
+    NULL,
+    .long_name = NULL_IF_CONFIG_SMALL("PC Paintbrush PCX image"),
 };

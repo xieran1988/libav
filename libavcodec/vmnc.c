@@ -456,7 +456,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, const
  * Init VMnc decoder
  *
  */
-static int decode_init(AVCodecContext *avctx)
+static av_cold int decode_init(AVCodecContext *avctx)
 {
     VmncContext * const c = avctx->priv_data;
 
@@ -469,7 +469,7 @@ static int decode_init(AVCodecContext *avctx)
     if (avcodec_check_dimensions(avctx, avctx->width, avctx->height) < 0) {
         return 1;
     }
-    c->bpp = avctx->bits_per_sample;
+    c->bpp = avctx->bits_per_coded_sample;
     c->bpp2 = c->bpp/8;
 
     switch(c->bpp){
@@ -496,7 +496,7 @@ static int decode_init(AVCodecContext *avctx)
  * Uninit VMnc decoder
  *
  */
-static int decode_end(AVCodecContext *avctx)
+static av_cold int decode_end(AVCodecContext *avctx)
 {
     VmncContext * const c = avctx->priv_data;
 
@@ -510,13 +510,14 @@ static int decode_end(AVCodecContext *avctx)
 }
 
 AVCodec vmnc_decoder = {
-    "VMware video",
+    "vmnc",
     CODEC_TYPE_VIDEO,
     CODEC_ID_VMNC,
     sizeof(VmncContext),
     decode_init,
     NULL,
     decode_end,
-    decode_frame
+    decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("VMware Screen Codec / VMware Video"),
 };
 

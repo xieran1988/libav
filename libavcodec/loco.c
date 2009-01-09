@@ -152,7 +152,7 @@ static int loco_decode_plane(LOCOContext *l, uint8_t *data, int width, int heigh
         data += stride;
     }
 
-    return ((get_bits_count(&rc.gb) + 7) >> 3);
+    return (get_bits_count(&rc.gb) + 7) >> 3;
 }
 
 static int decode_frame(AVCodecContext *avctx,
@@ -225,7 +225,7 @@ static int decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-static int decode_init(AVCodecContext *avctx){
+static av_cold int decode_init(AVCodecContext *avctx){
     LOCOContext * const l = avctx->priv_data;
     int version;
 
@@ -282,4 +282,5 @@ AVCodec loco_decoder = {
     NULL,
     decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("LOCO"),
 };

@@ -156,7 +156,6 @@ static void ape_parse_tag(AVFormatContext *s)
 
     get_buffer(pb, buf, 8);    /* APETAGEX */
     if (strncmp(buf, "APETAGEX", 8)) {
-        av_log(NULL, AV_LOG_ERROR, "Invalid APE Tags\n");
         return;
     }
 
@@ -425,7 +424,7 @@ static int ape_read_header(AVFormatContext * s, AVFormatParameters * ap)
     st->codec->codec_tag       = MKTAG('A', 'P', 'E', ' ');
     st->codec->channels        = ape->channels;
     st->codec->sample_rate     = ape->samplerate;
-    st->codec->bits_per_sample = ape->bps;
+    st->codec->bits_per_coded_sample = ape->bps;
     st->codec->frame_size      = MAC_SUBFRAME_SIZE;
 
     st->nb_frames = ape->totalframes;
@@ -512,7 +511,7 @@ static int ape_read_seek(AVFormatContext *s, int stream_index, int64_t timestamp
 
 AVInputFormat ape_demuxer = {
     "ape",
-    "Monkey's Audio",
+    NULL_IF_CONFIG_SMALL("Monkey's Audio"),
     sizeof(APEContext),
     ape_probe,
     ape_read_header,

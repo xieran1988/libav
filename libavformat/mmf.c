@@ -27,8 +27,16 @@ typedef struct {
     offset_t data_size;
 } MMFContext;
 
-static int mmf_rates[] = { 4000, 8000, 11025, 22050, 44100 };
+static const int mmf_rates[] = { 4000, 8000, 11025, 22050, 44100 };
 
+static int mmf_rate(int code)
+{
+    if((code < 0) || (code > 4))
+        return -1;
+    return mmf_rates[code];
+}
+
+#ifdef CONFIG_MMF_MUXER
 static int mmf_rate_code(int rate)
 {
     int i;
@@ -38,14 +46,6 @@ static int mmf_rate_code(int rate)
     return -1;
 }
 
-static int mmf_rate(int code)
-{
-    if((code < 0) || (code > 4))
-        return -1;
-    return mmf_rates[code];
-}
-
-#ifdef CONFIG_MUXERS
 /* Copy of end_tag() from avienc.c, but for big-endian chunk size */
 static void end_tag_be(ByteIOContext *pb, offset_t start)
 {
@@ -163,7 +163,7 @@ static int mmf_write_trailer(AVFormatContext *s)
     }
     return 0;
 }
-#endif //CONFIG_MUXERS
+#endif /* CONFIG_MMF_MUXER */
 
 static int mmf_probe(AVProbeData *p)
 {
@@ -248,8 +248,8 @@ static int mmf_read_header(AVFormatContext *s,
     st->codec->codec_id = CODEC_ID_ADPCM_YAMAHA;
     st->codec->sample_rate = rate;
     st->codec->channels = 1;
-    st->codec->bits_per_sample = 4;
-    st->codec->bit_rate = st->codec->sample_rate * st->codec->bits_per_sample;
+    st->codec->bits_per_coded_sample = 4;
+    st->codec->bit_rate = st->codec->sample_rate * st->codec->bits_per_coded_sample;
 
     av_set_pts_info(st, 64, 1, st->codec->sample_rate);
 
@@ -290,33 +290,22 @@ static int mmf_read_packet(AVFormatContext *s,
     return ret;
 }
 
-static int mmf_read_close(AVFormatContext *s)
-{
-    return 0;
-}
-
-static int mmf_read_seek(AVFormatContext *s,
-                         int stream_index, int64_t timestamp, int flags)
-{
-    return pcm_read_seek(s, stream_index, timestamp, flags);
-}
-
 #ifdef CONFIG_MMF_DEMUXER
 AVInputFormat mmf_demuxer = {
     "mmf",
-    "mmf format",
+    NULL_IF_CONFIG_SMALL("mmf format"),
     sizeof(MMFContext),
     mmf_probe,
     mmf_read_header,
     mmf_read_packet,
-    mmf_read_close,
-    mmf_read_seek,
+    NULL,
+    pcm_read_seek,
 };
 #endif
 #ifdef CONFIG_MMF_MUXER
 AVOutputFormat mmf_muxer = {
     "mmf",
-    "mmf format",
+    NULL_IF_CONFIG_SMALL("mmf format"),
     "application/vnd.smaf",
     "mmf",
     sizeof(MMFContext),

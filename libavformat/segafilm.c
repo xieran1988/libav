@@ -107,7 +107,7 @@ static int film_read_header(AVFormatContext *s,
         /* normal Saturn .cpk files; 32-byte header */
         if (get_buffer(pb, scratch, 32) != 32)
             return AVERROR(EIO);
-        film->audio_samplerate = AV_RB16(&scratch[24]);;
+        film->audio_samplerate = AV_RB16(&scratch[24]);
         film->audio_channels = scratch[21];
         film->audio_bits = scratch[22];
         if (film->audio_bits == 8)
@@ -148,12 +148,12 @@ static int film_read_header(AVFormatContext *s,
         st->codec->codec_id = film->audio_type;
         st->codec->codec_tag = 1;
         st->codec->channels = film->audio_channels;
-        st->codec->bits_per_sample = film->audio_bits;
+        st->codec->bits_per_coded_sample = film->audio_bits;
         st->codec->sample_rate = film->audio_samplerate;
         st->codec->bit_rate = st->codec->channels * st->codec->sample_rate *
-            st->codec->bits_per_sample;
+            st->codec->bits_per_coded_sample;
         st->codec->block_align = st->codec->channels *
-            st->codec->bits_per_sample / 8;
+            st->codec->bits_per_coded_sample / 8;
     }
 
     /* load the sample table */
@@ -283,7 +283,7 @@ static int film_read_close(AVFormatContext *s)
 
 AVInputFormat segafilm_demuxer = {
     "film_cpk",
-    "Sega FILM/CPK format",
+    NULL_IF_CONFIG_SMALL("Sega FILM/CPK format"),
     sizeof(FilmDemuxContext),
     film_probe,
     film_read_header,

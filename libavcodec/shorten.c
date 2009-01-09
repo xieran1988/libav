@@ -100,10 +100,11 @@ typedef struct ShortenContext {
     int32_t lpcqoffset;
 } ShortenContext;
 
-static int shorten_decode_init(AVCodecContext * avctx)
+static av_cold int shorten_decode_init(AVCodecContext * avctx)
 {
     ShortenContext *s = avctx->priv_data;
     s->avctx = avctx;
+    avctx->sample_fmt = SAMPLE_FMT_S16;
 
     return 0;
 }
@@ -227,9 +228,9 @@ static int decode_wave_header(AVCodecContext *avctx, uint8_t *header, int header
     avctx->sample_rate = get_le32(&hb);
     avctx->bit_rate = get_le32(&hb) * 8;
     avctx->block_align = get_le16(&hb);
-    avctx->bits_per_sample = get_le16(&hb);
+    avctx->bits_per_coded_sample = get_le16(&hb);
 
-    if (avctx->bits_per_sample != 16) {
+    if (avctx->bits_per_coded_sample != 16) {
         av_log(avctx, AV_LOG_ERROR, "unsupported number of bits per sample\n");
         return -1;
     }
@@ -501,7 +502,7 @@ frame_done:
         return i;
 }
 
-static int shorten_decode_close(AVCodecContext *avctx)
+static av_cold int shorten_decode_close(AVCodecContext *avctx)
 {
     ShortenContext *s = avctx->priv_data;
     int i;
@@ -532,4 +533,5 @@ AVCodec shorten_decoder = {
     shorten_decode_close,
     shorten_decode_frame,
     .flush= shorten_flush,
+    .long_name= NULL_IF_CONFIG_SMALL("Shorten"),
 };

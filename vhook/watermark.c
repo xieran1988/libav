@@ -58,12 +58,10 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#include "common.h"
-#include "avformat.h"
-
-#include "framehook.h"
-#include "cmdutils.h"
-#include "swscale.h"
+#include "libavutil/common.h"
+#include "libavformat/avformat.h"
+#include "libavformat/framehook.h"
+#include "libswscale/swscale.h"
 
 static int sws_flags = SWS_BICUBIC;
 

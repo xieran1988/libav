@@ -232,7 +232,7 @@ static inline int tm2_read_header(TM2Context *ctx, const uint8_t *buf)
         return -1;
     }
 
-    return (buf - obuf);
+    return buf - obuf;
 }
 
 static int tm2_read_deltas(TM2Context *ctx, int stream_id) {
@@ -818,7 +818,7 @@ static int decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-static int decode_init(AVCodecContext *avctx){
+static av_cold int decode_init(AVCodecContext *avctx){
     TM2Context * const l = avctx->priv_data;
     int i;
 
@@ -855,7 +855,7 @@ static int decode_init(AVCodecContext *avctx){
     return 0;
 }
 
-static int decode_end(AVCodecContext *avctx){
+static av_cold int decode_end(AVCodecContext *avctx){
     TM2Context * const l = avctx->priv_data;
     int i;
 
@@ -887,4 +887,5 @@ AVCodec truemotion2_decoder = {
     decode_end,
     decode_frame,
     CODEC_CAP_DR1,
+    .long_name = NULL_IF_CONFIG_SMALL("Duck TrueMotion 2.0"),
 };

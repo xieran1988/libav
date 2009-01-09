@@ -220,7 +220,7 @@ static int decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-static int targa_init(AVCodecContext *avctx){
+static av_cold int targa_init(AVCodecContext *avctx){
     TargaContext *s = avctx->priv_data;
 
     avcodec_get_frame_defaults((AVFrame*)&s->picture);
@@ -230,7 +230,7 @@ static int targa_init(AVCodecContext *avctx){
     return 0;
 }
 
-static int targa_end(AVCodecContext *avctx){
+static av_cold int targa_end(AVCodecContext *avctx){
     TargaContext *s = avctx->priv_data;
 
     if(s->picture.data[0])
@@ -249,5 +249,6 @@ AVCodec targa_decoder = {
     targa_end,
     decode_frame,
     0,
-    NULL
+    NULL,
+    .long_name = NULL_IF_CONFIG_SMALL("Truevision Targa image"),
 };

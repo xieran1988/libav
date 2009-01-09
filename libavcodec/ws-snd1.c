@@ -36,10 +36,11 @@ static const char ws_adpcm_4bit[] = {
 
 #define CLIP8(a) if(a>127)a=127;if(a<-128)a=-128;
 
-static int ws_snd_decode_init(AVCodecContext * avctx)
+static av_cold int ws_snd_decode_init(AVCodecContext * avctx)
 {
 //    WSSNDContext *c = avctx->priv_data;
 
+    avctx->sample_fmt = SAMPLE_FMT_S16;
     return 0;
 }
 
@@ -149,4 +150,5 @@ AVCodec ws_snd1_decoder = {
     NULL,
     NULL,
     ws_snd_decode_frame,
+    .long_name = NULL_IF_CONFIG_SMALL("Westwood Audio (SND1)"),
 };

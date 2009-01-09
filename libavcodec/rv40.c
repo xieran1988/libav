@@ -40,7 +40,7 @@ static VLC ptype_vlc[NUM_PTYPE_VLCS], btype_vlc[NUM_BTYPE_VLCS];
 /**
  * Initialize all tables.
  */
-static void rv40_init_tables()
+static av_cold void rv40_init_tables()
 {
     int i;
 
@@ -103,7 +103,7 @@ static void rv40_parse_picture_size(GetBitContext *gb, int *w, int *h)
 
 static int rv40_parse_slice_header(RV34DecContext *r, GetBitContext *gb, SliceInfo *si)
 {
-    int t, mb_bits;
+    int mb_bits;
     int w = r->s.width, h = r->s.height;
     int mb_size;
 
@@ -117,7 +117,7 @@ static int rv40_parse_slice_header(RV34DecContext *r, GetBitContext *gb, SliceIn
         return -1;
     si->vlc_set = get_bits(gb, 2);
     skip_bits1(gb);
-    t = get_bits(gb, 13); /// ???
+    si->pts = get_bits(gb, 13);
     if(!si->type || !get_bits1(gb))
         rv40_parse_picture_size(gb, &w, &h);
     if(avcodec_check_dimensions(r->s.avctx, w, h) < 0)
@@ -229,7 +229,7 @@ static int rv40_decode_mb_info(RV34DecContext *r)
             prev_type = i;
         }
     }
-    if(s->pict_type == P_TYPE){
+    if(s->pict_type == FF_P_TYPE){
         prev_type = block_num_to_ptype_vlc_num[prev_type];
         q = get_vlc2(gb, ptype_vlc[prev_type].table, PTYPE_VLC_BITS, 1);
         if(q < PBTYPE_ESCAPE)
@@ -250,7 +250,7 @@ static int rv40_decode_mb_info(RV34DecContext *r)
 /**
  * Initialize decoder.
  */
-static int rv40_decode_init(AVCodecContext *avctx)
+static av_cold int rv40_decode_init(AVCodecContext *avctx)
 {
     RV34DecContext *r = avctx->priv_data;
 
@@ -276,4 +276,5 @@ AVCodec rv40_decoder = {
     ff_rv34_decode_end,
     ff_rv34_decode_frame,
     CODEC_CAP_DR1 | CODEC_CAP_DELAY,
+    .long_name = NULL_IF_CONFIG_SMALL("RealVideo 4.0"),
 };

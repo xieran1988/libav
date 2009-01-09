@@ -25,10 +25,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <ctype.h>
-#include "framehook.h"
-#include "avformat.h"
-#include "swscale.h"
-#include "avstring.h"
+#include "libavutil/avstring.h"
+#include "libavformat/framehook.h"
+#include "libavformat/avformat.h"
+#include "libswscale/swscale.h"
+#undef fprintf
 
 static int sws_flags = SWS_BICUBIC;
 
@@ -211,7 +212,7 @@ int Configure(void **ctxp, int argc, char *argv[])
     if ( argc > 1 )
     {
         *ctxp = av_mallocz(sizeof(ContextInfo));
-        if ( ctxp != NULL && argc > 1 )
+        if ( *ctxp != NULL && argc > 1 )
         {
             ContextInfo *info = (ContextInfo *)*ctxp;
             info->rw = rwpipe_open( argc - 1, &argv[ 1 ] );
