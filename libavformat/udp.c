@@ -29,6 +29,9 @@
 #include <unistd.h>
 #include "network.h"
 #include "os_support.h"
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 
 #ifndef IPV6_ADD_MEMBERSHIP
 #define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
@@ -44,6 +47,7 @@
 typedef struct {
     int udp_fd;
     int ttl;
+    int buffer_size;
     int is_multicast;
     int local_port;
     int reuse_socket;
@@ -358,6 +362,8 @@ static int udp_open(URLContext *h, const char *uri, int flags)
 
     h->priv_data = s;
     s->ttl = 16;
+    s->buffer_size = is_output ? UDP_TX_BUF_SIZE : UDP_MAX_PKT_SIZE;
+
     p = strchr(uri, '?');
     if (p) {
         s->reuse_socket = find_info_tag(buf, sizeof(buf), "reuse", p);
@@ -369,6 +375,9 @@ static int udp_open(URLContext *h, const char *uri, int flags)
         }
         if (find_info_tag(buf, sizeof(buf), "pkt_size", p)) {
             h->max_packet_size = strtol(buf, NULL, 10);
+        }
+        if (find_info_tag(buf, sizeof(buf), "buffer_size", p)) {
+            s->buffer_size = strtol(buf, NULL, 10);
         }
     }
 
@@ -416,7 +425,7 @@ static int udp_open(URLContext *h, const char *uri, int flags)
 
     if (is_output) {
         /* limit the tx buf size to limit latency */
-        tmp = UDP_TX_BUF_SIZE;
+        tmp = s->buffer_size;
         if (setsockopt(udp_fd, SOL_SOCKET, SO_SNDBUF, &tmp, sizeof(tmp)) < 0) {
             av_log(NULL, AV_LOG_ERROR, "setsockopt(SO_SNDBUF): %s\n", strerror(errno));
             goto fail;
@@ -424,8 +433,10 @@ static int udp_open(URLContext *h, const char *uri, int flags)
     } else {
         /* set udp recv buffer size to the largest possible udp packet size to
          * avoid losing data on OSes that set this too low by default. */
-        tmp = UDP_MAX_PKT_SIZE;
-        setsockopt(udp_fd, SOL_SOCKET, SO_RCVBUF, &tmp, sizeof(tmp));
+        tmp = s->buffer_size;
+        if (setsockopt(udp_fd, SOL_SOCKET, SO_RCVBUF, &tmp, sizeof(tmp)) < 0) {
+            av_log(NULL, AV_LOG_WARNING, "setsockopt(SO_RECVBUF): %s\n", strerror(errno));
+        }
     }
 
     s->udp_fd = udp_fd;
@@ -441,9 +452,23 @@ static int udp_read(URLContext *h, uint8_t *buf, int size)
 {
     UDPContext *s = h->priv_data;
     int len;
+    fd_set rfds;
+    int ret;
+    struct timeval tv;
 
     for(;;) {
-        len = recv(s->udp_fd, buf, size, 0);
+        if (url_interrupt_cb())
+            return AVERROR(EINTR);
+        FD_ZERO(&rfds);
+        FD_SET(s->udp_fd, &rfds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 100 * 1000;
+        ret = select(s->udp_fd + 1, &rfds, NULL, NULL, &tv);
+        if (ret < 0)
+            return AVERROR(EIO);
+        if (!(ret > 0 && FD_ISSET(s->udp_fd, &rfds)))
+            continue;
+        len = recv(s->udp_fd, buf, size, MSG_DONTWAIT);
         if (len < 0) {
             if (ff_neterrno() != FF_NETERROR(EAGAIN) &&
                 ff_neterrno() != FF_NETERROR(EINTR))
