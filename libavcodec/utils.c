@@ -26,8 +26,9 @@
  */
 
 /* needed for mkstemp() */
-#define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE 600
 
+#include "libavutil/avstring.h"
 #include "libavutil/integer.h"
 #include "libavutil/crc.h"
 #include "avcodec.h"
@@ -79,7 +80,7 @@ void *av_fast_realloc(void *ptr, unsigned int *size, unsigned int min_size)
 }
 
 /* encoder management */
-AVCodec *first_avcodec = NULL;
+static AVCodec *first_avcodec = NULL;
 
 AVCodec *av_codec_next(AVCodec *c){
     if(c) return c->next;
@@ -170,6 +171,8 @@ void avcodec_align_dimensions(AVCodecContext *s, int *width, int *height){
 
     *width = ALIGN(*width , w_align);
     *height= ALIGN(*height, h_align);
+    if(s->codec_id == CODEC_ID_H264)
+        *height+=2; // some of the optimized chroma MC reads one line too much
 }
 
 int avcodec_check_dimensions(void *av_log_ctx, unsigned int w, unsigned int h){
@@ -229,6 +232,7 @@ int avcodec_default_get_buffer(AVCodecContext *s, AVFrame *pic){
         int size[4] = {0};
         int tmpsize;
         AVPicture picture;
+        int stride_align[4];
 
         avcodec_get_chroma_sub_sample(s->pix_fmt, &h_chroma_shift, &v_chroma_shift);
 
@@ -238,12 +242,22 @@ int avcodec_default_get_buffer(AVCodecContext *s, AVFrame *pic){
             w+= EDGE_WIDTH*2;
             h+= EDGE_WIDTH*2;
         }
-        avcodec_align_dimensions(s, &w, &h);
 
         ff_fill_linesize(&picture, s->pix_fmt, w);
 
-        for (i=0; i<4; i++)
-            picture.linesize[i] = ALIGN(picture.linesize[i], STRIDE_ALIGN);
+        for (i=0; i<4; i++){
+//STRIDE_ALIGN is 8 for SSE* but this does not work for SVQ1 chroma planes
+//we could change STRIDE_ALIGN to 16 for x86/sse but it would increase the
+//picture size unneccessarily in some cases. The solution here is not
+//pretty and better ideas are welcome!
+#ifdef HAVE_MMX
+            if(s->codec_id == CODEC_ID_SVQ1)
+                stride_align[i]= 16;
+            else
+#endif
+            stride_align[i] = STRIDE_ALIGN;
+            picture.linesize[i] = ALIGN(picture.linesize[i], stride_align[i]);
+        }
 
         tmpsize = ff_fill_pointer(&picture, NULL, s->pix_fmt, h);
 
@@ -269,7 +283,7 @@ int avcodec_default_get_buffer(AVCodecContext *s, AVFrame *pic){
             if((s->flags&CODEC_FLAG_EMU_EDGE) || (s->pix_fmt == PIX_FMT_PAL8) || !size[2])
                 buf->data[i] = buf->base[i];
             else
-                buf->data[i] = buf->base[i] + ALIGN((buf->linesize[i]*EDGE_WIDTH>>v_shift) + (EDGE_WIDTH>>h_shift), STRIDE_ALIGN);
+                buf->data[i] = buf->base[i] + ALIGN((buf->linesize[i]*EDGE_WIDTH>>v_shift) + (EDGE_WIDTH>>h_shift), stride_align[i]);
         }
         buf->width  = s->width;
         buf->height = s->height;
@@ -691,14 +705,13 @@ static const AVOption options[]={
 {"chromaoffset", "chroma qp offset from luma", OFFSET(chromaoffset), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
 {"bframebias", "influences how often B-frames are used", OFFSET(bframebias), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|E},
 {"trellis", "rate-distortion optimal quantization", OFFSET(trellis), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX, V|A|E},
-{"directpred", "direct mv prediction mode - 0 (none), 1 (spatial), 2 (temporal)", OFFSET(directpred), FF_OPT_TYPE_INT, 2, INT_MIN, INT_MAX, V|E},
+{"directpred", "direct mv prediction mode - 0 (none), 1 (spatial), 2 (temporal), 3 (auto)", OFFSET(directpred), FF_OPT_TYPE_INT, 2, INT_MIN, INT_MAX, V|E},
 {"bpyramid", "allows B-frames to be used as references for predicting", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_BPYRAMID, INT_MIN, INT_MAX, V|E, "flags2"},
 {"wpred", "weighted biprediction for b-frames (H.264)", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_WPRED, INT_MIN, INT_MAX, V|E, "flags2"},
 {"mixed_refs", "one reference per partition, as opposed to one reference per macroblock", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_MIXED_REFS, INT_MIN, INT_MAX, V|E, "flags2"},
 {"dct8x8", "high profile 8x8 transform (H.264)", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_8X8DCT, INT_MIN, INT_MAX, V|E, "flags2"},
 {"fastpskip", "fast pskip (H.264)", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_FASTPSKIP, INT_MIN, INT_MAX, V|E, "flags2"},
 {"aud", "access unit delimiters (H.264)", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_AUD, INT_MIN, INT_MAX, V|E, "flags2"},
-{"brdo", "b-frame rate-distortion optimization", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_BRDO, INT_MIN, INT_MAX, V|E, "flags2"},
 {"skiprd", "RD optimal MB level residual skipping", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_SKIP_RD, INT_MIN, INT_MAX, V|E, "flags2"},
 {"complexityblur", "reduce fluctuations in qp (before curve compression)", OFFSET(complexityblur), FF_OPT_TYPE_FLOAT, 20.0, FLT_MIN, FLT_MAX, V|E},
 {"deblockalpha", "in-loop deblocking filter alphac0 parameter", OFFSET(deblockalpha), FF_OPT_TYPE_INT, DEFAULT, -6, 6, V|E},
@@ -728,6 +741,8 @@ static const AVOption options[]={
 {"drc_scale", "percentage of dynamic range compression to apply", OFFSET(drc_scale), FF_OPT_TYPE_FLOAT, 1.0, 0.0, 1.0, A|D},
 {"reservoir", "use bit reservoir", 0, FF_OPT_TYPE_CONST, CODEC_FLAG2_BIT_RESERVOIR, INT_MIN, INT_MAX, A|E, "flags2"},
 {"bits_per_raw_sample", NULL, OFFSET(bits_per_raw_sample), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX},
+{"channel_layout", NULL, OFFSET(channel_layout), FF_OPT_TYPE_INT64, DEFAULT, 0, INT64_MAX, A|E|D, "channel_layout"},
+{"request_channel_layout", NULL, OFFSET(request_channel_layout), FF_OPT_TYPE_INT64, DEFAULT, 0, INT64_MAX, A|D, "request_channel_layout"},
 {NULL},
 };
 
@@ -997,6 +1012,8 @@ AVCodec *avcodec_find_encoder(enum CodecID id)
 AVCodec *avcodec_find_encoder_by_name(const char *name)
 {
     AVCodec *p;
+    if (!name)
+        return NULL;
     p = first_avcodec;
     while (p) {
         if (p->encode != NULL && strcmp(name,p->name) == 0)
@@ -1021,6 +1038,8 @@ AVCodec *avcodec_find_decoder(enum CodecID id)
 AVCodec *avcodec_find_decoder_by_name(const char *name)
 {
     AVCodec *p;
+    if (!name)
+        return NULL;
     p = first_avcodec;
     while (p) {
         if (p->decode != NULL && strcmp(name,p->name) == 0)
@@ -1035,7 +1054,6 @@ void avcodec_string(char *buf, int buf_size, AVCodecContext *enc, int encode)
     const char *codec_name;
     AVCodec *p;
     char buf1[32];
-    char channels_str[100];
     int bitrate;
     AVRational display_aspect_ratio;
 
@@ -1115,26 +1133,12 @@ void avcodec_string(char *buf, int buf_size, AVCodecContext *enc, int encode)
         snprintf(buf, buf_size,
                  "Audio: %s",
                  codec_name);
-        switch (enc->channels) {
-            case 1:
-                strcpy(channels_str, "mono");
-                break;
-            case 2:
-                strcpy(channels_str, "stereo");
-                break;
-            case 6:
-                strcpy(channels_str, "5:1");
-                break;
-            default:
-                snprintf(channels_str, sizeof(channels_str), "%d channels", enc->channels);
-                break;
-        }
         if (enc->sample_rate) {
             snprintf(buf + strlen(buf), buf_size - strlen(buf),
-                     ", %d Hz, %s",
-                     enc->sample_rate,
-                     channels_str);
+                     ", %d Hz", enc->sample_rate);
         }
+        av_strlcat(buf, ", ", buf_size);
+        avcodec_get_channel_layout_string(buf + strlen(buf), buf_size - strlen(buf), enc->channels, enc->channel_layout);
         if (enc->sample_fmt != SAMPLE_FMT_NONE) {
             snprintf(buf + strlen(buf), buf_size - strlen(buf),
                      ", %s", avcodec_get_sample_fmt_name(enc->sample_fmt));
@@ -1439,7 +1443,7 @@ static const VideoFrameRateAbbr video_frame_rate_abbrs[]= {
 int av_parse_video_frame_size(int *width_ptr, int *height_ptr, const char *str)
 {
     int i;
-    int n = sizeof(video_frame_size_abbrs) / sizeof(VideoFrameSizeAbbr);
+    int n = FF_ARRAY_ELEMS(video_frame_size_abbrs);
     const char *p;
     int frame_width = 0, frame_height = 0;
 
@@ -1467,7 +1471,7 @@ int av_parse_video_frame_size(int *width_ptr, int *height_ptr, const char *str)
 int av_parse_video_frame_rate(AVRational *frame_rate, const char *arg)
 {
     int i;
-    int n = sizeof(video_frame_rate_abbrs) / sizeof(VideoFrameRateAbbr);
+    int n = FF_ARRAY_ELEMS(video_frame_rate_abbrs);
     char* cp;
 
     /* First, we check our abbreviation table */

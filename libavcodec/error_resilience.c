@@ -551,7 +551,7 @@ score_sum+= best_score;
 static int is_intra_more_likely(MpegEncContext *s){
     int is_intra_likely, i, j, undamaged_count, skip_amount, mb_x, mb_y;
 
-    if(s->last_picture_ptr==NULL) return 1; //no previous frame available -> use spatial prediction
+    if(!s->last_picture_ptr || !s->last_picture_ptr->data[0]) return 1; //no previous frame available -> use spatial prediction
 
     undamaged_count=0;
     for(i=0; i<s->mb_num; i++){
@@ -680,7 +680,7 @@ void ff_er_frame_end(MpegEncContext *s){
     int size = s->b8_stride * 2 * s->mb_height;
     Picture *pic= s->current_picture_ptr;
 
-    if(!s->error_recognition || s->error_count==0 ||
+    if(!s->error_recognition || s->error_count==0 || s->avctx->lowres ||
        s->error_count==3*s->mb_width*(s->avctx->skip_top + s->avctx->skip_bottom)) return;
 
     if(s->current_picture.motion_val[0] == NULL){

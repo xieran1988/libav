@@ -46,7 +46,6 @@
 #define MAX_ELEM_ID 16
 
 #define TNS_MAX_ORDER 20
-#define PNS_MEAN_ENERGY 3719550720.0f // sqrt(3.0) * 1<<31
 
 enum AudioObjectType {
     AOT_NULL,
@@ -190,8 +189,8 @@ typedef struct {
     int num_coupled;       ///< number of target elements
     enum RawDataBlockType type[8];   ///< Type of channel element to be coupled - SCE or CPE.
     int id_select[8];      ///< element id
-    int ch_select[8];      /**< [0] shared list of gains; [1] list of gains for left channel;
-                            *   [2] list of gains for right channel; [3] lists of gains for both channels
+    int ch_select[8];      /**< [0] shared list of gains; [1] list of gains for right channel;
+                            *   [2] list of gains for left channel; [3] lists of gains for both channels
                             */
     float gain[16][120];
 } ChannelCoupling;

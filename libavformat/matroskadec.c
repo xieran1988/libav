@@ -200,11 +200,12 @@ typedef struct {
     EbmlList seekhead;
 
     /* byte position of the segment inside the stream */
-    offset_t segment_start;
+    int64_t segment_start;
 
     /* the packet queue */
     AVPacket **packets;
     int num_packets;
+    AVPacket *prev_pkt;
 
     int done;
     int has_cluster_id;
@@ -224,8 +225,6 @@ typedef struct {
     uint64_t timecode;
     EbmlList blocks;
 } MatroskaCluster;
-
-#define ARRAY_SIZE(x)  (sizeof(x)/sizeof(*x))
 
 static EbmlSyntax ebml_header[] = {
     { EBML_ID_EBMLREADVERSION,        EBML_UINT, 0, offsetof(Ebml,version), {.u=EBML_VERSION} },
@@ -494,7 +493,7 @@ const struct {
 static int ebml_level_end(MatroskaDemuxContext *matroska)
 {
     ByteIOContext *pb = matroska->ctx->pb;
-    offset_t pos = url_ftell(pb);
+    int64_t pos = url_ftell(pb);
 
     if (matroska->num_levels > 0) {
         MatroskaLevel *level = &matroska->levels[matroska->num_levels - 1];
@@ -526,7 +525,7 @@ static int ebml_read_num(MatroskaDemuxContext *matroska, ByteIOContext *pb,
     if (!(total = get_byte(pb))) {
         /* we might encounter EOS here */
         if (!url_feof(pb)) {
-            offset_t pos = url_ftell(pb);
+            int64_t pos = url_ftell(pb);
             av_log(matroska->ctx, AV_LOG_ERROR,
                    "Read error at pos. %"PRIu64" (0x%"PRIx64")\n",
                    pos, pos);
@@ -540,7 +539,7 @@ static int ebml_read_num(MatroskaDemuxContext *matroska, ByteIOContext *pb,
         len_mask >>= 1;
     }
     if (read > max_size) {
-        offset_t pos = url_ftell(pb) - 1;
+        int64_t pos = url_ftell(pb) - 1;
         av_log(matroska->ctx, AV_LOG_ERROR,
                "Invalid EBML number size tag 0x%02x at pos %"PRIu64" (0x%"PRIx64")\n",
                (uint8_t) total, pos, pos);
@@ -934,7 +933,7 @@ static int matroska_decode_buffer(uint8_t** buf, int* buf_size,
 }
 
 static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
-                                    AVPacket *pkt)
+                                    AVPacket *pkt, uint64_t display_duration)
 {
     char *line, *layer, *ptr = pkt->data, *end = ptr+pkt->size;
     for (; *ptr!=',' && ptr<end-1; ptr++);
@@ -942,7 +941,7 @@ static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
         layer = ++ptr;
     for (; *ptr!=',' && ptr<end-1; ptr++);
     if (*ptr == ',') {
-        int64_t end_pts = pkt->pts + pkt->convergence_duration;
+        int64_t end_pts = pkt->pts + display_duration;
         int sc = matroska->time_scale * pkt->pts / 10000000;
         int ec = matroska->time_scale * end_pts  / 10000000;
         int sh, sm, ss, eh, em, es, len;
@@ -956,12 +955,21 @@ static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
         len = 50 + end-ptr + FF_INPUT_BUFFER_PADDING_SIZE;
         if (!(line = av_malloc(len)))
             return;
-        snprintf(line,len,"Dialogue: %s,%d:%02d:%02d.%02d,%d:%02d:%02d.%02d,%s",
+        snprintf(line,len,"Dialogue: %s,%d:%02d:%02d.%02d,%d:%02d:%02d.%02d,%s\r\n",
                  layer, sh, sm, ss, sc, eh, em, es, ec, ptr);
         av_free(pkt->data);
         pkt->data = line;
         pkt->size = strlen(line);
     }
+}
+
+static void matroska_merge_packets(AVPacket *out, AVPacket *in)
+{
+    out->data = av_realloc(out->data, out->size+in->size);
+    memcpy(out->data+out->size, in->data, in->size);
+    out->size += in->size;
+    av_destruct_packet(in);
+    av_free(in);
 }
 
 static void matroska_convert_tags(AVFormatContext *s, EbmlList *list)
@@ -970,7 +978,7 @@ static void matroska_convert_tags(AVFormatContext *s, EbmlList *list)
     int i, j;
 
     for (i=0; i < list->nb_elem; i++) {
-        for (j=0; j < ARRAY_SIZE(metadata); j++){
+        for (j=0; j < FF_ARRAY_ELEMS(metadata); j++){
             if (!strcmp(tags[i].name, metadata[j].name)) {
                 int *ptr = (int *)((char *)s + metadata[j].offset);
                 if (*ptr)  continue;
@@ -990,12 +998,12 @@ static void matroska_execute_seekhead(MatroskaDemuxContext *matroska)
     EbmlList *seekhead_list = &matroska->seekhead;
     MatroskaSeekhead *seekhead = seekhead_list->elem;
     uint32_t level_up = matroska->level_up;
-    offset_t before_pos = url_ftell(matroska->ctx->pb);
+    int64_t before_pos = url_ftell(matroska->ctx->pb);
     MatroskaLevel level;
     int i;
 
     for (i=0; i<seekhead_list->nb_elem; i++) {
-        offset_t offset = seekhead[i].pos + matroska->segment_start;
+        int64_t offset = seekhead[i].pos + matroska->segment_start;
 
         if (seekhead[i].pos <= before_pos
             || seekhead[i].id == MATROSKA_ID_SEEKHEAD
@@ -1040,7 +1048,7 @@ static int matroska_aac_profile(char *codec_id)
     static const char * const aac_profiles[] = { "MAIN", "LC", "SSR" };
     int profile;
 
-    for (profile=0; profile<ARRAY_SIZE(aac_profiles); profile++)
+    for (profile=0; profile<FF_ARRAY_ELEMS(aac_profiles); profile++)
         if (strstr(codec_id, aac_profiles[profile]))
             break;
     return profile + 1;
@@ -1050,7 +1058,7 @@ static int matroska_aac_sri(int samplerate)
 {
     int sri;
 
-    for (sri=0; sri<ARRAY_SIZE(ff_mpeg4audio_sample_rates); sri++)
+    for (sri=0; sri<FF_ARRAY_ELEMS(ff_mpeg4audio_sample_rates); sri++)
         if (ff_mpeg4audio_sample_rates[sri] == samplerate)
             break;
     return sri;
@@ -1621,15 +1629,23 @@ static int matroska_parse_block(MatroskaDemuxContext *matroska, uint8_t *data,
 
                 pkt->pts = timecode;
                 pkt->pos = pos;
-                if (track->type == MATROSKA_TRACK_TYPE_SUBTITLE)
+                if (st->codec->codec_id == CODEC_ID_TEXT)
                     pkt->convergence_duration = duration;
-                else
+                else if (track->type != MATROSKA_TRACK_TYPE_SUBTITLE)
                     pkt->duration = duration;
 
                 if (st->codec->codec_id == CODEC_ID_SSA)
-                    matroska_fix_ass_packet(matroska, pkt);
+                    matroska_fix_ass_packet(matroska, pkt, duration);
 
-                dynarray_add(&matroska->packets, &matroska->num_packets, pkt);
+                if (matroska->prev_pkt &&
+                    timecode != AV_NOPTS_VALUE &&
+                    matroska->prev_pkt->pts == timecode &&
+                    matroska->prev_pkt->stream_index == st->index)
+                    matroska_merge_packets(matroska->prev_pkt, pkt);
+                else {
+                    dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
+                    matroska->prev_pkt = pkt;
+                }
             }
 
             if (timecode != AV_NOPTS_VALUE)
@@ -1648,7 +1664,8 @@ static int matroska_parse_cluster(MatroskaDemuxContext *matroska)
     EbmlList *blocks_list;
     MatroskaBlock *blocks;
     int i, res;
-    offset_t pos = url_ftell(matroska->ctx->pb);
+    int64_t pos = url_ftell(matroska->ctx->pb);
+    matroska->prev_pkt = NULL;
     if (matroska->has_cluster_id){
         /* For the first cluster we parse, its ID was already read as
            part of matroska_read_header(), so don't read it again */

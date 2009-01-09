@@ -88,7 +88,7 @@ static int infer_size(int *width_ptr, int *height_ptr, int size)
 {
     int i;
 
-    for(i=0;i<sizeof(sizes)/sizeof(sizes[0]);i++) {
+    for(i=0;i<FF_ARRAY_ELEMS(sizes);i++) {
         if ((sizes[i][0] * sizes[i][1]) == size) {
             *width_ptr = sizes[i][0];
             *height_ptr = sizes[i][1];
@@ -409,7 +409,7 @@ AVOutputFormat image2_muxer = {
     img_write_header,
     img_write_packet,
     NULL,
-    AVFMT_NOFILE,
+    .flags= AVFMT_NOTIMESTAMPS | AVFMT_NOFILE
 };
 #endif
 #ifdef CONFIG_IMAGE2PIPE_MUXER
@@ -423,5 +423,6 @@ AVOutputFormat image2pipe_muxer = {
     CODEC_ID_MJPEG,
     img_write_header,
     img_write_packet,
+    .flags= AVFMT_NOTIMESTAMPS
 };
 #endif

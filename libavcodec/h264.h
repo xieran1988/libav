@@ -59,6 +59,12 @@
 
 #define ALLOW_NOCHROMA
 
+/**
+ * The maximum number of slices supported by the decoder.
+ * must be a power of 2
+ */
+#define MAX_SLICES 16
+
 #ifdef ALLOW_INTERLACE
 #define MB_MBAFF h->mb_mbaff
 #define MB_FIELD h->mb_field_decoding_flag
@@ -83,6 +89,41 @@
 #ifndef ENABLE_H264_ENCODER
 #define ENABLE_H264_ENCODER 0
 #endif
+
+#define EXTENDED_SAR          255
+
+/* NAL unit types */
+enum {
+    NAL_SLICE=1,
+    NAL_DPA,
+    NAL_DPB,
+    NAL_DPC,
+    NAL_IDR_SLICE,
+    NAL_SEI,
+    NAL_SPS,
+    NAL_PPS,
+    NAL_AUD,
+    NAL_END_SEQUENCE,
+    NAL_END_STREAM,
+    NAL_FILLER_DATA,
+    NAL_SPS_EXT,
+    NAL_AUXILIARY_SLICE=19
+};
+
+/**
+ * pic_struct in picture timing SEI message
+ */
+typedef enum {
+    SEI_PIC_STRUCT_FRAME             = 0, ///<  0: %frame
+    SEI_PIC_STRUCT_TOP_FIELD         = 1, ///<  1: top field
+    SEI_PIC_STRUCT_BOTTOM_FIELD      = 2, ///<  2: bottom field
+    SEI_PIC_STRUCT_TOP_BOTTOM        = 3, ///<  3: top field, bottom field, in that order
+    SEI_PIC_STRUCT_BOTTOM_TOP        = 4, ///<  4: bottom field, top field, in that order
+    SEI_PIC_STRUCT_TOP_BOTTOM_TOP    = 5, ///<  5: top field, bottom field, top field repeated, in that order
+    SEI_PIC_STRUCT_BOTTOM_TOP_BOTTOM = 6, ///<  6: bottom field, top field, bottom field repeated, in that order
+    SEI_PIC_STRUCT_FRAME_DOUBLING    = 7, ///<  7: %frame doubling
+    SEI_PIC_STRUCT_FRAME_TRIPLING    = 8  ///<  8: %frame tripling
+} SEI_PicStructType;
 
 /**
  * Sequence parameter set
@@ -124,6 +165,12 @@ typedef struct SPS{
     int scaling_matrix_present;
     uint8_t scaling_matrix4[6][16];
     uint8_t scaling_matrix8[2][64];
+    int nal_hrd_parameters_present_flag;
+    int vcl_hrd_parameters_present_flag;
+    int pic_struct_present_flag;
+    int time_offset_length;
+    int cpb_removal_delay_length;      ///< cpb_removal_delay_length_minus1 + 1
+    int dpb_output_delay_length;       ///< dpb_output_delay_length_minus1 + 1
 }SPS;
 
 /**
@@ -276,8 +323,8 @@ typedef struct H264Context{
     int dequant_coeff_pps;     ///< reinit tables when pps changes
 
     int slice_num;
-    uint8_t *slice_table_base;
-    uint8_t *slice_table;      ///< slice_table_base + 2*mb_stride + 1
+    uint16_t *slice_table_base;
+    uint16_t *slice_table;     ///< slice_table_base + 2*mb_stride + 1
     int slice_type;
     int slice_type_nos;        ///< S free slice type (SI/SP are remapped to I/P)
     int slice_type_fixed;
@@ -346,7 +393,7 @@ typedef struct H264Context{
     Picture ref_list[2][48];         /**< 0..15: frame refs, 16..47: mbaff field refs.
                                           Reordered version of default_ref_list
                                           according to picture reordering in slice header */
-    int ref2frm[16][2][64];          ///< reference to frame number lists, used in the loop filter, the first 2 are for -2,-1
+    int ref2frm[MAX_SLICES][2][64];  ///< reference to frame number lists, used in the loop filter, the first 2 are for -2,-1
     Picture *delayed_pic[MAX_DELAYED_PIC_COUNT+2]; //FIXME size?
     int outputed_poc;
 
@@ -433,6 +480,12 @@ typedef struct H264Context{
 
     int mb_xy;
 
+    uint32_t svq3_watermark_key;
+
+    /**
+     * pic_struct in picture timing SEI message
+     */
+    SEI_PicStructType sei_pic_struct;
 }H264Context;
 
 #endif /* AVCODEC_H264_H */

@@ -34,26 +34,6 @@
 #include "mpegvideo.h"
 
 
-#define EXTENDED_SAR          255
-
-/* NAL unit types */
-enum {
-NAL_SLICE=1,
-NAL_DPA,
-NAL_DPB,
-NAL_DPC,
-NAL_IDR_SLICE,
-NAL_SEI,
-NAL_SPS,
-NAL_PPS,
-NAL_AUD,
-NAL_END_SEQUENCE,
-NAL_END_STREAM,
-NAL_FILLER_DATA,
-NAL_SPS_EXT,
-NAL_AUXILIARY_SLICE=19
-};
-
 static const AVRational pixel_aspect[17]={
  {0, 1},
  {1, 1},
@@ -1314,6 +1294,10 @@ static const int8_t cabac_context_init_PB[3][460][2] =
         {  30, -10 }, {  31,  -4 }, {  33,  -1 }, {  33,   7 },
         {  31,  12 }, {  37,  23 }, {  31,  38 }, {  20,  64 },
     }
+};
+
+static const uint8_t sei_num_clock_ts_table[9]={
+    1,  1,  1,  2,  2,  3,  3,  2,  3
 };
 
 #endif /* AVCODEC_H264DATA_H */

@@ -27,6 +27,7 @@
 
 #include "avcodec.h"
 #include "audioconvert.h"
+#include <libavutil/avstring.h>
 
 typedef struct SampleFmtInfo {
     const char *name;
@@ -70,6 +71,85 @@ void avcodec_sample_fmt_string (char *buf, int buf_size, int sample_fmt)
     }
 }
 
+static const char* const channel_names[]={
+    "FL", "FR", "FC", "LFE", "BL",  "BR",  "FLC", "FRC",
+    "BC", "SL", "SR", "TC",  "TFL", "TFC", "TFR", "TBL",
+    "TBC", "TBR",
+    [29] = "DL",
+    [30] = "DR",
+};
+
+const char *get_channel_name(int channel_id)
+{
+    if (channel_id<0 || channel_id>=FF_ARRAY_ELEMS(channel_names))
+        return NULL;
+    return channel_names[channel_id];
+}
+
+int64_t avcodec_guess_channel_layout(int nb_channels, enum CodecID codec_id, const char *fmt_name)
+{
+    switch(nb_channels) {
+    case 1: return CH_LAYOUT_MONO;
+    case 2: return CH_LAYOUT_STEREO;
+    case 3: return CH_LAYOUT_SURROUND;
+    case 4: return CH_LAYOUT_QUAD;
+    case 5: return CH_LAYOUT_5POINT0;
+    case 6: return CH_LAYOUT_5POINT1;
+    case 8: return CH_LAYOUT_7POINT1;
+    default: return 0;
+    }
+}
+
+static const struct {
+    const char *name;
+    int         nb_channels;
+    int64_t     layout;
+} const channel_layout_map[] = {
+    { "mono",        1,  CH_LAYOUT_MONO },
+    { "stereo",      2,  CH_LAYOUT_STEREO },
+    { "surround",    3,  CH_LAYOUT_SURROUND },
+    { "quad",        4,  CH_LAYOUT_QUAD },
+    { "5.0",         5,  CH_LAYOUT_5POINT0 },
+    { "5.1",         6,  CH_LAYOUT_5POINT1 },
+    { "5.1+downmix", 8,  CH_LAYOUT_5POINT1|CH_LAYOUT_STEREO_DOWNMIX, },
+    { "7.1",         8,  CH_LAYOUT_7POINT1 },
+    { "7.1(wide)",   8,  CH_LAYOUT_7POINT1_WIDE },
+    { "7.1+downmix", 10, CH_LAYOUT_7POINT1|CH_LAYOUT_STEREO_DOWNMIX, },
+    { 0 }
+};
+
+void avcodec_get_channel_layout_string(char *buf, int buf_size, int nb_channels, int64_t channel_layout)
+{
+    int i;
+
+    if (channel_layout==0)
+        channel_layout = avcodec_guess_channel_layout(nb_channels, CODEC_ID_NONE, NULL);
+
+    for (i=0; channel_layout_map[i].name; i++)
+        if (nb_channels    == channel_layout_map[i].nb_channels &&
+            channel_layout == channel_layout_map[i].layout) {
+            snprintf(buf, buf_size, channel_layout_map[i].name);
+            return;
+        }
+
+    snprintf(buf, buf_size, "%d channels", nb_channels);
+    if (channel_layout) {
+        int i,ch;
+        av_strlcat(buf, " (", buf_size);
+        for(i=0,ch=0; i<64; i++) {
+            if ((channel_layout & (1L<<i))) {
+                const char *name = get_channel_name(i);
+                if (name) {
+                    if (ch>0) av_strlcat(buf, "|", buf_size);
+                    av_strlcat(buf, name, buf_size);
+                }
+                ch++;
+            }
+        }
+        av_strlcat(buf, ")", buf_size);
+    }
+}
+
 struct AVAudioConvert {
     int in_channels, out_channels;
     int fmt_pair;
@@ -77,7 +157,7 @@ struct AVAudioConvert {
 
 AVAudioConvert *av_audio_convert_alloc(enum SampleFormat out_fmt, int out_channels,
                                        enum SampleFormat in_fmt, int in_channels,
-                                       const const float *matrix, int flags)
+                                       const float *matrix, int flags)
 {
     AVAudioConvert *ctx;
     if (in_channels!=out_channels)

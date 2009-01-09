@@ -40,7 +40,7 @@ FFmpeg supports the following file formats through the @code{libavformat}
 library:
 
 @multitable @columnfractions .4 .1 .1 .4
-@item Supported File Format @tab Encoding @tab Decoding @tab Comments
+@item Name @tab Encoding @tab Decoding @tab Comments
 @item 4xm                       @tab   @tab X
     @tab 4X Technologies format, used in some games.
 @item ADTS AAC audio            @tab X @tab X
@@ -154,7 +154,7 @@ FFmpeg can read and write images for each frame of a video sequence. The
 following image formats are supported:
 
 @multitable @columnfractions .4 .1 .1 .4
-@item Supported Image Format @tab Encoding @tab Decoding @tab Comments
+@item Name @tab Encoding @tab Decoding @tab Comments
 @item .Y.U.V       @tab X @tab X @tab one raw file per component
 @item animated GIF @tab X @tab X @tab Only uncompressed GIFs are generated.
 @item JPEG         @tab X @tab X @tab Progressive JPEG is not supported.
@@ -175,7 +175,7 @@ following image formats are supported:
 @section Video Codecs
 
 @multitable @columnfractions .4 .1 .1 .4
-@item Supported Codec @tab Encoding @tab Decoding @tab Comments
+@item Name @tab Encoding @tab Decoding @tab Comments
 @item 4X Video               @tab     @tab  X
     @tab Used in certain computer games.
 @item American Laser Games Video  @tab    @tab X
@@ -218,8 +218,8 @@ following image formats are supported:
     @tab fourcc: CLJR
 @item Creative YUV           @tab     @tab  X
     @tab fourcc: CYUV
-@item Dirac                  @tab  X  @tab  X
-    @tab Supported through the external libdirac/libschroedinger libraries.
+@item Dirac                  @tab  E  @tab  E
+    @tab supported through external libdirac/libschroedinger libraries
 @item Duck TrueMotion v1     @tab     @tab  X
     @tab fourcc: DUCK
 @item Duck TrueMotion v2     @tab     @tab  X
@@ -241,7 +241,8 @@ following image formats are supported:
 @item H.261                  @tab  X  @tab  X
 @item H.263(+)               @tab  X  @tab  X
     @tab also known as RealVideo 1.0
-@item H.264                  @tab     @tab  X
+@item H.264                  @tab  E  @tab  X
+    @tab encoding supported through external library libx264
 @item HuffYUV                @tab  X  @tab  X
 @item IBM Ultimotion         @tab     @tab  X
     @tab fourcc: ULTI
@@ -303,8 +304,8 @@ following image formats are supported:
     @tab fourcc: SP5X
 @item TechSmith Camtasia     @tab     @tab  X
     @tab fourcc: TSCC
-@item Theora                 @tab  X  @tab  X
-    @tab still experimental
+@item Theora                 @tab  E  @tab  X
+    @tab encoding supported through external library libtheora
 @item THP                    @tab     @tab  X
     @tab Used on the Nintendo GameCube.
 @item Tiertex Seq video      @tab     @tab  X
@@ -330,20 +331,21 @@ following image formats are supported:
 
 @code{X} means that encoding (resp. decoding) is supported.
 
+@code{E} means that support is provided through an external library.
+
 @section Audio Codecs
 
-@multitable @columnfractions .4 .1 .1 .1 .7
-@item Supported Codec @tab Encoding @tab Decoding @tab Comments
+@multitable @columnfractions .4 .1 .1 .4
+@item Name @tab Encoding @tab Decoding @tab Comments
 @item 4X IMA ADPCM           @tab     @tab  X
 @item 8SVX audio             @tab     @tab  X
-@item AAC                    @tab  X  @tab  X
-    @tab Encoding is supported through the external library libfaac.
+@item AAC                    @tab  E  @tab  X
+    @tab encoding supported through external library libfaac
 @item AC-3                   @tab IX  @tab IX
-    @tab liba52 can be used alternatively for decoding.
-@item AMR-NB                 @tab  X  @tab  X
-    @tab Supported through an external library.
-@item AMR-WB                 @tab  X  @tab  X
-    @tab Supported through an external library.
+@item AMR-NB                 @tab  E  @tab  E
+    @tab supported through external library libamrnb
+@item AMR-WB                 @tab  E  @tab  E
+    @tab supported through external library libamrwb
 @item AMV IMA ADPCM          @tab     @tab  X
     @tab Used in AMV files
 @item Apple lossless audio   @tab  X  @tab  X
@@ -370,6 +372,10 @@ following image formats are supported:
 @item Enhanced AC-3          @tab     @tab  X
 @item FLAC lossless audio    @tab IX  @tab  X
 @item G.726  ADPCM           @tab  X  @tab  X
+@item GSM                    @tab  E  @tab  E
+    @tab supported through external library libgsm
+@item GSM_MS                 @tab  E  @tab  E
+    @tab supported through external library libgsm
 @item id RoQ DPCM            @tab  X  @tab  X
     @tab Used in Quake III, Jedi Knight 2, other computer games.
 @item Intel Music Coder      @tab     @tab  X
@@ -382,8 +388,8 @@ following image formats are supported:
     @tab Used in DVD-Audio and Blu-Ray discs.
 @item Monkey's Audio         @tab     @tab  X
     @tab Only versions 3.97-3.99 are supported.
-@item MPEG audio layer 1/3   @tab  X  @tab IX
-    @tab MP3 encoding is supported through the external library LAME.
+@item MPEG audio layer 3     @tab  E  @tab IX
+    @tab encoding supported through external library LAME
 @item MPEG audio layer 2     @tab IX  @tab IX
 @item MS IMA ADPCM           @tab  X  @tab  X
 @item Musepack               @tab     @tab  X
@@ -410,6 +416,8 @@ following image formats are supported:
     @tab experimental codec
 @item Sonic lossless         @tab  X  @tab  X
     @tab experimental codec
+@item Speex                  @tab     @tab  E
+    @tab supported through external library libspeex
 @item THP ADPCM              @tab     @tab  X
     @tab Used on the Nintendo GameCube.
 @item True Audio (TTA)       @tab     @tab  X
@@ -424,8 +432,21 @@ following image formats are supported:
 
 @code{X} means that encoding (resp. decoding) is supported.
 
+@code{E} means that support is provided through an external library.
+
 @code{I} means that an integer-only version is available, too (ensures high
 performance on systems without hardware floating point support).
+
+@section Subtitle Formats
+
+@multitable @columnfractions .4 .1 .1 .1 .1 .1
+@item Name @tab Muxing @tab Demuxing @tab Encoding @tab Decoding @tab Rendering
+@item ASS/SSA      @tab X @tab X
+@item DVB          @tab X @tab X @tab X @tab X @tab X
+@item DVD          @tab X @tab X @tab X @tab X @tab X
+@end multitable
+
+@code{X} means that the feature is supported.
 
 @chapter Platform Specific information
 
@@ -443,15 +464,29 @@ the FFmpeg Windows Help Forum at
 @subsection Native Windows compilation
 
 FFmpeg can be built to run natively on Windows using the MinGW tools. Install
-the current versions of MSYS and MinGW from @url{http://www.mingw.org/}. Also
-install the coreutils package, and update to the latest MSYS make (note: not
-mingw32-make). You can find detailed installation
+the latest versions of MSYS and MinGW from @url{http://www.mingw.org/}.
+You can find detailed installation
 instructions in the download section and the FAQ.
+
+FFmpeg does not build out-of-the-box with the packages the automated MinGW
+installer provides. It also requires coreutils to be installed and many other
+packages updated to the latest version. The minimum version for some packages
+are listed below:
+
+@itemize
+@item bash 3.1
+@item msys-make 3.81-2 (note: not mingw32-make)
+@item w32api 3.12
+@item mingw-runtime 3.15
+@end itemize
+
+You will also need to pass @code{-fno-common} to the compiler to work around
+a GCC bug (see @url{http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37216}).
 
 Within the MSYS shell, configure and make with:
 
 @example
-./configure --enable-memalign-hack
+./configure --enable-memalign-hack --extra-cflags=-fno-common
 make
 make install
 @end example
@@ -463,9 +498,6 @@ to @file{/usr/local}. You may specify another install path using the
 Notes:
 
 @itemize
-
-@item Use at least bash 3.1. Older versions are known to fail on the
-configure script.
 
 @item In order to compile vhooks, you must have a POSIX-compliant libdl in
 your MinGW system. Get dlfcn-win32 from
@@ -994,6 +1026,8 @@ do not attach several unrelated patches to the same mail.
 @item
     Do the regression tests pass with the patch applied?
 @item
+    Does @code{make checkheaders} pass with the patch applied?
+@item
     Is the patch a unified diff?
 @item
     Is the patch against latest FFmpeg SVN?
@@ -1011,8 +1045,9 @@ do not attach several unrelated patches to the same mail.
     Have you checked that the patch does not introduce buffer overflows or
     other security issues?
 @item
-    If you add a new demuxer or decoder, have you checked that it does not
-    crash with damaged input (see tools/trasher)?
+    Did you test your decoder or demuxer against damaged data? If no, see
+    tools/trasher and the noise bitstream filter. Your decoder or demuxer
+    should not crash or end in a (near) infinite loop when fed damaged data.
 @item
     Is the patch created from the root of the source tree, so it can be
     applied with @code{patch -p0}?
@@ -1053,10 +1088,6 @@ do not attach several unrelated patches to the same mail.
     improves readability.
 @item
     Did you provide a suggestion for a clear commit log message?
-@item
-    Did you test your decoder or demuxer against damaged data? If no, see
-    tools/trasher and the noise bitstream filter. Your decoder or demuxer
-    should not crash or end in a (near) infinite loop when fed damaged data.
 @end enumerate
 
 @section Patch review process

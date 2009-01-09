@@ -43,42 +43,6 @@
 
 #define BI_RGB                      0
 
-typedef struct videohdr_tag {
-    LPBYTE      lpData;
-    DWORD       dwBufferLength;
-    DWORD       dwBytesUsed;
-    DWORD       dwTimeCaptured;
-    DWORD       dwUser;
-    DWORD       dwFlags;
-    DWORD_PTR   dwReserved[4];
-} VIDEOHDR, NEAR *PVIDEOHDR, FAR * LPVIDEOHDR;
-
-typedef struct {
-    DWORD dwRequestMicroSecPerFrame;
-    BOOL  fMakeUserHitOKToCapture;
-    UINT  wPercentDropForError;
-    BOOL  fYield;
-    DWORD dwIndexSize;
-    UINT  wChunkGranularity;
-    BOOL  fUsingDOSMemory;
-    UINT  wNumVideoRequested;
-    BOOL  fCaptureAudio;
-    UINT  wNumAudioRequested;
-    UINT  vKeyAbort;
-    BOOL  fAbortLeftMouse;
-    BOOL  fAbortRightMouse;
-    BOOL  fLimitEnabled;
-    UINT  wTimeLimit;
-    BOOL  fMCIControl;
-    BOOL  fStepMCIDevice;
-    DWORD dwMCIStartTime;
-    DWORD dwMCIStopTime;
-    BOOL  fStepCaptureAt2x;
-    UINT  wStepCaptureAverageFrames;
-    DWORD dwAudioBufferSize;
-    BOOL  fDisableWriteCache;
-    UINT  AVStreamMaster;
-} CAPTUREPARMS;
 /* End of missing MinGW defines */
 
 struct vfw_ctx {
@@ -188,7 +152,7 @@ static int shall_we_drop(struct vfw_ctx *ctx)
 {
     AVFormatContext *s = ctx->s;
     const uint8_t dropscore[] = {62, 75, 87, 100};
-    const int ndropscores = sizeof(dropscore)/sizeof(dropscore[0]);
+    const int ndropscores = FF_ARRAY_ELEMS(dropscore);
     unsigned int buffer_fullness = (ctx->curbufsize*100)/s->max_picture_buffer;
 
     if(dropscore[++ctx->frame_num%ndropscores] <= buffer_fullness) {

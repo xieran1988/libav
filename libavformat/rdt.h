@@ -22,6 +22,17 @@
 #ifndef AVFORMAT_RDT_H
 #define AVFORMAT_RDT_H
 
+#include <stdint.h>
+#include "avformat.h"
+#include "rtp.h"
+
+typedef struct RDTDemuxContext RDTDemuxContext;
+
+RDTDemuxContext *ff_rdt_parse_open(AVFormatContext *ic, AVStream *st,
+                                   void *priv_data,
+                                   RTPDynamicProtocolHandler *handler);
+void ff_rdt_parse_close(RDTDemuxContext *s);
+
 /**
  * Calculate the response (RealChallenge2 in the RTSP header) to the
  * challenge (RealChallenge1 in the RTSP header from the Real/Helix
@@ -45,20 +56,36 @@ void av_register_rdt_dynamic_payload_handlers(void);
 /**
  * Add subscription information to Subscribe parameter string.
  *
- * @param s RDT context
  * @param cmd string to write the subscription information into.
  * @param size size of cmd.
  * @param stream_nr stream number.
  * @param rule_nr rule number to conform to.
  */
-void ff_rdt_subscribe_rule(RTPDemuxContext *s, char *cmd, int size,
+void ff_rdt_subscribe_rule(char *cmd, int size,
                            int stream_nr, int rule_nr);
+// FIXME this will be removed ASAP
+void ff_rdt_subscribe_rule2(RDTDemuxContext *s, char *cmd, int size,
+                            int stream_nr, int rule_nr);
+
+/**
+ * Parse RDT-style packet header.
+ *
+ * @param buf input buffer
+ * @param len length of input buffer
+ * @param sn will be set to the stream number this packet belongs to
+ * @param seq will be set to the sequence number this packet belongs to
+ * @param rn will be set to the rule number this packet belongs to
+ * @param ts will be set to the timestamp of the packet
+ * @return the amount of bytes consumed, or <0 on error
+ */
+int ff_rdt_parse_header(const uint8_t *buf, int len,
+                        int *sn, int *seq, int *rn, uint32_t *ts);
 
 /**
  * Parse RDT-style packet data (header + media data).
  * Usage similar to rtp_parse_packet().
  */
-int ff_rdt_parse_packet(RTPDemuxContext *s, AVPacket *pkt,
+int ff_rdt_parse_packet(RDTDemuxContext *s, AVPacket *pkt,
                         const uint8_t *buf, int len);
 
 #endif /* AVFORMAT_RDT_H */

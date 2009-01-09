@@ -221,7 +221,7 @@ const AVCodecTag ff_codec_movsubtitle_tags[] = {
 /* cf. QTFileFormat.pdf p253, qtff.pdf p205 */
 /* http://developer.apple.com/documentation/mac/Text/Text-368.html */
 /* deprecated by putting the code as 3*5bit ascii */
-static const char *mov_mdhd_language_map[] = {
+static const char * const mov_mdhd_language_map[] = {
     /* 0-9 */
     "eng", "fra", "ger", "ita", "dut", "sve", "spa", "dan", "por", "nor",
     "heb", "jpn", "ara", "fin", "gre", "ice", "mlt", "tur", "hr "/*scr*/, "chi"/*ace?*/,
@@ -248,7 +248,7 @@ int ff_mov_iso639_to_lang(const char *lang, int mp4)
     int i, code = 0;
 
     /* old way, only for QT? */
-    for (i = 0; !mp4 && (i < (sizeof(mov_mdhd_language_map)/sizeof(char *))); i++) {
+    for (i = 0; !mp4 && i < FF_ARRAY_ELEMS(mov_mdhd_language_map); i++) {
         if (mov_mdhd_language_map[i] && !strcmp(lang, mov_mdhd_language_map[i]))
             return i;
     }
@@ -284,7 +284,7 @@ int ff_mov_lang_to_iso639(int code, char *to)
         return 1;
     }
     /* old fashion apple lang code */
-    if (code >= (sizeof(mov_mdhd_language_map)/sizeof(char *)))
+    if (code >= FF_ARRAY_ELEMS(mov_mdhd_language_map))
         return 0;
     if (!mov_mdhd_language_map[code])
         return 0;

@@ -934,7 +934,8 @@ static void mpegts_push_data(MpegTSFilter *filter,
 static AVStream* new_pes_av_stream(PESContext *pes, uint32_t code)
 {
     AVStream *st;
-    int codec_type, codec_id;
+    enum CodecID codec_id;
+    enum CodecType codec_type;
 
     switch(pes->stream_type){
     case STREAM_TYPE_AUDIO_MPEG1:
@@ -1200,7 +1201,7 @@ static int mpegts_probe(AVProbeData *p)
 #endif
 }
 
-/* return the 90 kHz PCR and the extension for the 27 MHz PCR. return
+/* return the 90kHz PCR and the extension for the 27MHz PCR. return
    (-1) if not available */
 static int parse_pcr(int64_t *ppcr_high, int *ppcr_low,
                      const uint8_t *packet)

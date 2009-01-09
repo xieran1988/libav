@@ -587,7 +587,7 @@ void ff_clean_mpeg4_qscales(MpegEncContext *s){
 
 #endif //CONFIG_ENCODERS
 
-#define tab_size ((signed)(sizeof(s->direct_scale_mv[0])/sizeof(int16_t)))
+#define tab_size ((signed)FF_ARRAY_ELEMS(s->direct_scale_mv[0]))
 #define tab_bias (tab_size/2)
 
 void ff_mpeg4_init_direct_mv(MpegEncContext *s){
@@ -5751,8 +5751,10 @@ static int decode_user_data(MpegEncContext *s, GetBitContext *gb){
         s->divx_version= ver;
         s->divx_build= build;
         s->divx_packed= e==3 && last=='p';
-        if(s->divx_packed)
+        if(s->divx_packed && !s->showed_packed_warning) {
             av_log(s->avctx, AV_LOG_WARNING, "Invalid and inefficient vfw-avi packed B frames detected\n");
+            s->showed_packed_warning=1;
+        }
     }
 
     /* ffmpeg detection */

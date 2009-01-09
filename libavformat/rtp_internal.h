@@ -45,19 +45,21 @@ typedef struct {
  * Packet parsing for "private" payloads in the RTP specs.
  *
  * @param s stream context
+ * @param st stream that this packet belongs to
  * @param pkt packet in which to write the parsed data
  * @param timestamp pointer in which to write the timestamp of this RTP packet
  * @param buf pointer to raw RTP packet data
  * @param len length of buf
  * @param flags flags from the RTP packet header (PKT_FLAG_*)
  */
-typedef int (*DynamicPayloadPacketHandlerProc) (struct RTPDemuxContext * s,
+typedef int (*DynamicPayloadPacketHandlerProc) (PayloadContext *s,
+                                                AVStream *st,
                                                 AVPacket * pkt,
                                                 uint32_t *timestamp,
                                                 const uint8_t * buf,
                                                 int len, int flags);
 
-typedef struct RTPDynamicProtocolHandler_s {
+struct RTPDynamicProtocolHandler_s {
     // fields from AVRtpDynamicPayloadType_s
     const char enc_name[50];    /* XXX: still why 50 ? ;-) */
     enum CodecType codec_type;
@@ -65,14 +67,14 @@ typedef struct RTPDynamicProtocolHandler_s {
 
     // may be null
     int (*parse_sdp_a_line) (AVStream * stream,
-                             void *protocol_data,
+                             PayloadContext *priv_data,
                              const char *line); ///< Parse the a= line from the sdp field
-    void *(*open) (); ///< allocate any data needed by the rtp parsing for this dynamic data.
-    void (*close)(void *protocol_data); ///< free any data needed by the rtp parsing for this dynamic data.
+    PayloadContext *(*open) (); ///< allocate any data needed by the rtp parsing for this dynamic data.
+    void (*close)(PayloadContext *protocol_data); ///< free any data needed by the rtp parsing for this dynamic data.
     DynamicPayloadPacketHandlerProc parse_packet; ///< parse handler for this dynamic packet.
 
     struct RTPDynamicProtocolHandler_s *next;
-} RTPDynamicProtocolHandler;
+};
 
 // moved out of rtp.c, because the h264 decoder needs to know about this structure..
 struct RTPDemuxContext {
@@ -113,7 +115,7 @@ struct RTPDemuxContext {
 
     /* dynamic payload stuff */
     DynamicPayloadPacketHandlerProc parse_packet;     ///< This is also copied from the dynamic protocol handler structure
-    void *dynamic_protocol_context;        ///< This is a copy from the values setup from the sdp parsing, in rtsp.c don't free me.
+    PayloadContext *dynamic_protocol_context;        ///< This is a copy from the values setup from the sdp parsing, in rtsp.c don't free me.
     int max_frames_per_packet;
 };
 

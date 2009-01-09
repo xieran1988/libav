@@ -33,6 +33,9 @@
 
 #include "h264pred.h"
 
+#define MB_TYPE_SEPARATE_DC 0x01000000
+#define IS_SEPARATE_DC(a)   ((a) & MB_TYPE_SEPARATE_DC)
+
 /**
  * RV30 and RV40 Macroblock types
  */
@@ -104,6 +107,7 @@ typedef struct RV34DecContext{
 
     uint16_t *cbp_luma;      ///< CBP values for luma subblocks
     uint8_t  *cbp_chroma;    ///< CBP values for chroma subblocks
+    int      *deblock_coefs; ///< deblock coefficients for each macroblock
 
     /** 8x8 block available flags (for MV prediction) */
     DECLARE_ALIGNED_8(uint32_t, avail_cache[3*4]);

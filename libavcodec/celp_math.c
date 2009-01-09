@@ -25,7 +25,7 @@
 #include <assert.h>
 
 #include "avcodec.h"
-#include "acelp_math.h"
+#include "celp_math.h"
 
 #ifdef G729_BITEXACT
 /**
@@ -148,7 +148,7 @@ int ff_exp2(uint16_t power)
 {
     unsigned int result= exp2a[power>>10] + 0x10000;
 
-    assert(arg <= 0x7fff);
+    assert(power <= 0x7fff);
 
     result= (result<<3) + ((result*exp2b[(power>>5)&31])>>17);
     return result + ((result*(power&31)*89)>>22);
@@ -194,4 +194,15 @@ int ff_log2(uint32_t value)
     value += (frac_dx * (tab_log2[frac_x0+1] - tab_log2[frac_x0])) >> 15;
 
     return (power_int << 15) + value;
+}
+
+float ff_dot_productf(const float* a, const float* b, int length)
+{
+    float sum = 0;
+    int i;
+
+    for(i=0; i<length; i++)
+        sum += a[i] * b[i];
+
+    return sum;
 }
