@@ -7,6 +7,8 @@ ffmpeg-debian (3:0.svn20090110-1) experimental; urgency=low
    - QCELP / PureVoice decoder
   
   * removed patch 050_fix_pkgconfig_files.patch. Merged upstream
+  * disabled patch 020_visibility_patch. It needs to be adapted to the new
+    upstream changes. Hopefully it will get merged into ffmpeg properly.
 
  -- Reinhard Tartler <siretart@tauware.de>  Sat, 10 Jan 2009 16:36:52 +0100
 
