@@ -163,7 +163,7 @@ static int read_braindead_odml_indx(AVFormatContext *s, int frame_num){
 #endif
             if(last_pos == pos || pos == base - 8)
                 avi->non_interleaved= 1;
-            else
+            if(last_pos != pos)
                 av_add_index_entry(st, pos, ast->cum_len / FFMAX(1, ast->sample_size), len, 0, key ? AVINDEX_KEYFRAME : 0);
 
             if(ast->sample_size)
@@ -216,13 +216,17 @@ static void clean_index(AVFormatContext *s){
     }
 }
 
-static int avi_read_tag(ByteIOContext *pb, char *buf, int maxlen,  unsigned int size)
+static int avi_read_tag(AVFormatContext *s, const char *key, unsigned int size)
 {
+    ByteIOContext *pb = s->pb;
+    uint8_t value[1024];
+
     int64_t i = url_ftell(pb);
     size += (size & 1);
-    get_strz(pb, buf, maxlen);
+    get_strz(pb, value, sizeof(value));
     url_fseek(pb, i+size, SEEK_SET);
-    return 0;
+
+    return av_metadata_set(&s->metadata, (const AVMetadataTag){key, value});
 }
 
 static int avi_read_header(AVFormatContext *s, AVFormatParameters *ap)
@@ -235,7 +239,6 @@ static int avi_read_header(AVFormatContext *s, AVFormatParameters *ap)
     int i;
     AVStream *st;
     AVIStream *ast = NULL;
-    char str_track[4];
     int avih_width=0, avih_height=0;
     int amv_file_format=0;
 
@@ -561,26 +564,25 @@ static int avi_read_header(AVFormatContext *s, AVFormatParameters *ap)
             url_fseek(pb, size, SEEK_CUR);
             break;
         case MKTAG('I', 'N', 'A', 'M'):
-            avi_read_tag(pb, s->title, sizeof(s->title), size);
+            avi_read_tag(s, "Title", size);
             break;
         case MKTAG('I', 'A', 'R', 'T'):
-            avi_read_tag(pb, s->author, sizeof(s->author), size);
+            avi_read_tag(s, "Artist", size);
             break;
         case MKTAG('I', 'C', 'O', 'P'):
-            avi_read_tag(pb, s->copyright, sizeof(s->copyright), size);
+            avi_read_tag(s, "Copyright", size);
             break;
         case MKTAG('I', 'C', 'M', 'T'):
-            avi_read_tag(pb, s->comment, sizeof(s->comment), size);
+            avi_read_tag(s, "Comment", size);
             break;
         case MKTAG('I', 'G', 'N', 'R'):
-            avi_read_tag(pb, s->genre, sizeof(s->genre), size);
+            avi_read_tag(s, "Genre", size);
             break;
         case MKTAG('I', 'P', 'R', 'D'):
-            avi_read_tag(pb, s->album, sizeof(s->album), size);
+            avi_read_tag(s, "Album", size);
             break;
         case MKTAG('I', 'P', 'R', 'T'):
-            avi_read_tag(pb, str_track, sizeof(str_track), size);
-            sscanf(str_track, "%d", &s->track);
+            avi_read_tag(s, "Track", size);
             break;
         default:
             if(size > 1000000){
@@ -668,8 +670,12 @@ static int avi_read_packet(AVFormatContext *s, AVPacket *pkt)
         best_ts= av_rescale(best_ts, best_st->time_base.den, AV_TIME_BASE * (int64_t)best_st->time_base.num); //FIXME a little ugly
         if(best_ast->remaining)
             i= av_index_search_timestamp(best_st, best_ts, AVSEEK_FLAG_ANY | AVSEEK_FLAG_BACKWARD);
-        else
+        else{
             i= av_index_search_timestamp(best_st, best_ts, AVSEEK_FLAG_ANY);
+            if(i>=0)
+                best_ast->frame_offset= best_st->index_entries[i].timestamp
+                                      * FFMAX(1, best_ast->sample_size);
+        }
 
 //        av_log(NULL, AV_LOG_DEBUG, "%d\n", i);
         if(i>=0){

@@ -21,6 +21,7 @@
 #include "avformat.h"
 #include "internal.h"
 #include "libavcodec/opt.h"
+#include "metadata.h"
 #include "libavutil/avstring.h"
 #include "riff.h"
 #include <sys/time.h>
@@ -294,7 +295,7 @@ int av_get_packet(ByteIOContext *s, AVPacket *pkt, int size)
 
 int av_dup_packet(AVPacket *pkt)
 {
-    if (pkt->destruct != av_destruct_packet) {
+    if (((pkt->destruct == av_destruct_packet_nofree) || (pkt->destruct == NULL)) && pkt->data) {
         uint8_t *data;
         /* We duplicate the packet and don't forget to add the padding again. */
         if((unsigned)pkt->size > (unsigned)pkt->size + FF_INPUT_BUFFER_PADDING_SIZE)
@@ -483,6 +484,10 @@ int av_open_input_stream(AVFormatContext **ic_ptr,
 
     if (pb && !ic->data_offset)
         ic->data_offset = url_ftell(ic->pb);
+
+#if LIBAVFORMAT_VERSION_MAJOR < 53
+    ff_metadata_demux_compat(ic);
+#endif
 
     *ic_ptr = ic;
     return 0;
@@ -2284,6 +2289,7 @@ void av_close_input_stream(AVFormatContext *s)
         if (st->parser) {
             av_parser_close(st->parser);
         }
+        av_metadata_free(&st->metadata);
         av_free(st->index_entries);
         av_free(st->codec->extradata);
         av_free(st->codec);
@@ -2294,6 +2300,7 @@ void av_close_input_stream(AVFormatContext *s)
     for(i=s->nb_programs-1; i>=0; i--) {
         av_freep(&s->programs[i]->provider_name);
         av_freep(&s->programs[i]->name);
+        av_metadata_free(&s->programs[i]->metadata);
         av_freep(&s->programs[i]->stream_index);
         av_freep(&s->programs[i]);
     }
@@ -2302,9 +2309,11 @@ void av_close_input_stream(AVFormatContext *s)
     av_freep(&s->priv_data);
     while(s->nb_chapters--) {
         av_free(s->chapters[s->nb_chapters]->title);
+        av_metadata_free(&s->chapters[s->nb_chapters]->metadata);
         av_free(s->chapters[s->nb_chapters]);
     }
     av_freep(&s->chapters);
+    av_metadata_free(&s->metadata);
     av_free(s);
 }
 
@@ -2491,6 +2500,10 @@ int av_write_header(AVFormatContext *s)
         if (!s->priv_data)
             return AVERROR(ENOMEM);
     }
+
+#if LIBAVFORMAT_VERSION_MAJOR < 53
+    ff_metadata_mux_compat(s);
+#endif
 
     if(s->oformat->write_header){
         ret = s->oformat->write_header(s);
@@ -2849,6 +2862,7 @@ void dump_format(AVFormatContext *ic,
         dump_stream_format(ic, i, index, is_output);
 }
 
+#if LIBAVFORMAT_VERSION_MAJOR < 53
 int parse_image_size(int *width_ptr, int *height_ptr, const char *str)
 {
     return av_parse_video_frame_size(width_ptr, height_ptr, str);
@@ -2862,6 +2876,7 @@ int parse_frame_rate(int *frame_rate_num, int *frame_rate_den, const char *arg)
     *frame_rate_den= frame_rate.den;
     return ret;
 }
+#endif
 
 int64_t av_gettime(void)
 {

@@ -22,6 +22,7 @@
 #include "libavutil/crc.h"
 #include "avformat.h"
 #include "mpegts.h"
+#include "internal.h"
 
 //#define DEBUG_SI
 //#define DEBUG_SEEK
@@ -38,8 +39,6 @@ typedef struct PESContext PESContext;
 
 static PESContext* add_pes_stream(MpegTSContext *ts, int pid, int pcr_pid, int stream_type);
 static AVStream* new_pes_av_stream(PESContext *pes, uint32_t code);
-extern void av_set_program_name(AVProgram *program, char *provider_name, char *name);
-extern void av_program_add_stream_index(AVFormatContext *ac, int progid, unsigned int idx);
 
 enum MpegTSFilterType {
     MPEGTS_PES,
@@ -80,11 +79,11 @@ struct MpegTSFilter {
 };
 
 #define MAX_PIDS_PER_PROGRAM 64
-typedef struct {
+struct Program {
     unsigned int id; //program id/service id
     unsigned int nb_pids;
     unsigned int pids[MAX_PIDS_PER_PROGRAM];
-} Program_t;
+};
 
 struct MpegTSContext {
     /* user data */
@@ -114,7 +113,7 @@ struct MpegTSContext {
     /* scan context */
     /** structure to keep track of Program->pids mapping     */
     unsigned int nb_prg;
-    Program_t *prg;
+    struct Program *prg;
 
 
     /** filters for various streams specified by PMT + for the PAT and PMT */
@@ -169,8 +168,8 @@ static void clear_programs(MpegTSContext *ts)
 
 static void add_pat_entry(MpegTSContext *ts, unsigned int programid)
 {
-    Program_t *p;
-    void *tmp = av_realloc(ts->prg, (ts->nb_prg+1)*sizeof(Program_t));
+    struct Program *p;
+    void *tmp = av_realloc(ts->prg, (ts->nb_prg+1)*sizeof(struct Program));
     if(!tmp)
         return;
     ts->prg = tmp;
@@ -183,7 +182,7 @@ static void add_pat_entry(MpegTSContext *ts, unsigned int programid)
 static void add_pid_to_pmt(MpegTSContext *ts, unsigned int programid, unsigned int pid)
 {
     int i;
-    Program_t *p = NULL;
+    struct Program *p = NULL;
     for(i=0; i<ts->nb_prg; i++) {
         if(ts->prg[i].id == programid) {
             p = &ts->prg[i];
@@ -210,7 +209,7 @@ static int discard_pid(MpegTSContext *ts, unsigned int pid)
 {
     int i, j, k;
     int used = 0, discarded = 0;
-    Program_t *p;
+    struct Program *p;
     for(i=0; i<ts->nb_prg; i++) {
         p = &ts->prg[i];
         for(j=0; j<p->nb_pids; j++) {

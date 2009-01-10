@@ -26,13 +26,13 @@
 
 #ifdef ARCH_X86_32
 
-#include "i386/mathops.h"
+#include "x86/mathops.h"
 
-#elif defined(ARCH_ARMV4L)
+#elif defined(ARCH_ARM)
 
-#include "armv4l/mathops.h"
+#include "arm/mathops.h"
 
-#elif defined(ARCH_POWERPC)
+#elif defined(ARCH_PPC)
 
 #include "ppc/mathops.h"
 
@@ -45,7 +45,7 @@
 /* generic implementation */
 
 #ifndef MULL
-#   define MULL(a,b) (((int64_t)(a) * (int64_t)(b)) >> FRAC_BITS)
+#   define MULL(a,b,s) (((int64_t)(a) * (int64_t)(b)) >> (s))
 #endif
 
 #ifndef MULH

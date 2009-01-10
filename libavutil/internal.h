@@ -33,9 +33,10 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include "common.h"
 
 #ifndef attribute_align_arg
-#if defined(__GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__>1)
+#if (!defined(__ICC) || __ICC > 1100) && AV_GCC_VERSION_AT_LEAST(4,2)
 #    define attribute_align_arg __attribute__((force_align_arg_pointer))
 #else
 #    define attribute_align_arg
@@ -43,7 +44,7 @@
 #endif
 
 #ifndef attribute_used
-#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
+#if AV_GCC_VERSION_AT_LEAST(3,1)
 #    define attribute_used __attribute__((used))
 #else
 #    define attribute_used
@@ -148,17 +149,14 @@ static inline av_const int FASTDIV(int a, int b)
                      : "=&r"(r), "=&r"(t) : "r"(a), "r"(b), "r"(ff_inverse));
     return r;
 }
-#elif defined(ARCH_ARMV4L)
-#    define FASTDIV(a,b) \
-    ({\
-        int ret,dmy;\
-        __asm__ volatile(\
-            "umull %1, %0, %2, %3"\
-            :"=&r"(ret),"=&r"(dmy)\
-            :"r"(a),"r"(ff_inverse[b])\
-            );\
-        ret;\
-    })
+#elif defined(ARCH_ARM)
+static inline av_const int FASTDIV(int a, int b)
+{
+    int r, t;
+    __asm__ volatile ("umull %1, %0, %2, %3"
+                      : "=&r"(r), "=&r"(t) : "r"(a), "r"(ff_inverse[b]));
+    return r;
+}
 #elif defined(CONFIG_FASTDIV)
 #    define FASTDIV(a,b)   ((uint32_t)((((uint64_t)a)*ff_inverse[b])>>32))
 #else

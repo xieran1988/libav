@@ -35,9 +35,10 @@
 #include "libavutil/common.h"
 
 #include "simple_idct.h"
+#include "aandcttab.h"
 #include "faandct.h"
 #include "faanidct.h"
-#include "i386/idct_xvid.h"
+#include "x86/idct_xvid.h"
 
 #undef printf
 #undef random
@@ -45,30 +46,36 @@
 void *fast_memcpy(void *a, const void *b, size_t c){return memcpy(a,b,c);};
 
 /* reference fdct/idct */
-extern void fdct(DCTELEM *block);
-extern void idct(DCTELEM *block);
-extern void init_fdct();
+void fdct(DCTELEM *block);
+void idct(DCTELEM *block);
+void init_fdct();
 
-extern void ff_mmx_idct(DCTELEM *data);
-extern void ff_mmxext_idct(DCTELEM *data);
+void ff_mmx_idct(DCTELEM *data);
+void ff_mmxext_idct(DCTELEM *data);
 
-extern void odivx_idct_c (short *block);
+void odivx_idct_c(short *block);
 
 // BFIN
-extern void ff_bfin_idct (DCTELEM *block)  ;
-extern void ff_bfin_fdct (DCTELEM *block) ;
+void ff_bfin_idct(DCTELEM *block);
+void ff_bfin_fdct(DCTELEM *block);
 
 // ALTIVEC
-extern void fdct_altivec (DCTELEM *block);
-//extern void idct_altivec (DCTELEM *block);?? no routine
+void fdct_altivec(DCTELEM *block);
+//void idct_altivec(DCTELEM *block);?? no routine
 
+// ARM
+void j_rev_dct_ARM(DCTELEM *data);
+void simple_idct_ARM(DCTELEM *data);
+void simple_idct_armv5te(DCTELEM *data);
+void ff_simple_idct_armv6(DCTELEM *data);
+void ff_simple_idct_neon(DCTELEM *data);
 
 struct algo {
   const char *name;
   enum { FDCT, IDCT } is_idct;
   void (* func) (DCTELEM *block);
   void (* ref)  (DCTELEM *block);
-  enum formattag { NO_PERM,MMX_PERM, MMX_SIMPLE_PERM, SCALE_PERM, SSE2_PERM } format;
+  enum formattag { NO_PERM,MMX_PERM, MMX_SIMPLE_PERM, SCALE_PERM, SSE2_PERM, PARTTRANS_PERM } format;
   int  mm_support;
 };
 
@@ -116,21 +123,24 @@ struct algo algos[] = {
   {"BFINidct",        1, ff_bfin_idct,       idct, NO_PERM},
 #endif
 
+#ifdef ARCH_ARM
+  {"SIMPLE-ARM",      1, simple_idct_ARM,    idct, NO_PERM },
+  {"INT-ARM",         1, j_rev_dct_ARM,      idct, MMX_PERM },
+#ifdef HAVE_ARMV5TE
+  {"SIMPLE-ARMV5TE",  1, simple_idct_armv5te, idct, NO_PERM },
+#endif
+#ifdef HAVE_ARMV6
+  {"SIMPLE-ARMV6",    1, ff_simple_idct_armv6, idct, MMX_PERM },
+#endif
+#ifdef HAVE_NEON
+  {"SIMPLE-NEON",     1, ff_simple_idct_neon, idct, PARTTRANS_PERM },
+#endif
+#endif /* ARCH_ARM */
+
   { 0 }
 };
 
 #define AANSCALE_BITS 12
-static const unsigned short aanscales[64] = {
-    /* precomputed values scaled up by 14 bits */
-    16384, 22725, 21407, 19266, 16384, 12873,  8867,  4520,
-    22725, 31521, 29692, 26722, 22725, 17855, 12299,  6270,
-    21407, 29692, 27969, 25172, 21407, 16819, 11585,  5906,
-    19266, 26722, 25172, 22654, 19266, 15137, 10426,  5315,
-    16384, 22725, 21407, 19266, 16384, 12873,  8867,  4520,
-    12873, 17855, 16819, 15137, 12873, 10114,  6967,  3552,
-    8867, 12299, 11585, 10426,  8867,  6967,  4799,  2446,
-    4520,  6270,  5906,  5315,  4520,  3552,  2446,  1247
-};
 
 uint8_t cropTbl[256 + 2 * MAX_NEG_CROP];
 
@@ -245,6 +255,9 @@ void dct_error(const char *name, int is_idct,
         } else if (form == SSE2_PERM) {
             for(i=0; i<64; i++)
                 block[(i&0x38) | idct_sse2_row_perm[i&7]] = block1[i];
+        } else if (form == PARTTRANS_PERM) {
+            for(i=0; i<64; i++)
+                block[(i&0x24) | ((i&3)<<3) | ((i>>3)&3)] = block1[i];
         } else {
             for(i=0; i<64; i++)
                 block[i]= block1[i];
@@ -263,7 +276,7 @@ void dct_error(const char *name, int is_idct,
 
         if (form == SCALE_PERM) {
             for(i=0; i<64; i++) {
-                scale = 8*(1 << (AANSCALE_BITS + 11)) / aanscales[i];
+                scale = 8*(1 << (AANSCALE_BITS + 11)) / ff_aanscales[i];
                 block[i] = (block[i] * scale /*+ (1<<(AANSCALE_BITS-1))*/) >> AANSCALE_BITS;
             }
         }

@@ -54,8 +54,6 @@ typedef struct DVVideoContext {
     uint8_t         *buf;
 
     uint8_t  dv_zigzag[2][64];
-    uint32_t dv_idct_factor[2][2][22][64];
-    uint32_t dv100_idct_factor[4][4][16][64];
 
     void (*get_pixels)(DCTELEM *block, const uint8_t *pixels, int line_size);
     void (*fdct[2])(DCTELEM *block);
@@ -90,63 +88,180 @@ static inline int dv_work_pool_size(const DVprofile *d)
     return size;
 }
 
-static int dv_init_dynamic_tables(const DVprofile *d)
+static inline void dv_calc_mb_coordinates(const DVprofile *d, int chan, int seq, int slot,
+                                          uint16_t *tbl)
 {
-    int j,i,c,s,p,k;
+    const static uint8_t off[] = { 2, 6, 8, 0, 4 };
+    const static uint8_t shuf1[] = { 36, 18, 54, 0, 72 };
+    const static uint8_t shuf2[] = { 24, 12, 36, 0, 48 };
+    const static uint8_t shuf3[] = { 18, 9, 27, 0, 36 };
 
-    if (d->work_chunks[dv_work_pool_size(d)-1].buf_offset)
-        return 0;
+    const static uint8_t l_start[] = {0, 4, 9, 13, 18, 22, 27, 31, 36, 40};
+    const static uint8_t l_start_shuffled[] = { 9, 4, 13, 0, 18 };
 
-    p = i = 0;
-    for (c=0; c<d->n_difchan; c++) {
-        for (s=0; s<d->difseg_size; s++) {
-            p += 6;
-            for (j=0; j<27; j++) {
-                 p += !(j%3);
-                 if (!(DV_PROFILE_IS_1080i50(d) && c != 0 && s == 11) &&
-                     !(DV_PROFILE_IS_720p50(d) && s > 9)) {
-                     for (k=0; k<5; k++)
-                         d->work_chunks[i].mb_coordinates[k] = d->video_place[(c*d->difseg_size+s)*27*5 + j*5 + k];
-                     d->work_chunks[i++].buf_offset = p;
-                 }
-                 p += 5;
-            }
+    const static uint8_t serpent1[] = {0, 1, 2, 2, 1, 0,
+                                       0, 1, 2, 2, 1, 0,
+                                       0, 1, 2, 2, 1, 0,
+                                       0, 1, 2, 2, 1, 0,
+                                       0, 1, 2};
+    const static uint8_t serpent2[] = {0, 1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 0,
+                                       0, 1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 0,
+                                       0, 1, 2, 3, 4, 5};
+
+    const static uint8_t remap[][2] = {{ 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, /* dummy */
+                                       { 0, 0}, { 0, 1}, { 0, 2}, { 0, 3}, {10, 0},
+                                       {10, 1}, {10, 2}, {10, 3}, {20, 0}, {20, 1},
+                                       {20, 2}, {20, 3}, {30, 0}, {30, 1}, {30, 2},
+                                       {30, 3}, {40, 0}, {40, 1}, {40, 2}, {40, 3},
+                                       {50, 0}, {50, 1}, {50, 2}, {50, 3}, {60, 0},
+                                       {60, 1}, {60, 2}, {60, 3}, {70, 0}, {70, 1},
+                                       {70, 2}, {70, 3}, { 0,64}, { 0,65}, { 0,66},
+                                       {10,64}, {10,65}, {10,66}, {20,64}, {20,65},
+                                       {20,66}, {30,64}, {30,65}, {30,66}, {40,64},
+                                       {40,65}, {40,66}, {50,64}, {50,65}, {50,66},
+                                       {60,64}, {60,65}, {60,66}, {70,64}, {70,65},
+                                       {70,66}, { 0,67}, {20,67}, {40,67}, {60,67}};
+
+    int i, k, m;
+    int x, y, blk;
+
+    for (m=0; m<5; m++) {
+         switch (d->width) {
+         case 1440:
+              blk = (chan*11+seq)*27+slot;
+
+              if (chan == 0 && seq == 11) {
+                  x = m*27+slot;
+                  if (x<90) {
+                      y = 0;
+                  } else {
+                      x = (x - 90)*2;
+                      y = 67;
+                  }
+              } else {
+                  i = (4*chan + blk + off[m])%11;
+                  k = (blk/11)%27;
+
+                  x = shuf1[m] + (chan&1)*9 + k%9;
+                  y = (i*3+k/9)*2 + (chan>>1) + 1;
+              }
+              tbl[m] = (x<<1)|(y<<9);
+              break;
+         case 1280:
+              blk = (chan*10+seq)*27+slot;
+
+              i = (4*chan + (seq/5) + 2*blk + off[m])%10;
+              k = (blk/5)%27;
+
+              x = shuf1[m]+(chan&1)*9 + k%9;
+              y = (i*3+k/9)*2 + (chan>>1) + 4;
+
+              if (x >= 80) {
+                  x = remap[y][0]+((x-80)<<(y>59));
+                  y = remap[y][1];
+              }
+              tbl[m] = (x<<1)|(y<<9);
+              break;
+       case 960:
+              blk = (chan*10+seq)*27+slot;
+
+              i = (4*chan + (seq/5) + 2*blk + off[m])%10;
+              k = (blk/5)%27 + (i&1)*3;
+
+              x = shuf2[m] + k%6 + 6*(chan&1);
+              y = l_start[i] + k/6 + 45*(chan>>1);
+              tbl[m] = (x<<1)|(y<<9);
+              break;
+        case 720:
+              switch (d->pix_fmt) {
+              case PIX_FMT_YUV422P:
+                   x = shuf3[m] + slot/3;
+                   y = serpent1[slot] +
+                       ((((seq + off[m]) % d->difseg_size)<<1) + chan)*3;
+                   tbl[m] = (x<<1)|(y<<8);
+                   break;
+              case PIX_FMT_YUV420P:
+                   x = shuf3[m] + slot/3;
+                   y = serpent1[slot] +
+                       ((seq + off[m]) % d->difseg_size)*3;
+                   tbl[m] = (x<<1)|(y<<9);
+                   break;
+              case PIX_FMT_YUV411P:
+                   i = (seq + off[m]) % d->difseg_size;
+                   k = slot + ((m==1||m==2)?3:0);
+
+                   x = l_start_shuffled[m] + k/6;
+                   y = serpent2[k] + i*6;
+                   if (x>21)
+                       y = y*2 - i*6;
+                   tbl[m] = (x<<2)|(y<<8);
+                   break;
+              }
+        default:
+              break;
         }
     }
-    return 0;
 }
 
-static void dv_build_unquantize_tables(DVVideoContext *s, uint8_t* perm)
+static int dv_init_dynamic_tables(const DVprofile *d)
 {
-    int i, q, a;
+    int j,i,c,s,p;
+    uint32_t *factor1, *factor2;
+    const int *iweight1, *iweight2;
 
-    /* NOTE: max left shift is 6 */
-    for (q = 0; q < 22; q++) {
-        /* 88DCT */
-        i = 1;
-        for (a = 0; a < 4; a++) {
-            for (; i < dv_quant_areas[a]; i++) {
-                /* 88 table */
-                s->dv_idct_factor[0][0][q][i] = dv_iweight_88[i] << (dv_quant_shifts[q][a] + 1);
-                s->dv_idct_factor[1][0][q][i] = s->dv_idct_factor[0][0][q][i] << 1;
-
-                /* 248 table */
-                s->dv_idct_factor[0][1][q][i] = dv_iweight_248[i] << (dv_quant_shifts[q][a] + 1);
-                s->dv_idct_factor[1][1][q][i] = s->dv_idct_factor[0][1][q][i] << 1;
+    if (!d->work_chunks[dv_work_pool_size(d)-1].buf_offset) {
+        p = i = 0;
+        for (c=0; c<d->n_difchan; c++) {
+            for (s=0; s<d->difseg_size; s++) {
+                p += 6;
+                for (j=0; j<27; j++) {
+                    p += !(j%3);
+                    if (!(DV_PROFILE_IS_1080i50(d) && c != 0 && s == 11) &&
+                        !(DV_PROFILE_IS_720p50(d) && s > 9)) {
+                          dv_calc_mb_coordinates(d, c, s, j, &d->work_chunks[i].mb_coordinates[0]);
+                          d->work_chunks[i++].buf_offset = p;
+                    }
+                    p += 5;
+                }
             }
         }
     }
 
-    for (a = 0; a < 4; a++) {
-        for (q = 0; q < 16; q++) {
-            for (i = 1; i < 64; i++) {
-                s->dv100_idct_factor[0][a][q][i] = (dv100_qstep[q] << (a + 9)) * dv_iweight_1080_y[i];
-                s->dv100_idct_factor[1][a][q][i] = (dv100_qstep[q] << (a + 9)) * dv_iweight_1080_c[i];
-                s->dv100_idct_factor[2][a][q][i] = (dv100_qstep[q] << (a + 9)) * dv_iweight_720_y[i];
-                s->dv100_idct_factor[3][a][q][i] = (dv100_qstep[q] << (a + 9)) * dv_iweight_720_c[i];
+    if (!d->idct_factor[DV_PROFILE_IS_HD(d)?8191:5631]) {
+        factor1 = &d->idct_factor[0];
+        factor2 = &d->idct_factor[DV_PROFILE_IS_HD(d)?4096:2816];
+        if (d->height == 720) {
+            iweight1 = &dv_iweight_720_y[0];
+            iweight2 = &dv_iweight_720_c[0];
+        } else {
+            iweight1 = &dv_iweight_1080_y[0];
+            iweight2 = &dv_iweight_1080_c[0];
+            }
+        if (DV_PROFILE_IS_HD(d)) {
+            for (c = 0; c < 4; c++) {
+                for (s = 0; s < 16; s++) {
+                    for (i = 0; i < 64; i++) {
+                        *factor1++ = (dv100_qstep[s] << (c + 9)) * iweight1[i];
+                        *factor2++ = (dv100_qstep[s] << (c + 9)) * iweight2[i];
+                    }
+                }
+            }
+        } else {
+            iweight1 = &dv_iweight_88[0];
+            for (j = 0; j < 2; j++, iweight1 = &dv_iweight_248[0]) {
+                for (s = 0; s < 22; s++) {
+                    for (i = c = 0; c < 4; c++) {
+                        for (; i < dv_quant_areas[c]; i++) {
+                            *factor1   = iweight1[i] << (dv_quant_shifts[s][c] + 1);
+                            *factor2++ = (*factor1++) << 1;
+        }
+    }
             }
         }
     }
+}
+
+    return 0;
 }
 
 static av_cold int dvvideo_init(AVCodecContext *avctx)
@@ -272,9 +387,6 @@ static av_cold int dvvideo_init(AVCodecContext *avctx)
     }else
         memcpy(s->dv_zigzag[1], ff_zigzag248_direct, 64);
 
-    /* XXX: do it only for constant case */
-    dv_build_unquantize_tables(s, dsp.idct_permutation);
-
     avctx->coded_frame = &s->picture;
     s->avctx = avctx;
 
@@ -395,8 +507,9 @@ static inline void dv_calculate_mb_xy(DVVideoContext *s, DVwork_chunk *work_chun
 }
 
 /* mb_x and mb_y are in units of 8 pixels */
-static inline void dv_decode_video_segment(DVVideoContext *s, DVwork_chunk *work_chunk)
+static int dv_decode_video_segment(AVCodecContext *avctx, DVwork_chunk *work_chunk)
 {
+    DVVideoContext *s = avctx->priv_data;
     int quant, dc, dct_mode, class1, j;
     int mb_index, mb_x, mb_y, last_index;
     int y_stride, linesize;
@@ -442,13 +555,13 @@ static inline void dv_decode_video_segment(DVVideoContext *s, DVwork_chunk *work
             if (DV_PROFILE_IS_HD(s->sys)) {
                 mb->idct_put     = s->idct_put[0];
                 mb->scan_table   = s->dv_zigzag[0];
-                mb->factor_table = s->dv100_idct_factor[((s->sys->height == 720) << 1) | (j >= 4)][class1][quant];
+                mb->factor_table = &s->sys->idct_factor[(j >= 4)*4*16*64 + class1*16*64 + quant*64];
                 is_field_mode[mb_index] |= !j && dct_mode;
             } else {
                 mb->idct_put     = s->idct_put[dct_mode && log2_blocksize == 3];
                 mb->scan_table   = s->dv_zigzag[dct_mode];
-                mb->factor_table = s->dv_idct_factor[class1 == 3][dct_mode]
-                    [quant + dv_quant_offset[class1]];
+                mb->factor_table = &s->sys->idct_factor[(class1 == 3)*2*22*64 + dct_mode*22*64 +
+                                                        (quant + dv_quant_offset[class1])*64];
             }
             dc = dc << 2;
             /* convert to unsigned because 128 is not added in the
@@ -576,6 +689,7 @@ static inline void dv_decode_video_segment(DVVideoContext *s, DVwork_chunk *work
             }
         }
     }
+    return 0;
 }
 
 #if ENABLE_SMALL
@@ -857,8 +971,9 @@ static inline void dv_guess_qnos(EncBlockInfo* blks, int* qnos)
     }
 }
 
-static inline void dv_encode_video_segment(DVVideoContext *s, DVwork_chunk *work_chunk)
+static int dv_encode_video_segment(AVCodecContext *avctx, DVwork_chunk *work_chunk)
 {
+    DVVideoContext *s = avctx->priv_data;
     int mb_index, i, j;
     int mb_x, mb_y, c_offset, linesize;
     uint8_t*  y_ptr;
@@ -1004,21 +1119,9 @@ static inline void dv_encode_video_segment(DVVideoContext *s, DVwork_chunk *work
 
     for (j = 0; j < 5 * 6; j++)
        flush_put_bits(&pbs[j]);
-}
 
-static int dv_decode_mt(AVCodecContext *avctx, void* sl)
-{
-    dv_decode_video_segment((DVVideoContext *)avctx->priv_data, (DVwork_chunk*)sl);
     return 0;
 }
-
-#ifdef CONFIG_DVVIDEO_ENCODER
-static int dv_encode_mt(AVCodecContext *avctx, void* sl)
-{
-    dv_encode_video_segment((DVVideoContext *)avctx->priv_data, (DVwork_chunk*)sl);
-    return 0;
-}
-#endif
 
 #ifdef CONFIG_DVVIDEO_DECODER
 /* NOTE: exactly one frame must be given (120000 bytes for NTSC,
@@ -1050,7 +1153,7 @@ static int dvvideo_decode_frame(AVCodecContext *avctx,
     s->picture.top_field_first  = 0;
 
     s->buf = buf;
-    avctx->execute(avctx, dv_decode_mt, s->sys->work_chunks, NULL,
+    avctx->execute(avctx, dv_decode_video_segment, s->sys->work_chunks, NULL,
                    dv_work_pool_size(s->sys), sizeof(DVwork_chunk));
 
     emms_c();
@@ -1203,7 +1306,7 @@ static int dvvideo_encode_frame(AVCodecContext *c, uint8_t *buf, int buf_size,
     s->picture.pict_type = FF_I_TYPE;
 
     s->buf = buf;
-    c->execute(c, dv_encode_mt, s->sys->work_chunks, NULL,
+    c->execute(c, dv_encode_video_segment, s->sys->work_chunks, NULL,
                dv_work_pool_size(s->sys), sizeof(DVwork_chunk));
 
     emms_c();

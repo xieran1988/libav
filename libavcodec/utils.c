@@ -87,13 +87,14 @@ AVCodec *av_codec_next(AVCodec *c){
     else  return first_avcodec;
 }
 
-void register_avcodec(AVCodec *format)
+void register_avcodec(AVCodec *codec)
 {
     AVCodec **p;
+    avcodec_init();
     p = &first_avcodec;
     while (*p != NULL) p = &(*p)->next;
-    *p = format;
-    format->next = NULL;
+    *p = codec;
+    codec->next = NULL;
 }
 
 void avcodec_set_dimensions(AVCodecContext *s, int width, int height){
@@ -563,6 +564,7 @@ static const AVOption options[]={
 {"simplearm", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_SIMPLEARM, INT_MIN, INT_MAX, V|E|D, "idct"},
 {"simplearmv5te", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_SIMPLEARMV5TE, INT_MIN, INT_MAX, V|E|D, "idct"},
 {"simplearmv6", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_SIMPLEARMV6, INT_MIN, INT_MAX, V|E|D, "idct"},
+{"simpleneon", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_SIMPLENEON, INT_MIN, INT_MAX, V|E|D, "idct"},
 {"h264", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_H264, INT_MIN, INT_MAX, V|E|D, "idct"},
 {"vp3", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_VP3, INT_MIN, INT_MAX, V|E|D, "idct"},
 {"ipp", NULL, 0, FF_OPT_TYPE_CONST, FF_IDCT_IPP, INT_MIN, INT_MAX, V|E|D, "idct"},
@@ -743,6 +745,8 @@ static const AVOption options[]={
 {"bits_per_raw_sample", NULL, OFFSET(bits_per_raw_sample), FF_OPT_TYPE_INT, DEFAULT, INT_MIN, INT_MAX},
 {"channel_layout", NULL, OFFSET(channel_layout), FF_OPT_TYPE_INT64, DEFAULT, 0, INT64_MAX, A|E|D, "channel_layout"},
 {"request_channel_layout", NULL, OFFSET(request_channel_layout), FF_OPT_TYPE_INT64, DEFAULT, 0, INT64_MAX, A|D, "request_channel_layout"},
+{"rc_max_vbv_use", NULL, OFFSET(rc_max_available_vbv_use), FF_OPT_TYPE_FLOAT, 1.0/3, 0.0, FLT_MAX, V|E},
+{"rc_min_vbv_use", NULL, OFFSET(rc_min_vbv_overflow_use),  FF_OPT_TYPE_FLOAT, 3,     0.0, FLT_MAX, V|E},
 {NULL},
 };
 
@@ -1506,7 +1510,7 @@ int av_parse_video_frame_rate(AVRational *frame_rate, const char *arg)
         return 0;
 }
 
-void av_log_missing_feature(void *avc, const char *feature, int want_sample)
+void ff_log_missing_feature(void *avc, const char *feature, int want_sample)
 {
     av_log(avc, AV_LOG_WARNING, "%s not implemented. Update your FFmpeg "
             "version to the newest one from SVN. If the problem still "
@@ -1514,7 +1518,7 @@ void av_log_missing_feature(void *avc, const char *feature, int want_sample)
             "been implemented.", feature);
     if(want_sample)
         av_log(avc, AV_LOG_WARNING, " If you want to help, upload a sample "
-                "of this file to ftp://upload.mplayerhq.hu/MPlayer/incoming/ "
-                "and contact the FFmpeg-devel mailing list.");
+                "of this file to ftp://upload.ffmpeg.org/MPlayer/incoming/ "
+                "and contact the ffmpeg-devel mailing list.");
     av_log(avc, AV_LOG_WARNING, "\n");
 }

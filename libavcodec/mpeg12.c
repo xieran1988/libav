@@ -63,10 +63,10 @@ static inline int mpeg2_fast_decode_block_intra(MpegEncContext *s, DCTELEM *bloc
 static int mpeg_decode_motion(MpegEncContext *s, int fcode, int pred);
 static void exchange_uv(MpegEncContext *s);
 
-extern int XVMC_field_start(MpegEncContext *s, AVCodecContext *avctx);
-extern int XVMC_field_end(MpegEncContext *s);
-extern void XVMC_pack_pblocks(MpegEncContext *s,int cbp);
-extern void XVMC_init_block(MpegEncContext *s);//set s->block
+int XVMC_field_start(MpegEncContext *s, AVCodecContext *avctx);
+int XVMC_field_end(MpegEncContext *s);
+void XVMC_pack_pblocks(MpegEncContext *s,int cbp);
+void XVMC_init_block(MpegEncContext *s);//set s->block
 
 static const enum PixelFormat pixfmt_xvmc_mpg2_420[] = {
                                            PIX_FMT_XVMC_MPEG2_IDCT,
@@ -303,7 +303,7 @@ static int mpeg_decode_mb(MpegEncContext *s,
         }else
             memset(s->last_mv, 0, sizeof(s->last_mv)); /* reset mv prediction */
         s->mb_intra = 1;
-#ifdef HAVE_XVMC
+#ifdef CONFIG_XVMC
         //if 1, we memcpy blocks in xvmcvideo
         if(s->avctx->xvmc_acceleration > 1){
             XVMC_pack_pblocks(s,-1);//inter are always full blocks
@@ -516,7 +516,7 @@ static int mpeg_decode_mb(MpegEncContext *s,
                 return -1;
             }
 
-#ifdef HAVE_XVMC
+#ifdef CONFIG_XVMC
             //if 1, we memcpy blocks in xvmcvideo
             if(s->avctx->xvmc_acceleration > 1){
                 XVMC_pack_pblocks(s,cbp);
@@ -1212,6 +1212,22 @@ static void quant_matrix_rebuild(uint16_t *matrix, const uint8_t *old_perm,
     }
 }
 
+static enum PixelFormat mpeg_get_pixelformat(AVCodecContext *avctx){
+    Mpeg1Context *s1 = avctx->priv_data;
+    MpegEncContext *s = &s1->mpeg_enc_ctx;
+
+    if(avctx->xvmc_acceleration)
+        return avctx->get_format(avctx,pixfmt_xvmc_mpg2_420);
+    else{
+        if(s->chroma_format <  2)
+            return PIX_FMT_YUV420P;
+        else if(s->chroma_format == 2)
+            return PIX_FMT_YUV422P;
+        else
+            return PIX_FMT_YUV444P;
+    }
+}
+
 /* Call this function when we know all parameters.
  * It may be called in different places for MPEG-1 and MPEG-2. */
 static int mpeg_decode_postinit(AVCodecContext *avctx){
@@ -1288,19 +1304,7 @@ static int mpeg_decode_postinit(AVCodecContext *avctx){
             }
         }//MPEG-2
 
-        if(avctx->xvmc_acceleration){
-            avctx->pix_fmt = avctx->get_format(avctx,pixfmt_xvmc_mpg2_420);
-        }else{
-            if(s->chroma_format <  2){
-                avctx->pix_fmt = PIX_FMT_YUV420P;
-            }else
-            if(s->chroma_format == 2){
-                avctx->pix_fmt = PIX_FMT_YUV422P;
-            }else
-            if(s->chroma_format >  2){
-                avctx->pix_fmt = PIX_FMT_YUV444P;
-            }
-        }
+        avctx->pix_fmt = mpeg_get_pixelformat(avctx);
         //until then pix_fmt may be changed right after codec init
         if( avctx->pix_fmt == PIX_FMT_XVMC_MPEG2_IDCT )
             if( avctx->idct_algo == FF_IDCT_AUTO )
@@ -1639,7 +1643,7 @@ static int mpeg_field_start(MpegEncContext *s){
                 }
             }
     }
-#ifdef HAVE_XVMC
+#ifdef CONFIG_XVMC
 // MPV_frame_start will call this function too,
 // but we need to call it on every field
     if(s->avctx->xvmc_acceleration)
@@ -1730,7 +1734,7 @@ static int mpeg_decode_slice(Mpeg1Context *s1, int mb_y,
     }
 
     for(;;) {
-#ifdef HAVE_XVMC
+#ifdef CONFIG_XVMC
         //If 1, we memcpy blocks in xvmcvideo.
         if(s->avctx->xvmc_acceleration > 1)
             XVMC_init_block(s);//set s->block
@@ -1912,7 +1916,7 @@ static int slice_end(AVCodecContext *avctx, AVFrame *pict)
     if (!s1->mpeg_enc_ctx_allocated || !s->current_picture_ptr)
         return 0;
 
-#ifdef HAVE_XVMC
+#ifdef CONFIG_XVMC
     if(s->avctx->xvmc_acceleration)
         XVMC_field_end(s);
 #endif
@@ -2069,11 +2073,7 @@ static int vcr2_init_sequence(AVCodecContext *avctx)
     avctx->has_b_frames= 0; //true?
     s->low_delay= 1;
 
-    if(avctx->xvmc_acceleration){
-        avctx->pix_fmt = avctx->get_format(avctx,pixfmt_xvmc_mpg2_420);
-    }else{
-        avctx->pix_fmt = PIX_FMT_YUV420P;
-    }
+    avctx->pix_fmt = mpeg_get_pixelformat(avctx);
 
     if( avctx->pix_fmt == PIX_FMT_XVMC_MPEG2_IDCT )
         if( avctx->idct_algo == FF_IDCT_AUTO )
@@ -2472,7 +2472,7 @@ AVCodec mpegvideo_decoder = {
     .long_name= NULL_IF_CONFIG_SMALL("MPEG-1 video"),
 };
 
-#ifdef HAVE_XVMC
+#ifdef CONFIG_XVMC
 static av_cold int mpeg_mc_decode_init(AVCodecContext *avctx){
     Mpeg1Context *s;
 

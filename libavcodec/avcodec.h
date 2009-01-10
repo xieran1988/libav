@@ -30,7 +30,7 @@
 #include "libavutil/avutil.h"
 
 #define LIBAVCODEC_VERSION_MAJOR 52
-#define LIBAVCODEC_VERSION_MINOR  3
+#define LIBAVCODEC_VERSION_MINOR 10
 #define LIBAVCODEC_VERSION_MICRO  0
 
 #define LIBAVCODEC_VERSION_INT  AV_VERSION_INT(LIBAVCODEC_VERSION_MAJOR, \
@@ -190,6 +190,9 @@ enum CodecID {
     CODEC_ID_MOTIONPIXELS,
     CODEC_ID_TGV,
     CODEC_ID_TGQ,
+
+    /* "codecs" for HW decoding with VDPAU */
+    CODEC_ID_H264_VDPAU= 0x9000,
 
     /* various PCM "codecs" */
     CODEC_ID_PCM_S16LE= 0x10000,
@@ -400,6 +403,7 @@ enum SampleFormat {
  */
 #define FF_MIN_BUFFER_SIZE 16384
 
+
 /**
  * motion estimation type.
  */
@@ -526,6 +530,10 @@ typedef struct RcOverride{
  * This can be used to prevent truncation of the last audio samples.
  */
 #define CODEC_CAP_SMALL_LAST_FRAME 0x0040
+/**
+ * Codec can export data for HW decoding (VDPAU).
+ */
+#define CODEC_CAP_HWACCEL_VDPAU    0x0080
 
 //The following defines may change, don't expect compatibility if you use them.
 #define MB_TYPE_INTRA4x4   0x0001
@@ -1390,6 +1398,7 @@ typedef struct AVCodecContext {
 #define FF_IDCT_WMV2          19
 #define FF_IDCT_FAAN          20
 #define FF_IDCT_EA            21
+#define FF_IDCT_SIMPLENEON    22
 
     /**
      * slice count
@@ -2081,7 +2090,7 @@ typedef struct AVCodecContext {
     /**
      * number of reference frames
      * - encoding: Set by user.
-     * - decoding: unused
+     * - decoding: Set by lavc.
      */
     int refs;
 
@@ -2283,6 +2292,20 @@ typedef struct AVCodecContext {
      * - decoding: Set by user.
      */
     int64_t request_channel_layout;
+
+    /**
+     * Ratecontrol attempt to use, at maximum, <value> of what can be used without an underflow.
+     * - encoding: Set by user.
+     * - decoding: unused.
+     */
+    float rc_max_available_vbv_use;
+
+    /**
+     * Ratecontrol attempt to use, at least, <value> times the amount needed to prevent a vbv overflow.
+     * - encoding: Set by user.
+     * - decoding: unused.
+     */
+    float rc_min_vbv_overflow_use;
 } AVCodecContext;
 
 /**
@@ -2360,23 +2383,54 @@ typedef struct AVPaletteControl {
 
 } AVPaletteControl attribute_deprecated;
 
+enum AVSubtitleType {
+    SUBTITLE_NONE,
+
+    SUBTITLE_BITMAP,                ///< A bitmap, pict will be set
+
+    /**
+     * Plain text, the text field must be set by the decoder and is
+     * authoritative. ass and pict fields may contain approximations.
+     */
+    SUBTITLE_TEXT,
+
+    /**
+     * Formatted text, the ass field must be set by the decoder and is
+     * authoritative. pict and text fields may contain approximations.
+     */
+    SUBTITLE_ASS,
+};
+
 typedef struct AVSubtitleRect {
-    uint16_t x;
-    uint16_t y;
-    uint16_t w;
-    uint16_t h;
-    uint16_t nb_colors;
-    int linesize;
-    uint32_t *rgba_palette;
-    uint8_t *bitmap;
+    int x;         ///< top left corner  of pict, undefined when pict is not set
+    int y;         ///< top left corner  of pict, undefined when pict is not set
+    int w;         ///< width            of pict, undefined when pict is not set
+    int h;         ///< height           of pict, undefined when pict is not set
+    int nb_colors; ///< number of colors in pict, undefined when pict is not set
+
+    /**
+     * data+linesize for the bitmap of this subtitle.
+     * can be set for text/ass as well once they where rendered
+     */
+    AVPicture pict;
+    enum AVSubtitleType type;
+
+    char *text;                     ///< 0 terminated plain UTF-8 text
+
+    /**
+     * 0 terminated ASS/SSA compatible event line.
+     * The pressentation of this is unaffected by the other values in this
+     * struct.
+     */
+    char *ass;
 } AVSubtitleRect;
 
 typedef struct AVSubtitle {
     uint16_t format; /* 0 = graphics */
     uint32_t start_display_time; /* relative to packet pts, in ms */
     uint32_t end_display_time; /* relative to packet pts, in ms */
-    uint32_t num_rects;
-    AVSubtitleRect *rects;
+    unsigned num_rects;
+    AVSubtitleRect **rects;
 } AVSubtitle;
 
 
@@ -2549,7 +2603,12 @@ unsigned avcodec_version(void);
  */
 void avcodec_init(void);
 
-void register_avcodec(AVCodec *format);
+/**
+ * Register the codec \p codec and initialize libavcodec.
+ *
+ * @see avcodec_init()
+ */
+void register_avcodec(AVCodec *codec);
 
 /**
  * Finds a registered encoder with a matching codec ID.
@@ -2738,6 +2797,9 @@ int avcodec_decode_audio2(AVCodecContext *avctx, int16_t *samples,
  * the linesize is not a multiple of 16 then there's no sense in aligning the
  * start of the buffer to 16.
  *
+ * @note Some codecs have a delay between input and output, these need to be
+ * feeded with buf=NULL, buf_size=0 at the end to return the remaining frames.
+ *
  * @param avctx the codec context
  * @param[out] picture The AVFrame in which the decoded video frame will be stored.
  * @param[in] buf the input buffer
@@ -2805,6 +2867,16 @@ int avcodec_encode_subtitle(AVCodecContext *avctx, uint8_t *buf, int buf_size,
 
 int avcodec_close(AVCodecContext *avctx);
 
+/**
+ * Register all the codecs, parsers and bitstream filters which were enabled at
+ * configuration time. If you do not call this function you can select exactly
+ * which formats you want to support, by using the individual registration
+ * functions.
+ *
+ * @see register_avcodec
+ * @see av_register_codec_parser
+ * @see av_register_bitstream_filter
+ */
 void avcodec_register_all(void);
 
 /**
@@ -2958,7 +3030,7 @@ int av_picture_crop(AVPicture *dst, const AVPicture *src,
 int av_picture_pad(AVPicture *dst, const AVPicture *src, int height, int width, int pix_fmt,
             int padtop, int padbottom, int padleft, int padright, int *color);
 
-extern unsigned int av_xiphlacing(unsigned char *s, unsigned int v);
+unsigned int av_xiphlacing(unsigned char *s, unsigned int v);
 
 /**
  * Parses \p str and put in \p width_ptr and \p height_ptr the detected values.
@@ -2983,18 +3055,6 @@ int av_parse_video_frame_size(int *width_ptr, int *height_ptr, const char *str);
  * frame rate
  */
 int av_parse_video_frame_rate(AVRational *frame_rate, const char *str);
-
-/**
- * Logs a generic warning message about a missing feature.
- * @param[in] avc a pointer to an arbitrary struct of which the first field is
- * a pointer to an AVClass struct
- * @param[in] feature string containing the name of the missing feature
- * @param[in] want_sample indicates if samples are wanted which exhibit this feature.
- * If \p want_sample is non-zero, additional verbage will be added to the log
- * message which tells the user how to report samples to the development
- * mailing list.
- */
-void av_log_missing_feature(void *avc, const char *feature, int want_sample);
 
 /* error handling */
 #if EINVAL > 0

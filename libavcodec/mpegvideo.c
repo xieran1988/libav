@@ -54,9 +54,9 @@ static void dct_unquantize_h263_intra_c(MpegEncContext *s,
 static void dct_unquantize_h263_inter_c(MpegEncContext *s,
                                   DCTELEM *block, int n, int qscale);
 
-extern int  XVMC_field_start(MpegEncContext*s, AVCodecContext *avctx);
-extern void XVMC_field_end(MpegEncContext *s);
-extern void XVMC_decode_mb(MpegEncContext *s);
+int  XVMC_field_start(MpegEncContext*s, AVCodecContext *avctx);
+void XVMC_field_end(MpegEncContext *s);
+void XVMC_decode_mb(MpegEncContext *s);
 
 
 /* enable all paranoid tests for rounding, overflows, etc... */
@@ -129,8 +129,8 @@ int ff_dct_common_init(MpegEncContext *s)
     MPV_common_init_mlib(s);
 #elif defined(HAVE_MMI)
     MPV_common_init_mmi(s);
-#elif defined(ARCH_ARMV4L)
-    MPV_common_init_armv4l(s);
+#elif defined(ARCH_ARM)
+    MPV_common_init_arm(s);
 #elif defined(HAVE_ALTIVEC)
     MPV_common_init_altivec(s);
 #elif defined(ARCH_BFIN)
@@ -289,6 +289,7 @@ static int init_duplicate_context(MpegEncContext *s, MpegEncContext *base){
 
      //FIXME should be linesize instead of s->width*2 but that is not known before get_buffer()
     CHECKED_ALLOCZ(s->me.scratchpad,  (s->width+64)*4*16*2*sizeof(uint8_t))
+    s->me.temp=         s->me.scratchpad;
     s->rd_scratchpad=   s->me.scratchpad;
     s->b_scratchpad=    s->me.scratchpad;
     s->obmc_scratchpad= s->me.scratchpad + 16;
@@ -315,6 +316,7 @@ static void free_duplicate_context(MpegEncContext *s){
 
     av_freep(&s->allocated_edge_emu_buffer); s->edge_emu_buffer= NULL;
     av_freep(&s->me.scratchpad);
+    s->me.temp=
     s->rd_scratchpad=
     s->b_scratchpad=
     s->obmc_scratchpad= NULL;
@@ -331,6 +333,7 @@ static void backup_duplicate_context(MpegEncContext *bak, MpegEncContext *src){
     COPY(allocated_edge_emu_buffer);
     COPY(edge_emu_buffer);
     COPY(me.scratchpad);
+    COPY(me.temp);
     COPY(rd_scratchpad);
     COPY(b_scratchpad);
     COPY(obmc_scratchpad);
@@ -936,7 +939,7 @@ alloc:
         update_noise_reduction(s);
     }
 
-#ifdef HAVE_XVMC
+#ifdef CONFIG_XVMC
     if(s->avctx->xvmc_acceleration)
         return XVMC_field_start(s, avctx);
 #endif
@@ -948,13 +951,17 @@ void MPV_frame_end(MpegEncContext *s)
 {
     int i;
     /* draw edge for correct motion prediction if outside */
-#ifdef HAVE_XVMC
+#ifdef CONFIG_XVMC
 //just to make sure that all data is rendered.
     if(s->avctx->xvmc_acceleration){
         XVMC_field_end(s);
     }else
 #endif
-    if(s->unrestricted_mv && s->current_picture.reference && !s->intra_only && !(s->flags&CODEC_FLAG_EMU_EDGE)) {
+    if(!(s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+       && s->unrestricted_mv
+       && s->current_picture.reference
+       && !s->intra_only
+       && !(s->flags&CODEC_FLAG_EMU_EDGE)) {
             s->dsp.draw_edges(s->current_picture.data[0], s->linesize  , s->h_edge_pos   , s->v_edge_pos   , EDGE_WIDTH  );
             s->dsp.draw_edges(s->current_picture.data[1], s->uvlinesize, s->h_edge_pos>>1, s->v_edge_pos>>1, EDGE_WIDTH/2);
             s->dsp.draw_edges(s->current_picture.data[2], s->uvlinesize, s->h_edge_pos>>1, s->v_edge_pos>>1, EDGE_WIDTH/2);
@@ -1729,7 +1736,7 @@ void MPV_decode_mb_internal(MpegEncContext *s, DCTELEM block[12][64],
 {
     int mb_x, mb_y;
     const int mb_xy = s->mb_y * s->mb_stride + s->mb_x;
-#ifdef HAVE_XVMC
+#ifdef CONFIG_XVMC
     if(s->avctx->xvmc_acceleration){
         XVMC_decode_mb(s);//xvmc uses pblocks
         return;

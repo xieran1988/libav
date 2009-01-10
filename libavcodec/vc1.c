@@ -1059,13 +1059,13 @@ static int decode_sequence_header_adv(VC1Context *v, GetBitContext *gb)
 static int decode_entry_point(AVCodecContext *avctx, GetBitContext *gb)
 {
     VC1Context *v = avctx->priv_data;
-    int i, blink, clentry, refdist;
+    int i, blink, clentry;
 
     av_log(avctx, AV_LOG_DEBUG, "Entry point: %08X\n", show_bits_long(gb, 32));
     blink = get_bits1(gb); // broken link
     clentry = get_bits1(gb); // closed entry
     v->panscanflag = get_bits1(gb);
-    refdist = get_bits1(gb); // refdist flag
+    v->refdist_flag = get_bits1(gb);
     v->s.loop_filter = get_bits1(gb);
     v->fastuvmc = get_bits1(gb);
     v->extended_mv = get_bits1(gb);
@@ -1099,7 +1099,7 @@ static int decode_entry_point(AVCodecContext *avctx, GetBitContext *gb)
         "BrokenLink=%i, ClosedEntry=%i, PanscanFlag=%i\n"
         "RefDist=%i, Postproc=%i, FastUVMC=%i, ExtMV=%i\n"
         "DQuant=%i, VSTransform=%i, Overlap=%i, Qmode=%i\n",
-        blink, clentry, v->panscanflag, refdist, v->s.loop_filter,
+        blink, clentry, v->panscanflag, v->refdist_flag, v->s.loop_filter,
         v->fastuvmc, v->extended_mv, v->dquant, v->vstransform, v->overlap, v->quantizer_mode);
 
     return 0;
@@ -1394,6 +1394,8 @@ static int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
     else v->halfpq = 0;
     if (v->quantizer_mode == QUANT_FRAME_EXPLICIT)
         v->pquantizer = get_bits1(gb);
+    if(v->postprocflag)
+        v->postproc = get_bits1(gb);
 
     if(v->s.pict_type == FF_I_TYPE || v->s.pict_type == FF_P_TYPE) v->use_ic = 0;
 
@@ -1416,8 +1418,6 @@ static int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
         }
         break;
     case FF_P_TYPE:
-        if(v->postprocflag)
-            v->postproc = get_bits1(gb);
         if (v->extended_mv) v->mvrange = get_unary(gb, 0, 3);
         else v->mvrange = 0;
         v->k_x = v->mvrange + 9 + (v->mvrange >> 1); //k_x can be 9 10 12 13
@@ -1507,8 +1507,6 @@ static int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
         }
         break;
     case FF_B_TYPE:
-        if(v->postprocflag)
-            v->postproc = get_bits1(gb);
         if (v->extended_mv) v->mvrange = get_unary(gb, 0, 3);
         else v->mvrange = 0;
         v->k_x = v->mvrange + 9 + (v->mvrange >> 1); //k_x can be 9 10 12 13
