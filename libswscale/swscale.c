@@ -452,6 +452,8 @@ const char *sws_format_name(enum PixelFormat format)
             return "nv21";
         case PIX_FMT_YUV440P:
             return "yuv440p";
+        case PIX_FMT_VDPAU_H264:
+            return "vdpau_h264";
         default:
             return "Unknown format";
     }
@@ -949,11 +951,11 @@ static inline void yuv2rgbXinC_full(SwsContext *c, int16_t *lumFilter, int16_t *
 #define COMPILE_C
 #endif
 
-#ifdef ARCH_POWERPC
+#ifdef ARCH_PPC
 #if (defined (HAVE_ALTIVEC) || defined (RUNTIME_CPUDETECT)) && defined (CONFIG_GPL)
 #define COMPILE_ALTIVEC
 #endif //HAVE_ALTIVEC
-#endif //ARCH_POWERPC
+#endif //ARCH_PPC
 
 #if defined(ARCH_X86)
 
@@ -1628,7 +1630,7 @@ static SwsFunc getSwsFunc(int flags){
         return swScale_C;
 
 #else
-#ifdef ARCH_POWERPC
+#ifdef ARCH_PPC
     if (flags & SWS_CPU_CAPS_ALTIVEC)
         return swScale_altivec;
     else

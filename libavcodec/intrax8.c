@@ -42,7 +42,7 @@ static VLC j_ac_vlc[2][2][8];  //[quant<13],[intra/inter],[select]
 static VLC j_dc_vlc[2][8];     //[quant], [select]
 static VLC j_orient_vlc[2][4]; //[quant], [select]
 
-static void x8_vlc_init(){
+static void x8_vlc_init(void){
     int i;
 
 #define  init_ac_vlc(dst,src) \
@@ -511,7 +511,7 @@ static int x8_decode_intra_mb(IntraX8Context* const w, const int chroma){
     int sign;
 
     assert(w->orient<12);
-    memset(s->block[0],0x00,64*sizeof(DCTELEM));
+    s->dsp.clear_block(s->block[0]);
 
     if(chroma){
         dc_mode=2;

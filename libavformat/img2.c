@@ -45,6 +45,7 @@ static const IdStrMap img_tags[] = {
     { CODEC_ID_PNG       , "png"},
     { CODEC_ID_PNG       , "mng"},
     { CODEC_ID_PPM       , "ppm"},
+    { CODEC_ID_PPM       , "pnm"},
     { CODEC_ID_PGM       , "pgm"},
     { CODEC_ID_PGMYUV    , "pgmyuv"},
     { CODEC_ID_PBM       , "pbm"},
@@ -69,6 +70,7 @@ static const IdStrMap img_tags[] = {
     { CODEC_ID_SUNRAST   , "im8"},
     { CODEC_ID_SUNRAST   , "im24"},
     { CODEC_ID_SUNRAST   , "sunras"},
+    { CODEC_ID_JPEG2000  , "jp2"},
     { CODEC_ID_NONE      , NULL}
 };
 
@@ -402,7 +404,7 @@ AVOutputFormat image2_muxer = {
     "image2",
     NULL_IF_CONFIG_SMALL("image2 sequence"),
     "",
-    "",
+    "bmp,jpeg,jpg,ljpg,pam,pbm,pgm,pgmyuv,png,ppm,sgi,tif,tiff",
     sizeof(VideoData),
     CODEC_ID_NONE,
     CODEC_ID_MJPEG,

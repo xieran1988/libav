@@ -32,6 +32,7 @@
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
+#include <sys/time.h>
 
 #ifndef IPV6_ADD_MEMBERSHIP
 #define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
@@ -336,7 +337,7 @@ int udp_get_file_handle(URLContext *h)
 static int udp_open(URLContext *h, const char *uri, int flags)
 {
     char hostname[1024];
-    int port, udp_fd = -1, tmp;
+    int port, udp_fd = -1, tmp, bind_ret = -1;
     UDPContext *s = NULL;
     int is_output;
     const char *p;
@@ -404,7 +405,13 @@ static int udp_open(URLContext *h, const char *uri, int flags)
             goto fail;
 
     /* the bind is needed to give a port to the socket now */
-    if (bind(udp_fd,(struct sockaddr *)&my_addr, len) < 0)
+    /* if multicast, try the multicast address bind first */
+    if (s->is_multicast && !(h->flags & URL_WRONLY)) {
+        bind_ret = bind(udp_fd,(struct sockaddr *)&s->dest_addr, len);
+    }
+    /* bind to the local address if not multicast or if the multicast
+     * bind failed */
+    if (bind_ret < 0 && bind(udp_fd,(struct sockaddr *)&my_addr, len) < 0)
         goto fail;
 
     len = sizeof(my_addr);
@@ -437,6 +444,8 @@ static int udp_open(URLContext *h, const char *uri, int flags)
         if (setsockopt(udp_fd, SOL_SOCKET, SO_RCVBUF, &tmp, sizeof(tmp)) < 0) {
             av_log(NULL, AV_LOG_WARNING, "setsockopt(SO_RECVBUF): %s\n", strerror(errno));
         }
+        /* make the socket non-blocking */
+        ff_socket_nonblock(udp_fd, 1);
     }
 
     s->udp_fd = udp_fd;
@@ -468,7 +477,7 @@ static int udp_read(URLContext *h, uint8_t *buf, int size)
             return AVERROR(EIO);
         if (!(ret > 0 && FD_ISSET(s->udp_fd, &rfds)))
             continue;
-        len = recv(s->udp_fd, buf, size, MSG_DONTWAIT);
+        len = recv(s->udp_fd, buf, size, 0);
         if (len < 0) {
             if (ff_neterrno() != FF_NETERROR(EAGAIN) &&
                 ff_neterrno() != FF_NETERROR(EINTR))
