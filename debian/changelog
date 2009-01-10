@@ -1,3 +1,9 @@
+ffmpeg-debian (3:0.svn20090110-1) experimental; urgency=low
+
+  * new upstream svn snapshot (svn revision 16508, libswscale revision 28286)
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 10 Jan 2009 16:36:52 +0100
+
 ffmpeg-debian (3:0.svn20081115-1) experimental; urgency=low
 
   * new upstream svn snapshot (svn revision 15824, libswscale revision 27910)
