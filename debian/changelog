@@ -5,6 +5,8 @@ ffmpeg-debian (3:0.svn20090110-1) experimental; urgency=low
   Upstream Changes:
    - RV30 and RV40 decoder
    - QCELP / PureVoice decoder
+  
+  * removed patch 050_fix_pkgconfig_files.patch. Merged upstream
 
  -- Reinhard Tartler <siretart@tauware.de>  Sat, 10 Jan 2009 16:36:52 +0100
 
