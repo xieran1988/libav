@@ -9,8 +9,10 @@ ffmpeg-debian (3:0.svn20090110-1) experimental; urgency=low
   * removed patch 050_fix_pkgconfig_files.patch. Merged upstream
   * disabled patch 020_visibility_patch. It needs to be adapted to the new
     upstream changes. Hopefully it will get merged into ffmpeg properly.
+  * install formats.txt in the libavcodec52 package to document what
+    formats this version of ffmpeg has enabled.
 
- -- Reinhard Tartler <siretart@tauware.de>  Sat, 10 Jan 2009 16:36:52 +0100
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 11 Jan 2009 20:55:48 +0100
 
 ffmpeg-debian (3:0.svn20081115-1) experimental; urgency=low
 
