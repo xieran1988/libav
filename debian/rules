@@ -76,9 +76,7 @@ get-orig-source:
 	dh_testdir
 	# strip patented code
 	chmod +x debian/strip.sh
-	sh debian/get-orig-source.sh -r{$(SVN_VERSION)} \
-	    $(if $(internalencoders),, -c $(CURDIR)/debian/strip.sh) \
-	    -o ../$(DEB_SOURCE)_$(UPSTREAM_VERSION).orig.tar.gz
+	sh debian/get-orig-source.sh -d$(SVN_VERSION)
 
 # The trailing newline is important!
 define install_flavor

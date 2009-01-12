@@ -12,6 +12,8 @@ export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 export DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
+SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
+
 # the other flavors always build dynamic versions
 ifeq      ($(DEB_HOST_ARCH),i386)
 FLAVORS += cmov
@@ -31,7 +33,7 @@ gpl_confflags += --enable-x11grab
 # Common configuration flags; comment out following line for LGPL versions of
 # the libraries
 confflags += $(gpl_confflags)
-confflags += --extra-version='svn15824+$(DEB_VERSION)'
+confflags += --extra-version='svn$(SVNREVISION)+$(DEB_VERSION)'
 confflags += --prefix=/usr
 confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf
