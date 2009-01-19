@@ -23,6 +23,7 @@
 
 //#define DEBUG
 
+#include "libavutil/intreadwrite.h"
 #include "avformat.h"
 #include "riff.h"
 #include "isom.h"
@@ -30,7 +31,7 @@
 #include "libavcodec/mpeg4audio.h"
 #include "libavcodec/mpegaudiodata.h"
 
-#ifdef CONFIG_ZLIB
+#if CONFIG_ZLIB
 #include <zlib.h>
 #endif
 
@@ -134,6 +135,8 @@ typedef struct MOVStreamContext {
     MOVDref *drefs;
     int dref_id;
     int wrong_dts; ///< dts are wrong due to negative ctts
+    int width;  ///< tkhd width
+    int height; ///< tkhd height
 } MOVStreamContext;
 
 typedef struct MOVContext {
@@ -977,7 +980,13 @@ static int mov_read_stsd(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
                 sc->sample_size = (bits_per_sample >> 3) * st->codec->channels;
             }
         } else if(st->codec->codec_type==CODEC_TYPE_SUBTITLE){
+            // ttxt stsd contains display flags, justification, background
+            // color, fonts, and default styles, so fake an atom to read it
+            MOVAtom fake_atom = { .size = size - (url_ftell(pb) - start_pos) };
+            mov_read_glbl(c, pb, fake_atom);
             st->codec->codec_id= id;
+            st->codec->width = sc->width;
+            st->codec->height = sc->height;
         } else {
             /* other codec type, just skip (rtp, mp4s, tmcd ...) */
             url_fskip(pb, size - (url_ftell(pb) - start_pos));
@@ -996,7 +1005,7 @@ static int mov_read_stsd(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
 
     /* special codec parameters handling */
     switch (st->codec->codec_id) {
-#ifdef CONFIG_DV_DEMUXER
+#if CONFIG_DV_DEMUXER
     case CODEC_ID_DVAUDIO:
         c->dv_fctx = av_alloc_format_context();
         c->dv_demux = dv_init_demux(c->dv_fctx);
@@ -1163,7 +1172,7 @@ static int mov_read_stts(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
         sc->stts_data[i].count= sample_count;
         sc->stts_data[i].duration= sample_duration;
 
-        sc->time_rate= ff_gcd(sc->time_rate, sample_duration);
+        sc->time_rate= av_gcd(sc->time_rate, sample_duration);
 
         dprintf(c->fc, "sample_count=%d, sample_duration=%d\n",sample_count,sample_duration);
 
@@ -1206,7 +1215,7 @@ static int mov_read_ctts(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
         sc->ctts_data[i].count   = count;
         sc->ctts_data[i].duration= duration;
 
-        sc->time_rate= ff_gcd(sc->time_rate, FFABS(duration));
+        sc->time_rate= av_gcd(sc->time_rate, FFABS(duration));
     }
     return 0;
 }
@@ -1333,6 +1342,7 @@ static int mov_read_trak(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
     st->priv_data = sc;
     st->codec->codec_type = CODEC_TYPE_DATA;
     st->start_time = 0; /* XXX: check */
+    sc->ffindex = st->index;
 
     if ((ret = mov_read_default(c, pb, atom)) < 0)
         return ret;
@@ -1359,7 +1369,7 @@ static int mov_read_trak(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
         assert(st->duration % sc->time_rate == 0);
         st->duration /= sc->time_rate;
     }
-    sc->ffindex = st->index;
+
     mov_build_index(c, st);
 
     if (sc->dref_id-1 < sc->drefs_count && sc->drefs[sc->dref_id-1].path) {
@@ -1370,13 +1380,13 @@ static int mov_read_trak(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
         sc->pb = c->fc->pb;
 
     switch (st->codec->codec_id) {
-#ifdef CONFIG_H261_DECODER
+#if CONFIG_H261_DECODER
     case CODEC_ID_H261:
 #endif
-#ifdef CONFIG_H263_DECODER
+#if CONFIG_H263_DECODER
     case CODEC_ID_H263:
 #endif
-#ifdef CONFIG_MPEG4_DECODER
+#if CONFIG_MPEG4_DECODER
     case CODEC_ID_MPEG4:
 #endif
         st->codec->width= 0; /* let decoder init width/height */
@@ -1466,6 +1476,7 @@ static int mov_read_tkhd(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
     int64_t disp_transform[2];
     int display_matrix[3][2];
     AVStream *st = c->fc->streams[c->fc->nb_streams-1];
+    MOVStreamContext *sc = st->priv_data;
     int version = get_byte(pb);
 
     get_be24(pb); /* flags */
@@ -1507,6 +1518,8 @@ static int mov_read_tkhd(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
 
     width = get_be32(pb);       // 16.16 fixed point track width
     height = get_be32(pb);      // 16.16 fixed point track height
+    sc->width = width >> 16;
+    sc->height = height >> 16;
 
     //transform the display width/height according to the matrix
     // skip this if the display matrix is the default identity matrix
@@ -1678,7 +1691,7 @@ static int mov_read_wide(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
 
 static int mov_read_cmov(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
 {
-#ifdef CONFIG_ZLIB
+#if CONFIG_ZLIB
     ByteIOContext ctx;
     uint8_t *cmov_data;
     uint8_t *moov_data; /* uncompressed data */
@@ -1926,7 +1939,7 @@ static int mov_read_packet(AVFormatContext *s, AVPacket *pkt)
         return -1;
     }
     av_get_packet(sc->pb, pkt, sample->size);
-#ifdef CONFIG_DV_DEMUXER
+#if CONFIG_DV_DEMUXER
     if (mov->dv_demux && sc->dv_audio_container) {
         dv_produce_packet(mov->dv_demux, pkt, pkt->data, pkt->size);
         av_free(pkt->data);

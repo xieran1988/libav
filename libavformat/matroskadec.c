@@ -36,12 +36,13 @@
 #include "matroska.h"
 #include "libavcodec/mpeg4audio.h"
 #include "libavutil/intfloat_readwrite.h"
+#include "libavutil/intreadwrite.h"
 #include "libavutil/avstring.h"
 #include "libavutil/lzo.h"
-#ifdef CONFIG_ZLIB
+#if CONFIG_ZLIB
 #include <zlib.h>
 #endif
-#ifdef CONFIG_BZLIB
+#if CONFIG_BZLIB
 #include <bzlib.h>
 #endif
 
@@ -878,7 +879,7 @@ static int matroska_decode_buffer(uint8_t** buf, int* buf_size,
             goto failed;
         pkt_size -= olen;
         break;
-#ifdef CONFIG_ZLIB
+#if CONFIG_ZLIB
     case MATROSKA_TRACK_ENCODING_COMP_ZLIB: {
         z_stream zstream = {0};
         if (inflateInit(&zstream) != Z_OK)
@@ -899,7 +900,7 @@ static int matroska_decode_buffer(uint8_t** buf, int* buf_size,
         break;
     }
 #endif
-#ifdef CONFIG_BZLIB
+#if CONFIG_BZLIB
     case MATROSKA_TRACK_ENCODING_COMP_BZLIB: {
         bz_stream bzstream = {0};
         if (BZ2_bzDecompressInit(&bzstream, 0, 0) != BZ_OK)
@@ -1075,6 +1076,7 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
     EbmlList *index_list;
     MatroskaIndex *index;
     int index_scale = 1;
+    uint64_t max_start = 0;
     Ebml ebml = { 0 };
     AVStream *st;
     int i, j;
@@ -1116,6 +1118,7 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
         uint8_t *extradata = NULL;
         int extradata_size = 0;
         int extradata_offset = 0;
+        ByteIOContext b;
 
         /* Apply some sanity checks. */
         if (track->type != MATROSKA_TRACK_TYPE_VIDEO &&
@@ -1146,10 +1149,10 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
         } else if (encodings_list->nb_elem == 1) {
             if (encodings[0].type ||
                 (encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_HEADERSTRIP &&
-#ifdef CONFIG_ZLIB
+#if CONFIG_ZLIB
                  encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_ZLIB &&
 #endif
-#ifdef CONFIG_BZLIB
+#if CONFIG_BZLIB
                  encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_BZLIB &&
 #endif
                  encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_LZO)) {
@@ -1199,8 +1202,12 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
         } else if (!strcmp(track->codec_id, "A_MS/ACM")
                    && track->codec_priv.size >= 18
                    && track->codec_priv.data != NULL) {
-            uint16_t tag = AV_RL16(track->codec_priv.data);
-            codec_id = codec_get_id(codec_wav_tags, tag);
+            init_put_byte(&b, track->codec_priv.data, track->codec_priv.size,
+                          URL_RDONLY, NULL, NULL, NULL, NULL);
+            get_wav_header(&b, st->codec, track->codec_priv.size);
+            codec_id = st->codec->codec_id;
+            extradata_offset = 18;
+            track->codec_priv.size -= extradata_offset;
         } else if (!strcmp(track->codec_id, "V_QUICKTIME")
                    && (track->codec_priv.size >= 86)
                    && (track->codec_priv.data != NULL)) {
@@ -1237,7 +1244,6 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
             } else
                 extradata_size = 2;
         } else if (codec_id == CODEC_ID_TTA) {
-            ByteIOContext b;
             extradata_size = 30;
             extradata = av_mallocz(extradata_size);
             if (extradata == NULL)
@@ -1259,8 +1265,6 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
             track->audio.channels = 1;
         } else if (codec_id == CODEC_ID_RA_288 || codec_id == CODEC_ID_COOK ||
                    codec_id == CODEC_ID_ATRAC3) {
-            ByteIOContext b;
-
             init_put_byte(&b, track->codec_priv.data,track->codec_priv.size,
                           0, NULL, NULL, NULL, NULL);
             url_fskip(&b, 24);
@@ -1364,10 +1368,13 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
 
     chapters = chapters_list->elem;
     for (i=0; i<chapters_list->nb_elem; i++)
-        if (chapters[i].start != AV_NOPTS_VALUE && chapters[i].uid)
+        if (chapters[i].start != AV_NOPTS_VALUE && chapters[i].uid
+            && (max_start==0 || chapters[i].start > max_start)) {
             ff_new_chapter(s, chapters[i].uid, (AVRational){1, 1000000000},
                            chapters[i].start, chapters[i].end,
                            chapters[i].title);
+            max_start = chapters[i].start;
+        }
 
     index_list = &matroska->index;
     index = index_list->elem;

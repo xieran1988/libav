@@ -30,7 +30,7 @@
 #include "libavutil/avutil.h"
 
 #define LIBAVCODEC_VERSION_MAJOR 52
-#define LIBAVCODEC_VERSION_MINOR 10
+#define LIBAVCODEC_VERSION_MINOR 11
 #define LIBAVCODEC_VERSION_MICRO  0
 
 #define LIBAVCODEC_VERSION_INT  AV_VERSION_INT(LIBAVCODEC_VERSION_MAJOR, \
@@ -191,9 +191,6 @@ enum CodecID {
     CODEC_ID_TGV,
     CODEC_ID_TGQ,
 
-    /* "codecs" for HW decoding with VDPAU */
-    CODEC_ID_H264_VDPAU= 0x9000,
-
     /* various PCM "codecs" */
     CODEC_ID_PCM_S16LE= 0x10000,
     CODEC_ID_PCM_S16BE,
@@ -248,6 +245,7 @@ enum CodecID {
     CODEC_ID_ADPCM_IMA_EA_EACS,
     CODEC_ID_ADPCM_EA_XAS,
     CODEC_ID_ADPCM_EA_MAXIS_XA,
+    CODEC_ID_ADPCM_IMA_ISS,
 
     /* AMR */
     CODEC_ID_AMR_NB= 0x12000,
@@ -309,6 +307,7 @@ enum CodecID {
     CODEC_ID_ATRAC3P,
     CODEC_ID_EAC3,
     CODEC_ID_SIPR,
+    CODEC_ID_MP1,
 
     /* subtitle codecs */
     CODEC_ID_DVD_SUBTITLE= 0x17000,
@@ -1399,6 +1398,7 @@ typedef struct AVCodecContext {
 #define FF_IDCT_FAAN          20
 #define FF_IDCT_EA            21
 #define FF_IDCT_SIMPLENEON    22
+#define FF_IDCT_SIMPLEALPHA   23
 
     /**
      * slice count

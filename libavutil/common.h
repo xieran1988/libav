@@ -151,47 +151,6 @@ static inline av_const int av_log2_16bit(unsigned int v)
     return n;
 }
 
-/* median of 3 */
-static inline av_const int mid_pred(int a, int b, int c)
-{
-#ifdef HAVE_CMOV
-    int i=b;
-    __asm__ volatile(
-        "cmp    %2, %1 \n\t"
-        "cmovg  %1, %0 \n\t"
-        "cmovg  %2, %1 \n\t"
-        "cmp    %3, %1 \n\t"
-        "cmovl  %3, %1 \n\t"
-        "cmp    %1, %0 \n\t"
-        "cmovg  %1, %0 \n\t"
-        :"+&r"(i), "+&r"(a)
-        :"r"(b), "r"(c)
-    );
-    return i;
-#elif 0
-    int t= (a-b)&((a-b)>>31);
-    a-=t;
-    b+=t;
-    b-= (b-c)&((b-c)>>31);
-    b+= (a-b)&((a-b)>>31);
-
-    return b;
-#else
-    if(a>b){
-        if(c>b){
-            if(c>a) b=a;
-            else    b=c;
-        }
-    }else{
-        if(b>c){
-            if(c>a) b=c;
-            else    b=a;
-        }
-    }
-    return b;
-#endif
-}
-
 /**
  * clip a signed integer value into the amin-amax range
  * @param a value to clip
@@ -240,20 +199,6 @@ static inline av_const float av_clipf(float a, float amin, float amax)
     if      (a < amin) return amin;
     else if (a > amax) return amax;
     else               return a;
-}
-
-/* math */
-int64_t av_const ff_gcd(int64_t a, int64_t b);
-
-/**
- * converts fourcc string to int
- */
-static inline av_pure int ff_get_fourcc(const char *s){
-#ifdef HAVE_AV_CONFIG_H
-    assert( strlen(s)==4 );
-#endif
-
-    return (s[0]) + (s[1]<<8) + (s[2]<<16) + (s[3]<<24);
 }
 
 #define MKTAG(a,b,c,d) (a | (b << 8) | (c << 16) | (d << 24))
@@ -322,89 +267,5 @@ static inline av_pure int ff_get_fourcc(const char *s){
             }\
         }\
     }
-
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_BFIN)
-#define AV_READ_TIME read_time
-#if defined(ARCH_X86)
-static inline uint64_t read_time(void)
-{
-    uint32_t a, d;
-    __asm__ volatile("rdtsc\n\t"
-                 : "=a" (a), "=d" (d));
-    return ((uint64_t)d << 32) + a;
-}
-#elif ARCH_BFIN
-static inline uint64_t read_time(void)
-{
-    union {
-        struct {
-            unsigned lo;
-            unsigned hi;
-        } p;
-        unsigned long long c;
-    } t;
-    __asm__ volatile ("%0=cycles; %1=cycles2;" : "=d" (t.p.lo), "=d" (t.p.hi));
-    return t.c;
-}
-#else //FIXME check ppc64
-static inline uint64_t read_time(void)
-{
-    uint32_t tbu, tbl, temp;
-
-     /* from section 2.2.1 of the 32-bit PowerPC PEM */
-     __asm__ volatile(
-         "1:\n"
-         "mftbu  %2\n"
-         "mftb   %0\n"
-         "mftbu  %1\n"
-         "cmpw   %2,%1\n"
-         "bne    1b\n"
-     : "=r"(tbl), "=r"(tbu), "=r"(temp)
-     :
-     : "cc");
-
-     return (((uint64_t)tbu)<<32) | (uint64_t)tbl;
-}
-#endif
-#elif defined(HAVE_GETHRTIME)
-#define AV_READ_TIME gethrtime
-#endif
-
-#ifdef AV_READ_TIME
-#define START_TIMER \
-uint64_t tend;\
-uint64_t tstart= AV_READ_TIME();\
-
-#define STOP_TIMER(id) \
-tend= AV_READ_TIME();\
-{\
-    static uint64_t tsum=0;\
-    static int tcount=0;\
-    static int tskip_count=0;\
-    if(tcount<2 || tend - tstart < FFMAX(8*tsum/tcount, 2000)){\
-        tsum+= tend - tstart;\
-        tcount++;\
-    }else\
-        tskip_count++;\
-    if(((tcount+tskip_count)&(tcount+tskip_count-1))==0){\
-        av_log(NULL, AV_LOG_ERROR, "%"PRIu64" dezicycles in %s, %d runs, %d skips\n",\
-               tsum*10/tcount, id, tcount, tskip_count);\
-    }\
-}
-#else
-#define START_TIMER
-#define STOP_TIMER(id) {}
-#endif
-
-/**
- * Returns NULL if CONFIG_SMALL is defined otherwise the argument
- * without modifications, used to disable the definition of strings
- * (for example AVCodec long_names).
- */
-#ifdef CONFIG_SMALL
-#   define NULL_IF_CONFIG_SMALL(x) NULL
-#else
-#   define NULL_IF_CONFIG_SMALL(x) x
-#endif
 
 #endif /* AVUTIL_COMMON_H */

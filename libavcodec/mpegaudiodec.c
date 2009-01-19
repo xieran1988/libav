@@ -34,12 +34,6 @@
  *  - test lsf / mpeg25 extensively.
  */
 
-/* define USE_HIGHPRECISION to have a bit exact (but slower) mpeg
-   audio decoder */
-#ifdef CONFIG_MPEGAUDIO_HP
-#   define USE_HIGHPRECISION
-#endif
-
 #include "mpegaudio.h"
 #include "mpegaudiodecheader.h"
 
@@ -322,11 +316,7 @@ static int decode_init(AVCodecContext * avctx)
 
     s->avctx = avctx;
 
-#if defined(USE_HIGHPRECISION) && defined(CONFIG_AUDIO_NONSHORT)
-    avctx->sample_fmt= SAMPLE_FMT_S32;
-#else
-    avctx->sample_fmt= SAMPLE_FMT_S16;
-#endif
+    avctx->sample_fmt= OUT_FMT;
     s->error_recognition= avctx->error_recognition;
 
     if(avctx->antialias_algo != FF_AA_FLOAT)
@@ -2322,7 +2312,7 @@ static void flush(AVCodecContext *avctx){
     s->last_buf_size= 0;
 }
 
-#ifdef CONFIG_MP3ADU_DECODER
+#if CONFIG_MP3ADU_DECODER
 static int decode_frame_adu(AVCodecContext * avctx,
                         void *data, int *data_size,
                         const uint8_t * buf, int buf_size)
@@ -2372,7 +2362,7 @@ static int decode_frame_adu(AVCodecContext * avctx,
 }
 #endif /* CONFIG_MP3ADU_DECODER */
 
-#ifdef CONFIG_MP3ON4_DECODER
+#if CONFIG_MP3ON4_DECODER
 
 /**
  * Context for MP3On4 decoder
@@ -2534,7 +2524,23 @@ static int decode_frame_mp3on4(AVCodecContext * avctx,
 }
 #endif /* CONFIG_MP3ON4_DECODER */
 
-#ifdef CONFIG_MP2_DECODER
+#if CONFIG_MP1_DECODER
+AVCodec mp1_decoder =
+{
+    "mp1",
+    CODEC_TYPE_AUDIO,
+    CODEC_ID_MP1,
+    sizeof(MPADecodeContext),
+    decode_init,
+    NULL,
+    NULL,
+    decode_frame,
+    CODEC_CAP_PARSE_ONLY,
+    .flush= flush,
+    .long_name= NULL_IF_CONFIG_SMALL("MP1 (MPEG audio layer 1)"),
+};
+#endif
+#if CONFIG_MP2_DECODER
 AVCodec mp2_decoder =
 {
     "mp2",
@@ -2550,7 +2556,7 @@ AVCodec mp2_decoder =
     .long_name= NULL_IF_CONFIG_SMALL("MP2 (MPEG audio layer 2)"),
 };
 #endif
-#ifdef CONFIG_MP3_DECODER
+#if CONFIG_MP3_DECODER
 AVCodec mp3_decoder =
 {
     "mp3",
@@ -2566,7 +2572,7 @@ AVCodec mp3_decoder =
     .long_name= NULL_IF_CONFIG_SMALL("MP3 (MPEG audio layer 3)"),
 };
 #endif
-#ifdef CONFIG_MP3ADU_DECODER
+#if CONFIG_MP3ADU_DECODER
 AVCodec mp3adu_decoder =
 {
     "mp3adu",
@@ -2582,7 +2588,7 @@ AVCodec mp3adu_decoder =
     .long_name= NULL_IF_CONFIG_SMALL("ADU (Application Data Unit) MP3 (MPEG audio layer 3)"),
 };
 #endif
-#ifdef CONFIG_MP3ON4_DECODER
+#if CONFIG_MP3ON4_DECODER
 AVCodec mp3on4_decoder =
 {
     "mp3on4",

@@ -117,6 +117,7 @@ const AVCodecTag codec_bmp_tags[] = {
     { CODEC_ID_MJPEG,        MKTAG('A', 'V', 'R', 'n') },
     { CODEC_ID_MJPEG,        MKTAG('A', 'C', 'D', 'V') },
     { CODEC_ID_MJPEG,        MKTAG('Q', 'I', 'V', 'G') },
+    { CODEC_ID_MJPEG,        MKTAG('S', 'L', 'M', 'J') }, /* SL M-JPEG */
     { CODEC_ID_MJPEG,        MKTAG('C', 'J', 'P', 'G') }, /* Creative Webcam JPEG */
     { CODEC_ID_HUFFYUV,      MKTAG('H', 'F', 'Y', 'U') },
     { CODEC_ID_FFVHUFF,      MKTAG('F', 'F', 'V', 'H') },
@@ -145,6 +146,7 @@ const AVCodecTag codec_bmp_tags[] = {
     { CODEC_ID_VCR1,         MKTAG('V', 'C', 'R', '1') },
     { CODEC_ID_FFV1,         MKTAG('F', 'F', 'V', '1') },
     { CODEC_ID_XAN_WC4,      MKTAG('X', 'x', 'a', 'n') },
+    { CODEC_ID_MIMIC,        MKTAG('L', 'M', '2', '0') },
     { CODEC_ID_MSRLE,        MKTAG('m', 'r', 'l', 'e') },
     { CODEC_ID_MSRLE,        MKTAG( 1 ,  0 ,  0 ,  0 ) },
     { CODEC_ID_MSRLE,        MKTAG( 2 ,  0 ,  0 ,  0 ) },
@@ -247,7 +249,7 @@ const AVCodecTag codec_wav_tags[] = {
     { 0, 0 },
 };
 
-#ifdef CONFIG_MUXERS
+#if CONFIG_MUXERS
 int64_t start_tag(ByteIOContext *pb, const char *tag)
 {
     put_tag(pb, tag);
@@ -378,7 +380,7 @@ void put_bmp_header(ByteIOContext *pb, AVCodecContext *enc, const AVCodecTag *ta
 }
 #endif //CONFIG_MUXERS
 
-#ifdef CONFIG_DEMUXERS
+#if CONFIG_DEMUXERS
 /* We could be given one of the three possible structures here:
  * WAVEFORMAT, PCMWAVEFORMAT or WAVEFORMATEX. Each structure
  * is an expansion of the previous one with the fields added
@@ -464,7 +466,7 @@ void ff_parse_specific_params(AVCodecContext *stream, int *au_rate, int *au_ssiz
         *au_scale= stream->block_align ? stream->block_align*8 : 8;
         *au_rate = stream->bit_rate ? stream->bit_rate : 8*stream->sample_rate;
     }
-    gcd= ff_gcd(*au_scale, *au_rate);
+    gcd= av_gcd(*au_scale, *au_rate);
     *au_scale /= gcd;
     *au_rate /= gcd;
 }
