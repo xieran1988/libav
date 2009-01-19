@@ -34,8 +34,9 @@
 #include "dsputil.h"
 #include "colorspace.h"
 
-#ifdef HAVE_MMX
-#include "i386/mmx.h"
+#if HAVE_MMX
+#include "x86/mmx.h"
+#include "x86/dsputil_mmx.h"
 #endif
 
 #define xglue(x, y) x ## y
@@ -265,6 +266,15 @@ static const PixFmtInfo pix_fmt_info[PIX_FMT_NB] = {
     },
     [PIX_FMT_XVMC_MPEG2_IDCT] = {
         .name = "xvmcidct",
+    },
+    [PIX_FMT_VDPAU_MPEG1] = {
+        .name = "vdpau_mpeg1",
+    },
+    [PIX_FMT_VDPAU_MPEG2] = {
+        .name = "vdpau_mpeg2",
+    },
+    [PIX_FMT_VDPAU_H264] = {
+        .name = "vdpau_h264",
     },
     [PIX_FMT_UYYVYY411] = {
         .name = "uyyvyy411",
@@ -783,7 +793,7 @@ static int avcodec_find_best_pix_fmt1(int64_t pix_fmt_mask,
     dst_pix_fmt = -1;
     min_dist = 0x7fffffff;
     for(i = 0;i < PIX_FMT_NB; i++) {
-        if (pix_fmt_mask & (1 << i)) {
+        if (pix_fmt_mask & (1ULL << i)) {
             loss = avcodec_get_pix_fmt_loss(i, src_pix_fmt, has_alpha) & loss_mask;
             if (loss == 0) {
                 dist = avg_bits_per_pixel(i);
@@ -2085,7 +2095,7 @@ int av_picture_pad(AVPicture *dst, const AVPicture *src, int height, int width,
     return 0;
 }
 
-#ifndef CONFIG_SWSCALE
+#if !CONFIG_SWSCALE
 static uint8_t y_ccir_to_jpeg[256];
 static uint8_t y_jpeg_to_ccir[256];
 static uint8_t c_ccir_to_jpeg[256];
@@ -2658,7 +2668,7 @@ int img_get_alpha_info(const AVPicture *src,
     return ret;
 }
 
-#ifdef HAVE_MMX
+#if HAVE_MMX
 #define DEINT_INPLACE_LINE_LUM \
                     movd_m2r(lum_m4[0],mm0);\
                     movd_m2r(lum_m3[0],mm1);\
@@ -2712,7 +2722,7 @@ static void deinterlace_line(uint8_t *dst,
                              const uint8_t *lum,
                              int size)
 {
-#ifndef HAVE_MMX
+#if !HAVE_MMX
     uint8_t *cm = ff_cropTbl + MAX_NEG_CROP;
     int sum;
 
@@ -2733,13 +2743,8 @@ static void deinterlace_line(uint8_t *dst,
 #else
 
     {
-        mmx_t rounder;
-        rounder.uw[0]=4;
-        rounder.uw[1]=4;
-        rounder.uw[2]=4;
-        rounder.uw[3]=4;
         pxor_r2r(mm7,mm7);
-        movq_m2r(rounder,mm6);
+        movq_m2r(ff_pw_4,mm6);
     }
     for (;size > 3; size-=4) {
         DEINT_LINE_LUM
@@ -2755,7 +2760,7 @@ static void deinterlace_line(uint8_t *dst,
 static void deinterlace_line_inplace(uint8_t *lum_m4, uint8_t *lum_m3, uint8_t *lum_m2, uint8_t *lum_m1, uint8_t *lum,
                              int size)
 {
-#ifndef HAVE_MMX
+#if !HAVE_MMX
     uint8_t *cm = ff_cropTbl + MAX_NEG_CROP;
     int sum;
 
@@ -2776,13 +2781,8 @@ static void deinterlace_line_inplace(uint8_t *lum_m4, uint8_t *lum_m3, uint8_t *
 #else
 
     {
-        mmx_t rounder;
-        rounder.uw[0]=4;
-        rounder.uw[1]=4;
-        rounder.uw[2]=4;
-        rounder.uw[3]=4;
         pxor_r2r(mm7,mm7);
-        movq_m2r(rounder,mm6);
+        movq_m2r(ff_pw_4,mm6);
     }
     for (;size > 3; size-=4) {
         DEINT_INPLACE_LINE_LUM

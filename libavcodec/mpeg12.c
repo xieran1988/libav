@@ -34,6 +34,7 @@
 #include "mpeg12data.h"
 #include "mpeg12decdata.h"
 #include "bytestream.h"
+#include "vdpau_internal.h"
 
 //#undef NDEBUG
 //#include <assert.h>
@@ -63,10 +64,10 @@ static inline int mpeg2_fast_decode_block_intra(MpegEncContext *s, DCTELEM *bloc
 static int mpeg_decode_motion(MpegEncContext *s, int fcode, int pred);
 static void exchange_uv(MpegEncContext *s);
 
-extern int XVMC_field_start(MpegEncContext *s, AVCodecContext *avctx);
-extern int XVMC_field_end(MpegEncContext *s);
-extern void XVMC_pack_pblocks(MpegEncContext *s,int cbp);
-extern void XVMC_init_block(MpegEncContext *s);//set s->block
+int XVMC_field_start(MpegEncContext *s, AVCodecContext *avctx);
+int XVMC_field_end(MpegEncContext *s);
+void XVMC_pack_pblocks(MpegEncContext *s,int cbp);
+void XVMC_init_block(MpegEncContext *s);//set s->block
 
 static const enum PixelFormat pixfmt_xvmc_mpg2_420[] = {
                                            PIX_FMT_XVMC_MPEG2_IDCT,
@@ -303,7 +304,7 @@ static int mpeg_decode_mb(MpegEncContext *s,
         }else
             memset(s->last_mv, 0, sizeof(s->last_mv)); /* reset mv prediction */
         s->mb_intra = 1;
-#ifdef HAVE_XVMC
+#if CONFIG_XVMC
         //if 1, we memcpy blocks in xvmcvideo
         if(s->avctx->xvmc_acceleration > 1){
             XVMC_pack_pblocks(s,-1);//inter are always full blocks
@@ -516,7 +517,7 @@ static int mpeg_decode_mb(MpegEncContext *s,
                 return -1;
             }
 
-#ifdef HAVE_XVMC
+#if CONFIG_XVMC
             //if 1, we memcpy blocks in xvmcvideo
             if(s->avctx->xvmc_acceleration > 1){
                 XVMC_pack_pblocks(s,cbp);
@@ -1212,6 +1213,27 @@ static void quant_matrix_rebuild(uint16_t *matrix, const uint8_t *old_perm,
     }
 }
 
+static enum PixelFormat mpeg_get_pixelformat(AVCodecContext *avctx){
+    Mpeg1Context *s1 = avctx->priv_data;
+    MpegEncContext *s = &s1->mpeg_enc_ctx;
+
+    if(avctx->xvmc_acceleration)
+        return avctx->get_format(avctx,pixfmt_xvmc_mpg2_420);
+    else if(avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU){
+        if(avctx->codec_id == CODEC_ID_MPEG1VIDEO)
+            return PIX_FMT_VDPAU_MPEG1;
+        else
+            return PIX_FMT_VDPAU_MPEG2;
+    }else{
+        if(s->chroma_format <  2)
+            return PIX_FMT_YUV420P;
+        else if(s->chroma_format == 2)
+            return PIX_FMT_YUV422P;
+        else
+            return PIX_FMT_YUV444P;
+    }
+}
+
 /* Call this function when we know all parameters.
  * It may be called in different places for MPEG-1 and MPEG-2. */
 static int mpeg_decode_postinit(AVCodecContext *avctx){
@@ -1249,7 +1271,8 @@ static int mpeg_decode_postinit(AVCodecContext *avctx){
          * that behave like P-frames. */
         avctx->has_b_frames = !(s->low_delay);
 
-        if(avctx->sub_id==1){//s->codec_id==avctx->codec_id==CODEC_ID
+        assert((avctx->sub_id==1) == (avctx->codec_id==CODEC_ID_MPEG1VIDEO));
+        if(avctx->codec_id==CODEC_ID_MPEG1VIDEO){
             //MPEG-1 fps
             avctx->time_base.den= ff_frame_rate_tab[s->frame_rate_index].num;
             avctx->time_base.num= ff_frame_rate_tab[s->frame_rate_index].den;
@@ -1288,21 +1311,10 @@ static int mpeg_decode_postinit(AVCodecContext *avctx){
             }
         }//MPEG-2
 
-        if(avctx->xvmc_acceleration){
-            avctx->pix_fmt = avctx->get_format(avctx,pixfmt_xvmc_mpg2_420);
-        }else{
-            if(s->chroma_format <  2){
-                avctx->pix_fmt = PIX_FMT_YUV420P;
-            }else
-            if(s->chroma_format == 2){
-                avctx->pix_fmt = PIX_FMT_YUV422P;
-            }else
-            if(s->chroma_format >  2){
-                avctx->pix_fmt = PIX_FMT_YUV444P;
-            }
-        }
+        avctx->pix_fmt = mpeg_get_pixelformat(avctx);
         //until then pix_fmt may be changed right after codec init
-        if( avctx->pix_fmt == PIX_FMT_XVMC_MPEG2_IDCT )
+        if( avctx->pix_fmt == PIX_FMT_XVMC_MPEG2_IDCT ||
+            s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU )
             if( avctx->idct_algo == FF_IDCT_AUTO )
                 avctx->idct_algo = FF_IDCT_SIMPLE;
 
@@ -1639,7 +1651,7 @@ static int mpeg_field_start(MpegEncContext *s){
                 }
             }
     }
-#ifdef HAVE_XVMC
+#if CONFIG_XVMC
 // MPV_frame_start will call this function too,
 // but we need to call it on every field
     if(s->avctx->xvmc_acceleration)
@@ -1730,7 +1742,7 @@ static int mpeg_decode_slice(Mpeg1Context *s1, int mb_y,
     }
 
     for(;;) {
-#ifdef HAVE_XVMC
+#if CONFIG_XVMC
         //If 1, we memcpy blocks in xvmcvideo.
         if(s->avctx->xvmc_acceleration > 1)
             XVMC_init_block(s);//set s->block
@@ -1912,7 +1924,7 @@ static int slice_end(AVCodecContext *avctx, AVFrame *pict)
     if (!s1->mpeg_enc_ctx_allocated || !s->current_picture_ptr)
         return 0;
 
-#ifdef HAVE_XVMC
+#if CONFIG_XVMC
     if(s->avctx->xvmc_acceleration)
         XVMC_field_end(s);
 #endif
@@ -2069,13 +2081,10 @@ static int vcr2_init_sequence(AVCodecContext *avctx)
     avctx->has_b_frames= 0; //true?
     s->low_delay= 1;
 
-    if(avctx->xvmc_acceleration){
-        avctx->pix_fmt = avctx->get_format(avctx,pixfmt_xvmc_mpg2_420);
-    }else{
-        avctx->pix_fmt = PIX_FMT_YUV420P;
-    }
+    avctx->pix_fmt = mpeg_get_pixelformat(avctx);
 
-    if( avctx->pix_fmt == PIX_FMT_XVMC_MPEG2_IDCT )
+    if( avctx->pix_fmt == PIX_FMT_XVMC_MPEG2_IDCT ||
+        s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU )
         if( avctx->idct_algo == FF_IDCT_AUTO )
             avctx->idct_algo = FF_IDCT_SIMPLE;
 
@@ -2269,7 +2278,7 @@ static int mpeg_decode_frame(AVCodecContext *avctx,
     }
 #endif
 
-    if(s->mpeg_enc_ctx_allocated==0 && avctx->codec_tag == ff_get_fourcc("VCR2"))
+    if(s->mpeg_enc_ctx_allocated==0 && avctx->codec_tag == AV_RL32("VCR2"))
         vcr2_init_sequence(avctx);
 
     s->slice_count= 0;
@@ -2303,6 +2312,10 @@ static int decode_chunks(AVCodecContext *avctx,
                     for(i=0; i<s->slice_count; i++)
                         s2->error_count += s2->thread_context[i]->error_count;
                 }
+
+                if (CONFIG_MPEG_VDPAU_DECODER && avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+                    ff_vdpau_mpeg_picture_complete(s2, buf, buf_size, s->slice_count);
+
                 if (slice_end(avctx, picture)) {
                     if(s2->last_picture_ptr || s2->low_delay) //FIXME merge with the stuff in mpeg_decode_slice
                         *data_size = sizeof(AVPicture);
@@ -2386,6 +2399,11 @@ static int decode_chunks(AVCodecContext *avctx,
                 if(!s2->current_picture_ptr){
                     av_log(avctx, AV_LOG_ERROR, "current_picture not initialized\n");
                     return -1;
+                }
+
+                if (avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU) {
+                    s->slice_count++;
+                    break;
                 }
 
                 if(avctx->thread_count > 1){
@@ -2472,7 +2490,7 @@ AVCodec mpegvideo_decoder = {
     .long_name= NULL_IF_CONFIG_SMALL("MPEG-1 video"),
 };
 
-#ifdef HAVE_XVMC
+#if CONFIG_XVMC
 static av_cold int mpeg_mc_decode_init(AVCodecContext *avctx){
     Mpeg1Context *s;
 
@@ -2507,3 +2525,36 @@ AVCodec mpeg_xvmc_decoder = {
 };
 
 #endif
+
+#if CONFIG_MPEG_VDPAU_DECODER
+AVCodec mpeg_vdpau_decoder = {
+    "mpegvideo_vdpau",
+    CODEC_TYPE_VIDEO,
+    CODEC_ID_MPEG2VIDEO,
+    sizeof(Mpeg1Context),
+    mpeg_decode_init,
+    NULL,
+    mpeg_decode_end,
+    mpeg_decode_frame,
+    CODEC_CAP_DR1 | CODEC_CAP_TRUNCATED | CODEC_CAP_HWACCEL_VDPAU | CODEC_CAP_DELAY,
+    .flush= ff_mpeg_flush,
+    .long_name = NULL_IF_CONFIG_SMALL("MPEG-1/2 video (VDPAU acceleration)"),
+};
+#endif
+
+#if CONFIG_MPEG1_VDPAU_DECODER
+AVCodec mpeg1_vdpau_decoder = {
+    "mpeg1video_vdpau",
+    CODEC_TYPE_VIDEO,
+    CODEC_ID_MPEG1VIDEO,
+    sizeof(Mpeg1Context),
+    mpeg_decode_init,
+    NULL,
+    mpeg_decode_end,
+    mpeg_decode_frame,
+    CODEC_CAP_DR1 | CODEC_CAP_TRUNCATED | CODEC_CAP_HWACCEL_VDPAU | CODEC_CAP_DELAY,
+    .flush= ff_mpeg_flush,
+    .long_name = NULL_IF_CONFIG_SMALL("MPEG-1 video (VDPAU acceleration)"),
+};
+#endif
+

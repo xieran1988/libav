@@ -47,12 +47,10 @@ void (*rgb15to32)(const uint8_t *src, uint8_t *dst, long src_size);
 void (*rgb16to15)(const uint8_t *src, uint8_t *dst, long src_size);
 void (*rgb16tobgr24)(const uint8_t *src, uint8_t *dst, long src_size);
 void (*rgb16to32)(const uint8_t *src, uint8_t *dst, long src_size);
-//void (*rgb24tobgr32)(const uint8_t *src, uint8_t *dst, long src_size);
 void (*rgb24tobgr24)(const uint8_t *src, uint8_t *dst, long src_size);
 void (*rgb24to16)(const uint8_t *src, uint8_t *dst, long src_size);
 void (*rgb24to15)(const uint8_t *src, uint8_t *dst, long src_size);
 void (*rgb32tobgr32)(const uint8_t *src, uint8_t *dst, long src_size);
-//void (*rgb32tobgr24)(const uint8_t *src, uint8_t *dst, long src_size);
 void (*rgb32tobgr16)(const uint8_t *src, uint8_t *dst, long src_size);
 void (*rgb32tobgr15)(const uint8_t *src, uint8_t *dst, long src_size);
 
@@ -90,7 +88,7 @@ void (*yvu9_to_yuy2)(const uint8_t *src1, const uint8_t *src2, const uint8_t *sr
                      long srcStride1, long srcStride2,
                      long srcStride3, long dstStride);
 
-#if defined(ARCH_X86) && defined(CONFIG_GPL)
+#if ARCH_X86 && CONFIG_GPL
 DECLARE_ASM_CONST(8, uint64_t, mmx_null)     = 0x0000000000000000ULL;
 DECLARE_ASM_CONST(8, uint64_t, mmx_one)      = 0xFFFFFFFFFFFFFFFFULL;
 DECLARE_ASM_CONST(8, uint64_t, mask32b)      = 0x000000FF000000FFULL;
@@ -124,22 +122,7 @@ DECLARE_ASM_CONST(8, uint64_t, blue_16mask)  = 0x0000001f0000001fULL;
 DECLARE_ASM_CONST(8, uint64_t, red_15mask)   = 0x00007c0000007c00ULL;
 DECLARE_ASM_CONST(8, uint64_t, green_15mask) = 0x000003e0000003e0ULL;
 DECLARE_ASM_CONST(8, uint64_t, blue_15mask)  = 0x0000001f0000001fULL;
-
-#if 0
-static volatile uint64_t __attribute__((aligned(8))) b5Dither;
-static volatile uint64_t __attribute__((aligned(8))) g5Dither;
-static volatile uint64_t __attribute__((aligned(8))) g6Dither;
-static volatile uint64_t __attribute__((aligned(8))) r5Dither;
-
-static uint64_t __attribute__((aligned(8))) dither4[2]={
-    0x0103010301030103LL,
-    0x0200020002000200LL,};
-
-static uint64_t __attribute__((aligned(8))) dither8[2]={
-    0x0602060206020602LL,
-    0x0004000400040004LL,};
-#endif
-#endif /* defined(ARCH_X86) */
+#endif /* ARCH_X86 */
 
 #define RGB2YUV_SHIFT 8
 #define BY ((int)( 0.098*(1<<RGB2YUV_SHIFT)+0.5))
@@ -158,35 +141,35 @@ static uint64_t __attribute__((aligned(8))) dither8[2]={
 #undef HAVE_MMX2
 #undef HAVE_3DNOW
 #undef HAVE_SSE2
+#define HAVE_MMX 0
+#define HAVE_MMX2 0
+#define HAVE_3DNOW 0
+#define HAVE_SSE2 0
 #define RENAME(a) a ## _C
 #include "rgb2rgb_template.c"
 
-#if defined(ARCH_X86) && defined(CONFIG_GPL)
+#if ARCH_X86 && CONFIG_GPL
 
 //MMX versions
 #undef RENAME
-#define HAVE_MMX
-#undef HAVE_MMX2
-#undef HAVE_3DNOW
-#undef HAVE_SSE2
+#undef HAVE_MMX
+#define HAVE_MMX 1
 #define RENAME(a) a ## _MMX
 #include "rgb2rgb_template.c"
 
 //MMX2 versions
 #undef RENAME
-#define HAVE_MMX
-#define HAVE_MMX2
-#undef HAVE_3DNOW
-#undef HAVE_SSE2
+#undef HAVE_MMX2
+#define HAVE_MMX2 1
 #define RENAME(a) a ## _MMX2
 #include "rgb2rgb_template.c"
 
 //3DNOW versions
 #undef RENAME
-#define HAVE_MMX
 #undef HAVE_MMX2
-#define HAVE_3DNOW
-#undef HAVE_SSE2
+#undef HAVE_3DNOW
+#define HAVE_MMX2 0
+#define HAVE_3DNOW 1
 #define RENAME(a) a ## _3DNOW
 #include "rgb2rgb_template.c"
 
@@ -200,7 +183,7 @@ static uint64_t __attribute__((aligned(8))) dither8[2]={
 */
 
 void sws_rgb2rgb_init(int flags){
-#if (defined(HAVE_MMX2) || defined(HAVE_3DNOW) || defined(HAVE_MMX))  && defined(CONFIG_GPL)
+#if (HAVE_MMX2 || HAVE_3DNOW || HAVE_MMX)  && CONFIG_GPL
     if (flags & SWS_CPU_CAPS_MMX2)
         rgb2rgb_init_MMX2();
     else if (flags & SWS_CPU_CAPS_3DNOW)
@@ -208,7 +191,7 @@ void sws_rgb2rgb_init(int flags){
     else if (flags & SWS_CPU_CAPS_MMX)
         rgb2rgb_init_MMX();
     else
-#endif /* defined(HAVE_MMX2) || defined(HAVE_3DNOW) || defined(HAVE_MMX) */
+#endif /* HAVE_MMX2 || HAVE_3DNOW || HAVE_MMX */
         rgb2rgb_init_C();
 }
 

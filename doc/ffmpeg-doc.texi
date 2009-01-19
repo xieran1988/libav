@@ -439,10 +439,11 @@ tell that the raw codec data must be copied as is.
 Use same video quality as source (implies VBR).
 
 @item -pass @var{n}
-Select the pass number (1 or 2). It is useful to do two pass
-encoding. The statistics of the video are recorded in the first
-pass and the video is generated at the exact requested bitrate
-in the second pass.
+Select the pass number (1 or 2). It is used to do two-pass
+video encoding. The statistics of the video are recorded in the first
+pass into a log file (see also the option -passlogfile),
+and in the second pass that log file is used to generate the video
+at the exact requested bitrate.
 On pass 1, you may just deactivate audio and set output to null,
 examples for Windows and Unix:
 @example
@@ -450,8 +451,11 @@ ffmpeg -i foo.mov -vcodec libxvid -pass 1 -an -f rawvideo -y NUL
 ffmpeg -i foo.mov -vcodec libxvid -pass 1 -an -f rawvideo -y /dev/null
 @end example
 
-@item -passlogfile @var{file}
-Set two pass logfile name to @var{file}.
+@item -passlogfile @var{prefix}
+Set two-pass log file name prefix to @var{prefix}, the default file name
+prefix is ``ffmpeg2pass''. The complete file name will be
+@file{PREFIX-N.log}, where N is a number specific to the output
+stream.
 
 @item -newvideo
 Add a new video stream to the current output stream.
@@ -826,6 +830,9 @@ The following binary operators are available: @code{+}, @code{-},
 The following unary operators are available: @code{+}, @code{-},
 @code{(...)}.
 
+The following statements are available: @code{ld}, @code{st},
+@code{while}.
+
 The following functions are available:
 @table @var
 @item sinh(x)
@@ -834,16 +841,22 @@ The following functions are available:
 @item sin(x)
 @item cos(x)
 @item tan(x)
+@item atan(x)
+@item asin(x)
+@item acos(x)
 @item exp(x)
 @item log(x)
+@item abs(x)
 @item squish(x)
 @item gauss(x)
-@item abs(x)
+@item mod(x, y)
 @item max(x, y)
 @item min(x, y)
-@item gt(x, y)
-@item lt(x, y)
 @item eq(x, y)
+@item gte(x, y)
+@item gt(x, y)
+@item lte(x, y)
+@item lt(x, y)
 @item bits2qp(bits)
 @item qp2bits(qp)
 @end table

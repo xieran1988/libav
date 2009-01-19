@@ -28,6 +28,7 @@
 #include "dsputil.h"
 #include "mpegvideo.h"
 #include "golomb.h"
+#include "mathops.h"
 #include "rectangle.h"
 
 #include "rv34vlc.h"
@@ -367,7 +368,7 @@ int ff_rv34_get_start_offset(GetBitContext *gb, int mb_size)
 {
     int i;
     for(i = 0; i < 5; i++)
-        if(rv34_mb_max_sizes[i] > mb_size)
+        if(rv34_mb_max_sizes[i] >= mb_size - 1)
             break;
     return rv34_mb_bits_sizes[i];
 }
@@ -564,7 +565,7 @@ static void rv34_pred_mv_rv3(RV34DecContext *r, int block_type, int dir)
     MpegEncContext *s = &r->s;
     int mv_pos = s->mb_x * 2 + s->mb_y * 2 * s->b8_stride;
     int A[2] = {0}, B[2], C[2];
-    int i, j;
+    int i, j, k;
     int mx, my;
     int avail_index = avail_indexes[0];
 
@@ -597,12 +598,12 @@ static void rv34_pred_mv_rv3(RV34DecContext *r, int block_type, int dir)
     my += r->dmv[0][1];
     for(j = 0; j < 2; j++){
         for(i = 0; i < 2; i++){
-            s->current_picture_ptr->motion_val[0][mv_pos + i + j*s->b8_stride][0] = mx;
-            s->current_picture_ptr->motion_val[0][mv_pos + i + j*s->b8_stride][1] = my;
+            for(k = 0; k < 2; k++){
+                s->current_picture_ptr->motion_val[k][mv_pos + i + j*s->b8_stride][0] = mx;
+                s->current_picture_ptr->motion_val[k][mv_pos + i + j*s->b8_stride][1] = my;
+            }
         }
     }
-    if(block_type == RV34_MB_B_BACKWARD || block_type == RV34_MB_B_FORWARD)
-        fill_rectangle(s->current_picture_ptr->motion_val[!dir][mv_pos], 2, 2, s->b8_stride, 0, 4);
 }
 
 static const int chroma_coeffs[3] = { 0, 3, 5 };
@@ -644,14 +645,20 @@ static inline void rv34_mc(RV34DecContext *r, const int block_type,
         uvmx = chroma_coeffs[(chroma_mx + (3 << 24)) % 3];
         uvmy = chroma_coeffs[(chroma_my + (3 << 24)) % 3];
     }else{
+        int cx, cy;
         mx = s->current_picture_ptr->motion_val[dir][mv_pos][0] >> 2;
         my = s->current_picture_ptr->motion_val[dir][mv_pos][1] >> 2;
         lx = s->current_picture_ptr->motion_val[dir][mv_pos][0] & 3;
         ly = s->current_picture_ptr->motion_val[dir][mv_pos][1] & 3;
-        umx = mx >> 1;
-        umy = my >> 1;
-        uvmx = mx & 6;
-        uvmy = my & 6;
+        cx = s->current_picture_ptr->motion_val[dir][mv_pos][0] / 2;
+        cy = s->current_picture_ptr->motion_val[dir][mv_pos][1] / 2;
+        umx = cx >> 2;
+        umy = cy >> 2;
+        uvmx = (cx & 3) << 1;
+        uvmy = (cy & 3) << 1;
+        //due to some flaw RV40 uses the same MC compensation routine for H2V2 and H3V3
+        if(uvmx == 6 && uvmy == 6)
+            uvmx = uvmy = 4;
     }
     dxy = ly*4 + lx;
     srcY = dir ? s->next_picture_ptr->data[0] : s->last_picture_ptr->data[0];
@@ -664,12 +671,12 @@ static inline void rv34_mc(RV34DecContext *r, const int block_type,
     srcY += src_y * s->linesize + src_x;
     srcU += uvsrc_y * s->uvlinesize + uvsrc_x;
     srcV += uvsrc_y * s->uvlinesize + uvsrc_x;
-    if(   (unsigned)(src_x - !!lx*2) > s->h_edge_pos - !!lx*2 - (width <<3) - 3
-       || (unsigned)(src_y - !!ly*2) > s->v_edge_pos - !!ly*2 - (height<<3) - 3){
-        uint8_t *uvbuf= s->edge_emu_buffer + 20 * s->linesize;
+    if(   (unsigned)(src_x - !!lx*2) > s->h_edge_pos - !!lx*2 - (width <<3) - 4
+       || (unsigned)(src_y - !!ly*2) > s->v_edge_pos - !!ly*2 - (height<<3) - 4){
+        uint8_t *uvbuf= s->edge_emu_buffer + 22 * s->linesize;
 
         srcY -= 2 + 2*s->linesize;
-        ff_emulated_edge_mc(s->edge_emu_buffer, srcY, s->linesize, (width<<3)+4, (height<<3)+4,
+        ff_emulated_edge_mc(s->edge_emu_buffer, srcY, s->linesize, (width<<3)+6, (height<<3)+6,
                             src_x - 2, src_y - 2, s->h_edge_pos, s->v_edge_pos);
         srcY = s->edge_emu_buffer + 2 + 2*s->linesize;
         ff_emulated_edge_mc(uvbuf     , srcU, s->uvlinesize, (width<<2)+1, (height<<2)+1,
@@ -704,20 +711,23 @@ static void rv34_mc_1mv(RV34DecContext *r, const int block_type,
 {
     rv34_mc(r, block_type, xoff, yoff, mv_off, width, height, dir, r->rv30,
             r->rv30 ? r->s.dsp.put_rv30_tpel_pixels_tab
-                    : r->s.dsp.put_h264_qpel_pixels_tab,
-            r->s.dsp.put_h264_chroma_pixels_tab);
+                    : r->s.dsp.put_rv40_qpel_pixels_tab,
+            r->rv30 ? r->s.dsp.put_h264_chroma_pixels_tab
+                    : r->s.dsp.put_rv40_chroma_pixels_tab);
 }
 
 static void rv34_mc_2mv(RV34DecContext *r, const int block_type)
 {
     rv34_mc(r, block_type, 0, 0, 0, 2, 2, 0, r->rv30,
             r->rv30 ? r->s.dsp.put_rv30_tpel_pixels_tab
-                    : r->s.dsp.put_h264_qpel_pixels_tab,
-            r->s.dsp.put_h264_chroma_pixels_tab);
+                    : r->s.dsp.put_rv40_qpel_pixels_tab,
+            r->rv30 ? r->s.dsp.put_h264_chroma_pixels_tab
+                    : r->s.dsp.put_rv40_chroma_pixels_tab);
     rv34_mc(r, block_type, 0, 0, 0, 2, 2, 1, r->rv30,
             r->rv30 ? r->s.dsp.avg_rv30_tpel_pixels_tab
-                    : r->s.dsp.avg_h264_qpel_pixels_tab,
-            r->s.dsp.avg_h264_chroma_pixels_tab);
+                    : r->s.dsp.avg_rv40_qpel_pixels_tab,
+            r->rv30 ? r->s.dsp.avg_h264_chroma_pixels_tab
+                    : r->s.dsp.avg_rv40_chroma_pixels_tab);
 }
 
 static void rv34_mc_2mv_skip(RV34DecContext *r)
@@ -727,12 +737,14 @@ static void rv34_mc_2mv_skip(RV34DecContext *r)
         for(i = 0; i < 2; i++){
              rv34_mc(r, RV34_MB_P_8x8, i*8, j*8, i+j*r->s.b8_stride, 1, 1, 0, r->rv30,
                     r->rv30 ? r->s.dsp.put_rv30_tpel_pixels_tab
-                            : r->s.dsp.put_h264_qpel_pixels_tab,
-                    r->s.dsp.put_h264_chroma_pixels_tab);
+                            : r->s.dsp.put_rv40_qpel_pixels_tab,
+                    r->rv30 ? r->s.dsp.put_h264_chroma_pixels_tab
+                            : r->s.dsp.put_rv40_chroma_pixels_tab);
              rv34_mc(r, RV34_MB_P_8x8, i*8, j*8, i+j*r->s.b8_stride, 1, 1, 1, r->rv30,
                     r->rv30 ? r->s.dsp.avg_rv30_tpel_pixels_tab
-                            : r->s.dsp.avg_h264_qpel_pixels_tab,
-                    r->s.dsp.avg_h264_chroma_pixels_tab);
+                            : r->s.dsp.avg_rv40_qpel_pixels_tab,
+                    r->rv30 ? r->s.dsp.avg_h264_chroma_pixels_tab
+                            : r->s.dsp.avg_rv40_chroma_pixels_tab);
         }
 }
 
@@ -953,11 +965,11 @@ static void rv34_output_macroblock(RV34DecContext *r, int8_t *intra_types, int c
         itype = ittrans16[intra_types[0]];
         itype = adjust_pred16(itype, r->avail_cache[5-4], r->avail_cache[5-1]);
         r->h.pred16x16[itype](Y, s->linesize);
-        dsp->add_pixels_clamped(s->block[0], Y,     s->current_picture.linesize[0]);
-        dsp->add_pixels_clamped(s->block[1], Y + 8, s->current_picture.linesize[0]);
-        Y += s->current_picture.linesize[0] * 8;
-        dsp->add_pixels_clamped(s->block[2], Y,     s->current_picture.linesize[0]);
-        dsp->add_pixels_clamped(s->block[3], Y + 8, s->current_picture.linesize[0]);
+        dsp->add_pixels_clamped(s->block[0], Y,     s->linesize);
+        dsp->add_pixels_clamped(s->block[1], Y + 8, s->linesize);
+        Y += s->linesize * 8;
+        dsp->add_pixels_clamped(s->block[2], Y,     s->linesize);
+        dsp->add_pixels_clamped(s->block[3], Y + 8, s->linesize);
 
         itype = ittrans16[intra_types[0]];
         if(itype == PLANE_PRED8x8) itype = DC_PRED8x8;
@@ -1046,7 +1058,7 @@ static int rv34_decode_mb_header(RV34DecContext *r, int8_t *intra_types)
  * mask for retrieving all bits in coded block pattern
  * corresponding to one 8x8 block
  */
-#define LUMA_CBP_BLOCK_MASK 0x303
+#define LUMA_CBP_BLOCK_MASK 0x33
 
 #define U_CBP_MASK 0x0F0000
 #define V_CBP_MASK 0xF00000
@@ -1059,7 +1071,7 @@ static void rv34_apply_differences(RV34DecContext *r, int cbp)
     int i;
 
     for(i = 0; i < 4; i++)
-        if(cbp & (LUMA_CBP_BLOCK_MASK << shifts[i]))
+        if((cbp & (LUMA_CBP_BLOCK_MASK << shifts[i])) || r->block_type == RV34_MB_P_MIX16x16)
             s->dsp.add_pixels_clamped(s->block[i], s->dest[0] + (i & 1)*8 + (i&2)*4*s->linesize, s->linesize);
     if(cbp & U_CBP_MASK)
         s->dsp.add_pixels_clamped(s->block[4], s->dest[1], s->uvlinesize);
@@ -1089,7 +1101,7 @@ static int rv34_set_deblock_coef(RV34DecContext *r)
         for(i = 0; i < 2; i++){
             if(is_mv_diff_gt_3(motion_val + i, 1))
                 vmvmask |= 0x11 << (j + i*2);
-            if(is_mv_diff_gt_3(motion_val + i, s->b8_stride))
+            if((j || s->mb_y) && is_mv_diff_gt_3(motion_val + i, s->b8_stride))
                 hmvmask |= 0x03 << (j + i*2);
         }
         motion_val += s->b8_stride;
@@ -1098,7 +1110,15 @@ static int rv34_set_deblock_coef(RV34DecContext *r)
         hmvmask &= ~0x000F;
     if(!s->mb_x)
         vmvmask &= ~0x1111;
-    return hmvmask | vmvmask; //XXX: should be stored separately for RV3
+    if(r->rv30){ //RV30 marks both subblocks on the edge for filtering
+        vmvmask |= (vmvmask & 0x4444) >> 1;
+        hmvmask |= (hmvmask & 0x0F00) >> 4;
+        if(s->mb_x)
+            r->deblock_coefs[s->mb_x - 1 + s->mb_y*s->mb_stride] |= (vmvmask & 0x1111) << 3;
+        if(!s->first_slice_line)
+            r->deblock_coefs[s->mb_x + (s->mb_y - 1)*s->mb_stride] |= (hmvmask & 0xF) << 12;
+    }
+    return hmvmask | vmvmask;
 }
 
 static int rv34_decode_macroblock(RV34DecContext *r, int8_t *intra_types)
@@ -1129,13 +1149,13 @@ static int rv34_decode_macroblock(RV34DecContext *r, int8_t *intra_types)
 
     s->qscale = r->si.quant;
     cbp = cbp2 = rv34_decode_mb_header(r, intra_types);
-    r->cbp_luma  [s->mb_x + s->mb_y * s->mb_stride] = cbp;
-    r->cbp_chroma[s->mb_x + s->mb_y * s->mb_stride] = cbp >> 16;
+    r->cbp_luma  [mb_pos] = cbp;
+    r->cbp_chroma[mb_pos] = cbp >> 16;
     if(s->pict_type == FF_I_TYPE)
-        r->deblock_coefs[mb_pos] = 0;
+        r->deblock_coefs[mb_pos] = 0xFFFF;
     else
-        r->deblock_coefs[mb_pos] = rv34_set_deblock_coef(r);
-    s->current_picture.qscale_table[s->mb_x + s->mb_y * s->mb_stride] = s->qscale;
+        r->deblock_coefs[mb_pos] = rv34_set_deblock_coef(r) | r->cbp_luma[mb_pos];
+    s->current_picture_ptr->qscale_table[mb_pos] = s->qscale;
 
     if(cbp == -1)
         return -1;
@@ -1169,7 +1189,7 @@ static int rv34_decode_macroblock(RV34DecContext *r, int8_t *intra_types)
         rv34_dequant4x4(s->block[blknum] + blkoff, rv34_qscale_tab[rv34_chroma_quant[1][s->qscale]],rv34_qscale_tab[rv34_chroma_quant[0][s->qscale]]);
         rv34_inv_transform(s->block[blknum] + blkoff);
     }
-    if(IS_INTRA(s->current_picture_ptr->mb_type[s->mb_x + s->mb_y*s->mb_stride]))
+    if(IS_INTRA(s->current_picture_ptr->mb_type[mb_pos]))
         rv34_output_macroblock(r, intra_types, cbp2, r->is16);
     else
         rv34_apply_differences(r, cbp2);
@@ -1201,7 +1221,7 @@ static inline int slice_compare(SliceInfo *si1, SliceInfo *si2)
            si1->pts    != si2->pts;
 }
 
-static int rv34_decode_slice(RV34DecContext *r, int end, uint8_t* buf, int buf_size)
+static int rv34_decode_slice(RV34DecContext *r, int end, const uint8_t* buf, int buf_size)
 {
     MpegEncContext *s = &r->s;
     GetBitContext *gb = &s->gb;
@@ -1234,7 +1254,6 @@ static int rv34_decode_slice(RV34DecContext *r, int end, uint8_t* buf, int buf_s
         if(MPV_frame_start(s, s->avctx) < 0)
             return -1;
         ff_er_frame_start(s);
-        s->current_picture_ptr = &s->current_picture;
         r->cur_pts = r->si.pts;
         if(s->pict_type != FF_B_TYPE){
             r->last_pts = r->next_pts;
@@ -1276,6 +1295,9 @@ static int rv34_decode_slice(RV34DecContext *r, int end, uint8_t* buf, int buf_s
 
             memmove(r->intra_types_hist, r->intra_types, s->b4_stride * 4 * sizeof(*r->intra_types_hist));
             memset(r->intra_types, -1, s->b4_stride * 4 * sizeof(*r->intra_types_hist));
+
+            if(r->loop_filter && s->mb_y >= 2)
+                r->loop_filter(r, s->mb_y - 2);
         }
         if(s->mb_x == s->resync_mb_x)
             s->first_slice_line=0;
@@ -1331,7 +1353,7 @@ av_cold int ff_rv34_decode_init(AVCodecContext *avctx)
     return 0;
 }
 
-static int get_slice_offset(AVCodecContext *avctx, uint8_t *buf, int n)
+static int get_slice_offset(AVCodecContext *avctx, const uint8_t *buf, int n)
 {
     if(avctx->slice_count) return avctx->slice_offset[n];
     else                   return AV_RL32(buf + n*8 - 4) == 1 ? AV_RL32(buf + n*8) :  AV_RB32(buf + n*8);
@@ -1339,7 +1361,7 @@ static int get_slice_offset(AVCodecContext *avctx, uint8_t *buf, int n)
 
 int ff_rv34_decode_frame(AVCodecContext *avctx,
                             void *data, int *data_size,
-                            uint8_t *buf, int buf_size)
+                            const uint8_t *buf, int buf_size)
 {
     RV34DecContext *r = avctx->priv_data;
     MpegEncContext *s = &r->s;
@@ -1347,7 +1369,7 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
     SliceInfo si;
     int i;
     int slice_count;
-    uint8_t *slices_hdr = NULL;
+    const uint8_t *slices_hdr = NULL;
     int last = 0;
 
     /* no supplementary picture */
@@ -1377,6 +1399,11 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
         else
             size= get_slice_offset(avctx, slices_hdr, i+1) - offset;
 
+        if(offset > buf_size){
+            av_log(avctx, AV_LOG_ERROR, "Slice offset is greater than frame size\n");
+            break;
+        }
+
         r->si.end = s->mb_width * s->mb_height;
         if(i+1 < slice_count){
             init_get_bits(&s->gb, buf+get_slice_offset(avctx, slices_hdr, i+1), (buf_size-get_slice_offset(avctx, slices_hdr, i+1))*8);
@@ -1388,6 +1415,8 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
             }else
                 r->si.end = si.start;
         }
+        if(!i && si.type == FF_B_TYPE && (!s->last_picture_ptr || !s->last_picture_ptr->data[0]))
+            return -1;
         last = rv34_decode_slice(r, r->si.end, buf + offset, size);
         s->mb_num_left = r->s.mb_x + r->s.mb_y*r->s.mb_width - r->si.start;
         if(last)
@@ -1396,7 +1425,7 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
 
     if(last){
         if(r->loop_filter)
-            r->loop_filter(r);
+            r->loop_filter(r, s->mb_height - 1);
         ff_er_frame_end(s);
         MPV_frame_end(s);
         if (s->pict_type == FF_B_TYPE || s->low_delay) {

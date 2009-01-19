@@ -21,6 +21,7 @@
  */
 
 #include "libavutil/avstring.h"
+#include "libavutil/bswap.h"
 #include "libavutil/tree.h"
 #include "nut.h"
 
@@ -205,7 +206,7 @@ static int decode_main_header(NUTContext *nut){
     for(i=0; i<nut->time_base_count; i++){
         GET_V(nut->time_base[i].num, tmp>0 && tmp<(1ULL<<31))
         GET_V(nut->time_base[i].den, tmp>0 && tmp<(1ULL<<31))
-        if(ff_gcd(nut->time_base[i].num, nut->time_base[i].den) != 1){
+        if(av_gcd(nut->time_base[i].num, nut->time_base[i].den) != 1){
             av_log(s, AV_LOG_ERROR, "time base invalid\n");
             return -1;
         }
@@ -846,9 +847,9 @@ assert(0);
 static int read_seek(AVFormatContext *s, int stream_index, int64_t pts, int flags){
     NUTContext *nut = s->priv_data;
     AVStream *st= s->streams[stream_index];
-    syncpoint_t dummy={.ts= pts*av_q2d(st->time_base)*AV_TIME_BASE};
-    syncpoint_t nopts_sp= {.ts= AV_NOPTS_VALUE, .back_ptr= AV_NOPTS_VALUE};
-    syncpoint_t *sp, *next_node[2]= {&nopts_sp, &nopts_sp};
+    Syncpoint dummy={.ts= pts*av_q2d(st->time_base)*AV_TIME_BASE};
+    Syncpoint nopts_sp= {.ts= AV_NOPTS_VALUE, .back_ptr= AV_NOPTS_VALUE};
+    Syncpoint *sp, *next_node[2]= {&nopts_sp, &nopts_sp};
     int64_t pos, pos2, ts;
     int i;
 
@@ -905,7 +906,7 @@ static int nut_read_close(AVFormatContext *s)
     return 0;
 }
 
-#ifdef CONFIG_NUT_DEMUXER
+#if CONFIG_NUT_DEMUXER
 AVInputFormat nut_demuxer = {
     "nut",
     NULL_IF_CONFIG_SMALL("NUT format"),

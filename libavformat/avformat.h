@@ -22,7 +22,7 @@
 #define AVFORMAT_AVFORMAT_H
 
 #define LIBAVFORMAT_VERSION_MAJOR 52
-#define LIBAVFORMAT_VERSION_MINOR 23
+#define LIBAVFORMAT_VERSION_MINOR 24
 #define LIBAVFORMAT_VERSION_MICRO  1
 
 #define LIBAVFORMAT_VERSION_INT AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
@@ -45,6 +45,59 @@ unsigned avformat_version(void);
 #include "libavcodec/avcodec.h"
 
 #include "avio.h"
+
+
+/*
+ * Public Metadata API.
+ * The metadata API allows libavformat to export metadata tags to a client
+ * application using a sequence of key/value pairs.
+ * Important concepts to keep in mind:
+ * 1. Keys are unique; there can never be 2 tags with the same key. This is
+ *    also meant semantically, i.e., a demuxer should not knowingly produce
+ *    several keys that are literally different but semantically identical.
+ *    E.g., key=Author5, key=Author6. In this example, all authors must be
+ *    placed in the same tag.
+ * 2. Metadata is flat, not hierarchical; there are no subtags. If you
+ *    want to store, e.g., the email address of the child of producer Alice
+ *    and actor Bob, that could have key=alice_and_bobs_childs_email_address.
+ * 3. A tag whose value is localized for a particular language is appended
+ *    with a dash character ('-') and the ISO 639 3-letter language code.
+ *    For example: Author-ger=Michael, Author-eng=Mike
+ *    The original/default language is in the unqualified "Author" tag.
+ *    A demuxer should set a default if it sets any translated tag.
+ */
+
+#define AV_METADATA_MATCH_CASE      1
+#define AV_METADATA_IGNORE_SUFFIX   2
+
+typedef struct {
+    char *key;
+    char *value;
+}AVMetadataTag;
+
+typedef struct AVMetadata AVMetadata;
+
+/**
+ * gets a metadata element with matching key.
+ * @param prev set to the previous matching element to find the next.
+ * @param flags allows case as well as suffix insensitive comparissions.
+ * @return found tag or NULL, changing key or value leads to undefined behavior.
+ */
+AVMetadataTag *
+av_metadata_get(AVMetadata *m, const char *key, const AVMetadataTag *prev, int flags);
+
+/**
+ * sets the given tag in m, overwriting an existing tag.
+ * @param tag tag to add to m, key and value will be av_strduped.
+ * @return >= 0 if success otherwise error code that is <0.
+ */
+int av_metadata_set(AVMetadata **m, AVMetadataTag tag);
+
+/**
+ * Free all the memory allocated for an AVMetadata struct.
+ */
+void av_metadata_free(AVMetadata **m);
+
 
 /* packet functions */
 
@@ -160,7 +213,7 @@ static inline void av_free_packet(AVPacket *pkt)
 */
 typedef struct AVFrac {
     int64_t val, num, den;
-} AVFrac attribute_deprecated;
+} AVFrac;
 
 /*************************************************/
 /* input/output formats */
@@ -432,6 +485,8 @@ typedef struct AVStream {
      * - decoding: Set by libavformat.
      */
     AVRational sample_aspect_ratio;
+
+    AVMetadata *metadata;
 } AVStream;
 
 #define AV_PROGRAM_RUNNING 1
@@ -450,6 +505,7 @@ typedef struct AVProgram {
     enum AVDiscard discard;        ///< selects which program to discard and which to feed to the caller
     unsigned int   *stream_index;
     unsigned int   nb_stream_indexes;
+    AVMetadata *metadata;
 } AVProgram;
 
 #define AVFMTCTX_NOHEADER      0x0001 /**< signal that no header is present
@@ -460,6 +516,7 @@ typedef struct AVChapter {
     AVRational time_base;   ///< time base in which the start/end timestamps are specified
     int64_t start, end;     ///< chapter start/end time in time_base units
     char *title;            ///< chapter title
+    AVMetadata *metadata;
 } AVChapter;
 
 #define MAX_STREAMS 20
@@ -608,6 +665,8 @@ typedef struct AVFormatContext {
     struct AVPacketList *raw_packet_buffer_end;
 
     struct AVPacketList *packet_buffer_end;
+
+    AVMetadata *metadata;
 } AVFormatContext;
 
 typedef struct AVPacketList {
@@ -1018,6 +1077,7 @@ void dump_format(AVFormatContext *ic,
                  const char *url,
                  int is_output);
 
+#if LIBAVFORMAT_VERSION_MAJOR < 53
 /**
  * Parses width and height out of string str.
  * @deprecated Use av_parse_video_frame_size instead.
@@ -1031,6 +1091,7 @@ attribute_deprecated int parse_image_size(int *width_ptr, int *height_ptr,
  */
 attribute_deprecated int parse_frame_rate(int *frame_rate, int *frame_rate_base,
                                           const char *arg);
+#endif
 
 /**
  * Parses \p datestr and returns a corresponding number of microseconds.

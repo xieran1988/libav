@@ -27,6 +27,7 @@
  * http://wiki.multimedia.cx/index.php?title=IFF
  */
 
+#include "libavutil/intreadwrite.h"
 #include "avformat.h"
 
 #define ID_8SVX       MKTAG('8','S','V','X')
@@ -52,7 +53,7 @@
 
 #define PACKET_SIZE 1024
 
-typedef enum {COMP_NONE, COMP_FIB, COMP_EXP} svx8_compression_t;
+typedef enum {COMP_NONE, COMP_FIB, COMP_EXP} svx8_compression_type;
 
 typedef struct {
     uint32_t  body_size;

@@ -22,25 +22,27 @@
 #define _XOPEN_SOURCE 600
 
 #include "config.h"
-#ifndef HAVE_CLOSESOCKET
+#if !HAVE_CLOSESOCKET
 #define closesocket close
 #endif
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
-#include "libavutil/random.h"
-#include "libavutil/avstring.h"
+/* avformat.h defines LIBAVFORMAT_BUILD, include it before all the other libav* headers which use it */
 #include "libavformat/avformat.h"
 #include "libavformat/network.h"
 #include "libavformat/os_support.h"
 #include "libavformat/rtp.h"
 #include "libavformat/rtsp.h"
+#include "libavutil/avstring.h"
+#include "libavutil/random.h"
+#include "libavutil/intreadwrite.h"
 #include "libavcodec/opt.h"
 #include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#ifdef HAVE_POLL_H
+#if HAVE_POLL_H
 #include <poll.h>
 #endif
 #include <errno.h>
@@ -49,7 +51,7 @@
 #include <time.h>
 #include <sys/wait.h>
 #include <signal.h>
-#ifdef HAVE_DLFCN_H
+#if HAVE_DLFCN_H
 #include <dlfcn.h>
 #endif
 
@@ -3507,7 +3509,7 @@ static void build_feed_streams(void)
             }
         }
         if (!url_exist(feed->feed_filename)) {
-            AVFormatContext s1, *s = &s1;
+            AVFormatContext s1 = {0}, *s = &s1;
 
             if (feed->readonly) {
                 http_log("Unable to create feed file '%s' as it is marked readonly\n",
@@ -3686,7 +3688,7 @@ static void add_codec(FFStream *stream, AVCodecContext *av)
     memcpy(st->codec, av, sizeof(AVCodecContext));
 }
 
-static int opt_audio_codec(const char *arg)
+static enum CodecID opt_audio_codec(const char *arg)
 {
     AVCodec *p= avcodec_find_encoder_by_name(arg);
 
@@ -3696,7 +3698,7 @@ static int opt_audio_codec(const char *arg)
     return p->id;
 }
 
-static int opt_video_codec(const char *arg)
+static enum CodecID opt_video_codec(const char *arg)
 {
     AVCodec *p= avcodec_find_encoder_by_name(arg);
 
@@ -3708,7 +3710,7 @@ static int opt_video_codec(const char *arg)
 
 /* simplistic plugin support */
 
-#ifdef HAVE_DLOPEN
+#if HAVE_DLOPEN
 static void load_module(const char *filename)
 {
     void *dll;
@@ -3735,13 +3737,11 @@ static void load_module(const char *filename)
 static int ffserver_opt_default(const char *opt, const char *arg,
                        AVCodecContext *avctx, int type)
 {
-    const AVOption *o  = NULL;
-    const AVOption *o2 = av_find_opt(avctx, opt, NULL, type, type);
-    if(o2)
-        o = av_set_string2(avctx, opt, arg, 1);
-    if(!o)
-        return -1;
-    return 0;
+    int ret = 0;
+    const AVOption *o = av_find_opt(avctx, opt, NULL, type, type);
+    if(o)
+        ret = av_set_string3(avctx, opt, arg, 1, NULL);
+    return ret;
 }
 
 static int parse_ffconfig(const char *filename)
@@ -3755,7 +3755,7 @@ static int parse_ffconfig(const char *filename)
     FFStream **last_stream, *stream, *redirect;
     FFStream **last_feed, *feed;
     AVCodecContext audio_enc, video_enc;
-    int audio_id, video_id;
+    enum CodecID audio_id, video_id;
 
     f = fopen(filename, "r");
     if (!f) {
@@ -4188,7 +4188,7 @@ static int parse_ffconfig(const char *filename)
         } else if (!strcasecmp(cmd, "VideoTag")) {
             get_arg(arg, sizeof(arg), &p);
             if ((strlen(arg) == 4) && stream)
-                video_enc.codec_tag = ff_get_fourcc(arg);
+                video_enc.codec_tag = AV_RL32(arg);
         } else if (!strcasecmp(cmd, "BitExact")) {
             if (stream)
                 video_enc.flags |= CODEC_FLAG_BITEXACT;
@@ -4395,7 +4395,7 @@ static int parse_ffconfig(const char *filename)
             }
         } else if (!strcasecmp(cmd, "LoadModule")) {
             get_arg(arg, sizeof(arg), &p);
-#ifdef HAVE_DLOPEN
+#if HAVE_DLOPEN
             load_module(arg);
 #else
             fprintf(stderr, "%s:%d: Module support not compiled into this version: '%s'\n",
@@ -4450,7 +4450,7 @@ static void opt_debug()
 
 static void opt_show_help(void)
 {
-    printf("usage: FFserver [options]\n"
+    printf("usage: ffserver [options]\n"
            "Hyper fast multi format Audio/Video streaming server\n");
     printf("\n");
     show_help_options(options, "Main options:\n", 0, 0);

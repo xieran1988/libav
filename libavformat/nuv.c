@@ -18,6 +18,8 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+#include "libavutil/intreadwrite.h"
 #include "avformat.h"
 #include "riff.h"
 
@@ -33,7 +35,7 @@ typedef enum {
     NUV_AUDIO = 'A',
     NUV_SEEKP = 'R',
     NUV_MYTHEXT = 'X'
-} frametype_t;
+} nuv_frametype;
 
 static int nuv_probe(AVProbeData *p) {
     if (!memcmp(p->buf, "NuppelVideo", 12))
@@ -55,7 +57,7 @@ static int nuv_probe(AVProbeData *p) {
  */
 static int get_codec_data(ByteIOContext *pb, AVStream *vst,
                           AVStream *ast, int myth) {
-    frametype_t frametype;
+    nuv_frametype frametype;
     if (!vst && !myth)
         return 1; // no codec data needed
     while (!url_feof(pb)) {
@@ -191,7 +193,7 @@ static int nuv_packet(AVFormatContext *s, AVPacket *pkt) {
     NUVContext *ctx = s->priv_data;
     ByteIOContext *pb = s->pb;
     uint8_t hdr[HDRSIZE];
-    frametype_t frametype;
+    nuv_frametype frametype;
     int ret, size;
     while (!url_feof(pb)) {
         int copyhdrsize = ctx->rtjpg_video ? HDRSIZE : 0;

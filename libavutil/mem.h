@@ -26,6 +26,8 @@
 #ifndef AVUTIL_MEM_H
 #define AVUTIL_MEM_H
 
+#include "common.h"
+
 #if defined(__ICC) || defined(__SUNPRO_C)
     #define DECLARE_ALIGNED(n,t,v)      t v __attribute__ ((aligned (n)))
     #define DECLARE_ASM_CONST(n,t,v)    const t __attribute__ ((aligned (n))) v
@@ -35,20 +37,20 @@
 #elif defined(_MSC_VER)
     #define DECLARE_ALIGNED(n,t,v)      __declspec(align(n)) t v
     #define DECLARE_ASM_CONST(n,t,v)    __declspec(align(n)) static const t v
-#elif defined(HAVE_INLINE_ASM)
+#elif HAVE_INLINE_ASM
     #error The asm code needs alignment, but we do not know how to do it for this compiler.
 #else
     #define DECLARE_ALIGNED(n,t,v)      t v
     #define DECLARE_ASM_CONST(n,t,v)    static const t v
 #endif
 
-#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
+#if AV_GCC_VERSION_AT_LEAST(3,1)
     #define av_malloc_attrib __attribute__((__malloc__))
 #else
     #define av_malloc_attrib
 #endif
 
-#if defined(__GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2)
+#if (!defined(__ICC) || __ICC > 1100) && AV_GCC_VERSION_AT_LEAST(4,3)
     #define av_alloc_size(n) __attribute__((alloc_size(n)))
 #else
     #define av_alloc_size(n)

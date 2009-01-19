@@ -29,10 +29,6 @@
 #include "avcodec.h"
 #include "bitstream.h"
 #include "dsputil.h"
-
-#ifdef CONFIG_MPEGAUDIO_HP
-#define USE_HIGHPRECISION
-#endif
 #include "mpegaudio.h"
 
 #include "mpc.h"
@@ -178,6 +174,7 @@ static av_cold int mpc8_decode_init(AVCodecContext * avctx)
     }
     vlc_initialized = 1;
     avctx->sample_fmt = SAMPLE_FMT_S16;
+    avctx->channel_layout = (avctx->channels==2) ? CH_LAYOUT_STEREO : CH_LAYOUT_MONO;
     return 0;
 }
 

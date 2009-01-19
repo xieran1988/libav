@@ -2,6 +2,23 @@ include $(SUBDIR)../config.mak
 
 NAME = avutil
 
+HEADERS = adler32.h                                                     \
+          avstring.h                                                    \
+          avutil.h                                                      \
+          base64.h                                                      \
+          common.h                                                      \
+          crc.h                                                         \
+          fifo.h                                                        \
+          intfloat_readwrite.h                                          \
+          log.h                                                         \
+          lzo.h                                                         \
+          mathematics.h                                                 \
+          md5.h                                                         \
+          mem.h                                                         \
+          random.h                                                      \
+          rational.h                                                    \
+          sha1.h
+
 OBJS = adler32.o                                                        \
        aes.o                                                            \
        base64.o                                                         \
@@ -24,24 +41,9 @@ OBJS = adler32.o                                                        \
        tree.o                                                           \
        utils.o                                                          \
 
-HEADERS = adler32.h                                                     \
-          avstring.h                                                    \
-          avutil.h                                                      \
-          base64.h                                                      \
-          common.h                                                      \
-          crc.h                                                         \
-          fifo.h                                                        \
-          intfloat_readwrite.h                                          \
-          log.h                                                         \
-          lzo.h                                                         \
-          mathematics.h                                                 \
-          md5.h                                                         \
-          mem.h                                                         \
-          random.h                                                      \
-          rational.h                                                    \
-          sha1.h
-
 TESTS = $(addsuffix -test$(EXESUF), adler32 aes crc des lls md5 pca random sha1 softfloat tree)
+
+DIRS = arm bfin sh4 x86
 
 include $(SUBDIR)../subdir.mak
 

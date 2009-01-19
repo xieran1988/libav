@@ -70,14 +70,13 @@ clean-real:
 	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp
 	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
 	dh_clean config-extra-includes.h debian/tmp.debhelper.log
+	dh_clean formats.txt
 
 get-orig-source:
 	dh_testdir
 	# strip patented code
 	chmod +x debian/strip.sh
-	sh debian/get-orig-source.sh -r{$(SVN_VERSION)} \
-	    $(if $(internalencoders),, -c $(CURDIR)/debian/strip.sh) \
-	    -o ../$(DEB_SOURCE)_$(UPSTREAM_VERSION).orig.tar.gz
+	sh debian/get-orig-source.sh -d$(SVN_VERSION)
 
 # The trailing newline is important!
 define install_flavor
@@ -105,18 +104,23 @@ else
 	dh_install --fail-missing --sourcedir=debian/tmp
 endif
 
+formats.txt: install
+	env LD_LIBRARY_PATH=$(CURDIR)/debian/tmp/usr/lib \
+	debian/tmp/usr/bin/ffmpeg -formats > $@
+
 ifneq ($(DEB_SOURCE),ffmpeg-debian)
 binary-indep: install
 else
 binary-indep: build-doxy install
 endif
 
-binary-arch: build install
+binary-arch: build install formats.txt
 	dh_testdir
 	dh_testroot
 	dh_installdocs $(extradoc) doc/optimization.txt
 	dh_installdocs -A MAINTAINERS CREDITS doc/TODO
 	dh_installdocs -A debian/patents.txt debian/README.Debian
+	dh_installdocs -p libavcodec52 formats.txt
 	dh_installexamples -pffmpeg doc/ffserver.conf debian/recordshow.sh
 	dh_installexamples -plibavcodec-dev libavcodec/apiexample.c
 	dh_installchangelogs Changelog

@@ -153,7 +153,7 @@ typedef struct ADPCMContext {
 
 /* XXX: implement encoding */
 
-#ifdef CONFIG_ENCODERS
+#if CONFIG_ENCODERS
 static int adpcm_encode_init(AVCodecContext *avctx)
 {
     if (avctx->channels > 2)
@@ -1131,6 +1131,33 @@ static int adpcm_decode_frame(AVCodecContext *avctx,
             *samples++ = c->status[0].predictor - c->status[1].predictor;
         }
         break;
+    case CODEC_ID_ADPCM_IMA_ISS:
+        c->status[0].predictor  = (int16_t)AV_RL16(src + 0);
+        c->status[0].step_index = src[2];
+        src += 4;
+        if(st) {
+            c->status[1].predictor  = (int16_t)AV_RL16(src + 0);
+            c->status[1].step_index = src[2];
+            src += 4;
+        }
+
+        while (src < buf + buf_size) {
+
+            if (st) {
+                *samples++ = adpcm_ima_expand_nibble(&c->status[0],
+                    src[0] >> 4  , 3);
+                *samples++ = adpcm_ima_expand_nibble(&c->status[1],
+                    src[0] & 0x0F, 3);
+            } else {
+                *samples++ = adpcm_ima_expand_nibble(&c->status[0],
+                    src[0] & 0x0F, 3);
+                *samples++ = adpcm_ima_expand_nibble(&c->status[0],
+                    src[0] >> 4  , 3);
+            }
+
+            src++;
+        }
+        break;
     case CODEC_ID_ADPCM_IMA_WS:
         /* no per-block initialization; just start decoding the data */
         while (src < buf + buf_size) {
@@ -1589,7 +1616,7 @@ static int adpcm_decode_frame(AVCodecContext *avctx,
 
 
 
-#ifdef CONFIG_ENCODERS
+#if CONFIG_ENCODERS
 #define ADPCM_ENCODER(id,name,long_name_)       \
 AVCodec name ## _encoder = {                    \
     #name,                                      \
@@ -1607,7 +1634,7 @@ AVCodec name ## _encoder = {                    \
 #define ADPCM_ENCODER(id,name,long_name_)
 #endif
 
-#ifdef CONFIG_DECODERS
+#if CONFIG_DECODERS
 #define ADPCM_DECODER(id,name,long_name_)       \
 AVCodec name ## _decoder = {                    \
     #name,                                      \
@@ -1641,6 +1668,7 @@ ADPCM_DECODER(CODEC_ID_ADPCM_IMA_DK3, adpcm_ima_dk3, "IMA Duck DK3 ADPCM");
 ADPCM_DECODER(CODEC_ID_ADPCM_IMA_DK4, adpcm_ima_dk4, "IMA Duck DK4 ADPCM");
 ADPCM_DECODER(CODEC_ID_ADPCM_IMA_EA_EACS, adpcm_ima_ea_eacs, "IMA Electronic Arts EACS ADPCM");
 ADPCM_DECODER(CODEC_ID_ADPCM_IMA_EA_SEAD, adpcm_ima_ea_sead, "IMA Electronic Arts SEAD ADPCM");
+ADPCM_DECODER(CODEC_ID_ADPCM_IMA_ISS, adpcm_ima_iss, "IMA Funcom ISS ADPCM");
 ADPCM_CODEC  (CODEC_ID_ADPCM_IMA_QT, adpcm_ima_qt, "IMA QuickTime ADPCM");
 ADPCM_DECODER(CODEC_ID_ADPCM_IMA_SMJPEG, adpcm_ima_smjpeg, "IMA Loki SDL MJPEG ADPCM");
 ADPCM_CODEC  (CODEC_ID_ADPCM_IMA_WAV, adpcm_ima_wav, "IMA Wav ADPCM");

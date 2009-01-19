@@ -230,7 +230,7 @@ int rv_decode_dc(MpegEncContext *s, int n)
 }
 
 
-#if defined(CONFIG_RV10_ENCODER) || defined(CONFIG_RV20_ENCODER)
+#if CONFIG_RV10_ENCODER || CONFIG_RV20_ENCODER
 /* write RV 1.0 compatible frame header */
 void rv10_encode_picture_header(MpegEncContext *s, int picture_number)
 {
@@ -304,7 +304,7 @@ static int get_num(GetBitContext *gb)
 }
 #endif
 
-#endif /* defined(CONFIG_RV10_ENCODER) || defined(CONFIG_RV20_ENCODER) */
+#endif /* CONFIG_RV10_ENCODER || CONFIG_RV20_ENCODER */
 
 /* read RV 1.0 compatible frame header */
 static int rv10_decode_picture_header(MpegEncContext *s)
@@ -526,6 +526,11 @@ static av_cold int rv10_decode_init(AVCodecContext *avctx)
 {
     MpegEncContext *s = avctx->priv_data;
     static int done=0;
+
+    if (avctx->extradata_size < 8) {
+        av_log(avctx, AV_LOG_ERROR, "Extradata is too small.\n");
+        return -1;
+    }
 
     MPV_decode_defaults(s);
 

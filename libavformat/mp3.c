@@ -24,8 +24,8 @@
 #include "libavcodec/mpegaudio.h"
 #include "libavcodec/mpegaudiodecheader.h"
 #include "avformat.h"
+#include "id3v2.h"
 
-#define ID3v2_HEADER_SIZE 10
 #define ID3v1_TAG_SIZE 128
 
 #define ID3v1_GENRE_MAX 125
@@ -158,20 +158,6 @@ static const char * const id3v1_genre_str[ID3v1_GENRE_MAX + 1] = {
     [124] = "Euro-House",
     [125] = "Dance Hall",
 };
-
-/* buf must be ID3v2_HEADER_SIZE byte long */
-static int id3v2_match(const uint8_t *buf)
-{
-    return  buf[0] == 'I' &&
-            buf[1] == 'D' &&
-            buf[2] == '3' &&
-            buf[3] != 0xff &&
-            buf[4] != 0xff &&
-            (buf[6] & 0x80) == 0 &&
-            (buf[7] & 0x80) == 0 &&
-            (buf[8] & 0x80) == 0 &&
-            (buf[9] & 0x80) == 0;
-}
 
 static unsigned int id3v2_get_size(ByteIOContext *s, int len)
 {
@@ -371,7 +357,7 @@ static int mp3_read_probe(AVProbeData *p)
     uint8_t *buf, *buf2, *end;
     AVCodecContext avctx;
 
-    if(id3v2_match(p->buf))
+    if(ff_id3v2_match(p->buf))
         return AVPROBE_SCORE_MAX/2+1; // this must be less than mpeg-ps because some retards put id3v2 tags before mpeg-ps files
 
     max_frames = 0;
@@ -383,7 +369,7 @@ static int mp3_read_probe(AVProbeData *p)
 
         for(frames = 0; buf2 < end; frames++) {
             header = AV_RB32(buf2);
-            fsize = ff_mpa_decode_header(&avctx, header, &sample_rate);
+            fsize = ff_mpa_decode_header(&avctx, header, &sample_rate, &sample_rate, &sample_rate, &sample_rate);
             if(fsize < 0)
                 break;
             buf2 += fsize;
@@ -402,20 +388,22 @@ static int mp3_read_probe(AVProbeData *p)
 /**
  * Try to find Xing/Info/VBRI tags and compute duration from info therein
  */
-static void mp3_parse_vbr_tags(AVFormatContext *s, AVStream *st, int64_t base)
+static int mp3_parse_vbr_tags(AVFormatContext *s, AVStream *st, int64_t base)
 {
     uint32_t v, spf;
     int frames = -1; /* Total number of frames in file */
     const int64_t xing_offtbl[2][2] = {{32, 17}, {17,9}};
     MPADecodeContext c;
+    int vbrtag_size = 0;
 
     v = get_be32(s->pb);
     if(ff_mpa_check_header(v) < 0)
-      return;
+      return -1;
 
-    ff_mpegaudio_decode_header(&c, v);
+    if (ff_mpegaudio_decode_header(&c, v) == 0)
+        vbrtag_size = c.frame_size;
     if(c.layer != 3)
-        return;
+        return -1;
 
     /* Check for Xing / Info tag */
     url_fseek(s->pb, xing_offtbl[c.lsf == 1][c.nb_channels == 1], SEEK_CUR);
@@ -439,11 +427,15 @@ static void mp3_parse_vbr_tags(AVFormatContext *s, AVStream *st, int64_t base)
     }
 
     if(frames < 0)
-        return;
+        return -1;
+
+    /* Skip the vbr tag frame */
+    url_fseek(s->pb, base + vbrtag_size, SEEK_SET);
 
     spf = c.lsf ? 576 : 1152; /* Samples per frame, layer 3 */
     st->duration = av_rescale_q(frames, (AVRational){spf, c.sample_rate},
                                 st->time_base);
+    return 0;
 }
 
 static int mp3_read_header(AVFormatContext *s,
@@ -481,7 +473,7 @@ static int mp3_read_header(AVFormatContext *s,
     ret = get_buffer(s->pb, buf, ID3v2_HEADER_SIZE);
     if (ret != ID3v2_HEADER_SIZE)
         return -1;
-    if (id3v2_match(buf)) {
+    if (ff_id3v2_match(buf)) {
         /* parse ID3v2 header */
         len = ((buf[6] & 0x7f) << 21) |
             ((buf[7] & 0x7f) << 14) |
@@ -493,8 +485,8 @@ static int mp3_read_header(AVFormatContext *s,
     }
 
     off = url_ftell(s->pb);
-    mp3_parse_vbr_tags(s, st, off);
-    url_fseek(s->pb, off, SEEK_SET);
+    if (mp3_parse_vbr_tags(s, st, off) < 0)
+        url_fseek(s->pb, off, SEEK_SET);
 
     /* the parameters will be extracted from the compressed bitstream */
     return 0;
@@ -521,7 +513,7 @@ static int mp3_read_packet(AVFormatContext *s, AVPacket *pkt)
     return ret;
 }
 
-#if defined(CONFIG_MP2_MUXER) || defined(CONFIG_MP3_MUXER)
+#if CONFIG_MP2_MUXER || CONFIG_MP3_MUXER
 static void id3v1_create_tag(AVFormatContext *s, uint8_t *buf)
 {
     int v, i;
@@ -639,9 +631,9 @@ static int mp3_write_trailer(struct AVFormatContext *s)
     }
     return 0;
 }
-#endif /* defined(CONFIG_MP2_MUXER) || defined(CONFIG_MP3_MUXER) */
+#endif /* CONFIG_MP2_MUXER || CONFIG_MP3_MUXER */
 
-#ifdef CONFIG_MP3_DEMUXER
+#if CONFIG_MP3_DEMUXER
 AVInputFormat mp3_demuxer = {
     "mp3",
     NULL_IF_CONFIG_SMALL("MPEG audio"),
@@ -653,12 +645,12 @@ AVInputFormat mp3_demuxer = {
     .extensions = "mp2,mp3,m2a", /* XXX: use probe */
 };
 #endif
-#ifdef CONFIG_MP2_MUXER
+#if CONFIG_MP2_MUXER
 AVOutputFormat mp2_muxer = {
     "mp2",
     NULL_IF_CONFIG_SMALL("MPEG audio layer 2"),
     "audio/x-mpeg",
-#ifdef CONFIG_LIBMP3LAME
+#if CONFIG_LIBMP3LAME
     "mp2,m2a",
 #else
     "mp2,mp3,m2a",
@@ -671,7 +663,7 @@ AVOutputFormat mp2_muxer = {
     mp3_write_trailer,
 };
 #endif
-#ifdef CONFIG_MP3_MUXER
+#if CONFIG_MP3_MUXER
 AVOutputFormat mp3_muxer = {
     "mp3",
     NULL_IF_CONFIG_SMALL("MPEG audio layer 3"),

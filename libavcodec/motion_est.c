@@ -32,6 +32,7 @@
 #include <limits.h>
 #include "avcodec.h"
 #include "dsputil.h"
+#include "mathops.h"
 #include "mpegvideo.h"
 
 #undef NDEBUG
@@ -306,8 +307,6 @@ int ff_init_me(MpegEncContext *s){
     if(s->codec_id == CODEC_ID_H261){
         c->sub_motion_search= no_sub_motion_search;
     }
-
-    c->temp= c->scratchpad;
 
     return 0;
 }

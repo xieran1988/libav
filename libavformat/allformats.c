@@ -23,15 +23,18 @@
 #include "rdt.h"
 
 #define REGISTER_MUXER(X,x) { \
-          extern AVOutputFormat x##_muxer; \
-          if(ENABLE_##X##_MUXER)   av_register_output_format(&x##_muxer); }
+    extern AVOutputFormat x##_muxer; \
+    if(CONFIG_##X##_MUXER) av_register_output_format(&x##_muxer); }
+
 #define REGISTER_DEMUXER(X,x) { \
-          extern AVInputFormat x##_demuxer; \
-          if(ENABLE_##X##_DEMUXER) av_register_input_format(&x##_demuxer); }
+    extern AVInputFormat x##_demuxer; \
+    if(CONFIG_##X##_DEMUXER) av_register_input_format(&x##_demuxer); }
+
 #define REGISTER_MUXDEMUX(X,x)  REGISTER_MUXER(X,x); REGISTER_DEMUXER(X,x)
+
 #define REGISTER_PROTOCOL(X,x) { \
-          extern URLProtocol x##_protocol; \
-          if(ENABLE_##X##_PROTOCOL) register_protocol(&x##_protocol); }
+    extern URLProtocol x##_protocol; \
+    if(CONFIG_##X##_PROTOCOL) register_protocol(&x##_protocol); }
 
 /* If you do not call this function, then you can select exactly which
    formats you want to support */
@@ -47,7 +50,6 @@ void av_register_all(void)
         return;
     initialized = 1;
 
-    avcodec_init();
     avcodec_register_all();
 
     /* (de)muxers */
@@ -99,6 +101,7 @@ void av_register_all(void)
     REGISTER_DEMUXER  (INGENIENT, ingenient);
     REGISTER_DEMUXER  (IPMOVIE, ipmovie);
     REGISTER_MUXER    (IPOD, ipod);
+    REGISTER_DEMUXER  (ISS, iss);
     REGISTER_DEMUXER  (LMLM4, lmlm4);
     REGISTER_MUXDEMUX (M4V, m4v);
     REGISTER_MUXDEMUX (MATROSKA, matroska);
@@ -166,7 +169,7 @@ void av_register_all(void)
     REGISTER_MUXER    (RTP, rtp);
     REGISTER_DEMUXER  (RTSP, rtsp);
     REGISTER_DEMUXER  (SDP, sdp);
-#ifdef CONFIG_SDP_DEMUXER
+#if CONFIG_SDP_DEMUXER
     av_register_rtp_dynamic_payload_handlers();
     av_register_rdt_dynamic_payload_handlers();
 #endif

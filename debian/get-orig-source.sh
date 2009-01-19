@@ -39,61 +39,62 @@ error () {
 }
 
 set +e
-PARAMS=`getopt hr:c:o: "$@"`
+PARAMS=`getopt hd: "$@"`
 if test $? -ne 0; then usage; exit 1; fi;
 set -e
 
 eval set -- "$PARAMS"
 
 DEBUG=false
-REVISION=
-CLEANUPSCRIPT=
-TARBALL=
+SVNDATE=
 
 while test $# -gt 0
 do
 	case $1 in
 		-h) usage; exit 1 ;;
-		-r) REVISION=$2; shift ;;
-		-c) CLEANUPSCRIPT=$2; shift ;;
-		-o) TARBALL=$2; shift ;;
+		-d) SVNDATE=$2; shift ;;
 		--) shift ; break ;;
 		*)  echo "Internal error!" ; exit 1 ;;
 	esac
 	shift
 done
 
-if [ -z $REVISION ]; then
-	error "you need to specify an svn revision"
+# sanity checks now
+dh_testdir
+
+if [ -z $SVNDATE ]; then
+	error "you need to specify an svn date. e.g. 20081230 for Dec 29. 2009"
 fi
 
-if [ -z $TARBALL ]; then
-	error "you need to specify a tarballname"
-fi
-
-if [ -n $CLEANUPSCRIPT ] && [ -f $CLEANUPSCRIPT ]; then
-	if [ ! -x $CLEANUPSCRIPT ]; then
-		error "$CLEANUPSCRIPT must be executable"
-	fi
-fi
+CLEANUPSCRIPT=`pwd`/debian/strip.sh
+TARBALL=../ffmpeg-debian_0.svn${SVNDATE}.orig.tar.gz
+TARBALL_UNSTRIPPED=../ffmpeg_0.svn${SVNDATE}.orig.tar.gz
 
 TMPDIR=`mktemp -d`
 trap 'rm -rf ${TMPDIR}'  EXIT
 
-svn export -r${REVISION} \
+svn export -r{${SVNDATE}} \
+	--ignore-externals \
 	svn://svn.mplayerhq.hu/ffmpeg/trunk \
 	${TMPDIR}/ffmpeg
 
-# libswscale is just an unversioned redirect, so we have to export it properly by hand
-rm -rf ${TMPDIR}/ffmpeg/libswscale
+svn info -r{${SVNDATE}} \
+	svn://svn.mplayerhq.hu/ffmpeg/trunk \
+	| awk '/^Revision/ {print $2}' \
+	> ${TMPDIR}/ffmpeg/.svnrevision
 
-svn export -r${REVISION} \
+svn export -r{${SVNDATE}} \
 	svn://svn.mplayerhq.hu/mplayer/trunk/libswscale \
 	${TMPDIR}/ffmpeg/libswscale
+
+svn info -r{${SVNDATE}} \
+	svn://svn.mplayerhq.hu/mplayer/trunk/libswscale \
+	| awk '/^Revision/ {print $2}' \
+	> ${TMPDIR}/ffmpeg/libswscale/.svnrevision
+
+tar czf ${TARBALL_UNSTRIPPED} -C ${TMPDIR} ffmpeg
 	
-if [ -n ${CLEANUPSCRIPT} ]; then
-	( cd ${TMPDIR}/ffmpeg && ${CLEANUPSCRIPT} )
-fi
+( cd ${TMPDIR}/ffmpeg && sh ${CLEANUPSCRIPT} )
 
 tar czf ${TARBALL} -C ${TMPDIR} ffmpeg
 

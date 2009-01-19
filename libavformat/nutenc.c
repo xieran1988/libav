@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/intreadwrite.h"
 #include "libavutil/tree.h"
 #include "libavcodec/mpegaudiodata.h"
 #include "nut.h"
@@ -260,7 +261,7 @@ static void put_v(ByteIOContext *bc, uint64_t val){
     put_byte(bc, val&127);
 }
 
-static void put_t(NUTContext *nut, StreamContext *nus, ByteIOContext *bc, uint64_t val){
+static void put_tt(NUTContext *nut, StreamContext *nus, ByteIOContext *bc, uint64_t val){
     val *= nut->time_base_count;
     val += nus->time_base - nut->time_base;
     put_v(bc, val);
@@ -664,7 +665,7 @@ static int write_packet(AVFormatContext *s, AVPacket *pkt){
 //FIXME: Ensure store_sp is 1 in the first place.
 
     if(store_sp){
-        syncpoint_t *sp, dummy= {.pos= INT64_MAX};
+        Syncpoint *sp, dummy= {.pos= INT64_MAX};
 
         ff_nut_reset_ts(nut, *nus->time_base, pkt->dts);
         for(i=0; i<s->nb_streams; i++){
@@ -684,7 +685,7 @@ static int write_packet(AVFormatContext *s, AVPacket *pkt){
         ret = url_open_dyn_buf(&dyn_bc);
         if(ret < 0)
             return ret;
-        put_t(nut, nus, dyn_bc, pkt->dts);
+        put_tt(nut, nus, dyn_bc, pkt->dts);
         put_v(dyn_bc, sp ? (nut->last_syncpoint_pos - sp->pos)>>4 : 0);
         put_packet(nut, bc, dyn_bc, 1, SYNCPOINT_STARTCODE);
 
@@ -808,9 +809,9 @@ AVOutputFormat nut_muxer = {
     "video/x-nut",
     "nut",
     sizeof(NUTContext),
-#ifdef CONFIG_LIBVORBIS
+#if   CONFIG_LIBVORBIS
     CODEC_ID_VORBIS,
-#elif defined(CONFIG_LIBMP3LAME)
+#elif CONFIG_LIBMP3LAME
     CODEC_ID_MP3,
 #else
     CODEC_ID_MP2,

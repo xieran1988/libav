@@ -26,6 +26,7 @@
 
 #include "dsputil_ppc.h"
 #include "util_altivec.h"
+#include "types_altivec.h"
 
 int sad16_x2_altivec(void *v, uint8_t *pix1, uint8_t *pix2, int line_size, int h)
 {
@@ -572,6 +573,20 @@ void diff_pixels_altivec(DCTELEM *restrict block, const uint8_t *s1,
         block += 8;
     }
 }
+
+
+static void clear_block_altivec(DCTELEM *block) {
+    LOAD_ZERO;
+    vec_st(zero_s16v,   0, block);
+    vec_st(zero_s16v,  16, block);
+    vec_st(zero_s16v,  32, block);
+    vec_st(zero_s16v,  48, block);
+    vec_st(zero_s16v,  64, block);
+    vec_st(zero_s16v,  80, block);
+    vec_st(zero_s16v,  96, block);
+    vec_st(zero_s16v, 112, block);
+}
+
 
 void add_bytes_altivec(uint8_t *dst, uint8_t *src, int w) {
     register int i;
@@ -1420,6 +1435,7 @@ void dsputil_init_altivec(DSPContext* c, AVCodecContext *avctx)
     c->pix_sum = pix_sum_altivec;
     c->diff_pixels = diff_pixels_altivec;
     c->get_pixels = get_pixels_altivec;
+    c->clear_block = clear_block_altivec;
     c->add_bytes= add_bytes_altivec;
     c->put_pixels_tab[0][0] = put_pixels16_altivec;
     /* the two functions do the same thing, so use the same code */
@@ -1434,6 +1450,6 @@ void dsputil_init_altivec(DSPContext* c, AVCodecContext *avctx)
 
     c->hadamard8_diff[0] = hadamard8_diff16_altivec;
     c->hadamard8_diff[1] = hadamard8_diff8x8_altivec;
-    if (ENABLE_VORBIS_DECODER)
+    if (CONFIG_VORBIS_DECODER)
         c->vorbis_inverse_coupling = vorbis_inverse_coupling_altivec;
 }

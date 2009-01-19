@@ -1,0 +1,16 @@
+
+Checklist and howto for ffmpeg upstream upgrades:
+
+ - run 'sh debian/get-orig-source -dYYYYMMDD'
+ - run 'git-import-orig --debian-branch=$branch --pristine-tar ../ffmpeg-XXX.orig.tar.gz'
+ - check and note the svn revision numbers from ffmpeg/.svnrevision in debian/changelog
+ - document new formats additions in debian/changelog
+ - build the package, compare against the the version already in the archive
+   - headers in the -dev packages with 
+   - soname in the libraries
+   - formats.txt in the libavcodecs package
+
+TODOs
+
+ - improvements to get-orig-source.sh script:
+    - commit to git
