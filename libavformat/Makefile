@@ -5,7 +5,7 @@ FFLIBS = avcodec avutil
 
 HEADERS = avformat.h avio.h rtsp.h rtspcodes.h
 
-OBJS = allformats.o cutils.o metadata.o metadata_compat.o os_support.o sdp.o utils.o
+OBJS = allformats.o cutils.o metadata.o metadata_compat.o options.o os_support.o sdp.o utils.o
 
 # muxers/demuxers
 OBJS-$(CONFIG_AAC_DEMUXER)               += raw.o
@@ -78,6 +78,7 @@ OBJS-$(CONFIG_IMAGE2PIPE_MUXER)          += img2.o
 OBJS-$(CONFIG_INGENIENT_DEMUXER)         += raw.o
 OBJS-$(CONFIG_IPMOVIE_DEMUXER)           += ipmovie.o
 OBJS-$(CONFIG_IPOD_MUXER)                += movenc.o riff.o isom.o avc.o
+OBJS-$(CONFIG_ISS_DEMUXER)               += iss.o
 OBJS-$(CONFIG_LMLM4_DEMUXER)             += lmlm4.o
 OBJS-$(CONFIG_M4V_DEMUXER)               += raw.o
 OBJS-$(CONFIG_M4V_MUXER)                 += raw.o
@@ -93,7 +94,7 @@ OBJS-$(CONFIG_MMF_MUXER)                 += mmf.o riff.o
 OBJS-$(CONFIG_MOV_DEMUXER)               += mov.o riff.o isom.o
 OBJS-$(CONFIG_MOV_MUXER)                 += movenc.o riff.o isom.o avc.o
 OBJS-$(CONFIG_MP2_MUXER)                 += mp3.o
-OBJS-$(CONFIG_MP3_DEMUXER)               += mp3.o
+OBJS-$(CONFIG_MP3_DEMUXER)               += mp3.o id3v2.o
 OBJS-$(CONFIG_MP3_MUXER)                 += mp3.o
 OBJS-$(CONFIG_MP4_MUXER)                 += movenc.o riff.o isom.o avc.o
 OBJS-$(CONFIG_MPC_DEMUXER)               += mpc.o

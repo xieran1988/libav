@@ -32,11 +32,12 @@
 #include "h264data.h"
 #include "h264_parser.h"
 #include "golomb.h"
+#include "mathops.h"
 #include "rectangle.h"
 #include "vdpau_internal.h"
 
 #include "cabac.h"
-#ifdef ARCH_X86
+#if ARCH_X86
 #include "x86/h264_i386.h"
 #endif
 
@@ -1380,8 +1381,8 @@ static const uint8_t *decode_nal(H264Context *h, const uint8_t *src, int *dst_le
         printf("%2X ", src[i]);
 #endif
 
-#ifdef HAVE_FAST_UNALIGNED
-# ifdef HAVE_FAST_64BIT
+#if HAVE_FAST_UNALIGNED
+# if HAVE_FAST_64BIT
 #   define RS 7
     for(i=0; i+1<length; i+=9){
         if(!((~*(uint64_t*)(src+i) & (*(uint64_t*)(src+i) - 0x0100010001000101ULL)) & 0x8000800080008080ULL))
@@ -1641,7 +1642,7 @@ static inline void mc_dir_part(H264Context *h, Picture *pic, int n, int square, 
         qpix_op[luma_xy](dest_y + delta, src_y + delta, h->mb_linesize);
     }
 
-    if(ENABLE_GRAY && s->flags&CODEC_FLAG_GRAY) return;
+    if(CONFIG_GRAY && s->flags&CODEC_FLAG_GRAY) return;
 
     if(MB_FIELD){
         // chroma offset when predicting from a field of opposite parity
@@ -2189,7 +2190,7 @@ static av_cold int decode_init(AVCodecContext *avctx){
 
     if(avctx->codec_id == CODEC_ID_SVQ3)
         avctx->pix_fmt= PIX_FMT_YUVJ420P;
-    else if(avctx->codec_id == CODEC_ID_H264_VDPAU)
+    else if(s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
         avctx->pix_fmt= PIX_FMT_VDPAU_H264;
     else
         avctx->pix_fmt= PIX_FMT_YUV420P;
@@ -2286,7 +2287,7 @@ static inline void backup_mb_border(H264Context *h, uint8_t *src_y, uint8_t *src
             if(!MB_MBAFF){
                 *(uint64_t*)(h->top_borders[0][s->mb_x]+ 0)= *(uint64_t*)(src_y +  15*linesize);
                 *(uint64_t*)(h->top_borders[0][s->mb_x]+ 8)= *(uint64_t*)(src_y +8+15*linesize);
-                if(simple || !ENABLE_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
+                if(simple || !CONFIG_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
                     *(uint64_t*)(h->top_borders[0][s->mb_x]+16)= *(uint64_t*)(src_cb+7*uvlinesize);
                     *(uint64_t*)(h->top_borders[0][s->mb_x]+24)= *(uint64_t*)(src_cr+7*uvlinesize);
                 }
@@ -2294,7 +2295,7 @@ static inline void backup_mb_border(H264Context *h, uint8_t *src_y, uint8_t *src
         }else{
             if(!MB_MBAFF){
                 h->left_border[0]= h->top_borders[0][s->mb_x][15];
-                if(simple || !ENABLE_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
+                if(simple || !CONFIG_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
                     h->left_border[34   ]= h->top_borders[0][s->mb_x][16+7  ];
                     h->left_border[34+18]= h->top_borders[0][s->mb_x][16+8+7];
                 }
@@ -2317,7 +2318,7 @@ static inline void backup_mb_border(H264Context *h, uint8_t *src_y, uint8_t *src
     *(uint64_t*)(h->top_borders[top_idx][s->mb_x]+0)= *(uint64_t*)(src_y +  16*linesize);
     *(uint64_t*)(h->top_borders[top_idx][s->mb_x]+8)= *(uint64_t*)(src_y +8+16*linesize);
 
-    if(simple || !ENABLE_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
+    if(simple || !CONFIG_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
         h->left_border[uvoffset+34   ]= h->top_borders[top_idx][s->mb_x][16+7];
         h->left_border[uvoffset+34+18]= h->top_borders[top_idx][s->mb_x][24+7];
         for(i=1; i<9 - skiplast; i++){
@@ -2387,7 +2388,7 @@ b= t;
         }
     }
 
-    if(simple || !ENABLE_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
+    if(simple || !CONFIG_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
         if(deblock_left){
             for(i = !deblock_top; i<8; i++){
                 XCHG(h->left_border[uvoffset+34   +i*step], src_cb[i*uvlinesize], temp8, xchg);
@@ -2415,7 +2416,7 @@ static av_always_inline void hl_decode_mb_internal(H264Context *h, int simple){
     int *block_offset = &h->block_offset[0];
     const int transform_bypass = !simple && (s->qscale == 0 && h->sps.transform_bypass);
     /* is_h264 should always be true if SVQ3 is disabled. */
-    const int is_h264 = !ENABLE_SVQ3_DECODER || simple || s->codec_id == CODEC_ID_H264;
+    const int is_h264 = !CONFIG_SVQ3_DECODER || simple || s->codec_id == CODEC_ID_H264;
     void (*idct_add)(uint8_t *dst, DCTELEM *block, int stride);
     void (*idct_dc_add)(uint8_t *dst, DCTELEM *block, int stride);
 
@@ -2471,7 +2472,7 @@ static av_always_inline void hl_decode_mb_internal(H264Context *h, int simple){
             if(h->deblocking_filter)
                 xchg_mb_border(h, dest_y, dest_cb, dest_cr, linesize, uvlinesize, 1, simple);
 
-            if(simple || !ENABLE_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
+            if(simple || !CONFIG_GRAY || !(s->flags&CODEC_FLAG_GRAY)){
                 h->hpc.pred8x8[ h->chroma_pred_mode ](dest_cb, uvlinesize);
                 h->hpc.pred8x8[ h->chroma_pred_mode ](dest_cr, uvlinesize);
             }
@@ -2606,7 +2607,7 @@ static av_always_inline void hl_decode_mb_internal(H264Context *h, int simple){
             }
         }
 
-        if((simple || !ENABLE_GRAY || !(s->flags&CODEC_FLAG_GRAY)) && (h->cbp&0x30)){
+        if((simple || !CONFIG_GRAY || !(s->flags&CODEC_FLAG_GRAY)) && (h->cbp&0x30)){
             uint8_t *dest[2] = {dest_cb, dest_cr};
             if(transform_bypass){
                 if(IS_INTRA(mb_type) && h->sps.profile_idc==244 && (h->chroma_pred_mode==VERT_PRED8x8 || h->chroma_pred_mode==HOR_PRED8x8)){
@@ -2676,9 +2677,9 @@ static void hl_decode_mb(H264Context *h){
     MpegEncContext * const s = &h->s;
     const int mb_xy= h->mb_xy;
     const int mb_type= s->current_picture.mb_type[mb_xy];
-    int is_complex = ENABLE_SMALL || h->is_complex || IS_INTRA_PCM(mb_type) || s->qscale == 0;
+    int is_complex = CONFIG_SMALL || h->is_complex || IS_INTRA_PCM(mb_type) || s->qscale == 0;
 
-    if(ENABLE_H264_ENCODER && !s->decode)
+    if(CONFIG_H264_ENCODER && !s->decode)
         return;
 
     if (is_complex)
@@ -5224,7 +5225,7 @@ static av_always_inline void decode_cabac_residual_internal( H264Context *h, DCT
     uint8_t *last_coeff_ctx_base;
     uint8_t *abs_level_m1_ctx_base;
 
-#ifndef ARCH_X86
+#if !ARCH_X86
 #define CABAC_ON_STACK
 #endif
 #ifdef CABAC_ON_STACK
@@ -5285,7 +5286,7 @@ static av_always_inline void decode_cabac_residual_internal( H264Context *h, DCT
             index[coeff_count++] = last;\
         }
         const uint8_t *sig_off = significant_coeff_flag_offset_8x8[MB_FIELD];
-#if defined(ARCH_X86) && defined(HAVE_7REGS) && defined(HAVE_EBX_AVAILABLE) && !defined(BROKEN_RELOCATIONS)
+#if ARCH_X86 && HAVE_7REGS && HAVE_EBX_AVAILABLE && !defined(BROKEN_RELOCATIONS)
         coeff_count= decode_significance_8x8_x86(CC, significant_coeff_ctx_base, index, sig_off);
     } else {
         coeff_count= decode_significance_x86(CC, max_coeff, significant_coeff_ctx_base, index);
@@ -5360,7 +5361,7 @@ static av_always_inline void decode_cabac_residual_internal( H264Context *h, DCT
 
 }
 
-#ifndef CONFIG_SMALL
+#if !CONFIG_SMALL
 static void decode_cabac_residual_dc( H264Context *h, DCTELEM *block, int cat, int n, const uint8_t *scantable, const uint32_t *qmul, int max_coeff ) {
     decode_cabac_residual_internal(h, block, cat, n, scantable, qmul, max_coeff, 1);
 }
@@ -5371,7 +5372,7 @@ static void decode_cabac_residual_nondc( H264Context *h, DCTELEM *block, int cat
 #endif
 
 static void decode_cabac_residual( H264Context *h, DCTELEM *block, int cat, int n, const uint8_t *scantable, const uint32_t *qmul, int max_coeff ) {
-#ifdef CONFIG_SMALL
+#if CONFIG_SMALL
     decode_cabac_residual_internal(h, block, cat, n, scantable, qmul, max_coeff, cat == 0 || cat == 3);
 #else
     if( cat == 0 || cat == 3 ) decode_cabac_residual_dc(h, block, cat, n, scantable, qmul, max_coeff);
@@ -6572,7 +6573,7 @@ static void filter_mb( H264Context *h, int mb_x, int mb_y, uint8_t *img_y, uint8
         filter_mb_mbaff_edgecv( h, &img_cr[0], uvlinesize, bS, rqp );
     }
 
-#ifdef CONFIG_SMALL
+#if CONFIG_SMALL
     for( dir = 0; dir < 2; dir++ )
         filter_mb_dir(h, mb_x, mb_y, img_y, img_cb, img_cr, linesize, uvlinesize, mb_xy, mb_type, mvy_limit, dir ? 0 : first_vertical_edge_done, dir);
 #else
@@ -6589,7 +6590,7 @@ static int decode_slice(struct AVCodecContext *avctx, void *arg){
     s->mb_skip_run= -1;
 
     h->is_complex = FRAME_MBAFF || s->picture_structure != PICT_FRAME || s->codec_id != CODEC_ID_H264 ||
-                    (ENABLE_GRAY && (s->flags&CODEC_FLAG_GRAY)) || (ENABLE_H264_ENCODER && s->encoding);
+                    (CONFIG_GRAY && (s->flags&CODEC_FLAG_GRAY)) || (CONFIG_H264_ENCODER && s->encoding);
 
     if( h->pps.cabac ) {
         int i;
@@ -7293,7 +7294,7 @@ static void execute_decode_slices(H264Context *h, int context_count){
     H264Context *hx;
     int i;
 
-    if(avctx->codec_id == CODEC_ID_H264_VDPAU)
+    if(s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
         return;
     if(context_count == 1) {
         decode_slice(avctx, &h);
@@ -7423,10 +7424,10 @@ static int decode_nal_units(H264Context *h, const uint8_t *buf, int buf_size){
                && (avctx->skip_frame < AVDISCARD_BIDIR  || hx->slice_type_nos!=FF_B_TYPE)
                && (avctx->skip_frame < AVDISCARD_NONKEY || hx->slice_type_nos==FF_I_TYPE)
                && avctx->skip_frame < AVDISCARD_ALL){
-                if(ENABLE_H264_VDPAU_DECODER && avctx->codec_id == CODEC_ID_H264_VDPAU){
+                if(CONFIG_H264_VDPAU_DECODER && s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU){
                     static const uint8_t start_code[] = {0x00, 0x00, 0x01};
-                    ff_vdpau_h264_add_data_chunk(h, start_code, sizeof(start_code));
-                    ff_vdpau_h264_add_data_chunk(h, &buf[buf_index - consumed], consumed );
+                    ff_vdpau_add_data_chunk(s, start_code, sizeof(start_code));
+                    ff_vdpau_add_data_chunk(s, &buf[buf_index - consumed], consumed );
                 }else
                     context_count++;
             }
@@ -7624,6 +7625,9 @@ static int decode_frame(AVCodecContext *avctx,
         s->current_picture_ptr->qscale_type= FF_QSCALE_TYPE_H264;
         s->current_picture_ptr->pict_type= s->pict_type;
 
+        if (CONFIG_H264_VDPAU_DECODER && s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+            ff_vdpau_h264_set_reference_frames(s);
+
         if(!s->dropable) {
             execute_ref_pic_marking(h, h->mmco, h->mmco_index);
             h->prev_poc_msb= h->poc_msb;
@@ -7632,8 +7636,8 @@ static int decode_frame(AVCodecContext *avctx,
         h->prev_frame_num_offset= h->frame_num_offset;
         h->prev_frame_num= h->frame_num;
 
-        if (ENABLE_H264_VDPAU_DECODER && avctx->codec_id == CODEC_ID_H264_VDPAU)
-            ff_vdpau_h264_picture_complete(h);
+        if (CONFIG_H264_VDPAU_DECODER && s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+            ff_vdpau_h264_picture_complete(s);
 
         /*
          * FIXME: Error handling code does not seem to support interlaced
@@ -8020,11 +8024,11 @@ AVCodec h264_decoder = {
     .long_name = NULL_IF_CONFIG_SMALL("H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10"),
 };
 
-#ifdef CONFIG_H264_VDPAU_DECODER
+#if CONFIG_H264_VDPAU_DECODER
 AVCodec h264_vdpau_decoder = {
     "h264_vdpau",
     CODEC_TYPE_VIDEO,
-    CODEC_ID_H264_VDPAU,
+    CODEC_ID_H264,
     sizeof(H264Context),
     decode_init,
     NULL,
@@ -8036,6 +8040,6 @@ AVCodec h264_vdpau_decoder = {
 };
 #endif
 
-#ifdef CONFIG_SVQ3_DECODER
+#if CONFIG_SVQ3_DECODER
 #include "svq3.c"
 #endif

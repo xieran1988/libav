@@ -22,7 +22,7 @@
 #define AVFORMAT_AVFORMAT_H
 
 #define LIBAVFORMAT_VERSION_MAJOR 52
-#define LIBAVFORMAT_VERSION_MINOR 23
+#define LIBAVFORMAT_VERSION_MINOR 24
 #define LIBAVFORMAT_VERSION_MICRO  1
 
 #define LIBAVFORMAT_VERSION_INT AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
@@ -67,7 +67,7 @@ unsigned avformat_version(void);
  *    A demuxer should set a default if it sets any translated tag.
  */
 
-#define AV_METADATA_IGNORE_CASE     1
+#define AV_METADATA_MATCH_CASE      1
 #define AV_METADATA_IGNORE_SUFFIX   2
 
 typedef struct {

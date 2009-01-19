@@ -23,10 +23,11 @@
 #define _SVID_SOURCE
 
 #include "libavutil/avstring.h"
+#include "libavutil/intreadwrite.h"
 #include "avformat.h"
 
 #include <sys/time.h>
-#ifdef HAVE_SYS_SELECT_H
+#if HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
 #include <strings.h>
@@ -441,17 +442,13 @@ static void sdp_parse_line(AVFormatContext *s, SDPParseState *s1,
             } else {
                 av_strlcpy(rtsp_st->control_url, p,   sizeof(rtsp_st->control_url));
             }
-        } else if (av_strstart(p, "rtpmap:", &p)) {
+        } else if (av_strstart(p, "rtpmap:", &p) && s->nb_streams > 0) {
             /* NOTE: rtpmap is only supported AFTER the 'm=' tag */
             get_word(buf1, sizeof(buf1), &p);
             payload_type = atoi(buf1);
-            for(i = 0; i < s->nb_streams;i++) {
-                st = s->streams[i];
-                rtsp_st = st->priv_data;
-                if (rtsp_st->sdp_payload_type == payload_type) {
-                    sdp_parse_rtpmap(st->codec, rtsp_st, payload_type, p);
-                }
-            }
+            st = s->streams[s->nb_streams - 1];
+            rtsp_st = st->priv_data;
+            sdp_parse_rtpmap(st->codec, rtsp_st, payload_type, p);
         } else if (av_strstart(p, "fmtp:", &p)) {
             /* NOTE: fmtp is only supported AFTER the 'a=rtpmap:xxx' tag */
             get_word(buf1, sizeof(buf1), &p);
@@ -510,10 +507,11 @@ static int sdp_parse(AVFormatContext *s, const char *content)
 {
     const char *p;
     int letter;
-    /* Some SDP lines, particularly for Realmedia or ASF RTSP streams, contain long SDP
-     * lines containing complete ASF Headers (several kB) or arrays of MDPR (RM stream
-     * descriptor) headers plus "rulebooks" describing their properties. Therefore, the
-     * SDP line buffer is large. */
+    /* Some SDP lines, particularly for Realmedia or ASF RTSP streams,
+     * contain long SDP lines containing complete ASF Headers (several
+     * kB) or arrays of MDPR (RM stream descriptor) headers plus
+     * "rulebooks" describing their properties. Therefore, the SDP line
+     * buffer is large. */
     char buf[8192], *q;
     SDPParseState sdp_parse_state, *s1 = &sdp_parse_state;
 
@@ -1504,7 +1502,7 @@ static int rtsp_read_close(AVFormatContext *s)
     return 0;
 }
 
-#ifdef CONFIG_RTSP_DEMUXER
+#if CONFIG_RTSP_DEMUXER
 AVInputFormat rtsp_demuxer = {
     "rtsp",
     NULL_IF_CONFIG_SMALL("RTSP input format"),
@@ -1597,7 +1595,7 @@ static int sdp_read_close(AVFormatContext *s)
     return 0;
 }
 
-#ifdef CONFIG_SDP_DEMUXER
+#if CONFIG_SDP_DEMUXER
 AVInputFormat sdp_demuxer = {
     "sdp",
     NULL_IF_CONFIG_SMALL("SDP"),
@@ -1609,7 +1607,7 @@ AVInputFormat sdp_demuxer = {
 };
 #endif
 
-#ifdef CONFIG_REDIR_DEMUXER
+#if CONFIG_REDIR_DEMUXER
 /* dummy redirector format (used directly in av_open_input_file now) */
 static int redir_probe(AVProbeData *pd)
 {

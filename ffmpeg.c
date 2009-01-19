@@ -41,23 +41,23 @@
 #include "libavutil/avstring.h"
 #include "libavformat/os_support.h"
 
-#ifdef HAVE_SYS_RESOURCE_H
+#if HAVE_SYS_RESOURCE_H
 #include <sys/types.h>
 #include <sys/resource.h>
-#elif defined(HAVE_GETPROCESSTIMES)
+#elif HAVE_GETPROCESSTIMES
 #include <windows.h>
 #endif
 
-#ifdef HAVE_SYS_SELECT_H
+#if HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
 
-#ifdef HAVE_TERMIOS_H
+#if HAVE_TERMIOS_H
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <termios.h>
-#elif defined(HAVE_CONIO_H)
+#elif HAVE_CONIO_H
 #include <conio.h>
 #endif
 #undef time //needed because HAVE_AV_CONFIG_H is defined on top
@@ -295,7 +295,7 @@ typedef struct AVInputFile {
     int nb_streams;       /* nb streams we are aware of */
 } AVInputFile;
 
-#ifdef HAVE_TERMIOS_H
+#if HAVE_TERMIOS_H
 
 /* init terminal so that we can grab keys */
 static struct termios oldtty;
@@ -303,7 +303,7 @@ static struct termios oldtty;
 
 static void term_exit(void)
 {
-#ifdef HAVE_TERMIOS_H
+#if HAVE_TERMIOS_H
     tcsetattr (0, TCSANOW, &oldtty);
 #endif
 }
@@ -319,7 +319,7 @@ sigterm_handler(int sig)
 
 static void term_init(void)
 {
-#ifdef HAVE_TERMIOS_H
+#if HAVE_TERMIOS_H
     struct termios tty;
 
     tcgetattr (0, &tty);
@@ -344,7 +344,7 @@ static void term_init(void)
     register a function to be called at normal program termination
     */
     atexit(term_exit);
-#ifdef CONFIG_BEOS_NETSERVER
+#if CONFIG_BEOS_NETSERVER
     fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
 #endif
 }
@@ -352,10 +352,10 @@ static void term_init(void)
 /* read a key without blocking */
 static int read_key(void)
 {
-#if defined(HAVE_TERMIOS_H)
+#if HAVE_TERMIOS_H
     int n = 1;
     unsigned char ch;
-#ifndef CONFIG_BEOS_NETSERVER
+#if !CONFIG_BEOS_NETSERVER
     struct timeval tv;
     fd_set rfds;
 
@@ -372,7 +372,7 @@ static int read_key(void)
 
         return n;
     }
-#elif defined(HAVE_CONIO_H)
+#elif HAVE_CONIO_H
     if(kbhit())
         return(getch());
 #endif
@@ -427,7 +427,7 @@ static int av_exit(int ret)
 
     av_free(video_standard);
 
-#ifdef CONFIG_POWERPC_PERF
+#if CONFIG_POWERPC_PERF
     void powerpc_display_perf_report(void);
     powerpc_display_perf_report();
 #endif /* CONFIG_POWERPC_PERF */
@@ -684,6 +684,10 @@ static void do_audio_out(AVFormatContext *s,
 
             ret = avcodec_encode_audio(enc, audio_out, audio_out_size,
                                        (short *)audio_buf);
+            if (ret < 0) {
+                fprintf(stderr, "Audio encoding failed\n");
+                av_exit(1);
+            }
             audio_size += ret;
             pkt.stream_index= ost->index;
             pkt.data= audio_out;
@@ -711,6 +715,10 @@ static void do_audio_out(AVFormatContext *s,
         //FIXME pass ost->sync_opts as AVFrame.pts in avcodec_encode_audio()
         ret = avcodec_encode_audio(enc, audio_out, size_out,
                                    (short *)buftmp);
+        if (ret < 0) {
+            fprintf(stderr, "Audio encoding failed\n");
+            av_exit(1);
+        }
         audio_size += ret;
         pkt.stream_index= ost->index;
         pkt.data= audio_out;
@@ -760,7 +768,7 @@ static void pre_process_video_frame(AVInputStream *ist, AVPicture *picture, void
         picture2 = picture;
     }
 
-    if (ENABLE_VHOOK)
+    if (CONFIG_VHOOK)
         frame_hook_process(picture2, dec->pix_fmt, dec->width, dec->height,
                            1000000 * ist->pts / AV_TIME_BASE);
 
@@ -967,7 +975,7 @@ static void do_video_out(AVFormatContext *s,
             ret = avcodec_encode_video(enc,
                                        bit_buffer, bit_buffer_size,
                                        &big_picture);
-            if (ret == -1) {
+            if (ret < 0) {
                 fprintf(stderr, "Video encoding failed\n");
                 av_exit(1);
             }
@@ -1456,11 +1464,19 @@ static int output_packet(AVInputStream *ist, int ist_index,
                             if(ret <= 0) {
                                 ret = avcodec_encode_audio(enc, bit_buffer, bit_buffer_size, NULL);
                             }
+                            if (ret < 0) {
+                                fprintf(stderr, "Audio encoding failed\n");
+                                av_exit(1);
+                            }
                             audio_size += ret;
                             pkt.flags |= PKT_FLAG_KEY;
                             break;
                         case CODEC_TYPE_VIDEO:
                             ret = avcodec_encode_video(enc, bit_buffer, bit_buffer_size, NULL);
+                            if (ret < 0) {
+                                fprintf(stderr, "Video encoding failed\n");
+                                av_exit(1);
+                            }
                             video_size += ret;
                             if(enc->coded_frame && enc->coded_frame->key_frame)
                                 pkt.flags |= PKT_FLAG_KEY;
@@ -1763,6 +1779,8 @@ static int av_encode(AVFormatContext **output_files,
                 codec->has_b_frames = icodec->has_b_frames;
                 break;
             case CODEC_TYPE_SUBTITLE:
+                codec->width = icodec->width;
+                codec->height = icodec->height;
                 break;
             default:
                 abort();
@@ -2537,7 +2555,7 @@ static void opt_top_field_first(const char *arg)
 static int opt_thread_count(const char *opt, const char *arg)
 {
     thread_count= parse_number_or_die(opt, arg, OPT_INT64, 0, INT_MAX);
-#if !defined(HAVE_THREADS)
+#if !HAVE_THREADS
     if (verbose >= 0)
         fprintf(stderr, "Warning: not compiled with thread support, using thread emulation\n");
 #endif
@@ -2610,7 +2628,7 @@ static void opt_video_tag(const char *arg)
         video_codec_tag= arg[0] + (arg[1]<<8) + (arg[2]<<16) + (arg[3]<<24);
 }
 
-#ifdef CONFIG_VHOOK
+#if CONFIG_VHOOK
 static void add_frame_hooker(const char *arg)
 {
     int argc = 0;
@@ -3400,12 +3418,12 @@ static void opt_pass(const char *pass_str)
 
 static int64_t getutime(void)
 {
-#ifdef HAVE_GETRUSAGE
+#if HAVE_GETRUSAGE
     struct rusage rusage;
 
     getrusage(RUSAGE_SELF, &rusage);
     return (rusage.ru_utime.tv_sec * 1000000LL) + rusage.ru_utime.tv_usec;
-#elif defined(HAVE_GETPROCESSTIMES)
+#elif HAVE_GETPROCESSTIMES
     HANDLE proc;
     FILETIME c, e, k, u;
     proc = GetCurrentProcess();
@@ -3812,7 +3830,7 @@ static const OptionDef options[] = {
     { "psnr", OPT_BOOL | OPT_EXPERT | OPT_VIDEO, {(void*)&do_psnr}, "calculate PSNR of compressed frames" },
     { "vstats", OPT_EXPERT | OPT_VIDEO, {(void*)&opt_vstats}, "dump video coding statistics to file" },
     { "vstats_file", HAS_ARG | OPT_EXPERT | OPT_VIDEO, {(void*)opt_vstats_file}, "dump video coding statistics to file", "file" },
-#ifdef CONFIG_VHOOK
+#if CONFIG_VHOOK
     { "vhook", HAS_ARG | OPT_EXPERT | OPT_VIDEO, {(void*)add_frame_hooker}, "insert video processing module", "module" },
 #endif
     { "intra_matrix", HAS_ARG | OPT_EXPERT | OPT_VIDEO, {(void*)opt_intra_matrix}, "specify intra matrix coeffs", "matrix" },

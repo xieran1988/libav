@@ -28,18 +28,18 @@
 
 #define REGISTER_ENCODER(X,x) { \
           extern AVCodec x##_encoder; \
-          if(ENABLE_##X##_ENCODER)  register_avcodec(&x##_encoder); }
+          if(CONFIG_##X##_ENCODER)  register_avcodec(&x##_encoder); }
 #define REGISTER_DECODER(X,x) { \
           extern AVCodec x##_decoder; \
-          if(ENABLE_##X##_DECODER)  register_avcodec(&x##_decoder); }
+          if(CONFIG_##X##_DECODER)  register_avcodec(&x##_decoder); }
 #define REGISTER_ENCDEC(X,x)  REGISTER_ENCODER(X,x); REGISTER_DECODER(X,x)
 
 #define REGISTER_PARSER(X,x) { \
           extern AVCodecParser x##_parser; \
-          if(ENABLE_##X##_PARSER)  av_register_codec_parser(&x##_parser); }
+          if(CONFIG_##X##_PARSER)  av_register_codec_parser(&x##_parser); }
 #define REGISTER_BSF(X,x) { \
           extern AVBitStreamFilter x##_bsf; \
-          if(ENABLE_##X##_BSF)     av_register_bitstream_filter(&x##_bsf); }
+          if(CONFIG_##X##_BSF)     av_register_bitstream_filter(&x##_bsf); }
 
 void avcodec_register_all(void)
 {
@@ -108,6 +108,8 @@ void avcodec_register_all(void)
     REGISTER_DECODER  (MPEG2VIDEO, mpeg2video);
     REGISTER_DECODER  (MPEG4, mpeg4);
     REGISTER_DECODER (MPEGVIDEO, mpegvideo);
+    REGISTER_DECODER (MPEG_VDPAU, mpeg_vdpau);
+    REGISTER_DECODER (MPEG1_VDPAU, mpeg1_vdpau);
     REGISTER_DECODER  (MSMPEG4V1, msmpeg4v1);
     REGISTER_DECODER  (MSMPEG4V2, msmpeg4v2);
     REGISTER_DECODER  (MSMPEG4V3, msmpeg4v3);
@@ -188,6 +190,7 @@ void avcodec_register_all(void)
     REGISTER_DECODER (MACE3, mace3);
     REGISTER_DECODER (MACE6, mace6);
     REGISTER_DECODER (MLP, mlp);
+    REGISTER_DECODER (MP1, mp1);
     REGISTER_ENCDEC  (MP2, mp2);
     REGISTER_DECODER (MP3, mp3);
     REGISTER_DECODER (MP3ADU, mp3adu);
@@ -260,6 +263,7 @@ void avcodec_register_all(void)
     REGISTER_DECODER (ADPCM_IMA_DK4, adpcm_ima_dk4);
     REGISTER_DECODER (ADPCM_IMA_EA_EACS, adpcm_ima_ea_eacs);
     REGISTER_DECODER (ADPCM_IMA_EA_SEAD, adpcm_ima_ea_sead);
+    REGISTER_DECODER (ADPCM_IMA_ISS, adpcm_ima_iss);
     REGISTER_ENCDEC  (ADPCM_IMA_QT, adpcm_ima_qt);
     REGISTER_DECODER (ADPCM_IMA_SMJPEG, adpcm_ima_smjpeg);
     REGISTER_ENCDEC  (ADPCM_IMA_WAV, adpcm_ima_wav);
