@@ -1,6 +1,11 @@
-ffmpeg-debian (3:0.svn20090110-2) experimental; urgency=low
+ffmpeg-debian (3:0.svn20090119-1) UNRELEASED; urgency=low
 
+  * New Upstream Version (svn revision 16681m libswscale revision 28341)
   * update Vcs-Git tags. Packaging has now moved to git
+  
+  Upstream Changes:
+   - SVQ3 watermark decoding support
+   - hybrid WavPack support
 
  -- Reinhard Tartler <siretart@tauware.de>  Mon, 12 Jan 2009 07:42:17 +0100
 
