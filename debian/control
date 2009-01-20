@@ -24,6 +24,7 @@ Build-Depends: debhelper (>= 5.0.0),
                libvorbis-dev,
                libx11-dev,
                libxext-dev,
+               libxvmc-dev,
                quilt,
                texi2html,
                zlib1g-dev

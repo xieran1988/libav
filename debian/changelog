@@ -4,6 +4,7 @@ ffmpeg-debian (3:0.svn20090119-1) experimental; urgency=low
   * update Vcs-Git tags. Packaging has now moved to git
   * updates to packaging that faciliate building the unstripped and ubuntu
     variants of this package
+  * enable xvmc support
 
   Upstream Changes:
    - SVQ3 watermark decoding support
