@@ -137,7 +137,7 @@ endif
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION)) | $$upkg (>= $(SHLIBS_VERSION))"; \
 	done
 	dh_installdeb
-	env LD_LIBRARY_PATH=$(CURDIR)/debian/tmp/usr/lib \
+	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
 	dh_shlibdeps
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"
 	dh_md5sums
