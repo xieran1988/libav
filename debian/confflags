@@ -25,10 +25,22 @@ endif
 
 # Configuration flags causing the libs to be GPL tainted
 gpl_confflags += --enable-gpl
-gpl_confflags += --enable-libfaad
 gpl_confflags += --enable-postproc
 gpl_confflags += --enable-swscale
 gpl_confflags += --enable-x11grab
+
+# there is no libfaad in ubuntu/main, on in ubuntu/multiverse
+HAVE_LIBFAAD = no
+ifeq ($(ubuntu),)
+HAVE_LIBFAAD = yes
+endif
+ifneq ($(DEB_SOURCE),ffmpeg-debian)
+HAVE_LIBFAAD = yes
+endif
+
+ifeq ($(HAVE_LIBFAAD),yes)
+gpl_confflags += --enable-libfaad
+endif
 
 # Common configuration flags; comment out following line for LGPL versions of
 # the libraries
@@ -44,6 +56,23 @@ confflags += --enable-libvorbis
 confflags += --enable-pthreads
 confflags += --disable-stripping
 confflags += --disable-vhook
+
+# this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
+ifneq ($(DEB_SOURCE),ffmpeg-debian)
+confflags += --enable-libxvid
+confflags += --enable-libmp3lame
+confflags += --enable-libfaac
+confflags += --enable-libx264
+
+ifeq      ($(DEB_HOST_ARCH),i386)
+confflags += --enable-xvmc
+confflags += --enable-vdpau
+else ifeq ($(DEB_HOST_ARCH),amd64)
+confflags += --enable-xvmc
+confflags += --enable-vdpau
+endif
+
+endif
 
 # Enable IEEE 1394 (FireWire) support on Linux only
 ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))

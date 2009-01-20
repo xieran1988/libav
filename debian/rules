@@ -7,6 +7,7 @@ DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
 SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+\.svn([0-9]+)$$/\1/p')
 SHLIBS_VERSION := 3:0.svn20081101-1
+ubuntu := $(findstring ubuntu,$(DEB_VERSION))
 
 LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-unstripped-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 
@@ -105,7 +106,7 @@ else
 endif
 
 formats.txt: install
-	env LD_LIBRARY_PATH=$(CURDIR)/debian/tmp/usr/lib \
+	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
 	debian/tmp/usr/bin/ffmpeg -formats > $@
 
 ifneq ($(DEB_SOURCE),ffmpeg-debian)
@@ -120,7 +121,11 @@ binary-arch: build install formats.txt
 	dh_installdocs $(extradoc) doc/optimization.txt
 	dh_installdocs -A MAINTAINERS CREDITS doc/TODO
 	dh_installdocs -A debian/patents.txt debian/README.Debian
+ifeq ($(DEB_SOURCE),ffmpeg)
+	dh_installdocs -p libavcodec-unstripped-52 formats.txt
+else
 	dh_installdocs -p libavcodec52 formats.txt
+endif
 	dh_installexamples -pffmpeg doc/ffserver.conf debian/recordshow.sh
 	dh_installexamples -plibavcodec-dev libavcodec/apiexample.c
 	dh_installchangelogs Changelog
@@ -133,8 +138,12 @@ endif
 	dh_compress
 	dh_fixperms
 	for pkg in $(LIB_PKGS); do \
+ifneq ($(DEB_SOURCE),ffmpeg-debian)
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-unstripped-\1/'); \
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION)) | $$upkg (>= $(SHLIBS_VERSION))"; \
+else
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION))"; \
+endif
 	done
 	dh_installdeb
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
