@@ -30,17 +30,9 @@ gpl_confflags += --enable-swscale
 gpl_confflags += --enable-x11grab
 
 # there is no libfaad in ubuntu/main, on in ubuntu/multiverse
-HAVE_LIBFAAD = no
-ifeq ($(ubuntu),)
-HAVE_LIBFAAD = yes
-endif
-ifneq ($(DEB_SOURCE),ffmpeg-debian)
-HAVE_LIBFAAD = yes
-endif
-
-ifeq ($(HAVE_LIBFAAD),yes)
-gpl_confflags += --enable-libfaad
-endif
+HAVE_LIBFAAD := $(shell stat /usr/include/faad.h >/dev/null 2>/dev/null && \
+                        echo --enable-libfaad )
+gpl_confflags += $(HAVE_LIBFAAD)
 
 # Common configuration flags; comment out following line for LGPL versions of
 # the libraries
