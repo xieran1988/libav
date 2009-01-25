@@ -1,3 +1,10 @@
+ffmpeg-debian (3:0.svn20090119-2) UNRELEASED; urgency=low
+
+  * strighten internal dependencies by using a shlibs.local file
+    Closes: #512844, #512466
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 25 Jan 2009 11:16:24 +0100
+
 ffmpeg-debian (3:0.svn20090119-1) experimental; urgency=low
 
   * New Upstream Version (svn revision 16681 libswscale revision 28341)
