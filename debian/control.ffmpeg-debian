@@ -56,6 +56,9 @@ Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
+Breaks: libavcodec51,
+	libavcodec52 (<= 3:0.svn20090119-1),
+	libavformat52 (<= 3:0.svn20090119-1)
 Description: ffmpeg utility library
  This is the common utility library from the ffmpeg project. It is required
  by all other ffmpeg libraries.
