@@ -1,0 +1,7 @@
+libavutil 49 libavutil49 (= ${binary:Version})
+libavcodec 52 libavcodec52 (= ${binary:Version})
+libavdevice 52 libavdevice52 (= ${binary:Version})
+libavformat 52 libavformat52 (= ${binary:Version})
+libavfilter 0 libavfilter0 (= ${binary:Version})
+libpostproc 51 libpostproc51 (= ${binary:Version})
+libswscale 0 libswscale0 (= ${binary:Version})
