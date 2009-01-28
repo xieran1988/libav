@@ -35,6 +35,7 @@
 #include "unary.h"
 #include "simple_idct.h"
 #include "mathops.h"
+#include "vdpau_internal.h"
 
 #undef NDEBUG
 #include <assert.h>
@@ -1173,12 +1174,7 @@ static int vc1_parse_frame_header(VC1Context *v, GetBitContext* gb)
     v->k_y = v->mvrange + 8; //k_y can be 8 9 10 11
     v->range_x = 1 << (v->k_x - 1);
     v->range_y = 1 << (v->k_y - 1);
-    if (v->profile == PROFILE_ADVANCED)
-    {
-        if (v->postprocflag) v->postproc = get_bits1(gb);
-    }
-    else
-        if (v->multires && v->s.pict_type != FF_B_TYPE) v->respic = get_bits(gb, 2);
+    if (v->multires && v->s.pict_type != FF_B_TYPE) v->respic = get_bits(gb, 2);
 
     if(v->res_x8 && (v->s.pict_type == FF_I_TYPE || v->s.pict_type == FF_BI_TYPE)){
         v->x8_type = get_bits1(gb);
@@ -1406,7 +1402,7 @@ static int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
     if (v->quantizer_mode == QUANT_FRAME_EXPLICIT)
         v->pquantizer = get_bits1(gb);
     if(v->postprocflag)
-        v->postproc = get_bits1(gb);
+        v->postproc = get_bits(gb, 2);
 
     if(v->s.pict_type == FF_I_TYPE || v->s.pict_type == FF_P_TYPE) v->use_ic = 0;
 
@@ -3107,6 +3103,8 @@ static int vc1_decode_p_block(VC1Context *v, DCTELEM block[64], int n, int mquan
     return pat;
 }
 
+static const int size_table  [6] = { 0, 2, 3, 4,  5,  8 };
+static const int offset_table[6] = { 0, 1, 3, 7, 15, 31 };
 
 /** Decode one P-frame MB (in Simple/Main profile)
  */
@@ -3120,8 +3118,6 @@ static int vc1_decode_p_mb(VC1Context *v)
     int mqdiff, mquant; /* MB quantization */
     int ttmb = v->ttfrm; /* MB Transform type */
 
-    static const int size_table[6] = { 0, 2, 3, 4, 5, 8 },
-      offset_table[6] = { 0, 1, 3, 7, 15, 31 };
     int mb_has_coeffs = 1; /* last_flag */
     int dmv_x, dmv_y; /* Differential MV components */
     int index, index1; /* LUT indexes */
@@ -3415,9 +3411,6 @@ static void vc1_decode_b_mb(VC1Context *v)
     int cbp = 0; /* cbp decoding stuff */
     int mqdiff, mquant; /* MB quantization */
     int ttmb = v->ttfrm; /* MB Transform type */
-
-    static const int size_table[6] = { 0, 2, 3, 4, 5, 8 },
-      offset_table[6] = { 0, 1, 3, 7, 15, 31 };
     int mb_has_coeffs = 0; /* last_flag */
     int index, index1; /* LUT indexes */
     int val, sign; /* temp values */
@@ -4130,6 +4123,7 @@ static int vc1_decode_frame(AVCodecContext *avctx,
     MpegEncContext *s = &v->s;
     AVFrame *pict = data;
     uint8_t *buf2 = NULL;
+    const uint8_t *buf_vdpau = buf;
 
     /* no supplementary picture */
     if (buf_size == 0) {
@@ -4151,6 +4145,13 @@ static int vc1_decode_frame(AVCodecContext *avctx,
         s->current_picture_ptr= &s->picture[i];
     }
 
+    if (s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU){
+        if (v->profile < PROFILE_ADVANCED)
+            avctx->pix_fmt = PIX_FMT_VDPAU_WMV3;
+        else
+            avctx->pix_fmt = PIX_FMT_VDPAU_VC1;
+    }
+
     //for advanced profile we may need to parse and unescape data
     if (avctx->codec_id == CODEC_ID_VC1) {
         int buf_size2 = 0;
@@ -4167,6 +4168,8 @@ static int vc1_decode_frame(AVCodecContext *avctx,
                 if(size <= 0) continue;
                 switch(AV_RB32(start)){
                 case VC1_CODE_FRAME:
+                    if (s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+                        buf_vdpau = start;
                     buf_size2 = vc1_unescape_buffer(start + 4, size, buf2);
                     break;
                 case VC1_CODE_ENTRYPOINT: /* it should be before frame data */
@@ -4255,14 +4258,19 @@ static int vc1_decode_frame(AVCodecContext *avctx,
     s->me.qpel_put= s->dsp.put_qpel_pixels_tab;
     s->me.qpel_avg= s->dsp.avg_qpel_pixels_tab;
 
-    ff_er_frame_start(s);
+    if ((CONFIG_VC1_VDPAU_DECODER || CONFIG_WMV3_VDPAU_DECODER)
+        &&s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+        ff_vdpau_vc1_decode_picture(s, buf_vdpau, (buf + buf_size) - buf_vdpau);
+    else {
+        ff_er_frame_start(s);
 
-    v->bits = buf_size * 8;
-    vc1_decode_blocks(v);
+        v->bits = buf_size * 8;
+        vc1_decode_blocks(v);
 //av_log(s->avctx, AV_LOG_INFO, "Consumed %i/%i bits\n", get_bits_count(&s->gb), buf_size*8);
 //  if(get_bits_count(&s->gb) > buf_size * 8)
 //      return -1;
-    ff_er_frame_end(s);
+        ff_er_frame_end(s);
+    }
 
     MPV_frame_end(s);
 
@@ -4336,3 +4344,35 @@ AVCodec wmv3_decoder = {
     NULL,
     .long_name = NULL_IF_CONFIG_SMALL("Windows Media Video 9"),
 };
+
+#if CONFIG_WMV3_VDPAU_DECODER
+AVCodec wmv3_vdpau_decoder = {
+    "wmv3_vdpau",
+    CODEC_TYPE_VIDEO,
+    CODEC_ID_WMV3,
+    sizeof(VC1Context),
+    vc1_decode_init,
+    NULL,
+    vc1_decode_end,
+    vc1_decode_frame,
+    CODEC_CAP_DR1 | CODEC_CAP_DELAY | CODEC_CAP_HWACCEL_VDPAU,
+    NULL,
+    .long_name = NULL_IF_CONFIG_SMALL("Windows Media Video 9 VDPAU"),
+};
+#endif
+
+#if CONFIG_VC1_VDPAU_DECODER
+AVCodec vc1_vdpau_decoder = {
+    "vc1_vdpau",
+    CODEC_TYPE_VIDEO,
+    CODEC_ID_VC1,
+    sizeof(VC1Context),
+    vc1_decode_init,
+    NULL,
+    vc1_decode_end,
+    vc1_decode_frame,
+    CODEC_CAP_DR1 | CODEC_CAP_DELAY | CODEC_CAP_HWACCEL_VDPAU,
+    NULL,
+    .long_name = NULL_IF_CONFIG_SMALL("SMPTE VC-1 VDPAU"),
+};
+#endif

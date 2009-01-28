@@ -1,6 +1,6 @@
 /*
  * default memory allocator for libavutil
- * Copyright (c) 2002 Fabrice Bellard.
+ * Copyright (c) 2002 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -24,17 +24,21 @@
  * default memory allocator for libavutil.
  */
 
-#include "common.h"
+#include "config.h"
 
-/* here we can use OS dependent allocation functions */
-#undef malloc
-#undef free
-#undef realloc
-
+#include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #if HAVE_MALLOC_H
 #include <malloc.h>
 #endif
+
+#include "mem.h"
+
+/* here we can use OS dependent allocation functions */
+#undef free
+#undef malloc
+#undef realloc
 
 /* you can redefine av_malloc and av_free in your project to use your
    memory allocator. You do not need to suppress this file because the

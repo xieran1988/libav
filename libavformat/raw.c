@@ -1,6 +1,6 @@
 /*
  * RAW muxer and demuxer
- * Copyright (c) 2001 Fabrice Bellard.
+ * Copyright (c) 2001 Fabrice Bellard
  * Copyright (c) 2005 Alex Beregszaszi
  *
  * This file is part of FFmpeg.
@@ -26,6 +26,7 @@
 #include "libavcodec/bytestream.h"
 #include "avformat.h"
 #include "raw.h"
+#include "id3v2.h"
 
 /* simple formats */
 #if CONFIG_FLAC_MUXER
@@ -288,6 +289,18 @@ static int audio_read_header(AVFormatContext *s,
     st->codec->codec_id = s->iformat->value;
     st->need_parsing = AVSTREAM_PARSE_FULL;
     /* the parameters will be extracted from the compressed bitstream */
+
+    if(st->codec->codec_id == CODEC_ID_FLAC) {
+        /* skip ID3v2 header if found */
+        uint8_t buf[ID3v2_HEADER_SIZE];
+        int ret = get_buffer(s->pb, buf, ID3v2_HEADER_SIZE);
+        if (ret == ID3v2_HEADER_SIZE && ff_id3v2_match(buf)) {
+            int len = ff_id3v2_tag_len(buf);
+            url_fseek(s->pb, len - ID3v2_HEADER_SIZE, SEEK_CUR);
+        } else {
+            url_fseek(s->pb, 0, SEEK_SET);
+        }
+    }
     return 0;
 }
 
@@ -572,8 +585,14 @@ static int eac3_probe(AVProbeData *p)
 #if CONFIG_FLAC_DEMUXER
 static int flac_probe(AVProbeData *p)
 {
-    if(memcmp(p->buf, "fLaC", 4)) return 0;
-    else                          return AVPROBE_SCORE_MAX / 2;
+    uint8_t *bufptr = p->buf;
+    uint8_t *end    = p->buf + p->buf_size;
+
+    if(ff_id3v2_match(bufptr))
+        bufptr += ff_id3v2_tag_len(bufptr);
+
+    if(bufptr > end-4 || memcmp(bufptr, "fLaC", 4)) return 0;
+    else                                            return AVPROBE_SCORE_MAX/2;
 }
 #endif
 
@@ -582,9 +601,15 @@ static int adts_aac_probe(AVProbeData *p)
 {
     int max_frames = 0, first_frames = 0;
     int fsize, frames;
+    uint8_t *buf0 = p->buf;
     uint8_t *buf2;
-    uint8_t *buf = p->buf;
-    uint8_t *end = buf + p->buf_size - 7;
+    uint8_t *buf;
+    uint8_t *end = buf0 + p->buf_size - 7;
+
+    if (ff_id3v2_match(buf0)) {
+        buf0 += ff_id3v2_tag_len(buf0);
+    }
+    buf = buf0;
 
     for(; buf < end; buf= buf2+1) {
         buf2 = buf;
@@ -599,7 +624,7 @@ static int adts_aac_probe(AVProbeData *p)
             buf2 += fsize;
         }
         max_frames = FFMAX(max_frames, frames);
-        if(buf == p->buf)
+        if(buf == buf0)
             first_frames= frames;
     }
     if   (first_frames>=3) return AVPROBE_SCORE_MAX/2+1;

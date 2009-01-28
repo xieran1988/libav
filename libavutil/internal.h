@@ -30,6 +30,7 @@
 #    define NDEBUG
 #endif
 
+#include <limits.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
@@ -164,8 +165,6 @@ static inline av_const int FASTDIV(int a, int b)
 
 extern const uint8_t ff_sqrt_tab[256];
 
-static inline int av_log2_16bit(unsigned int v);
-
 static inline av_const unsigned int ff_sqrt(unsigned int a)
 {
     unsigned int b;
@@ -231,7 +230,7 @@ if((y)<(x)){\
 #undef  rand
 #define rand rand_is_forbidden_due_to_state_trashing_use_av_random
 #undef  srand
-#define srand srand_is_forbidden_due_to_state_trashing_use_av_init_random
+#define srand srand_is_forbidden_due_to_state_trashing_use_av_random_init
 #undef  random
 #define random random_is_forbidden_due_to_state_trashing_use_av_random
 #undef  sprintf
@@ -242,11 +241,11 @@ if((y)<(x)){\
 #define exit exit_is_forbidden
 #ifndef LIBAVFORMAT_BUILD
 #undef  printf
-#define printf please_use_av_log
+#define printf please_use_av_log_instead_of_printf
 #undef  fprintf
-#define fprintf please_use_av_log
+#define fprintf please_use_av_log_instead_of_fprintf
 #undef  puts
-#define puts please_use_av_log
+#define puts please_use_av_log_instead_of_puts
 #undef  perror
 #define perror please_use_av_log_instead_of_perror
 #endif
@@ -259,6 +258,23 @@ if((y)<(x)){\
         goto fail;\
     }\
 }
+
+#if defined(__ICC) || defined(__SUNPRO_C)
+    #define DECLARE_ALIGNED(n,t,v)      t v __attribute__ ((aligned (n)))
+    #define DECLARE_ASM_CONST(n,t,v)    const t __attribute__ ((aligned (n))) v
+#elif defined(__GNUC__)
+    #define DECLARE_ALIGNED(n,t,v)      t v __attribute__ ((aligned (n)))
+    #define DECLARE_ASM_CONST(n,t,v)    static const t v attribute_used __attribute__ ((aligned (n)))
+#elif defined(_MSC_VER)
+    #define DECLARE_ALIGNED(n,t,v)      __declspec(align(n)) t v
+    #define DECLARE_ASM_CONST(n,t,v)    __declspec(align(n)) static const t v
+#elif HAVE_INLINE_ASM
+    #error The asm code needs alignment, but we do not know how to do it for this compiler.
+#else
+    #define DECLARE_ALIGNED(n,t,v)      t v
+    #define DECLARE_ASM_CONST(n,t,v)    static const t v
+#endif
+
 
 #if !HAVE_LLRINT
 static av_always_inline av_const long long llrint(double x)

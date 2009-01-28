@@ -1,7 +1,7 @@
 /*
  * Faad decoder
- * Copyright (c) 2003 Zdenek Kabelac.
- * Copyright (c) 2004 Thomas Raivio.
+ * Copyright (c) 2003 Zdenek Kabelac
+ * Copyright (c) 2004 Thomas Raivio
  *
  * This file is part of FFmpeg.
  *
@@ -21,7 +21,7 @@
  */
 
 /**
- * @file faad.c
+ * @file libfaad.c
  * AAC decoder.
  *
  * still a bit unfinished - but it plays something

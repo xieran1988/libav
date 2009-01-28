@@ -27,13 +27,13 @@
 
 #include "avformat.h"
 #include "libavutil/avstring.h"
-#include "rtp_internal.h"
+#include "rtp.h"
 #include "rdt.h"
 #include "libavutil/base64.h"
 #include "libavutil/md5.h"
 #include "rm.h"
 #include "internal.h"
-#include <libavcodec/bitstream.h>
+#include "libavcodec/bitstream.h"
 
 struct RDTDemuxContext {
     AVFormatContext *ic; /**< the containing (RTSP) demux context */

@@ -2100,7 +2100,10 @@ static int av_encode(AVFormatContext **output_files,
 
         /* read a frame from it and output it in the fifo */
         is = input_files[file_index];
-        if (av_read_frame(is, &pkt) < 0) {
+        ret= av_read_frame(is, &pkt);
+        if(ret == AVERROR(EAGAIN) && strcmp(is->iformat->name, "ffm"))
+            continue;
+        if (ret < 0) {
             file_table[file_index].eof_reached = 1;
             if (opt_shortest)
                 break;
@@ -3697,19 +3700,18 @@ static int opt_preset(const char *opt, const char *arg)
     FILE *f=NULL;
     char filename[1000], tmp[1000], tmp2[1000], line[1000];
     int i;
-    const char *base[3]= { getenv("HOME"),
-                           "/usr/local/share",
-                           "/usr/share",
+    const char *base[2]= { getenv("HOME"),
+                           FFMPEG_DATADIR,
                          };
 
-    for(i=!base[0]; i<3 && !f; i++){
-        snprintf(filename, sizeof(filename), "%s/%sffmpeg/%s.ffpreset", base[i], i ? "" : ".", arg);
+    for(i=!base[0]; i<2 && !f; i++){
+        snprintf(filename, sizeof(filename), "%s%s/%s.ffpreset", base[i], i ? "" : "/.ffmpeg", arg);
         f= fopen(filename, "r");
         if(!f){
             char *codec_name= *opt == 'v' ? video_codec_name :
                               *opt == 'a' ? audio_codec_name :
                                             subtitle_codec_name;
-            snprintf(filename, sizeof(filename), "%s/%sffmpeg/%s-%s.ffpreset", base[i],  i ? "" : ".", codec_name, arg);
+            snprintf(filename, sizeof(filename), "%s%s/%s-%s.ffpreset", base[i],  i ? "" : "/.ffmpeg", codec_name, arg);
             f= fopen(filename, "r");
         }
     }
@@ -3918,8 +3920,9 @@ int main(int argc, char **argv)
     }
 
     ti = getutime();
-    av_encode(output_files, nb_output_files, input_files, nb_input_files,
-              stream_maps, nb_stream_maps);
+    if (av_encode(output_files, nb_output_files, input_files, nb_input_files,
+                  stream_maps, nb_stream_maps) < 0)
+        av_exit(1);
     ti = getutime() - ti;
     if (do_benchmark) {
         printf("bench: utime=%0.3fs\n", ti / 1000000.0);

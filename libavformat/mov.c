@@ -1,6 +1,6 @@
 /*
  * MOV demuxer
- * Copyright (c) 2001 Fabrice Bellard.
+ * Copyright (c) 2001 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -439,10 +439,11 @@ static int mov_read_pasp(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
     const int den = get_be32(pb);
     AVStream * const st = c->fc->streams[c->fc->nb_streams-1];
     if (den != 0) {
-        if ((st->sample_aspect_ratio.den && den != st->sample_aspect_ratio.den) ||
-            (st->sample_aspect_ratio.num && num != st->sample_aspect_ratio.num))
+        if ((st->sample_aspect_ratio.den != 1 || st->sample_aspect_ratio.num) && // default
+            (den != st->sample_aspect_ratio.den || num != st->sample_aspect_ratio.num))
             av_log(c->fc, AV_LOG_WARNING,
-                   "sample aspect ratio already set, overriding by 'pasp' atom\n");
+                   "sample aspect ratio already set to %d:%d, overriding by 'pasp' atom\n",
+                   st->sample_aspect_ratio.num, st->sample_aspect_ratio.den);
         st->sample_aspect_ratio.num = num;
         st->sample_aspect_ratio.den = den;
     }
@@ -493,7 +494,7 @@ static int mov_read_mdhd(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
     AVStream *st = c->fc->streams[c->fc->nb_streams-1];
     MOVStreamContext *sc = st->priv_data;
     int version = get_byte(pb);
-    int lang;
+    unsigned lang;
 
     if (version > 1)
         return -1; /* unsupported */
@@ -2013,6 +2014,8 @@ static int mov_read_seek(AVFormatContext *s, int stream_index, int64_t sample_ti
 
     if (stream_index >= s->nb_streams)
         return -1;
+    if (sample_time < 0)
+        sample_time = 0;
 
     st = s->streams[stream_index];
     sample = mov_seek_stream(st, sample_time, flags);

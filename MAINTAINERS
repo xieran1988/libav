@@ -127,7 +127,7 @@ Codecs:
   dxa.c                                 Kostya Shishkov
   dv.c                                  Roman Shaposhnik
   ffv1.c                                Michael Niedermayer
-  flac.c                                Alex Beregszaszi
+  flacdec.c                             Alex Beregszaszi, Justin Ruggles
   flacenc.c                             Justin Ruggles
   flashsv*                              Benjamin Larsson
   flicvideo.c                           Mike Melanson
@@ -162,7 +162,7 @@ Codecs:
   pcx.c                                 Ivo van Poorten
   ptx.c                                 Ivo van Poorten
   qcelp*                                Reynaldo H. Verdejo Pinochet
-  qdm2.c, qdm2data.h                    Roberto Togni
+  qdm2.c, qdm2data.h                    Roberto Togni, Benjamin Larsson
   qdrw.c                                Kostya Shishkov
   qpeg.c                                Kostya Shishkov
   qtrle.c                               Mike Melanson
@@ -249,6 +249,7 @@ Muxers/Demuxers:
   iff.c                                 Jaikrishnan Menon
   ipmovie.c                             Mike Melanson
   img2.c                                Michael Niedermayer
+  iss.c                                 Stefan Gehrer
   libnut.c                              Oded Shimon
   lmlm4.c                               Ivo van Poorten
   matroska.c                            Aurelien Jacobs
@@ -271,6 +272,7 @@ Muxers/Demuxers:
   oggparseogm.c                         Mans Rullgard
   psxstr.c                              Mike Melanson
   pva.c                                 Ivo van Poorten
+  r3d.c                                 Baptiste Coudurier
   raw.c                                 Michael Niedermayer
   rl2.c                                 Sascha Sommer
   rm.c                                  Roberto Togni

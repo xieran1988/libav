@@ -1,7 +1,7 @@
 /*
  * FFT/IFFT transforms
  * Copyright (c) 2008 Loren Merritt
- * Copyright (c) 2002 Fabrice Bellard.
+ * Copyright (c) 2002 Fabrice Bellard
  * Partly based on libdjbfft by D. J. Bernstein
  *
  * This file is part of FFmpeg.
@@ -58,11 +58,7 @@ static int split_radix_permutation(int i, int n, int inverse)
     else                  return split_radix_permutation(i, m, inverse)*4 - 1;
 }
 
-/**
- * The size of the FFT is 2^nbits. If inverse is TRUE, inverse FFT is
- * done
- */
-int ff_fft_init(FFTContext *s, int nbits, int inverse)
+av_cold int ff_fft_init(FFTContext *s, int nbits, int inverse)
 {
     int i, j, m, n;
     float alpha, c1, s1, s2;
@@ -185,9 +181,6 @@ int ff_fft_init(FFTContext *s, int nbits, int inverse)
     return -1;
 }
 
-/**
- * Do the permutation needed BEFORE calling ff_fft_calc()
- */
 void ff_fft_permute_c(FFTContext *s, FFTComplex *z)
 {
     int j, k, np;
@@ -374,11 +367,6 @@ static void (*fft_dispatch[])(FFTComplex*) = {
     fft2048, fft4096, fft8192, fft16384, fft32768, fft65536,
 };
 
-/**
- * Do a complex FFT with the parameters defined in ff_fft_init(). The
- * input data must be permuted before with s->revtab table. No
- * 1.0/sqrt(n) normalization is done.
- */
 void ff_fft_calc_c(FFTContext *s, FFTComplex *z)
 {
     fft_dispatch[s->nbits-2](z);

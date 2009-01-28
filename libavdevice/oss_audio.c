@@ -1,6 +1,6 @@
 /*
  * Linux audio play and grab interface
- * Copyright (c) 2000, 2001 Fabrice Bellard.
+ * Copyright (c) 2000, 2001 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -53,8 +53,9 @@ typedef struct {
     int buffer_ptr;
 } AudioData;
 
-static int audio_open(AudioData *s, int is_output, const char *audio_device)
+static int audio_open(AVFormatContext *s1, int is_output, const char *audio_device)
 {
+    AudioData *s = s1->priv_data;
     int audio_fd;
     int tmp, err;
     char *flip = getenv("AUDIO_FLIP_LEFT");
@@ -64,7 +65,7 @@ static int audio_open(AudioData *s, int is_output, const char *audio_device)
     else
         audio_fd = open(audio_device, O_RDONLY);
     if (audio_fd < 0) {
-        av_log(NULL, AV_LOG_ERROR, "%s: %s\n", audio_device, strerror(errno));
+        av_log(s1, AV_LOG_ERROR, "%s: %s\n", audio_device, strerror(errno));
         return AVERROR(EIO);
     }
 
@@ -114,27 +115,27 @@ static int audio_open(AudioData *s, int is_output, const char *audio_device)
         s->codec_id = CODEC_ID_PCM_S16BE;
         break;
     default:
-        av_log(NULL, AV_LOG_ERROR, "Soundcard does not support 16 bit sample format\n");
+        av_log(s1, AV_LOG_ERROR, "Soundcard does not support 16 bit sample format\n");
         close(audio_fd);
         return AVERROR(EIO);
     }
     err=ioctl(audio_fd, SNDCTL_DSP_SETFMT, &tmp);
     if (err < 0) {
-        av_log(NULL, AV_LOG_ERROR, "SNDCTL_DSP_SETFMT: %s\n", strerror(errno));
+        av_log(s1, AV_LOG_ERROR, "SNDCTL_DSP_SETFMT: %s\n", strerror(errno));
         goto fail;
     }
 
     tmp = (s->channels == 2);
     err = ioctl(audio_fd, SNDCTL_DSP_STEREO, &tmp);
     if (err < 0) {
-        av_log(NULL, AV_LOG_ERROR, "SNDCTL_DSP_STEREO: %s\n", strerror(errno));
+        av_log(s1, AV_LOG_ERROR, "SNDCTL_DSP_STEREO: %s\n", strerror(errno));
         goto fail;
     }
 
     tmp = s->sample_rate;
     err = ioctl(audio_fd, SNDCTL_DSP_SPEED, &tmp);
     if (err < 0) {
-        av_log(NULL, AV_LOG_ERROR, "SNDCTL_DSP_SPEED: %s\n", strerror(errno));
+        av_log(s1, AV_LOG_ERROR, "SNDCTL_DSP_SPEED: %s\n", strerror(errno));
         goto fail;
     }
     s->sample_rate = tmp; /* store real sample rate */
@@ -162,7 +163,7 @@ static int audio_write_header(AVFormatContext *s1)
     st = s1->streams[0];
     s->sample_rate = st->codec->sample_rate;
     s->channels = st->codec->channels;
-    ret = audio_open(s, 1, s1->filename);
+    ret = audio_open(s1, 1, s1->filename);
     if (ret < 0) {
         return AVERROR(EIO);
     } else {
@@ -225,7 +226,7 @@ static int audio_read_header(AVFormatContext *s1, AVFormatParameters *ap)
     s->sample_rate = ap->sample_rate;
     s->channels = ap->channels;
 
-    ret = audio_open(s, 0, s1->filename);
+    ret = audio_open(s1, 0, s1->filename);
     if (ret < 0) {
         av_free(st);
         return AVERROR(EIO);

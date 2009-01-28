@@ -1,6 +1,6 @@
 /*
  * ISO Media common code
- * Copyright (c) 2001 Fabrice Bellard.
+ * Copyright (c) 2001 Fabrice Bellard
  * Copyright (c) 2002 Francois Revol <revol@free.fr>
  * Copyright (c) 2006 Baptiste Coudurier <baptiste.coudurier@free.fr>
  *
@@ -274,7 +274,7 @@ int ff_mov_iso639_to_lang(const char *lang, int mp4)
     return code;
 }
 
-int ff_mov_lang_to_iso639(int code, char *to)
+int ff_mov_lang_to_iso639(unsigned code, char *to)
 {
     int i;
     /* is it the mangled iso code? */
