@@ -43,6 +43,7 @@ confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf
 confflags += --enable-libgsm
 confflags += --enable-libschroedinger
+confflags += --enable-libspeex
 confflags += --enable-libtheora
 confflags += --enable-libvorbis
 confflags += --enable-pthreads
