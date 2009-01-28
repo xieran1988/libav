@@ -137,6 +137,21 @@ else
 endif
 	dh_compress
 	dh_fixperms
+	dh_installdeb
+# strict internal dependencies
+ifeq ($(DEB_SOURCE),ffmpeg-debian)
+	for pkg in $(LIB_PKGS); do \
+	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-unstripped-\1/'); \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(UPSTREAM_VERSION)) | $$upkg (>= $(UPSTREAM_VERSION)), $$pkg (< $(UPSTREAM_VERSION)-99) | $$upkg (< $(UPSTREAM_VERSION)-99)"; \
+	done
+else
+	for pkg in $(LIB_PKGS); do \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(UPSTREAM_VERSION)), $$pkg (< $(UPSTREAM_VERSION)-99)"; \
+	done
+endif
+	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
+	dh_shlibdeps
+# target dependencies for external packages
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-unstripped-\1/'); \
@@ -147,9 +162,6 @@ else
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION))"; \
 	done
 endif
-	dh_installdeb
-	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
-	dh_shlibdeps
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"
 	dh_md5sums
 	dh_builddeb
