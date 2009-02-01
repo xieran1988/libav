@@ -10,6 +10,15 @@ ffmpeg-debian (3:0.svn20090119-2) experimental; urgency=low
     to ffmpeg and may change on any new upstream revision. Please get in touch
     with the ffmpeg maintainers if you maintain packages that rely on that
     ffmpeg internal headers like this.
+  * simplify debian/confflags by doing autodetection of headers:
+     - xvid.h
+     - lame/lame.h
+     - faac.h
+     - x264.h
+     - vdpau/vdpau.h
+    Also remove the setting externalcodecs from DEB_BUILD_OPTIONS. The codecs 
+    will be enabled as soon as the headers are installed on the filesystem,
+    so there is no need in enabling that seperately.
   
   [ Fabian Greffrath ]
   * Enabled Speex decoding via libspeex.
