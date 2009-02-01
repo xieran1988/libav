@@ -92,7 +92,6 @@ install: build
 	dh_installdirs -ptmp usr/share/doc/ffmpeg/html etc
 	dh_installdirs -ptmp usr/share/doc/ffmpeg-doc/html
 	$(foreach flavor,$(FLAVORS),$(call install_flavor,$(flavor)))
-	cp -a libavcodec/dsputil.h debian/tmp/usr/include/libavcodec
 	cp debian-shared/doc/*.html debian/tmp/usr/share/doc/ffmpeg/html/
 	# don't fail on binary-indep only builds.
 	[ ! -d doxy ] || cp doxy/html/* debian/tmp/usr/share/doc/ffmpeg-doc/html

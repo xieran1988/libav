@@ -6,7 +6,11 @@ ffmpeg-debian (3:0.svn20090119-2) experimental; urgency=low
   * Add breaks on libavutil on earlier versions of libavcodec and
     libavformat. Again because of the ff_gcd -> av_gcd rename. 
     Closes: #512946
-
+  * no longer install dsputil.h. It exposes lots of function that are private
+    to ffmpeg and may change on any new upstream revision. Please get in touch
+    with the ffmpeg maintainers if you maintain packages that rely on that
+    ffmpeg internal headers like this.
+  
   [ Fabian Greffrath ]
   * Enabled Speex decoding via libspeex.
   * Use an alternative approach to achieve strict internal dependencies
