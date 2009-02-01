@@ -1,4 +1,4 @@
-ffmpeg-debian (3:0.svn20090119-2) UNRELEASED; urgency=low
+ffmpeg-debian (3:0.svn20090119-2) experimental; urgency=low
 
   [ Reinhard Tartler ]
   * strighten internal dependencies by using a shlibs.local file
@@ -13,7 +13,7 @@ ffmpeg-debian (3:0.svn20090119-2) UNRELEASED; urgency=low
     by calling dh_makeshlibs twice in debian/rules instead of a
     debian/shlibs.local file.
 
- -- Fabian Greffrath <fabian@debian-unofficial.org>  Wed, 28 Jan 2009 15:08:05 +0100
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 01 Feb 2009 19:54:27 +0100
 
 ffmpeg-debian (3:0.svn20090119-1) experimental; urgency=low
 
