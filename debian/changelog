@@ -11,6 +11,9 @@ ffmpeg-debian (3:0.svn20090128-1) experimental; urgency=low
     Closes: #512844, #512466
   * New upstream version reintroduces a compatibility symbol ff_gcd
     Closes: #512946
+  * Bump shlibs because of changes of the Metadata API in libavformat.
+    Actually no other package should use them yet, but let's better play safe 
+    here...
   * no longer install dsputil.h. It exposes lots of function that are private
     to ffmpeg and may change on any new upstream revision. Please get in touch
     with the ffmpeg maintainers if you maintain packages that rely on that
