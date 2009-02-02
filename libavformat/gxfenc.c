@@ -1,6 +1,6 @@
 /*
  * GXF muxer.
- * Copyright (c) 2006 SmartJog S.A., Baptiste Coudurier <baptiste dot coudurier at smartjog dot com>.
+ * Copyright (c) 2006 SmartJog S.A., Baptiste Coudurier <baptiste dot coudurier at smartjog dot com>
  *
  * This file is part of FFmpeg.
  *
@@ -169,7 +169,7 @@ static void gxf_write_packet_header(ByteIOContext *pb, GXFPktType type)
 static int gxf_write_mpeg_auxiliary(ByteIOContext *pb, GXFStreamContext *ctx)
 {
     char buffer[1024];
-    int size;
+    int size, starting_line;
 
     if (ctx->iframes) {
         ctx->p_per_gop = ctx->pframes / ctx->iframes;
@@ -182,11 +182,18 @@ static int gxf_write_mpeg_auxiliary(ByteIOContext *pb, GXFStreamContext *ctx)
         if (ctx->b_per_gop > 9)
             ctx->b_per_gop = 9; /* ensure value won't take more than one char */
     }
+    if (ctx->codec->height == 512 || ctx->codec->height == 608)
+        starting_line = 7; // VBI
+    else if (ctx->codec->height == 480)
+        starting_line = 20;
+    else
+        starting_line = 23; // default PAL
+
     size = snprintf(buffer, 1024, "Ver 1\nBr %.6f\nIpg 1\nPpi %d\nBpiop %d\n"
-                    "Pix 0\nCf %d\nCg %d\nSl 7\nnl16 %d\nVi 1\nf1 1\n",
+                    "Pix 0\nCf %d\nCg %d\nSl %d\nnl16 %d\nVi 1\nf1 1\n",
                     (float)ctx->codec->bit_rate, ctx->p_per_gop, ctx->b_per_gop,
                     ctx->codec->pix_fmt == PIX_FMT_YUV422P ? 2 : 1, ctx->first_gop_closed == 1,
-                    ctx->codec->height / 16);
+                    starting_line, ctx->codec->height / 16);
     put_byte(pb, TRACK_MPG_AUX);
     put_byte(pb, size + 1);
     put_buffer(pb, (uint8_t *)buffer, size + 1);
@@ -353,13 +360,20 @@ static int gxf_write_flt_packet(ByteIOContext *pb, GXFContext *ctx)
 
 static int gxf_write_umf_material_description(ByteIOContext *pb, GXFContext *ctx)
 {
+    // XXX drop frame
+    uint32_t timecode =
+        ctx->nb_frames / ctx->sample_rate * 3600 % 24 << 27 | // hours
+        ctx->nb_frames / ctx->sample_rate * 60 % 60   << 16 | // minutes
+        ctx->nb_frames / ctx->sample_rate % 60        <<  8 | // seconds
+        ctx->nb_frames % ctx->sample_rate;                    // fields
+
     put_le32(pb, ctx->flags);
     put_le32(pb, ctx->nb_frames); /* length of the longest track */
     put_le32(pb, ctx->nb_frames); /* length of the shortest track */
     put_le32(pb, 0); /* mark in */
     put_le32(pb, ctx->nb_frames); /* mark out */
     put_le32(pb, 0); /* timecode mark in */
-    put_le32(pb, ctx->nb_frames); /* timecode mark out */
+    put_le32(pb, timecode); /* timecode mark out */
     put_le64(pb, ctx->fc->timestamp); /* modification time */
     put_le64(pb, ctx->fc->timestamp); /* creation time */
     put_le16(pb, 0); /* reserved */
@@ -677,11 +691,8 @@ static int gxf_write_trailer(AVFormatContext *s)
     int i;
 
     for (i = 0; i < s->nb_streams; ++i) {
-        if (s->streams[i]->codec->codec_type == CODEC_TYPE_AUDIO) {
+        if (s->streams[i]->codec->codec_type == CODEC_TYPE_AUDIO)
             av_fifo_free(&gxf->streams[i].audio_buffer);
-        } else if (s->streams[i]->codec->codec_type == CODEC_TYPE_VIDEO) {
-            gxf->nb_frames = 2 * s->streams[i]->codec->frame_number;
-        }
     }
 
     gxf_write_eos_packet(pb, gxf);
@@ -756,6 +767,10 @@ static int gxf_write_media_packet(ByteIOContext *pb, GXFContext *ctx, AVPacket *
     gxf_write_media_preamble(pb, ctx, pkt, pkt->size + padding);
     put_buffer(pb, pkt->data, pkt->size);
     gxf_write_padding(pb, padding);
+
+    if (sc->codec->codec_type == CODEC_TYPE_VIDEO)
+        ctx->nb_frames += 2; // count fields
+
     return updatePacketSize(pb, pos);
 }
 

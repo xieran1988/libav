@@ -1,6 +1,6 @@
 /*
  * Mersenne Twister Random Algorithm
- * Copyright (c) 2006 Ryan Martell.
+ * Copyright (c) 2006 Ryan Martell
  * Based on A C-program for MT19937, with initialization improved 2002/1/26. Coded by
  * Takuji Nishimura and Makoto Matsumoto.
  *
@@ -55,10 +55,12 @@ void av_random_init(AVRandomState *state, unsigned int seed)
     state->index= index; // will cause it to generate untempered numbers the first iteration
 }
 
+#if LIBAVUTIL_VERSION_MAJOR < 50
 void av_init_random(unsigned int seed, AVRandomState *state)
 {
     av_random_init(state, seed);
 }
+#endif
 
 /** generate AV_RANDOM_N words at one time (which will then be tempered later) (av_random calls this; you shouldn't) */
 void av_random_generate_untempered_numbers(AVRandomState *state)
@@ -88,7 +90,7 @@ int main(void)
     int i, j;
     AVRandomState state;
 
-    av_init_random(0xdeadbeef, &state);
+    av_random_init(&state, 0xdeadbeef);
     for (j = 0; j < 10000; j++) {
         START_TIMER
         for (i = 0; i < 624; i++) {

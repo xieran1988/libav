@@ -1,6 +1,6 @@
 /*
  * MP3 muxer and demuxer
- * Copyright (c) 2003 Fabrice Bellard.
+ * Copyright (c) 2003 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -354,15 +354,17 @@ static int mp3_read_probe(AVProbeData *p)
     int max_frames, first_frames = 0;
     int fsize, frames, sample_rate;
     uint32_t header;
-    uint8_t *buf, *buf2, *end;
+    uint8_t *buf, *buf0, *buf2, *end;
     AVCodecContext avctx;
 
-    if(ff_id3v2_match(p->buf))
-        return AVPROBE_SCORE_MAX/2+1; // this must be less than mpeg-ps because some retards put id3v2 tags before mpeg-ps files
+    buf0 = p->buf;
+    if(ff_id3v2_match(buf0)) {
+        buf0 += ff_id3v2_tag_len(buf0);
+    }
 
     max_frames = 0;
-    buf = p->buf;
-    end = buf + p->buf_size - sizeof(uint32_t);
+    buf = buf0;
+    end = p->buf + p->buf_size - sizeof(uint32_t);
 
     for(; buf < end; buf= buf2+1) {
         buf2 = buf;
@@ -375,7 +377,7 @@ static int mp3_read_probe(AVProbeData *p)
             buf2 += fsize;
         }
         max_frames = FFMAX(max_frames, frames);
-        if(buf == p->buf)
+        if(buf == buf0)
             first_frames= frames;
     }
     if   (first_frames>=3) return AVPROBE_SCORE_MAX/2+1;
@@ -393,7 +395,7 @@ static int mp3_parse_vbr_tags(AVFormatContext *s, AVStream *st, int64_t base)
     uint32_t v, spf;
     int frames = -1; /* Total number of frames in file */
     const int64_t xing_offtbl[2][2] = {{32, 17}, {17,9}};
-    MPADecodeContext c;
+    MPADecodeHeader c;
     int vbrtag_size = 0;
 
     v = get_be32(s->pb);

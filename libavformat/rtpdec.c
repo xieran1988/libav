@@ -1,6 +1,6 @@
 /*
  * RTP input format
- * Copyright (c) 2002 Fabrice Bellard.
+ * Copyright (c) 2002 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include "network.h"
 
-#include "rtp_internal.h"
+#include "rtp.h"
 #include "rtp_h264.h"
 
 //#define DEBUG

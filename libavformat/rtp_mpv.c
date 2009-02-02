@@ -1,7 +1,7 @@
 /*
  * RTP packetization for MPEG video
- * Copyright (c) 2002 Fabrice Bellard.
- * Copyright (c) 2007 Luca Abeni.
+ * Copyright (c) 2002 Fabrice Bellard
+ * Copyright (c) 2007 Luca Abeni
  *
  * This file is part of FFmpeg.
  *
@@ -22,7 +22,7 @@
 
 #include "libavcodec/mpegvideo.h"
 #include "avformat.h"
-#include "rtp_internal.h"
+#include "rtp.h"
 
 /* NOTE: a single frame must be passed with sequence header if
    needed. XXX: use slices. */
