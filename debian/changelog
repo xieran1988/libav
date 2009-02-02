@@ -1,6 +1,12 @@
-ffmpeg-debian (3:0.svn20090119-2) experimental; urgency=low
+ffmpeg-debian (3:0.svn20090128-1) experimental; urgency=low
 
   [ Reinhard Tartler ]
+  * New Upstream Version (svn revision 16838 libswscale revision 28380)
+  
+  Upstream Changes:
+    - R3D REDCODE demuxer
+    - ALSA support for playback and record
+  
   * strighten internal dependencies by using a shlibs.local file
     Closes: #512844, #512466
   * Add breaks on libavutil on earlier versions of libavcodec and
