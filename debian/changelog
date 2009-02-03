@@ -27,6 +27,9 @@ ffmpeg-debian (3:0.svn20090128-1) experimental; urgency=low
     Also remove the setting externalcodecs from DEB_BUILD_OPTIONS. The codecs 
     will be enabled as soon as the headers are installed on the filesystem,
     so there is no need in enabling that seperately.
+  * install ffpresets in /usr/share/ffmpeg/. Currently only presets for
+    x264 are avaiable, so a libx264 enabled libavcodec (like
+    libavcodec-unstripped-52) is needed to actually use them.
   
   [ Fabian Greffrath ]
   * Enabled Speex decoding via libspeex.
