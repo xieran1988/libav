@@ -2,17 +2,17 @@ ffmpeg-debian (3:0.svn20090128-1) experimental; urgency=low
 
   [ Reinhard Tartler ]
   * New Upstream Version (svn revision 16838 libswscale revision 28380)
-  
+
   Upstream Changes:
     - R3D REDCODE demuxer
     - ALSA support for playback and record
-  
+
   * strighten internal dependencies by using a shlibs.local file
     Closes: #512844, #512466
   * New upstream version reintroduces a compatibility symbol ff_gcd
     Closes: #512946
   * Bump shlibs because of changes of the Metadata API in libavformat.
-    Actually no other package should use them yet, but let's better play safe 
+    Actually no other package should use them yet, but let's better play safe
     here...
   * no longer install dsputil.h. It exposes lots of function that are private
     to ffmpeg and may change on any new upstream revision. Please get in touch
@@ -24,13 +24,13 @@ ffmpeg-debian (3:0.svn20090128-1) experimental; urgency=low
      - faac.h
      - x264.h
      - vdpau/vdpau.h
-    Also remove the setting externalcodecs from DEB_BUILD_OPTIONS. The codecs 
+    Also remove the setting externalcodecs from DEB_BUILD_OPTIONS. The codecs
     will be enabled as soon as the headers are installed on the filesystem,
     so there is no need in enabling that seperately.
   * install ffpresets in /usr/share/ffmpeg/. Currently only presets for
     x264 are avaiable, so a libx264 enabled libavcodec (like
     libavcodec-unstripped-52) is needed to actually use them.
-  
+
   [ Fabian Greffrath ]
   * Enabled Speex decoding via libspeex.
   * Use an alternative approach to achieve strict internal dependencies
