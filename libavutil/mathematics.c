@@ -19,8 +19,8 @@
  */
 
 /**
- * @file mathematics.c
- * Miscellaneous math routines and tables.
+ * @file libavutil/mathematics.c
+ * miscellaneous math routines and tables
  */
 
 #include <assert.h>
