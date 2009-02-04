@@ -1,16 +1,44 @@
 
 Checklist and howto for ffmpeg upstream upgrades:
 
- - run 'debian/rules debian/get-orig-source SVN_VERSION=YYYYMMDD'
- - run 'git-import-orig --debian-branch=$branch --pristine-tar ../ffmpeg-XXX.orig.tar.gz'
- - check and note the svn revision numbers from ffmpeg/.svnrevision in debian/changelog
+Stage in a tmp directory:
+
+  mkdir /tmp/f ; cd /tmp/f
+  git clone git://git.debian.org/git/pkg-multimedia/ffmpeg-debian.git
+  cd ffmpeg-debian
+  branches="master.unstripped pristine-tar upstream upstream.unstripped"
+  for b in $branches; do git checkout -b $b origin/$b ; done
+
+The following commands are intended to be copy&pastable.
+
+ - run 'SVNDATE=`date +%Y%m%d`'
+ - run 'git checkout master'
+ - run 'debian/rules get-orig-source SVN_VERSION=${SVNDATE}'
+ - run 'git-import-orig \
+            --debian-branch=master \
+            --upstream-branch=upstream \
+            --pristine-tar \
+            --upstream-tag=upstream/0.svn${SVNDATE} \
+            ../ffmpeg-debian_0.svn${SVNDATE}.orig.tar.gz'
+ - check and note the svn revision numbers from ffmpeg/{libswscale,}.svnrevision
+   in debian/changelog
+ - run 'git diff upstream^ Changelog libavcodec/allcodecs.c libavformat/allformats.c'
  - document new formats additions in debian/changelog
+ - commit debian/changelog
+ - run 'git checkout master.unstripped'
+ - run 'git-import-orig \
+            --debian-branch=master.unstripped \
+            --upstream-branch=upstream.unstripped \
+            --pristine-tar \
+            --upstream-tag=upstream.unstripped/0.svn${SVNDATE}-unstripped \
+            --upstream-version=0.svn${SVNDATE}-unstripped \
+            ../ffmpeg_0.svn${SVNDATE}.orig.tar.gz'
+ - resolve the conflicts, hopefully the only conflict is in debian/changelog
+   NB: libavcodec/allcodecs.c must match upstream.unstripped!
+ - run 'git checkout master'
  - build the package, compare against the the version already in the archive
    - headers in the -dev packages with 
    - soname in the libraries
    - formats.txt in the libavcodecs package
+ - run 'git merge master'
 
-TODOs
-
- - improvements to get-orig-source.sh script:
-    - commit to git
