@@ -19,8 +19,8 @@
  */
 
 /**
- * @file internal.h
- * common internal api header.
+ * @file libavutil/internal.h
+ * common internal API header
  */
 
 #ifndef AVUTIL_INTERNAL_H
@@ -34,7 +34,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include "config.h"
 #include "common.h"
+#include "mem.h"
 #include "timer.h"
 
 #ifndef attribute_align_arg
@@ -96,8 +98,6 @@
 #if ( defined(__PIC__) || defined(__pic__) ) && ! defined(PIC)
 #    define PIC
 #endif
-
-#include "config.h"
 
 #ifndef offsetof
 #    define offsetof(T,F) ((unsigned int)((char *)&((T *)0)->F))
@@ -218,7 +218,7 @@ if((y)<(x)){\
 }
 #endif
 
-/* avoid usage of various functions */
+/* avoid usage of dangerous/inappropriate system functions */
 #undef  malloc
 #define malloc please_use_av_malloc
 #undef  free
@@ -319,8 +319,8 @@ static av_always_inline av_const float truncf(float x)
 #endif /* HAVE_TRUNCF */
 
 /**
- * Returns NULL if CONFIG_SMALL is true otherwise the argument
- * without modifications, used to disable the definition of strings
+ * Returns NULL if CONFIG_SMALL is true, otherwise the argument
+ * without modification. Used to disable the definition of strings
  * (for example AVCodec long_names).
  */
 #if CONFIG_SMALL

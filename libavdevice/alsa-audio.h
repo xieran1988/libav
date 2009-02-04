@@ -21,7 +21,7 @@
  */
 
 /**
- * @file alsa-audio.h
+ * @file libavdevice/alsa-audio.h
  * ALSA input and output: definitions and structures
  * @author Luca Abeni ( lucabe72 email it )
  * @author Benoit Fouet ( benoit fouet free fr )
@@ -29,6 +29,10 @@
 
 #ifndef AVDEVICE_ALSA_AUDIO_H
 #define AVDEVICE_ALSA_AUDIO_H
+
+#include <alsa/asoundlib.h>
+#include "config.h"
+#include "libavformat/avformat.h"
 
 /* XXX: we make the assumption that the soundcard accepts this format */
 /* XXX: find better solution with "preinit" method, needed also in
