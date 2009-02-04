@@ -1,6 +1,10 @@
 
 Checklist and howto for ffmpeg upstream upgrades:
 
+Needed packages:
+
+  apt-get install devscripts git-buildpackage, pristine-tar
+
 Stage in a tmp directory:
 
   mkdir /tmp/f ; cd /tmp/f
@@ -33,6 +37,8 @@ The following commands are intended to be copy&pastable.
             --upstream-tag=upstream.unstripped/0.svn${SVNDATE}-unstripped \
             --upstream-version=0.svn${SVNDATE}-unstripped \
             ../ffmpeg_0.svn${SVNDATE}.orig.tar.gz'
+ - run 'git checkout master.unstripped'
+ - run 'git merge master'
  - resolve the conflicts, hopefully the only conflict is in debian/changelog
    NB: libavcodec/allcodecs.c must match upstream.unstripped!
  - run 'git checkout master'
@@ -40,5 +46,4 @@ The following commands are intended to be copy&pastable.
    - headers in the -dev packages with 
    - soname in the libraries
    - formats.txt in the libavcodecs package
- - run 'git merge master'
 
