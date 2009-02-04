@@ -3,7 +3,7 @@ Checklist and howto for ffmpeg upstream upgrades:
 
 Needed packages:
 
-  apt-get install devscripts git-buildpackage, pristine-tar
+  apt-get install devscripts git-buildpackage pristine-tar
 
 Stage in a tmp directory:
 
