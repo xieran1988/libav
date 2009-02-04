@@ -1,7 +1,7 @@
-ffmpeg-debian (3:0.svn20090128-1) experimental; urgency=low
+ffmpeg-debian (3:0.svn20090204-1) experimental; urgency=low
 
   [ Reinhard Tartler ]
-  * New Upstream Version (svn revision 16838 libswscale revision 28380)
+  * New Upstream Version (svn revision 16978 libswscale revision 28461)
 
   Upstream Changes:
     - R3D REDCODE demuxer
