@@ -1,3 +1,12 @@
+ffmpeg-debian (3:0.svn20090204-2) experimental; urgency=low
+
+  * add libxvmc-dev to build-depends in the 'ffmpeg' variant
+  * add libasound2-dev to build-depends. This means that ffplay is now able to
+    actually play using alsa directly instead only via libsdl
+  * add epochs for the "internal" shlibs dependencies
+
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 05 Feb 2009 20:30:05 +0100
+
 ffmpeg-debian (3:0.svn20090204-1) experimental; urgency=low
 
   [ Reinhard Tartler ]
@@ -26,7 +35,7 @@ ffmpeg-debian (3:0.svn20090204-1) experimental; urgency=low
      - vdpau/vdpau.h
     Also remove the setting externalcodecs from DEB_BUILD_OPTIONS. The codecs
     will be enabled as soon as the headers are installed on the filesystem,
-    so there is no need in enabling that seperately.
+    so there is no need in enabling that separately.
   * install ffpresets in /usr/share/ffmpeg/. Currently only presets for
     x264 are avaiable, so a libx264 enabled libavcodec (like
     libavcodec-unstripped-52) is needed to actually use them.
