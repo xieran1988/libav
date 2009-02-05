@@ -1,6 +1,6 @@
 /*
  * RTP network protocol
- * Copyright (c) 2002 Fabrice Bellard.
+ * Copyright (c) 2002 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -20,7 +20,7 @@
  */
 
 /**
- * @file rtpproto.c
+ * @file libavformat/rtpproto.c
  * RTP protocol
  */
 

@@ -1,6 +1,6 @@
 /*
  * MDCT/IMDCT transforms
- * Copyright (c) 2002 Fabrice Bellard.
+ * Copyright (c) 2002 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -21,7 +21,7 @@
 #include "dsputil.h"
 
 /**
- * @file mdct.c
+ * @file libavcodec/mdct.c
  * MDCT/IMDCT transforms.
  */
 

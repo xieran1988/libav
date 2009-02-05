@@ -2,12 +2,12 @@
 
 include /usr/share/quilt/quilt.make
 
+EPOCH=3:
 DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
 DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
 SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+\.svn([0-9]+)$$/\1/p')
-SHLIBS_VERSION := 3:0.svn20081101-1
-ubuntu := $(findstring ubuntu,$(DEB_VERSION))
+SHLIBS_VERSION := $(EPOCH)0.svn20090128-1
 
 LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-unstripped-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 
@@ -93,12 +93,11 @@ install: build
 	dh_installdirs -ptmp usr/share/doc/ffmpeg/html etc
 	dh_installdirs -ptmp usr/share/doc/ffmpeg-doc/html
 	$(foreach flavor,$(FLAVORS),$(call install_flavor,$(flavor)))
-	cp -a libavcodec/dsputil.h debian/tmp/usr/include/libavcodec
-	cp debian-shared/doc/*.html debian/tmp/usr/share/doc/ffmpeg/html/
+	install -m 644 -D debian-shared/doc/*.html debian/tmp/usr/share/doc/ffmpeg/html/
 	# don't fail on binary-indep only builds.
 	[ ! -d doxy ] || cp doxy/html/* debian/tmp/usr/share/doc/ffmpeg-doc/html
-	cp doc/ffserver.conf debian/tmp/etc/
-	cp debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
+	install -m 644 -D doc/ffserver.conf debian/tmp/etc/
+	install -m 644 -D debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
 ifneq ($(DEB_SOURCE),ffmpeg-debian)
 	dh_install --list-missing --sourcedir=debian/tmp
 else
@@ -137,6 +136,21 @@ else
 endif
 	dh_compress
 	dh_fixperms
+	dh_installdeb
+# strict internal dependencies
+ifeq ($(DEB_SOURCE),ffmpeg-debian)
+	for pkg in $(LIB_PKGS); do \
+	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-unstripped-\1/'); \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(EPOCH)$(UPSTREAM_VERSION)) | $$upkg (>= $(EPOCH)$(UPSTREAM_VERSION)), $$pkg (< $(EPOCH)$(UPSTREAM_VERSION)-99) | $$upkg (< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
+	done
+else
+	for pkg in $(LIB_PKGS); do \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(UPSTREAM_VERSION)), $$pkg (< $(UPSTREAM_VERSION)-99)"; \
+	done
+endif
+	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
+	dh_shlibdeps
+# target dependencies for external packages
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-unstripped-\1/'); \
@@ -147,9 +161,6 @@ else
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION))"; \
 	done
 endif
-	dh_installdeb
-	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
-	dh_shlibdeps
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"
 	dh_md5sums
 	dh_builddeb

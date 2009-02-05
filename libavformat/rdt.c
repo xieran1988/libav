@@ -20,20 +20,20 @@
  */
 
 /**
- * @file rdt.c
+ * @file libavformat/rdt.c
  * @brief Realmedia RTSP protocol (RDT) support
  * @author Ronald S. Bultje <rbultje@ronald.bitfreak.net>
  */
 
 #include "avformat.h"
 #include "libavutil/avstring.h"
-#include "rtp_internal.h"
+#include "rtp.h"
 #include "rdt.h"
 #include "libavutil/base64.h"
 #include "libavutil/md5.h"
 #include "rm.h"
 #include "internal.h"
-#include <libavcodec/bitstream.h>
+#include "libavcodec/bitstream.h"
 
 struct RDTDemuxContext {
     AVFormatContext *ic; /**< the containing (RTSP) demux context */

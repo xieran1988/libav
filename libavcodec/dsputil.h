@@ -1,6 +1,6 @@
 /*
  * DSP utils
- * Copyright (c) 2000, 2001, 2002 Fabrice Bellard.
+ * Copyright (c) 2000, 2001, 2002 Fabrice Bellard
  * Copyright (c) 2002-2004 Michael Niedermayer <michaelni@gmx.at>
  *
  * This file is part of FFmpeg.
@@ -21,7 +21,7 @@
  */
 
 /**
- * @file dsputil.h
+ * @file libavcodec/dsputil.h
  * DSP utils.
  * note, many functions in here may use MMX which trashes the FPU state, it is
  * absolutely necessary to call emms_c() between dsp & float/double code
@@ -674,6 +674,13 @@ typedef struct FFTContext {
     void (*imdct_half)(struct MDCTContext *s, FFTSample *output, const FFTSample *input);
 } FFTContext;
 
+extern FFTSample* ff_cos_tabs[13];
+
+/**
+ * Sets up a complex FFT.
+ * @param nbits           log2 of the length of the input array
+ * @param inverse         if 0 perform the forward transform, if 1 perform the inverse
+ */
 int ff_fft_init(FFTContext *s, int nbits, int inverse);
 void ff_fft_permute_c(FFTContext *s, FFTComplex *z);
 void ff_fft_permute_sse(FFTContext *s, FFTComplex *z);
@@ -683,10 +690,17 @@ void ff_fft_calc_3dn(FFTContext *s, FFTComplex *z);
 void ff_fft_calc_3dn2(FFTContext *s, FFTComplex *z);
 void ff_fft_calc_altivec(FFTContext *s, FFTComplex *z);
 
+/**
+ * Do the permutation needed BEFORE calling ff_fft_calc().
+ */
 static inline void ff_fft_permute(FFTContext *s, FFTComplex *z)
 {
     s->fft_permute(s, z);
 }
+/**
+ * Do a complex FFT with the parameters defined in ff_fft_init(). The
+ * input data must be permuted before. No 1.0/sqrt(n) normalization is done.
+ */
 static inline void ff_fft_calc(FFTContext *s, FFTComplex *z)
 {
     s->fft_calc(s, z);
@@ -746,6 +760,35 @@ void ff_imdct_calc_sse(MDCTContext *s, FFTSample *output, const FFTSample *input
 void ff_imdct_half_sse(MDCTContext *s, FFTSample *output, const FFTSample *input);
 void ff_mdct_calc(MDCTContext *s, FFTSample *out, const FFTSample *input);
 void ff_mdct_end(MDCTContext *s);
+
+/* Real Discrete Fourier Transform */
+
+enum RDFTransformType {
+    RDFT,
+    IRDFT,
+    RIDFT,
+    IRIDFT,
+};
+
+typedef struct {
+    int nbits;
+    int inverse;
+    int sign_convention;
+
+    /* pre/post rotation tables */
+    FFTSample *tcos;
+    FFTSample *tsin;
+    FFTContext fft;
+} RDFTContext;
+
+/**
+ * Sets up a real FFT.
+ * @param nbits           log2 of the length of the input array
+ * @param trans           the type of transform
+ */
+int ff_rdft_init(RDFTContext *s, int nbits, enum RDFTransformType trans);
+void ff_rdft_calc(RDFTContext *s, FFTSample *data);
+void ff_rdft_end(RDFTContext *s);
 
 #define WRAPPER8_16(name8, name16)\
 static int name16(void /*MpegEncContext*/ *s, uint8_t *dst, uint8_t *src, int stride, int h){\

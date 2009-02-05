@@ -21,7 +21,7 @@
  */
 
 /**
- * @file cook.c
+ * @file libavcodec/cook.c
  * Cook compatible decoder. Bastardization of the G.722.1 standard.
  * This decoder handles RealNetworks, RealAudio G2 data.
  * Cook is identified by the codec name cook in RM files.
@@ -1053,7 +1053,7 @@ static int cook_decode_init(AVCodecContext *avctx)
     q->bit_rate = avctx->bit_rate;
 
     /* Initialize RNG. */
-    av_init_random(1, &q->random_state);
+    av_random_init(&q->random_state, 1);
 
     /* Initialize extradata related variables. */
     q->samples_per_channel = q->samples_per_frame / q->nb_channels;

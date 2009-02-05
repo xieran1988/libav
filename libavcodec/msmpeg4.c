@@ -1,6 +1,6 @@
 /*
  * MSMPEG4 backend for ffmpeg encoder and decoder
- * Copyright (c) 2001 Fabrice Bellard.
+ * Copyright (c) 2001 Fabrice Bellard
  * Copyright (c) 2002-2004 Michael Niedermayer <michaelni@gmx.at>
  *
  * msmpeg4v1 & v2 stuff by Michael Niedermayer <michaelni@gmx.at>
@@ -23,7 +23,7 @@
  */
 
 /**
- * @file msmpeg4.c
+ * @file libavcodec/msmpeg4.c
  * MSMPEG4 backend for ffmpeg encoder and decoder.
  */
 

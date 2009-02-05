@@ -1,6 +1,6 @@
 /*
  * RTSP/SDP client
- * Copyright (c) 2002 Fabrice Bellard.
+ * Copyright (c) 2002 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -34,7 +34,7 @@
 #include "network.h"
 #include "rtsp.h"
 
-#include "rtp_internal.h"
+#include "rtp.h"
 #include "rdt.h"
 
 //#define DEBUG
@@ -325,6 +325,7 @@ typedef struct SDPParseState {
     /* SDP only */
     struct in_addr default_ip;
     int default_ttl;
+    int skip_media; ///< set if an unknown m= line occurs
 } SDPParseState;
 
 static void sdp_parse_line(AVFormatContext *s, SDPParseState *s1,
@@ -345,6 +346,8 @@ static void sdp_parse_line(AVFormatContext *s, SDPParseState *s1,
 #endif
 
     p = buf;
+    if (s1->skip_media && letter != 'm')
+        return;
     switch(letter) {
     case 'c':
         get_word(buf1, sizeof(buf1), &p);
@@ -373,22 +376,24 @@ static void sdp_parse_line(AVFormatContext *s, SDPParseState *s1,
         }
         break;
     case 's':
-        av_strlcpy(s->title, p, sizeof(s->title));
+        av_metadata_set(&s->metadata, "title", p);
         break;
     case 'i':
         if (s->nb_streams == 0) {
-            av_strlcpy(s->comment, p, sizeof(s->comment));
+            av_metadata_set(&s->metadata, "comment", p);
             break;
         }
         break;
     case 'm':
         /* new stream */
+        s1->skip_media = 0;
         get_word(st_type, sizeof(st_type), &p);
         if (!strcmp(st_type, "audio")) {
             codec_type = CODEC_TYPE_AUDIO;
         } else if (!strcmp(st_type, "video")) {
             codec_type = CODEC_TYPE_VIDEO;
         } else {
+            s1->skip_media = 1;
             return;
         }
         rtsp_st = av_mallocz(sizeof(RTSPStream));
@@ -881,7 +886,7 @@ make_setup_request (AVFormatContext *s, const char *host, int port,
                     int lower_transport, const char *real_challenge)
 {
     RTSPState *rt = s->priv_data;
-    int j, i, err;
+    int j, i, err, interleave = 0;
     RTSPStream *rtsp_st;
     RTSPHeader reply1, *reply = &reply1;
     char cmd[2048];
@@ -938,14 +943,21 @@ make_setup_request (AVFormatContext *s, const char *host, int port,
         /* RTP/TCP */
         else if (lower_transport == RTSP_LOWER_TRANSPORT_TCP) {
             snprintf(transport, sizeof(transport) - 1,
-                     "%s/TCP", trans_pref);
+                     "%s/TCP;", trans_pref);
+            if (rt->server_type == RTSP_SERVER_WMS)
+                av_strlcat(transport, "unicast;", sizeof(transport));
+            av_strlcatf(transport, sizeof(transport),
+                        "interleaved=%d-%d",
+                        interleave, interleave + 1);
+            interleave += 2;
         }
 
         else if (lower_transport == RTSP_LOWER_TRANSPORT_UDP_MULTICAST) {
             snprintf(transport, sizeof(transport) - 1,
                      "%s/UDP;multicast", trans_pref);
         }
-        if (rt->server_type == RTSP_SERVER_REAL)
+        if (rt->server_type == RTSP_SERVER_REAL ||
+            rt->server_type == RTSP_SERVER_WMS)
             av_strlcat(transport, ";mode=play", sizeof(transport));
         snprintf(cmd, sizeof(cmd),
                  "SETUP %s RTSP/1.0\r\n"

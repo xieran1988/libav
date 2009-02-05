@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 The FFmpeg Project.
+ * Copyright (c) 2007 The FFmpeg Project
  *
  * This file is part of FFmpeg.
  *
@@ -20,6 +20,8 @@
 
 #ifndef AVFORMAT_NETWORK_H
 #define AVFORMAT_NETWORK_H
+
+#include "config.h"
 
 #if HAVE_WINSOCK2_H
 #include <winsock2.h>

@@ -21,7 +21,7 @@
  */
 
 /**
- * @file vc1.c
+ * @file libavcodec/vc1.c
  * VC-1 and WMV3 decoder
  *
  */
@@ -35,6 +35,7 @@
 #include "unary.h"
 #include "simple_idct.h"
 #include "mathops.h"
+#include "vdpau_internal.h"
 
 #undef NDEBUG
 #include <assert.h>
@@ -115,12 +116,12 @@ static int vc1_init_common(VC1Context *v)
 
 /***********************************************************************/
 /**
- * @defgroup bitplane VC9 Bitplane decoding
+ * @defgroup vc1bitplane VC-1 Bitplane decoding
  * @see 8.7, p56
  * @{
  */
 
-/** @addtogroup bitplane
+/**
  * Imode types
  * @{
  */
@@ -176,7 +177,8 @@ static void decode_colskip(uint8_t* plane, int width, int height, int stride, Ge
 }
 
 /** Decode a bitplane's bits
- * @param bp Bitplane where to store the decode bits
+ * @param data bitplane where to store the decode bits
+ * @param[out] raw_flag pointer to the flag indicating that this bitplane is not coded explicitly
  * @param v VC-1 context for bit reading and logging
  * @return Status
  * @todo FIXME: Optimize
@@ -311,6 +313,7 @@ static int bitplane_decoding(uint8_t* data, int *raw_flag, VC1Context *v)
 /**
  * VC-1 in-loop deblocking filter for one line
  * @param src source block type
+ * @param stride block stride
  * @param pq block quantizer
  * @return whether other 3 pairs should be filtered or not
  * @see 8.6
@@ -353,6 +356,8 @@ static int av_always_inline vc1_filter_line(uint8_t* src, int stride, int pq){
 /**
  * VC-1 in-loop deblocking filter
  * @param src source block type
+ * @param step distance between horizontally adjacent elements
+ * @param stride distance between vertically adjacent elements
  * @param len edge length to filter (4 or 8 pixels)
  * @param pq block quantizer
  * @see 8.6
@@ -1070,11 +1075,11 @@ static int decode_sequence_header_adv(VC1Context *v, GetBitContext *gb)
 static int decode_entry_point(AVCodecContext *avctx, GetBitContext *gb)
 {
     VC1Context *v = avctx->priv_data;
-    int i, blink, clentry;
+    int i;
 
     av_log(avctx, AV_LOG_DEBUG, "Entry point: %08X\n", show_bits_long(gb, 32));
-    blink = get_bits1(gb); // broken link
-    clentry = get_bits1(gb); // closed entry
+    v->broken_link = get_bits1(gb);
+    v->closed_entry = get_bits1(gb);
     v->panscanflag = get_bits1(gb);
     v->refdist_flag = get_bits1(gb);
     v->s.loop_filter = get_bits1(gb);
@@ -1110,7 +1115,7 @@ static int decode_entry_point(AVCodecContext *avctx, GetBitContext *gb)
         "BrokenLink=%i, ClosedEntry=%i, PanscanFlag=%i\n"
         "RefDist=%i, Postproc=%i, FastUVMC=%i, ExtMV=%i\n"
         "DQuant=%i, VSTransform=%i, Overlap=%i, Qmode=%i\n",
-        blink, clentry, v->panscanflag, v->refdist_flag, v->s.loop_filter,
+        v->broken_link, v->closed_entry, v->panscanflag, v->refdist_flag, v->s.loop_filter,
         v->fastuvmc, v->extended_mv, v->dquant, v->vstransform, v->overlap, v->quantizer_mode);
 
     return 0;
@@ -1134,8 +1139,8 @@ static int vc1_parse_frame_header(VC1Context *v, GetBitContext* gb)
 
     v->bi_type = 0;
     if(v->s.pict_type == FF_B_TYPE) {
-        v->bfraction = get_vlc2(gb, ff_vc1_bfraction_vlc.table, VC1_BFRACTION_VLC_BITS, 1);
-        v->bfraction = ff_vc1_bfraction_lut[v->bfraction];
+        v->bfraction_lut_index = get_vlc2(gb, ff_vc1_bfraction_vlc.table, VC1_BFRACTION_VLC_BITS, 1);
+        v->bfraction = ff_vc1_bfraction_lut[v->bfraction_lut_index];
         if(v->bfraction == 0) {
             v->s.pict_type = FF_BI_TYPE;
         }
@@ -1173,12 +1178,7 @@ static int vc1_parse_frame_header(VC1Context *v, GetBitContext* gb)
     v->k_y = v->mvrange + 8; //k_y can be 8 9 10 11
     v->range_x = 1 << (v->k_x - 1);
     v->range_y = 1 << (v->k_y - 1);
-    if (v->profile == PROFILE_ADVANCED)
-    {
-        if (v->postprocflag) v->postproc = get_bits1(gb);
-    }
-    else
-        if (v->multires && v->s.pict_type != FF_B_TYPE) v->respic = get_bits(gb, 2);
+    if (v->multires && v->s.pict_type != FF_B_TYPE) v->respic = get_bits(gb, 2);
 
     if(v->res_x8 && (v->s.pict_type == FF_I_TYPE || v->s.pict_type == FF_BI_TYPE)){
         v->x8_type = get_bits1(gb);
@@ -1381,8 +1381,8 @@ static int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
         v->uvsamp = get_bits1(gb);
     if(v->finterpflag) v->interpfrm = get_bits1(gb);
     if(v->s.pict_type == FF_B_TYPE) {
-        v->bfraction = get_vlc2(gb, ff_vc1_bfraction_vlc.table, VC1_BFRACTION_VLC_BITS, 1);
-        v->bfraction = ff_vc1_bfraction_lut[v->bfraction];
+        v->bfraction_lut_index = get_vlc2(gb, ff_vc1_bfraction_vlc.table, VC1_BFRACTION_VLC_BITS, 1);
+        v->bfraction = ff_vc1_bfraction_lut[v->bfraction_lut_index];
         if(v->bfraction == 0) {
             v->s.pict_type = FF_BI_TYPE; /* XXX: should not happen here */
         }
@@ -1406,7 +1406,7 @@ static int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
     if (v->quantizer_mode == QUANT_FRAME_EXPLICIT)
         v->pquantizer = get_bits1(gb);
     if(v->postprocflag)
-        v->postproc = get_bits1(gb);
+        v->postproc = get_bits(gb, 2);
 
     if(v->s.pict_type == FF_I_TYPE || v->s.pict_type == FF_P_TYPE) v->use_ic = 0;
 
@@ -1590,7 +1590,7 @@ static int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
 
 /***********************************************************************/
 /**
- * @defgroup block VC-1 Block-level functions
+ * @defgroup vc1block VC-1 Block-level functions
  * @see 7.1.4, p91 and 8.1.1.7, p(1)04
  * @{
  */
@@ -2176,6 +2176,8 @@ static inline void vc1_pred_b_mv(VC1Context *v, int dmv_x[2], int dmv_y[2], int 
 /** Get predicted DC value for I-frames only
  * prediction dir: left=0, top=1
  * @param s MpegEncContext
+ * @param overlap flag indicating that overlap filtering is used
+ * @param pq integer part of picture quantizer
  * @param[in] n block index in the current MB
  * @param dc_val_ptr Pointer to DC predictor
  * @param dir_ptr Prediction direction for use in AC prediction
@@ -2236,7 +2238,11 @@ static inline int vc1_i_pred_dc(MpegEncContext *s, int overlap, int pq, int n,
 /** Get predicted DC value
  * prediction dir: left=0, top=1
  * @param s MpegEncContext
+ * @param overlap flag indicating that overlap filtering is used
+ * @param pq integer part of picture quantizer
  * @param[in] n block index in the current MB
+ * @param a_avail flag indicating top block availability
+ * @param c_avail flag indicating left block availability
  * @param dc_val_ptr Pointer to DC predictor
  * @param dir_ptr Prediction direction for use in AC prediction
  */
@@ -2307,9 +2313,10 @@ static inline int vc1_pred_dc(MpegEncContext *s, int overlap, int pq, int n,
     return pred;
 }
 
+/** @} */ // Block group
 
 /**
- * @defgroup std_mb VC1 Macroblock-level functions in Simple/Main Profiles
+ * @defgroup vc1_std_mb VC1 Macroblock-level functions in Simple/Main Profiles
  * @see 7.1.4, p91 and 8.1.1.7, p(1)04
  * @{
  */
@@ -2346,6 +2353,7 @@ static inline int vc1_coded_block_pred(MpegEncContext * s, int n, uint8_t **code
  * @param last Last coefficient
  * @param skip How much zero coefficients to skip
  * @param value Decoded AC coefficient value
+ * @param codingset set of VLC to decode data
  * @see 8.1.3.4
  */
 static void vc1_decode_ac_coeff(VC1Context *v, int *last, int *skip, int *value, int codingset)
@@ -2409,6 +2417,7 @@ static void vc1_decode_ac_coeff(VC1Context *v, int *last, int *skip, int *value,
 /** Decode intra block in intra frames - should be faster than decode_intra_block
  * @param v VC1Context
  * @param block block to decode
+ * @param[in] n subblock index
  * @param coded are AC coeffs present or not
  * @param codingset set of VLC to decode data
  */
@@ -2574,8 +2583,10 @@ not_coded:
 /** Decode intra block in intra frames - should be faster than decode_intra_block
  * @param v VC1Context
  * @param block block to decode
+ * @param[in] n subblock number
  * @param coded are AC coeffs present or not
  * @param codingset set of VLC to decode data
+ * @param mquant quantizer value for this macroblock
  */
 static int vc1_decode_i_block_adv(VC1Context *v, DCTELEM block[64], int n, int coded, int codingset, int mquant)
 {
@@ -2770,6 +2781,7 @@ static int vc1_decode_i_block_adv(VC1Context *v, DCTELEM block[64], int n, int c
 /** Decode intra block in inter frames - more generic version than vc1_decode_i_block
  * @param v VC1Context
  * @param block block to decode
+ * @param[in] n subblock index
  * @param coded are AC coeffs present or not
  * @param mquant block quantizer
  * @param codingset set of VLC to decode data
@@ -3107,6 +3119,10 @@ static int vc1_decode_p_block(VC1Context *v, DCTELEM block[64], int n, int mquan
     return pat;
 }
 
+/** @} */ // Macroblock group
+
+static const int size_table  [6] = { 0, 2, 3, 4,  5,  8 };
+static const int offset_table[6] = { 0, 1, 3, 7, 15, 31 };
 
 /** Decode one P-frame MB (in Simple/Main profile)
  */
@@ -3120,8 +3136,6 @@ static int vc1_decode_p_mb(VC1Context *v)
     int mqdiff, mquant; /* MB quantization */
     int ttmb = v->ttfrm; /* MB Transform type */
 
-    static const int size_table[6] = { 0, 2, 3, 4, 5, 8 },
-      offset_table[6] = { 0, 1, 3, 7, 15, 31 };
     int mb_has_coeffs = 1; /* last_flag */
     int dmv_x, dmv_y; /* Differential MV components */
     int index, index1; /* LUT indexes */
@@ -3415,9 +3429,6 @@ static void vc1_decode_b_mb(VC1Context *v)
     int cbp = 0; /* cbp decoding stuff */
     int mqdiff, mquant; /* MB quantization */
     int ttmb = v->ttfrm; /* MB Transform type */
-
-    static const int size_table[6] = { 0, 2, 3, 4, 5, 8 },
-      offset_table[6] = { 0, 1, 3, 7, 15, 31 };
     int mb_has_coeffs = 0; /* last_flag */
     int index, index1; /* LUT indexes */
     int val, sign; /* temp values */
@@ -4130,6 +4141,7 @@ static int vc1_decode_frame(AVCodecContext *avctx,
     MpegEncContext *s = &v->s;
     AVFrame *pict = data;
     uint8_t *buf2 = NULL;
+    const uint8_t *buf_vdpau = buf;
 
     /* no supplementary picture */
     if (buf_size == 0) {
@@ -4151,6 +4163,13 @@ static int vc1_decode_frame(AVCodecContext *avctx,
         s->current_picture_ptr= &s->picture[i];
     }
 
+    if (s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU){
+        if (v->profile < PROFILE_ADVANCED)
+            avctx->pix_fmt = PIX_FMT_VDPAU_WMV3;
+        else
+            avctx->pix_fmt = PIX_FMT_VDPAU_VC1;
+    }
+
     //for advanced profile we may need to parse and unescape data
     if (avctx->codec_id == CODEC_ID_VC1) {
         int buf_size2 = 0;
@@ -4167,6 +4186,8 @@ static int vc1_decode_frame(AVCodecContext *avctx,
                 if(size <= 0) continue;
                 switch(AV_RB32(start)){
                 case VC1_CODE_FRAME:
+                    if (s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+                        buf_vdpau = start;
                     buf_size2 = vc1_unescape_buffer(start + 4, size, buf2);
                     break;
                 case VC1_CODE_ENTRYPOINT: /* it should be before frame data */
@@ -4255,14 +4276,19 @@ static int vc1_decode_frame(AVCodecContext *avctx,
     s->me.qpel_put= s->dsp.put_qpel_pixels_tab;
     s->me.qpel_avg= s->dsp.avg_qpel_pixels_tab;
 
-    ff_er_frame_start(s);
+    if ((CONFIG_VC1_VDPAU_DECODER || CONFIG_WMV3_VDPAU_DECODER)
+        &&s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+        ff_vdpau_vc1_decode_picture(s, buf_vdpau, (buf + buf_size) - buf_vdpau);
+    else {
+        ff_er_frame_start(s);
 
-    v->bits = buf_size * 8;
-    vc1_decode_blocks(v);
+        v->bits = buf_size * 8;
+        vc1_decode_blocks(v);
 //av_log(s->avctx, AV_LOG_INFO, "Consumed %i/%i bits\n", get_bits_count(&s->gb), buf_size*8);
 //  if(get_bits_count(&s->gb) > buf_size * 8)
 //      return -1;
-    ff_er_frame_end(s);
+        ff_er_frame_end(s);
+    }
 
     MPV_frame_end(s);
 
@@ -4336,3 +4362,35 @@ AVCodec wmv3_decoder = {
     NULL,
     .long_name = NULL_IF_CONFIG_SMALL("Windows Media Video 9"),
 };
+
+#if CONFIG_WMV3_VDPAU_DECODER
+AVCodec wmv3_vdpau_decoder = {
+    "wmv3_vdpau",
+    CODEC_TYPE_VIDEO,
+    CODEC_ID_WMV3,
+    sizeof(VC1Context),
+    vc1_decode_init,
+    NULL,
+    vc1_decode_end,
+    vc1_decode_frame,
+    CODEC_CAP_DR1 | CODEC_CAP_DELAY | CODEC_CAP_HWACCEL_VDPAU,
+    NULL,
+    .long_name = NULL_IF_CONFIG_SMALL("Windows Media Video 9 VDPAU"),
+};
+#endif
+
+#if CONFIG_VC1_VDPAU_DECODER
+AVCodec vc1_vdpau_decoder = {
+    "vc1_vdpau",
+    CODEC_TYPE_VIDEO,
+    CODEC_ID_VC1,
+    sizeof(VC1Context),
+    vc1_decode_init,
+    NULL,
+    vc1_decode_end,
+    vc1_decode_frame,
+    CODEC_CAP_DR1 | CODEC_CAP_DELAY | CODEC_CAP_HWACCEL_VDPAU,
+    NULL,
+    .long_name = NULL_IF_CONFIG_SMALL("SMPTE VC-1 VDPAU"),
+};
+#endif

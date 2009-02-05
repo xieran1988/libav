@@ -40,12 +40,13 @@ static AVCRC av_crc_table[AV_CRC_MAX][257];
 #endif
 
 /**
- * Inits a crc table.
- * @param ctx must be an array of sizeof(AVCRC)*257 or sizeof(AVCRC)*1024
+ * Initializes a CRC table.
+ * @param ctx must be an array of size sizeof(AVCRC)*257 or sizeof(AVCRC)*1024
  * @param cts_size size of ctx in bytes
- * @param le if 1, lowest bit represents coefficient for highest exponent
- *           of corresponding polynomial (both for poly and actual CRC).
- *           If 0, you must swap the crc parameter and the result of av_crc
+ * @param le If 1, the lowest bit represents the coefficient for the highest
+ *           exponent of the corresponding polynomial (both for poly and
+ *           actual CRC).
+ *           If 0, you must swap the CRC parameter and the result of av_crc
  *           if you need the standard representation (can be simplified in
  *           most cases to e.g. bswap16):
  *           bswap_32(crc << (32-bits))
@@ -86,7 +87,7 @@ int av_crc_init(AVCRC *ctx, int le, int bits, uint32_t poly, int ctx_size){
 }
 
 /**
- * Get an initialized standard CRC table.
+ * Gets an initialized standard CRC table.
  * @param crc_id ID of a standard CRC
  * @return a pointer to the CRC table or NULL on failure
  */
@@ -104,8 +105,8 @@ const AVCRC *av_crc_get_table(AVCRCId crc_id){
 }
 
 /**
- * Calculate the CRC of a block
- * @param crc CRC of previous blocks if any or initial value for CRC.
+ * Calculates the CRC of a block.
+ * @param crc CRC of previous blocks if any or initial value for CRC
  * @return CRC updated with the data from the given block
  *
  * @see av_crc_init() "le" parameter

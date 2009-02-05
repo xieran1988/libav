@@ -145,8 +145,6 @@ void av_sha1_final(AVSHA1* ctx, uint8_t digest[20]){
         ((uint32_t*)digest)[i]= be2me_32(ctx->state[i]);
 }
 
-// use the following to test
-// gcc -DTEST -DHAVE_AV_CONFIG_H -I.. sha1.c -O2 -W -Wall -o sha1 && time ./sha1
 #ifdef TEST
 #include <stdio.h>
 #undef printf
@@ -170,7 +168,7 @@ int main(void){
             printf("%02X", digest[i]);
         putchar('\n');
     }
-    //Test Vectors (from FIPS PUB 180-1)
+    //test vectors (from FIPS PUB 180-1)
     printf("A9993E36 4706816A BA3E2571 7850C26C 9CD0D89D\n"
            "84983E44 1C3BD26E BAAE4AA1 F95129E5 E54670F1\n"
            "34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F\n");

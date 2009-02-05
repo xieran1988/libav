@@ -4441,7 +4441,7 @@ static void handle_child_exit(int sig)
     need_to_start_children = 1;
 }
 
-static void opt_debug()
+static void opt_debug(void)
 {
     ffserver_debug = 1;
     ffserver_daemon = 0;
@@ -4485,7 +4485,7 @@ int main(int argc, char **argv)
 
     unsetenv("http_proxy");             /* Kill the http_proxy */
 
-    av_init_random(av_gettime() + (getpid() << 16), &random_state);
+    av_random_init(&random_state, av_gettime() + (getpid() << 16));
 
     memset(&sigact, 0, sizeof(sigact));
     sigact.sa_handler = handle_child_exit;

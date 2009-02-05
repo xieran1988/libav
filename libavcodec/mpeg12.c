@@ -1,6 +1,6 @@
 /*
  * MPEG-1/2 decoder
- * Copyright (c) 2000,2001 Fabrice Bellard.
+ * Copyright (c) 2000,2001 Fabrice Bellard
  * Copyright (c) 2002-2004 Michael Niedermayer <michaelni@gmx.at>
  *
  * This file is part of FFmpeg.
@@ -21,7 +21,7 @@
  */
 
 /**
- * @file mpeg12.c
+ * @file libavcodec/mpeg12.c
  * MPEG-1/2 decoder
  */
 

@@ -1,6 +1,6 @@
 /*
  * MXF
- * Copyright (c) 2006 SmartJog S.A., Baptiste Coudurier <baptiste dot coudurier at smartjog dot com>.
+ * Copyright (c) 2006 SmartJog S.A., Baptiste Coudurier <baptiste dot coudurier at smartjog dot com>
  *
  * This file is part of FFmpeg.
  *
@@ -21,6 +21,7 @@
 #ifndef AVFORMAT_MXF_H
 #define AVFORMAT_MXF_H
 
+#include <string.h>
 #include "avformat.h"
 #include "libavcodec/bytestream.h"
 
@@ -42,6 +43,7 @@ enum MXFMetadataSetType {
     ContentStorage,
     SubDescriptor,
     IndexTableSegment,
+    EssenceContainerData,
     TypeBottom,// add metadata type before this
 };
 

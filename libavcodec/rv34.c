@@ -20,7 +20,7 @@
  */
 
 /**
- * @file rv34.c
+ * @file libavcodec/rv34.c
  * RV30/40 decoder common data
  */
 
@@ -65,6 +65,7 @@ static RV34VLC intra_vlcs[NUM_INTRA_TABLES], inter_vlcs[NUM_INTER_TABLES];
  * Generate VLC from codeword lengths.
  * @param bits   codeword lengths (zeroes are accepted)
  * @param size   length of input data
+ * @param vlc    output VLC
  * @param insyms symbols for input codes (NULL for default ones)
  */
 static void rv34_gen_vlc(const uint8_t *bits, int size, VLC *vlc, const uint8_t *insyms)
@@ -100,7 +101,7 @@ static void rv34_gen_vlc(const uint8_t *bits, int size, VLC *vlc, const uint8_t 
 /**
  * Initialize all tables.
  */
-static av_cold void rv34_init_tables()
+static av_cold void rv34_init_tables(void)
 {
     int i, j, k;
 
@@ -222,7 +223,7 @@ static int rv34_decode_cbp(GetBitContext *gb, RV34VLC *vlc, int table)
     int ones;
     static const int cbp_masks[3] = {0x100000, 0x010000, 0x110000};
     static const int shifts[4] = { 0, 2, 8, 10 };
-    int *curshift = shifts;
+    const int *curshift = shifts;
     int i, t, mask;
 
     code = get_vlc2(gb, vlc->cbppattern[table].table, 9, 2);
@@ -618,6 +619,10 @@ static const int chroma_coeffs[3] = { 0, 3, 5 };
  * @param mv_off offset to the motion vector information
  * @param width width of the current partition in 8x8 blocks
  * @param height height of the current partition in 8x8 blocks
+ * @param dir motion compensation direction (i.e. from the last or the next reference frame)
+ * @param thirdpel motion vectors are specified in 1/3 of pixel
+ * @param qpel_mc a set of functions used to perform luma motion compensation
+ * @param chroma_mc a set of functions used to perform chroma motion compensation
  */
 static inline void rv34_mc(RV34DecContext *r, const int block_type,
                           const int xoff, const int yoff, int mv_off,
@@ -878,7 +883,7 @@ static void rv34_pred_4x4_block(RV34DecContext *r, uint8_t *dst, int stride, int
     }
     if(!right && up){
         topleft = dst[-stride + 3] * 0x01010101;
-        prev = &topleft;
+        prev = (uint8_t*)&topleft;
     }
     r->h.pred4x4[itype](dst, prev, stride);
 }

@@ -1,6 +1,6 @@
 /*
  * FFM (ffserver live feed) demuxer
- * Copyright (c) 2001 Fabrice Bellard.
+ * Copyright (c) 2001 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -358,6 +358,9 @@ static int ffm_read_packet(AVFormatContext *s, AVPacket *pkt)
     int size;
     FFMContext *ffm = s->priv_data;
     int duration;
+
+    if (url_fsize(s->pb) == FFM_PACKET_SIZE)
+        return -1;
 
     switch(ffm->read_state) {
     case READ_HEADER:

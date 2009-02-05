@@ -1,6 +1,6 @@
 /*
  * MMX optimized DSP utils
- * Copyright (c) 2000, 2001 Fabrice Bellard.
+ * Copyright (c) 2000, 2001 Fabrice Bellard
  * Copyright (c) 2002-2004 Michael Niedermayer <michaelni@gmx.at>
  *
  * This file is part of FFmpeg.
@@ -2491,12 +2491,12 @@ static void sub_int16_sse2(int16_t * v1, int16_t * v2, int order)
 static int32_t scalarproduct_int16_sse2(int16_t * v1, int16_t * v2, int order, int shift)
 {
     int res = 0;
-    DECLARE_ALIGNED_16(int64_t, sh);
+    DECLARE_ALIGNED_16(xmm_reg, sh);
     x86_reg o = -(order << 1);
 
     v1 += order;
     v2 += order;
-    sh = shift;
+    sh.a = shift;
     __asm__ volatile(
         "pxor      %%xmm7,  %%xmm7        \n\t"
         "1:                               \n\t"

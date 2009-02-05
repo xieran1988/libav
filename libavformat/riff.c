@@ -1,6 +1,6 @@
 /*
  * RIFF codec tags
- * Copyright (c) 2000 Fabrice Bellard.
+ * Copyright (c) 2000 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -34,6 +34,7 @@ const AVCodecTag codec_bmp_tags[] = {
     { CODEC_ID_H264,         MKTAG('V', 'S', 'S', 'H') },
     { CODEC_ID_H263,         MKTAG('H', '2', '6', '3') },
     { CODEC_ID_H263,         MKTAG('X', '2', '6', '3') },
+    { CODEC_ID_H263,         MKTAG('T', '2', '6', '3') },
     { CODEC_ID_H263,         MKTAG('L', '2', '6', '3') },
     { CODEC_ID_H263,         MKTAG('V', 'X', '1', 'K') },
     { CODEC_ID_H263P,        MKTAG('H', '2', '6', '3') },
@@ -70,6 +71,8 @@ const AVCodecTag codec_bmp_tags[] = {
     { CODEC_ID_MPEG4,        MKTAG('D', 'M', 'K', '2') },
     { CODEC_ID_MPEG4,        MKTAG('D', 'I', 'G', 'I') },
     { CODEC_ID_MPEG4,        MKTAG('I', 'N', 'M', 'C') },
+    { CODEC_ID_MPEG4,        MKTAG('E', 'P', 'H', 'V') }, /* Ephv MPEG-4 */
+    { CODEC_ID_MPEG4,        MKTAG('E', 'M', '4', 'A') },
     { CODEC_ID_MSMPEG4V3,    MKTAG('D', 'I', 'V', '3') }, /* default signature when using MSMPEG4 */
     { CODEC_ID_MSMPEG4V3,    MKTAG('M', 'P', '4', '3') },
     { CODEC_ID_MSMPEG4V3,    MKTAG('M', 'P', 'G', '3') },
@@ -158,6 +161,7 @@ const AVCodecTag codec_bmp_tags[] = {
     { CODEC_ID_MSVIDEO1,     MKTAG('w', 'h', 'a', 'm') },
     { CODEC_ID_CINEPAK,      MKTAG('c', 'v', 'i', 'd') },
     { CODEC_ID_TRUEMOTION1,  MKTAG('D', 'U', 'C', 'K') },
+    { CODEC_ID_TRUEMOTION1,  MKTAG('P', 'V', 'E', 'Z') },
     { CODEC_ID_MSZH,         MKTAG('M', 'S', 'Z', 'H') },
     { CODEC_ID_ZLIB,         MKTAG('Z', 'L', 'I', 'B') },
     { CODEC_ID_SNOW,         MKTAG('S', 'N', 'O', 'W') },
@@ -195,6 +199,7 @@ const AVCodecTag codec_bmp_tags[] = {
     { CODEC_ID_RPZA,         MKTAG('a', 'z', 'p', 'r') },
     { CODEC_ID_RPZA,         MKTAG('R', 'P', 'Z', 'A') },
     { CODEC_ID_RPZA,         MKTAG('r', 'p', 'z', 'a') },
+    { CODEC_ID_SP5X,         MKTAG('S', 'P', '5', '4') },
     { CODEC_ID_NONE,         0 }
 };
 
@@ -221,6 +226,7 @@ const AVCodecTag codec_wav_tags[] = {
     { CODEC_ID_AMR_WB,          0x0058 },
     { CODEC_ID_ADPCM_IMA_DK4,   0x0061 },  /* rogue format number */
     { CODEC_ID_ADPCM_IMA_DK3,   0x0062 },  /* rogue format number */
+    { CODEC_ID_ADPCM_IMA_WAV,   0x0069 },
     { CODEC_ID_VOXWARE,         0x0075 },
     { CODEC_ID_AAC,             0x00ff },
     { CODEC_ID_SIPR,            0x0130 },

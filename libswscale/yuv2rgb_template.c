@@ -1,7 +1,7 @@
 /*
  * yuv2rgb_mmx.c, software YUV to RGB converter with Intel MMX "technology"
  *
- * Copyright (C) 2000, Silicon Integrated System Corp.
+ * Copyright (C) 2000, Silicon Integrated System Corp
  *
  * Author: Olie Lho <ollie@sis.com.tw>
  *
@@ -30,7 +30,7 @@
 #undef EMMS
 #undef SFENCE
 
-#if HAVE_3DNOW
+#if HAVE_AMD3DNOW
 /* On K6 femms is faster than emms. On K7 femms is directly mapped to emms. */
 #define EMMS     "femms"
 #else

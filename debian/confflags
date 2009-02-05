@@ -23,6 +23,10 @@ else ifeq ($(DEB_HOST_ARCH),sparc)
 FLAVORS += vis
 endif
 
+define cond_enable
+	$(shell test -r $(1) && echo --enable-$(2) )
+endef
+
 # Configuration flags causing the libs to be GPL tainted
 gpl_confflags += --enable-gpl
 gpl_confflags += --enable-postproc
@@ -30,9 +34,7 @@ gpl_confflags += --enable-swscale
 gpl_confflags += --enable-x11grab
 
 # there is no libfaad in ubuntu/main, on in ubuntu/multiverse
-HAVE_LIBFAAD := $(shell stat /usr/include/faad.h >/dev/null 2>/dev/null && \
-                        echo --enable-libfaad )
-gpl_confflags += $(HAVE_LIBFAAD)
+gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 
 # Common configuration flags; comment out following line for LGPL versions of
 # the libraries
@@ -43,28 +45,20 @@ confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf
 confflags += --enable-libgsm
 confflags += --enable-libschroedinger
+confflags += --enable-libspeex
 confflags += --enable-libtheora
 confflags += --enable-libvorbis
 confflags += --enable-pthreads
 confflags += --disable-stripping
 confflags += --disable-vhook
-confflags += --enable-xvmc
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
-ifneq ($(DEB_SOURCE),ffmpeg-debian)
-confflags += --enable-libxvid
-confflags += --enable-libmp3lame
-confflags += --enable-libfaac
-confflags += --enable-libx264
-
-ifeq      ($(DEB_HOST_ARCH),i386)
-confflags += --enable-vdpau
-else ifeq ($(DEB_HOST_ARCH),amd64)
-confflags += --enable-xvmc
-confflags += --enable-vdpau
-endif
-
-endif
+confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
+confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
+confflags += $(call cond_enable,/usr/include/faac.h,libfaac)
+confflags += $(call cond_enable,/usr/include/x264.h,libx264)
+confflags += $(call cond_enable,/usr/include/X11/extensions/XvMClib.h,xvmc)
+confflags += $(call cond_enable,/usr/include/vdpau/vdpau.h,vdpau)
 
 # Enable IEEE 1394 (FireWire) support on Linux only
 ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
@@ -80,25 +74,6 @@ ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 # and with mmx code enabled.
   confflags += --disable-optimizations
   confflags += --disable-mmx
-endif
-
-# Support for additional external codecs
-ifneq (,$(findstring externalcodecs,$(DEB_BUILD_OPTIONS)))
-# Uncomment the following lines to allow the use of nonfree code,
-# the resulting packages will be unredistributable!
-# weak-build-deps += libamrnb-dev
-# confflags += --enable-nonfree --enable-libamr-nb
-# weak-build-deps += libamrwb-dev
-# confflags += --enable-nonfree --enable-libamr-wb
-  weak-build-deps += libmp3lame-dev | liblame-dev
-  confflags += --enable-libmp3lame
-  weak-build-deps += libfaac-dev
-  confflags += --enable-libfaac
-  weak-build-deps += libxvidcore-dev | libxvidcore4-dev
-  confflags += --enable-gpl --enable-libxvid
-  weak-build-deps += libx264-dev
-  confflags += --enable-gpl --enable-libx264
-  $(warning Make sure these packages are installed: $(weak-build-deps))
 endif
 
 # Disable architecture-specific optimizations for default shared build

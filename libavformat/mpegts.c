@@ -1,6 +1,6 @@
 /*
  * MPEG2 transport stream (aka DVB) demuxer
- * Copyright (c) 2002-2003 Fabrice Bellard.
+ * Copyright (c) 2002-2003 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -888,7 +888,7 @@ static void mpegts_push_data(MpegTSFilter *filter,
                 pes->pts = AV_NOPTS_VALUE;
                 pes->dts = AV_NOPTS_VALUE;
                 if ((flags & 0xc0) == 0x80) {
-                    pes->pts = get_pts(r);
+                    pes->dts = pes->pts = get_pts(r);
                     r += 5;
                 } else if ((flags & 0xc0) == 0xc0) {
                     pes->pts = get_pts(r);
@@ -1177,14 +1177,15 @@ static int mpegts_probe(AVProbeData *p)
 #if 1
     const int size= p->buf_size;
     int score, fec_score, dvhs_score;
+    int check_count= size / TS_FEC_PACKET_SIZE;
 #define CHECK_COUNT 10
 
-    if (size < (TS_FEC_PACKET_SIZE * CHECK_COUNT))
+    if (check_count < CHECK_COUNT)
         return -1;
 
-    score    = analyze(p->buf, TS_PACKET_SIZE    *CHECK_COUNT, TS_PACKET_SIZE, NULL);
-    dvhs_score  = analyze(p->buf, TS_DVHS_PACKET_SIZE    *CHECK_COUNT, TS_DVHS_PACKET_SIZE, NULL);
-    fec_score= analyze(p->buf, TS_FEC_PACKET_SIZE*CHECK_COUNT, TS_FEC_PACKET_SIZE, NULL);
+    score     = analyze(p->buf, TS_PACKET_SIZE     *check_count, TS_PACKET_SIZE     , NULL)*CHECK_COUNT/check_count;
+    dvhs_score= analyze(p->buf, TS_DVHS_PACKET_SIZE*check_count, TS_DVHS_PACKET_SIZE, NULL)*CHECK_COUNT/check_count;
+    fec_score = analyze(p->buf, TS_FEC_PACKET_SIZE *check_count, TS_FEC_PACKET_SIZE , NULL)*CHECK_COUNT/check_count;
 //    av_log(NULL, AV_LOG_DEBUG, "score: %d, dvhs_score: %d, fec_score: %d \n", score, dvhs_score, fec_score);
 
 // we need a clear definition for the returned score otherwise things will become messy sooner or later
@@ -1235,7 +1236,7 @@ static int mpegts_read_header(AVFormatContext *s,
 {
     MpegTSContext *ts = s->priv_data;
     ByteIOContext *pb = s->pb;
-    uint8_t buf[1024];
+    uint8_t buf[5*1024];
     int len;
     int64_t pos;
 

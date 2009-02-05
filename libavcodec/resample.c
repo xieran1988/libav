@@ -1,6 +1,6 @@
 /*
  * samplerate conversion for both audio and video
- * Copyright (c) 2000 Fabrice Bellard.
+ * Copyright (c) 2000 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -20,7 +20,7 @@
  */
 
 /**
- * @file resample.c
+ * @file libavcodec/resample.c
  * samplerate conversion for both audio and video
  */
 

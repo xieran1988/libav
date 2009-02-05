@@ -1,6 +1,6 @@
 /*
  * The simplest mpeg encoder (well, it was the simplest!)
- * Copyright (c) 2000,2001 Fabrice Bellard.
+ * Copyright (c) 2000,2001 Fabrice Bellard
  * Copyright (c) 2002-2004 Michael Niedermayer <michaelni@gmx.at>
  *
  * 4MV & hq & B-frame encoding stuff by Michael Niedermayer <michaelni@gmx.at>
@@ -23,13 +23,14 @@
  */
 
 /**
- * @file mpegvideo_common.h
+ * @file libavcodec/mpegvideo_common.h
  * The simplest mpeg encoder (well, it was the simplest!).
  */
 
 #ifndef AVCODEC_MPEGVIDEO_COMMON_H
 #define AVCODEC_MPEGVIDEO_COMMON_H
 
+#include <string.h>
 #include "avcodec.h"
 #include "dsputil.h"
 #include "mpegvideo.h"

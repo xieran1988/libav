@@ -22,11 +22,11 @@
 #define AVCODEC_AVCODEC_H
 
 /**
- * @file avcodec.h
+ * @file libavcodec/avcodec.h
  * external API header
  */
 
-
+#include <errno.h>
 #include "libavutil/avutil.h"
 
 #define LIBAVCODEC_VERSION_MAJOR 52
@@ -2858,7 +2858,7 @@ int avcodec_encode_audio(AVCodecContext *avctx, uint8_t *buf, int buf_size,
  * @param[in] buf_size the size of the output buffer in bytes
  * @param[in] pict the input picture to encode
  * @return On error a negative value is returned, on success zero or the number
- * of bytes used from the input buffer.
+ * of bytes used from the output buffer.
  */
 int avcodec_encode_video(AVCodecContext *avctx, uint8_t *buf, int buf_size,
                          const AVFrame *pict);

@@ -19,13 +19,14 @@
  */
 
 /**
- * @file postprocess_internal.h
+ * @file libpostproc/postprocess_internal.h
  * internal api header.
  */
 
 #ifndef POSTPROCESS_POSTPROCESS_INTERNAL_H
 #define POSTPROCESS_POSTPROCESS_INTERNAL_H
 
+#include <string.h>
 #include "libavutil/avutil.h"
 #include "postprocess.h"
 

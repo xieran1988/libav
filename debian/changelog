@@ -1,3 +1,53 @@
+ffmpeg-debian (3:0.svn20090204-2) experimental; urgency=low
+
+  * add libxvmc-dev to build-depends in the 'ffmpeg' variant
+  * add libasound2-dev to build-depends. This means that ffplay is now able to
+    actually play using alsa directly instead only via libsdl
+  * add epochs for the "internal" shlibs dependencies
+
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 05 Feb 2009 20:30:05 +0100
+
+ffmpeg-debian (3:0.svn20090204-1) experimental; urgency=low
+
+  [ Reinhard Tartler ]
+  * New Upstream Version (svn revision 16978 libswscale revision 28461)
+
+  Upstream Changes:
+    - R3D REDCODE demuxer
+    - ALSA support for playback and record
+
+  * strighten internal dependencies by using a shlibs.local file
+    Closes: #512844, #512466
+  * New upstream version reintroduces a compatibility symbol ff_gcd
+    Closes: #512946
+  * Bump shlibs because of changes of the Metadata API in libavformat.
+    Actually no other package should use them yet, but let's better play safe
+    here...
+  * no longer install dsputil.h. It exposes lots of function that are private
+    to ffmpeg and may change on any new upstream revision. Please get in touch
+    with the ffmpeg maintainers if you maintain packages that rely on that
+    ffmpeg internal headers like this.
+  * simplify debian/confflags by doing autodetection of headers:
+     - xvid.h
+     - lame/lame.h
+     - faac.h
+     - x264.h
+     - vdpau/vdpau.h
+    Also remove the setting externalcodecs from DEB_BUILD_OPTIONS. The codecs
+    will be enabled as soon as the headers are installed on the filesystem,
+    so there is no need in enabling that separately.
+  * install ffpresets in /usr/share/ffmpeg/. Currently only presets for
+    x264 are avaiable, so a libx264 enabled libavcodec (like
+    libavcodec-unstripped-52) is needed to actually use them.
+
+  [ Fabian Greffrath ]
+  * Enabled Speex decoding via libspeex.
+  * Use an alternative approach to achieve strict internal dependencies
+    by calling dh_makeshlibs twice in debian/rules instead of a
+    debian/shlibs.local file.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 01 Feb 2009 19:54:27 +0100
+
 ffmpeg-debian (3:0.svn20090119-1ubuntu1) jaunty; urgency=low
 
   * merge from debian. LP: #318501

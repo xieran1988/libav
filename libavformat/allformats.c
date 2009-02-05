@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include "avformat.h"
-#include "rtp_internal.h"
+#include "rtp.h"
 #include "rdt.h"
 
 #define REGISTER_MUXER(X,x) { \
@@ -36,12 +36,6 @@
     extern URLProtocol x##_protocol; \
     if(CONFIG_##X##_PROTOCOL) register_protocol(&x##_protocol); }
 
-/* If you do not call this function, then you can select exactly which
-   formats you want to support */
-
-/**
- * Initialize libavformat and register all the (de)muxers and protocols.
- */
 void av_register_all(void)
 {
     static int initialized;
@@ -160,6 +154,7 @@ void av_register_all(void)
     REGISTER_MUXDEMUX (PCM_U8,    pcm_u8);
     REGISTER_MUXER    (PSP, psp);
     REGISTER_DEMUXER  (PVA, pva);
+    REGISTER_DEMUXER  (R3D, r3d);
     REGISTER_MUXDEMUX (RAWVIDEO, rawvideo);
     REGISTER_DEMUXER  (REDIR, redir);
     REGISTER_DEMUXER  (RL2, rl2);

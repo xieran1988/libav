@@ -1,6 +1,6 @@
 /*
  * PCM codecs
- * Copyright (c) 2001 Fabrice Bellard.
+ * Copyright (c) 2001 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -20,7 +20,7 @@
  */
 
 /**
- * @file pcm.c
+ * @file libavcodec/pcm.c
  * PCM codecs
  */
 

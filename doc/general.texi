@@ -123,6 +123,8 @@ library:
 @item raw MPEG-4 video          @tab X @tab X
 @item raw PCM 8/16/32 bits, 32/64-bit floating point, mu-law/A-law @tab X  @tab  X
 @item raw Shorten audio         @tab    @tab  X
+@item R3D REDCODE               @tab   @tab X
+    @tab File format used by RED Digital cameras, contains JPEG 2000 frames and PCM audio.
 @item RealMedia                 @tab X @tab X
 @item RL2                       @tab   @tab X
     @tab Audio and video format used in some games by Entertainment Software Partners.
@@ -453,6 +455,7 @@ performance on systems without hardware floating point support).
 @item ASS/SSA      @tab X @tab X
 @item DVB          @tab X @tab X @tab X @tab X @tab X
 @item DVD          @tab X @tab X @tab X @tab X @tab X
+@item XSUB         @tab   @tab   @tab   @tab X @tab
 @end multitable
 
 @code{X} means that the feature is supported.
@@ -720,6 +723,9 @@ libxvidcore-devel
 
 The recommendation for libnut and x264 is to build them from source by
 yourself, as they evolve too quickly for Cygwin Ports to be up to date.
+
+Cygwin 1.7.x has IPv6 support. You can add IPv6 to Cygwin 1.5.x by means
+of the @code{libgetaddrinfo-devel} package, available at Cygwin Ports.
 
 @subsection Crosscompilation for Windows under Cygwin
 

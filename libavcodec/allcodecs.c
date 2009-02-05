@@ -1,6 +1,6 @@
 /*
  * Provides registration of all codecs, parsers and bitstream filters for libavcodec.
- * Copyright (c) 2002 Fabrice Bellard.
+ * Copyright (c) 2002 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -20,7 +20,7 @@
  */
 
 /**
- * @file allcodecs.c
+ * @file libavcodec/allcodecs.c
  * Provides registration of all codecs, parsers and bitstream filters for libavcodec.
  */
 
@@ -156,6 +156,7 @@ void avcodec_register_all(void)
     REGISTER_DECODER (ULTI, ulti);
     REGISTER_DECODER (VB, vb);
     REGISTER_DECODER (VC1, vc1);
+    REGISTER_DECODER (VC1_VDPAU, vc1_vdpau);
     REGISTER_DECODER (VCR1, vcr1);
     REGISTER_DECODER (VMDVIDEO, vmdvideo);
     REGISTER_DECODER (VMNC, vmnc);
@@ -168,10 +169,10 @@ void avcodec_register_all(void)
     REGISTER_ENCDEC  (WMV1, wmv1);
     REGISTER_ENCDEC  (WMV2, wmv2);
     REGISTER_DECODER (WMV3, wmv3);
+    REGISTER_DECODER (WMV3_VDPAU, wmv3_vdpau);
     REGISTER_DECODER (WNV1, wnv1);
     REGISTER_DECODER (XAN_WC3, xan_wc3);
     REGISTER_DECODER (XL, xl);
-    REGISTER_DECODER (XSUB, xsub);
     REGISTER_ENCDEC  (ZLIB, zlib);
     REGISTER_ENCDEC  (ZMBV, zmbv);
 
@@ -280,6 +281,7 @@ void avcodec_register_all(void)
     /* subtitles */
     REGISTER_ENCDEC  (DVBSUB, dvbsub);
     REGISTER_ENCDEC  (DVDSUB, dvdsub);
+    REGISTER_DECODER (XSUB, xsub);
 
     /* external libraries */
     REGISTER_ENCDEC  (LIBAMR_NB, libamr_nb);
