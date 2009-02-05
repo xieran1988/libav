@@ -2,11 +2,12 @@
 
 include /usr/share/quilt/quilt.make
 
+EPOCH=3:
 DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
 DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
 SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+\.svn([0-9]+)$$/\1/p')
-SHLIBS_VERSION := 3:0.svn20090128-1
+SHLIBS_VERSION := $(EPOCH)0.svn20090128-1
 
 LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-unstripped-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 
@@ -140,7 +141,7 @@ endif
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-unstripped-\1/'); \
-	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(UPSTREAM_VERSION)) | $$upkg (>= $(UPSTREAM_VERSION)), $$pkg (< $(UPSTREAM_VERSION)-99) | $$upkg (< $(UPSTREAM_VERSION)-99)"; \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(EPOCH)$(UPSTREAM_VERSION)) | $$upkg (>= $(EPOCH)$(UPSTREAM_VERSION)), $$pkg (< $(EPOCH)$(UPSTREAM_VERSION)-99) | $$upkg (< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
 	done
 else
 	for pkg in $(LIB_PKGS); do \
