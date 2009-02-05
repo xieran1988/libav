@@ -13,9 +13,14 @@ Build-Depends: debhelper (>= 5.0.0),
                libvorbis-dev,
                libx11-dev,
                libxext-dev,
-               libxvmc-dev,
+               libmp3lame-dev,
+               libfaac-dev,
+               libxvidcore-dev | libxvidcore4-dev,
                quilt,
                texi2html,
+               libx264-dev (>> 1:0.svn20081230),
+               libxvmc-dev [i386 amd64],
+               nvidia-180-libvdpau-dev [i386 amd64],
                zlib1g-dev
 
 Package: libavutil-unstripped-49
