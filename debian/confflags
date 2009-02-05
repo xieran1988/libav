@@ -24,7 +24,7 @@ FLAVORS += vis
 endif
 
 define cond_enable
-	$(shell stat $(1) >/dev/null 2>/dev/null && echo --enable-$(2) )
+	$(shell test -r $(1) && echo --enable-$(2) )
 endef
 
 # Configuration flags causing the libs to be GPL tainted
