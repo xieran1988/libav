@@ -1,4 +1,4 @@
-ffmpeg-debian (3:0.svn20090204-3) experimental; urgency=low
+ffmpeg-debian (3:0.svn20090204-3) unstable; urgency=low
 
   * remove libasound2-dev from build-depends on non-Linux archs
 
