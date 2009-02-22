@@ -136,7 +136,6 @@ else
 endif
 	dh_compress
 	dh_fixperms
-	dh_installdeb
 # strict internal dependencies
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \
@@ -161,6 +160,7 @@ else
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION))"; \
 	done
 endif
+	dh_installdeb
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"
 	dh_md5sums
 	dh_builddeb
