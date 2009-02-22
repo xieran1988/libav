@@ -1,8 +1,13 @@
 ffmpeg-debian (3:0.svn20090204-3) unstable; urgency=low
 
+  [ Fabian Greffrath ]
   * remove libasound2-dev from build-depends on non-Linux archs
 
- -- Fabian Greffrath <fabian@debian-unofficial.org>  Fri, 06 Feb 2009 10:01:51 +0100
+  [ Reinhard Tartler ]
+  * fix postinst generation by calling dh_installdeb after dh_makeshlibs
+  * upload to unstable
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 22 Feb 2009 09:32:49 +0100
 
 ffmpeg-debian (3:0.svn20090204-2) experimental; urgency=low
 
