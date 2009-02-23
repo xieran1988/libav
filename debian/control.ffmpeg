@@ -37,7 +37,7 @@ Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
-Suggests: liba52-0.7.4, libfaad0
+Suggests: libfaad0
 Conflicts: libavcodec52
 Replaces: libavcodec52
 Description: ffmpeg codec library
