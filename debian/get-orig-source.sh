@@ -63,7 +63,7 @@ done
 dh_testdir
 
 if [ -z $SVNDATE ]; then
-	error "you need to specify an svn date. e.g. 20081230 for Dec 29. 2009"
+	error "you need to specify an svn date. e.g. 20081230 for Dec 29. 2008"
 fi
 
 CLEANUPSCRIPT=`pwd`/debian/strip.sh
