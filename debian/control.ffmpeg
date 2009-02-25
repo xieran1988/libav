@@ -91,6 +91,7 @@ Depends: ${shlibs:Depends},
          ${misc:Depends}
 Conflicts: libavformatcvs52, libavformat52
 Replaces: libavformatcvs52, libavformat52
+Breaks: libavcodec51
 Description: ffmpeg file format library
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
