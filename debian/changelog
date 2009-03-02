@@ -1,3 +1,9 @@
+ffmpeg-debian (3:0.svn20090204-4) UNRELEASED; urgency=low
+
+  * describe changes below
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 02 Mar 2009 21:55:57 +0100
+
 ffmpeg-debian (3:0.svn20090204-3) unstable; urgency=low
 
   [ Fabian Greffrath ]
