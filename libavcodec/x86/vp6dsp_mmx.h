@@ -1,5 +1,6 @@
 /*
- * RTP definitions
+ * vp6dsp MMX function declarations
+ * Copyright (c) 2009  Sebastien Lucas <sebastien.lucas@gmail.com>
  *
  * This file is part of FFmpeg.
  *
@@ -17,11 +18,13 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#ifndef AVFORMAT_RTP_MPV_H
-#define AVFORMAT_RTP_MPV_H
 
-#include "avformat.h"
+#ifndef AVCODEC_X86_VP6DSP_MMX_H
+#define AVCODEC_X86_VP6DSP_MMX_H
 
-void ff_rtp_send_mpegvideo(AVFormatContext *s1, const uint8_t *buf1, int size);
+#include <stdint.h>
 
-#endif /* AVFORMAT_RTP_MPV_H */
+void ff_vp6_filter_diag4_mmx(uint8_t *dst, uint8_t *src, int stride,
+                             const int16_t *h_weights,const int16_t *v_weights);
+
+#endif /* AVCODEC_X86_VP6DSP_MMX_H */

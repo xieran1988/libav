@@ -88,7 +88,7 @@ AVCodec *av_codec_next(AVCodec *c){
     else  return first_avcodec;
 }
 
-void register_avcodec(AVCodec *codec)
+void avcodec_register(AVCodec *codec)
 {
     AVCodec **p;
     avcodec_init();
@@ -97,6 +97,13 @@ void register_avcodec(AVCodec *codec)
     *p = codec;
     codec->next = NULL;
 }
+
+#if LIBAVCODEC_VERSION_MAJOR < 53
+void register_avcodec(AVCodec *codec)
+{
+    avcodec_register(codec);
+}
+#endif
 
 void avcodec_set_dimensions(AVCodecContext *s, int width, int height){
     s->coded_width = width;
@@ -154,6 +161,8 @@ void avcodec_align_dimensions(AVCodecContext *s, int *width, int *height){
             h_align=4;
         }
     case PIX_FMT_PAL8:
+    case PIX_FMT_BGR8:
+    case PIX_FMT_RGB8:
         if(s->codec_id == CODEC_ID_SMC){
             w_align=4;
             h_align=4;
@@ -262,6 +271,8 @@ int avcodec_default_get_buffer(AVCodecContext *s, AVFrame *pic){
         }
 
         tmpsize = ff_fill_pointer(&picture, NULL, s->pix_fmt, h);
+        if (tmpsize < 0)
+            return -1;
 
         for (i=0; i<3 && picture.data[i+1]; i++)
             size[i] = picture.data[i+1] - picture.data[i];
@@ -281,12 +292,14 @@ int avcodec_default_get_buffer(AVCodecContext *s, AVFrame *pic){
             if(buf->base[i]==NULL) return -1;
             memset(buf->base[i], 128, size[i]);
 
-            // no edge if EDEG EMU or not planar YUV, we check for PAL8 redundantly to protect against a exploitable bug regression ...
-            if((s->flags&CODEC_FLAG_EMU_EDGE) || (s->pix_fmt == PIX_FMT_PAL8) || !size[2])
+            // no edge if EDEG EMU or not planar YUV
+            if((s->flags&CODEC_FLAG_EMU_EDGE) || !size[2])
                 buf->data[i] = buf->base[i];
             else
                 buf->data[i] = buf->base[i] + ALIGN((buf->linesize[i]*EDGE_WIDTH>>v_shift) + (EDGE_WIDTH>>h_shift), stride_align[i]);
         }
+        if(size[1] && !size[2])
+            ff_set_systematic_pal((uint32_t*)buf->data[1], s->pix_fmt);
         buf->width  = s->width;
         buf->height = s->height;
         buf->pix_fmt= s->pix_fmt;
@@ -380,7 +393,9 @@ int avcodec_default_execute(AVCodecContext *c, int (*func)(AVCodecContext *c2, v
     return 0;
 }
 
-enum PixelFormat avcodec_default_get_format(struct AVCodecContext *s, const enum PixelFormat * fmt){
+enum PixelFormat avcodec_default_get_format(struct AVCodecContext *s, const enum PixelFormat *fmt){
+    while (*fmt != PIX_FMT_NONE && ff_is_hwaccel_pix_fmt(*fmt))
+        ++fmt;
     return fmt[0];
 }
 
@@ -460,7 +475,7 @@ int attribute_align_arg avcodec_encode_audio(AVCodecContext *avctx, uint8_t *buf
         return -1;
     }
     if((avctx->codec->capabilities & CODEC_CAP_DELAY) || samples){
-        int ret = avctx->codec->encode(avctx, buf, buf_size, (void *)samples);
+        int ret = avctx->codec->encode(avctx, buf, buf_size, samples);
         avctx->frame_number++;
         return ret;
     }else
@@ -477,7 +492,7 @@ int attribute_align_arg avcodec_encode_video(AVCodecContext *avctx, uint8_t *buf
     if(avcodec_check_dimensions(avctx,avctx->width,avctx->height))
         return -1;
     if((avctx->codec->capabilities & CODEC_CAP_DELAY) || pict){
-        int ret = avctx->codec->encode(avctx, buf, buf_size, (void *)pict);
+        int ret = avctx->codec->encode(avctx, buf, buf_size, pict);
         avctx->frame_number++;
         emms_c(); //needed to avoid an emms_c() call before every return;
 
@@ -490,7 +505,13 @@ int avcodec_encode_subtitle(AVCodecContext *avctx, uint8_t *buf, int buf_size,
                             const AVSubtitle *sub)
 {
     int ret;
-    ret = avctx->codec->encode(avctx, buf, buf_size, (void *)sub);
+    if(sub->start_display_time) {
+        av_log(avctx, AV_LOG_ERROR, "start_display_time must be 0.\n");
+        return -1;
+    }
+    if(sub->num_rects == 0 || !sub->rects)
+        return -1;
+    ret = avctx->codec->encode(avctx, buf, buf_size, sub);
     avctx->frame_number++;
     return ret;
 }
@@ -1021,7 +1042,7 @@ int av_parse_video_frame_size(int *width_ptr, int *height_ptr, const char *str)
 {
     int i;
     int n = FF_ARRAY_ELEMS(video_frame_size_abbrs);
-    const char *p;
+    char *p;
     int frame_width = 0, frame_height = 0;
 
     for(i=0;i<n;i++) {
@@ -1033,10 +1054,10 @@ int av_parse_video_frame_size(int *width_ptr, int *height_ptr, const char *str)
     }
     if (i == n) {
         p = str;
-        frame_width = strtol(p, (char **)&p, 10);
+        frame_width = strtol(p, &p, 10);
         if (*p)
             p++;
-        frame_height = strtol(p, (char **)&p, 10);
+        frame_height = strtol(p, &p, 10);
     }
     if (frame_width <= 0 || frame_height <= 0)
         return -1;
@@ -1102,4 +1123,32 @@ void ff_log_ask_for_sample(void *avc, const char *msg)
     av_log(avc, AV_LOG_WARNING, "If you want to help, upload a sample "
             "of this file to ftp://upload.ffmpeg.org/MPlayer/incoming/ "
             "and contact the ffmpeg-devel mailing list.\n");
+}
+
+static AVHWAccel *first_hwaccel = NULL;
+
+void av_register_hwaccel(AVHWAccel *hwaccel)
+{
+    AVHWAccel **p = &first_hwaccel;
+    while (*p)
+        p = &(*p)->next;
+    *p = hwaccel;
+    hwaccel->next = NULL;
+}
+
+AVHWAccel *av_hwaccel_next(AVHWAccel *hwaccel)
+{
+    return hwaccel ? hwaccel->next : first_hwaccel;
+}
+
+AVHWAccel *ff_find_hwaccel(enum CodecID codec_id, enum PixelFormat pix_fmt)
+{
+    AVHWAccel *hwaccel=NULL;
+
+    while((hwaccel= av_hwaccel_next(hwaccel))){
+        if (   hwaccel->id      == codec_id
+            && hwaccel->pix_fmt == pix_fmt)
+            return hwaccel;
+    }
+    return NULL;
 }

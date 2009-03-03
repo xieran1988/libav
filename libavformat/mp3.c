@@ -391,6 +391,7 @@ static int mp3_read_probe(AVProbeData *p)
     if   (first_frames>=3) return AVPROBE_SCORE_MAX/2+1;
     else if(max_frames>500)return AVPROBE_SCORE_MAX/2;
     else if(max_frames>=3) return AVPROBE_SCORE_MAX/4;
+    else if(buf0!=p->buf)  return AVPROBE_SCORE_MAX/4-1;
     else if(max_frames>=1) return 1;
     else                   return 0;
 }
@@ -656,7 +657,7 @@ static int mp3_write_trailer(struct AVFormatContext *s)
 #if CONFIG_MP3_DEMUXER
 AVInputFormat mp3_demuxer = {
     "mp3",
-    NULL_IF_CONFIG_SMALL("MPEG audio"),
+    NULL_IF_CONFIG_SMALL("MPEG audio layer 2/3"),
     0,
     mp3_read_probe,
     mp3_read_header,

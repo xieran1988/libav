@@ -48,7 +48,7 @@ enum MpegTSFilterType {
 
 typedef struct MpegTSFilter MpegTSFilter;
 
-typedef void PESCallback(MpegTSFilter *f, const uint8_t *buf, int len, int is_start);
+typedef void PESCallback(MpegTSFilter *f, const uint8_t *buf, int len, int is_start, int64_t pos);
 
 typedef struct MpegTSPESFilter {
     PESCallback *pes_cb;
@@ -147,6 +147,7 @@ struct PESContext {
     int total_size;
     int pes_header_size;
     int64_t pts, dts;
+    int64_t ts_packet_pos; /**< position of first TS packet of this PES packet */
     uint8_t header[MAX_PES_HEADER_SIZE];
 };
 
@@ -334,6 +335,13 @@ static void mpegts_close_filter(MpegTSContext *ts, MpegTSFilter *filter)
     pid = filter->pid;
     if (filter->type == MPEGTS_SECTION)
         av_freep(&filter->u.section_filter.section_buf);
+    else if (filter->type == MPEGTS_PES) {
+        /* referenced private data will be freed later in
+         * av_close_input_stream */
+        if (!((PESContext *)filter->u.pes_filter.opaque)->st) {
+            av_freep(&filter->u.pes_filter.opaque);
+        }
+    }
 
     av_free(filter);
     ts->pids[pid] = NULL;
@@ -652,7 +660,7 @@ static void pmt_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
 
         if (st) {
             if (language[0] != 0) {
-                memcpy(st->language, language, 4);
+                av_metadata_set(&st->metadata, "language", language);
             }
 
             if (stream_type == STREAM_TYPE_SUBTITLE_DVB) {
@@ -778,8 +786,10 @@ static void sdt_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
                 name = getstr8(&p, p_end);
                 if (name) {
                     AVProgram *program = av_new_program(ts->stream, sid);
-                    if(program)
-                        av_set_program_name(program, provider_name, name);
+                    if(program) {
+                        av_metadata_set(&program->metadata, "name", name);
+                        av_metadata_set(&program->metadata, "provider_name", provider_name);
+                    }
                 }
                 av_free(name);
                 av_free(provider_name);
@@ -810,7 +820,8 @@ static int64_t get_pts(const uint8_t *p)
 
 /* return non zero if a packet could be constructed */
 static void mpegts_push_data(MpegTSFilter *filter,
-                             const uint8_t *buf, int buf_size, int is_start)
+                             const uint8_t *buf, int buf_size, int is_start,
+                             int64_t pos)
 {
     PESContext *pes = filter->u.pes_filter.opaque;
     MpegTSContext *ts = pes->ts;
@@ -823,6 +834,7 @@ static void mpegts_push_data(MpegTSFilter *filter,
     if (is_start) {
         pes->state = MPEGTS_HEADER;
         pes->data_index = 0;
+        pes->ts_packet_pos = pos;
     }
     p = buf;
     while (buf_size > 0) {
@@ -915,6 +927,8 @@ static void mpegts_push_data(MpegTSFilter *filter,
                     pkt->stream_index = pes->st->index;
                     pkt->pts = pes->pts;
                     pkt->dts = pes->dts;
+                    /* store position of first TS packet of this PES packet */
+                    pkt->pos = pes->ts_packet_pos;
                     /* reset pts values */
                     pes->pts = AV_NOPTS_VALUE;
                     pes->dts = AV_NOPTS_VALUE;
@@ -1036,6 +1050,7 @@ static void handle_packet(MpegTSContext *ts, const uint8_t *packet)
     MpegTSFilter *tss;
     int len, pid, cc, cc_ok, afc, is_start;
     const uint8_t *p, *p_end;
+    int64_t pos;
 
     pid = AV_RB16(packet + 1) & 0x1fff;
     if(pid && discard_pid(ts, pid))
@@ -1070,7 +1085,8 @@ static void handle_packet(MpegTSContext *ts, const uint8_t *packet)
     if (p >= p_end)
         return;
 
-    ts->pos47= url_ftell(ts->stream->pb) % ts->raw_packet_size;
+    pos = url_ftell(ts->stream->pb);
+    ts->pos47= pos % ts->raw_packet_size;
 
     if (tss->type == MPEGTS_SECTION) {
         if (is_start) {
@@ -1098,8 +1114,9 @@ static void handle_packet(MpegTSContext *ts, const uint8_t *packet)
             }
         }
     } else {
+        // Note: The position here points actually behind the current packet.
         tss->u.pes_filter.pes_cb(tss,
-                                 p, p_end - p, is_start);
+                                 p, p_end - p, is_start, pos - ts->raw_packet_size);
     }
 }
 
