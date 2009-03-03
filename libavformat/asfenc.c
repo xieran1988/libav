@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include "avformat.h"
+#include "metadata.h"
 #include "riff.h"
 #include "asf.h"
 
@@ -271,15 +272,23 @@ static int asf_write_header1(AVFormatContext *s, int64_t file_size, int64_t data
 {
     ASFContext *asf = s->priv_data;
     ByteIOContext *pb = s->pb;
+    AVMetadataTag *title, *author, *copyright, *comment;
     int header_size, n, extra_size, extra_size2, wav_extra_size, file_time;
     int has_title;
+    int metadata_count;
     AVCodecContext *enc;
     int64_t header_offset, cur_pos, hpos;
     int bit_rate;
     int64_t duration;
 
+    title     = av_metadata_get(s->metadata, "title"    , NULL, 0);
+    author    = av_metadata_get(s->metadata, "author"   , NULL, 0);
+    copyright = av_metadata_get(s->metadata, "copyright", NULL, 0);
+    comment   = av_metadata_get(s->metadata, "comment"  , NULL, 0);
+
     duration = asf->duration + PREROLL_TIME * 10000;
-    has_title = (s->title[0] || s->author[0] || s->copyright[0] || s->comment[0]);
+    has_title = title || author || copyright || comment;
+    metadata_count = s->metadata ? s->metadata->count : 0;
 
     bit_rate = 0;
     for(n=0;n<s->nb_streams;n++) {
@@ -294,16 +303,16 @@ static int asf_write_header1(AVFormatContext *s, int64_t file_size, int64_t data
         put_chunk(s, 0x4824, 0, 0xc00); /* start of stream (length will be patched later) */
     }
 
-    put_guid(pb, &asf_header);
+    put_guid(pb, &ff_asf_header);
     put_le64(pb, -1); /* header length, will be patched after */
-    put_le32(pb, 3 + has_title + s->nb_streams); /* number of chunks in header */
+    put_le32(pb, 3 + has_title + !!metadata_count + s->nb_streams); /* number of chunks in header */
     put_byte(pb, 1); /* ??? */
     put_byte(pb, 2); /* ??? */
 
     /* file header */
     header_offset = url_ftell(pb);
-    hpos = put_header(pb, &file_header);
-    put_guid(pb, &my_guid);
+    hpos = put_header(pb, &ff_asf_file_header);
+    put_guid(pb, &ff_asf_my_guid);
     put_le64(pb, file_size);
     file_time = 0;
     put_le64(pb, unix_to_file_time(file_time));
@@ -318,24 +327,40 @@ static int asf_write_header1(AVFormatContext *s, int64_t file_size, int64_t data
     end_header(pb, hpos);
 
     /* unknown headers */
-    hpos = put_header(pb, &head1_guid);
-    put_guid(pb, &head2_guid);
+    hpos = put_header(pb, &ff_asf_head1_guid);
+    put_guid(pb, &ff_asf_head2_guid);
     put_le32(pb, 6);
     put_le16(pb, 0);
     end_header(pb, hpos);
 
     /* title and other infos */
     if (has_title) {
-        hpos = put_header(pb, &comment_header);
-        if ( s->title[0]     ) { put_le16(pb, 2 * (strlen(s->title    ) + 1)); } else { put_le16(pb, 0); }
-        if ( s->author[0]    ) { put_le16(pb, 2 * (strlen(s->author   ) + 1)); } else { put_le16(pb, 0); }
-        if ( s->copyright[0] ) { put_le16(pb, 2 * (strlen(s->copyright) + 1)); } else { put_le16(pb, 0); }
-        if ( s->comment[0]   ) { put_le16(pb, 2 * (strlen(s->comment  ) + 1)); } else { put_le16(pb, 0); }
+        hpos = put_header(pb, &ff_asf_comment_header);
+        put_le16(pb, title     ? 2 * (strlen(title->value    ) + 1) : 0);
+        put_le16(pb, author    ? 2 * (strlen(author->value   ) + 1) : 0);
+        put_le16(pb, copyright ? 2 * (strlen(copyright->value) + 1) : 0);
+        put_le16(pb, comment   ? 2 * (strlen(comment->value  ) + 1) : 0);
         put_le16(pb, 0);
-        if ( s->title[0]     ) put_str16_nolen(pb, s->title);
-        if ( s->author[0]    ) put_str16_nolen(pb, s->author);
-        if ( s->copyright[0] ) put_str16_nolen(pb, s->copyright);
-        if ( s->comment[0]   ) put_str16_nolen(pb, s->comment);
+        if (title    ) put_str16_nolen(pb, title->value    );
+        if (author   ) put_str16_nolen(pb, author->value   );
+        if (copyright) put_str16_nolen(pb, copyright->value);
+        if (comment  ) put_str16_nolen(pb, comment->value  );
+        end_header(pb, hpos);
+    }
+    if (metadata_count) {
+        AVMetadataTag *tag = NULL;
+        hpos = put_header(pb, &ff_asf_extended_content_header);
+        put_le16(pb, metadata_count);
+        while ((tag = av_metadata_get(s->metadata, "", tag, AV_METADATA_IGNORE_SUFFIX))) {
+            put_le16(pb, 2*(strlen(tag->key) + 3) + 1);
+            put_le16(pb, 'W');
+            put_le16(pb, 'M');
+            put_le16(pb, '/');
+            put_str16_nolen(pb, tag->key);
+            put_le16(pb, 0);
+            put_le16(pb, 2*strlen(tag->value) + 1);
+            put_str16_nolen(pb, tag->value);
+        }
         end_header(pb, hpos);
     }
 
@@ -363,13 +388,13 @@ static int asf_write_header1(AVFormatContext *s, int64_t file_size, int64_t data
             break;
         }
 
-        hpos = put_header(pb, &stream_header);
+        hpos = put_header(pb, &ff_asf_stream_header);
         if (enc->codec_type == CODEC_TYPE_AUDIO) {
-            put_guid(pb, &audio_stream);
-            put_guid(pb, &audio_conceal_spread);
+            put_guid(pb, &ff_asf_audio_stream);
+            put_guid(pb, &ff_asf_audio_conceal_spread);
         } else {
-            put_guid(pb, &video_stream);
-            put_guid(pb, &video_conceal_none);
+            put_guid(pb, &ff_asf_video_stream);
+            put_guid(pb, &ff_asf_video_conceal_none);
         }
         put_le64(pb, 0); /* ??? */
         es_pos = url_ftell(pb);
@@ -419,8 +444,8 @@ static int asf_write_header1(AVFormatContext *s, int64_t file_size, int64_t data
 
     /* media comments */
 
-    hpos = put_header(pb, &codec_comment_header);
-    put_guid(pb, &codec_comment1_header);
+    hpos = put_header(pb, &ff_asf_codec_comment_header);
+    put_guid(pb, &ff_asf_codec_comment1_header);
     put_le32(pb, s->nb_streams);
     for(n=0;n<s->nb_streams;n++) {
         AVCodec *p;
@@ -476,9 +501,9 @@ static int asf_write_header1(AVFormatContext *s, int64_t file_size, int64_t data
 
     /* movie chunk, followed by packets of packet_size */
     asf->data_offset = cur_pos;
-    put_guid(pb, &data_header);
+    put_guid(pb, &ff_asf_data_header);
     put_le64(pb, data_chunk_size);
-    put_guid(pb, &my_guid);
+    put_guid(pb, &ff_asf_my_guid);
     put_le64(pb, asf->nb_packets); /* nb packets */
     put_byte(pb, 1); /* ??? */
     put_byte(pb, 1); /* ??? */
@@ -768,9 +793,9 @@ static int asf_write_index(AVFormatContext *s, ASFIndex *index, uint16_t max, ui
     ByteIOContext *pb = s->pb;
     int i;
 
-    put_guid(pb, &simple_index_header);
+    put_guid(pb, &ff_asf_simple_index_header);
     put_le64(pb, 24 + 16 + 8 + 4 + 4 + (4 + 2)*count);
-    put_guid(pb, &my_guid);
+    put_guid(pb, &ff_asf_my_guid);
     put_le64(pb, ASF_INDEXED_INTERVAL);
     put_le32(pb, max);
     put_le32(pb, count);
@@ -830,6 +855,7 @@ AVOutputFormat asf_muxer = {
     asf_write_trailer,
     .flags = AVFMT_GLOBALHEADER,
     .codec_tag= (const AVCodecTag* const []){codec_asf_bmp_tags, codec_bmp_tags, codec_wav_tags, 0},
+    .metadata_conv = ff_asf_metadata_conv,
 };
 #endif
 
@@ -851,5 +877,6 @@ AVOutputFormat asf_stream_muxer = {
     asf_write_trailer,
     .flags = AVFMT_GLOBALHEADER,
     .codec_tag= (const AVCodecTag* const []){codec_asf_bmp_tags, codec_bmp_tags, codec_wav_tags, 0},
+    .metadata_conv = ff_asf_metadata_conv,
 };
 #endif //CONFIG_ASF_STREAM_MUXER

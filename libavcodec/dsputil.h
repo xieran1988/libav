@@ -94,6 +94,10 @@ void ff_vp3_idct_add_c(uint8_t *dest/*align 8*/, int line_size, DCTELEM *block/*
 void ff_vp3_v_loop_filter_c(uint8_t *src, int stride, int *bounding_values);
 void ff_vp3_h_loop_filter_c(uint8_t *src, int stride, int *bounding_values);
 
+/* VP6 DSP functions */
+void ff_vp6_filter_diag4_c(uint8_t *dst, uint8_t *src, int stride,
+                           const int16_t *h_weights, const int16_t *v_weights);
+
 /* 1/2^n downscaling functions from imgconvert.c */
 void ff_img_copy_plane(uint8_t *dst, int dst_wrap, const uint8_t *src, int src_wrap, int width, int height);
 void ff_shrink22(uint8_t *dst, int dst_wrap, const uint8_t *src, int src_wrap, int width, int height);
@@ -214,27 +218,27 @@ typedef struct DSPContext {
     int (*pix_norm1)(uint8_t * pix, int line_size);
 // 16x16 8x8 4x4 2x2 16x8 8x4 4x2 8x16 4x8 2x4
 
-    me_cmp_func sad[5]; /* identical to pix_absAxA except additional void * */
-    me_cmp_func sse[5];
-    me_cmp_func hadamard8_diff[5];
-    me_cmp_func dct_sad[5];
-    me_cmp_func quant_psnr[5];
-    me_cmp_func bit[5];
-    me_cmp_func rd[5];
-    me_cmp_func vsad[5];
-    me_cmp_func vsse[5];
-    me_cmp_func nsse[5];
-    me_cmp_func w53[5];
-    me_cmp_func w97[5];
-    me_cmp_func dct_max[5];
-    me_cmp_func dct264_sad[5];
+    me_cmp_func sad[6]; /* identical to pix_absAxA except additional void * */
+    me_cmp_func sse[6];
+    me_cmp_func hadamard8_diff[6];
+    me_cmp_func dct_sad[6];
+    me_cmp_func quant_psnr[6];
+    me_cmp_func bit[6];
+    me_cmp_func rd[6];
+    me_cmp_func vsad[6];
+    me_cmp_func vsse[6];
+    me_cmp_func nsse[6];
+    me_cmp_func w53[6];
+    me_cmp_func w97[6];
+    me_cmp_func dct_max[6];
+    me_cmp_func dct264_sad[6];
 
-    me_cmp_func me_pre_cmp[5];
-    me_cmp_func me_cmp[5];
-    me_cmp_func me_sub_cmp[5];
-    me_cmp_func mb_cmp[5];
-    me_cmp_func ildct_cmp[5]; //only width 16 used
-    me_cmp_func frame_skip_cmp[5]; //only width 8 used
+    me_cmp_func me_pre_cmp[6];
+    me_cmp_func me_cmp[6];
+    me_cmp_func me_sub_cmp[6];
+    me_cmp_func mb_cmp[6];
+    me_cmp_func ildct_cmp[6]; //only width 16 used
+    me_cmp_func frame_skip_cmp[6]; //only width 8 used
 
     int (*ssd_int8_vs_int16)(const int8_t *pix1, const int16_t *pix2,
                              int size);
@@ -345,6 +349,7 @@ typedef struct DSPContext {
      * note, this might read from src1[-1], src2[-1]
      */
     void (*sub_hfyu_median_prediction)(uint8_t *dst, uint8_t *src1, uint8_t *src2, int w, int *left, int *left_top);
+    void (*add_hfyu_median_prediction)(uint8_t *dst, uint8_t *top, uint8_t *diff, int w, int *left, int *left_top);
     /* this might write to dst[w] */
     void (*add_png_paeth_prediction)(uint8_t *dst, uint8_t *src, uint8_t *top, int w, int bpp);
     void (*bswap_buf)(uint32_t *dst, const uint32_t *src, int w);
@@ -372,6 +377,9 @@ typedef struct DSPContext {
 
     void (*vp3_v_loop_filter)(uint8_t *src, int stride, int *bounding_values);
     void (*vp3_h_loop_filter)(uint8_t *src, int stride, int *bounding_values);
+
+    void (*vp6_filter_diag4)(uint8_t *dst, uint8_t *src, int stride,
+                             const int16_t *h_weights,const int16_t *v_weights);
 
     /* assume len is a multiple of 4, and arrays are 16-byte aligned */
     void (*vorbis_inverse_coupling)(float *mag, float *ang, int blocksize);

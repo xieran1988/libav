@@ -22,6 +22,9 @@
 /**
  * @file libavcodec/imgresample.c
  * High quality image resampling with polyphase filters .
+ *
+ * WARNING: This file is deprecated and will be removed after FFmpeg 0.5
+ * release, do not lose your time improving it!
  */
 
 #include "avcodec.h"
@@ -572,7 +575,7 @@ void sws_freeContext(struct SwsContext *ctx)
  * Otherwise, frees context and gets a new one.
  *
  * Be warned that srcFilter, dstFilter are not checked, they are
- * asumed to remain valid.
+ * assumed to remain valid.
  */
 struct SwsContext *sws_getCachedContext(struct SwsContext *ctx,
                         int srcW, int srcH, int srcFormat,

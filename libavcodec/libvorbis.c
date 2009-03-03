@@ -50,14 +50,14 @@ typedef struct OggVorbisContext {
 } OggVorbisContext ;
 
 
-static int oggvorbis_init_encoder(vorbis_info *vi, AVCodecContext *avccontext) {
+static av_cold int oggvorbis_init_encoder(vorbis_info *vi, AVCodecContext *avccontext) {
     double cfreq;
 
     if(avccontext->flags & CODEC_FLAG_QSCALE) {
         /* variable bitrate */
         if(vorbis_encode_setup_vbr(vi, avccontext->channels,
                 avccontext->sample_rate,
-                avccontext->global_quality / (float)FF_QP2LAMBDA))
+                avccontext->global_quality / (float)FF_QP2LAMBDA / 10.0))
             return -1;
     } else {
         /* constant bitrate */

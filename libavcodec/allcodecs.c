@@ -28,10 +28,10 @@
 
 #define REGISTER_ENCODER(X,x) { \
           extern AVCodec x##_encoder; \
-          if(CONFIG_##X##_ENCODER)  register_avcodec(&x##_encoder); }
+          if(CONFIG_##X##_ENCODER)  avcodec_register(&x##_encoder); }
 #define REGISTER_DECODER(X,x) { \
           extern AVCodec x##_decoder; \
-          if(CONFIG_##X##_DECODER)  register_avcodec(&x##_decoder); }
+          if(CONFIG_##X##_DECODER)  avcodec_register(&x##_decoder); }
 #define REGISTER_ENCDEC(X,x)  REGISTER_ENCODER(X,x); REGISTER_DECODER(X,x)
 
 #define REGISTER_PARSER(X,x) { \
@@ -71,6 +71,7 @@ void avcodec_register_all(void)
     REGISTER_DECODER (EACMV, eacmv);
     REGISTER_DECODER (EATGQ, eatgq);
     REGISTER_DECODER (EATGV, eatgv);
+    REGISTER_DECODER (EATQI, eatqi);
     REGISTER_DECODER (EIGHTBPS, eightbps);
     REGISTER_DECODER (EIGHTSVX_EXP, eightsvx_exp);
     REGISTER_DECODER (EIGHTSVX_FIB, eightsvx_fib);
@@ -292,6 +293,7 @@ void avcodec_register_all(void)
     REGISTER_ENCDEC  (LIBGSM, libgsm);
     REGISTER_ENCDEC  (LIBGSM_MS, libgsm_ms);
     REGISTER_ENCODER (LIBMP3LAME, libmp3lame);
+    REGISTER_DECODER (LIBOPENJPEG, libopenjpeg);
     REGISTER_ENCDEC  (LIBSCHROEDINGER, libschroedinger);
     REGISTER_DECODER (LIBSPEEX, libspeex);
     REGISTER_ENCODER (LIBTHEORA, libtheora);
