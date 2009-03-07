@@ -6,12 +6,13 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
            Loic Minier <lool@dooz.org>,
            Reinhard Tartler <siretart@tauware.de>,
            Fabian Greffrath <fabian@debian-unofficial.org>
-Standards-Version: 3.7.3
-Vcs-Svn: https://code.launchpad.net/~siretart/ffmpeg/ffmpeg.jaunty
-Vcs-Browser: https://code.launchpad.net/~siretart/ffmpeg/ffmpeg.jaunty
-Homepage: http://ffmpeg.mplayerhq.hu/
+Standards-Version: 3.8.0
+Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg-debian.git
+Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/ffmpeg-debian.git;a=summary
+Homepage: http://ffmpeg.org/
+Build-Depends-Indep: doxygen
 Build-Depends: debhelper (>= 5.0.0),
-               doxygen,
+               libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libfreetype6-dev,
                libgsm1-dev,
@@ -19,10 +20,12 @@ Build-Depends: debhelper (>= 5.0.0),
                libraw1394-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libsdl1.2-dev,
                libschroedinger-dev,
+               libspeex-dev,
                libtheora-dev (>> 0.0.0.alpha4),
                libvorbis-dev,
                libx11-dev,
                libxext-dev,
+               libxvmc-dev,
                quilt,
                texi2html,
                zlib1g-dev
@@ -102,6 +105,7 @@ Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
+Breaks: libavcodec51
 Description: ffmpeg file format library
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
@@ -162,6 +166,7 @@ Suggests: libfaad-dev,
           libgsm1-dev,
           libogg-dev,
           libschroedinger-dev,
+          libspeex-dev,
           libtheora-dev (>> 0.0.0.alpha4),
           libvorbis-dev,
           libx11-dev,

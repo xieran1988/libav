@@ -1,6 +1,6 @@
 /*
  * DSP utils
- * Copyright (c) 2000, 2001, 2002 Fabrice Bellard.
+ * Copyright (c) 2000, 2001, 2002 Fabrice Bellard
  * Copyright (c) 2002-2004 Michael Niedermayer <michaelni@gmx.at>
  *
  * This file is part of FFmpeg.
@@ -21,7 +21,7 @@
  */
 
 /**
- * @file dsputil.h
+ * @file libavcodec/dsputil.h
  * DSP utils.
  * note, many functions in here may use MMX which trashes the FPU state, it is
  * absolutely necessary to call emms_c() between dsp & float/double code
@@ -30,6 +30,7 @@
 #ifndef AVCODEC_DSPUTIL_H
 #define AVCODEC_DSPUTIL_H
 
+#include "libavutil/intreadwrite.h"
 #include "avcodec.h"
 
 
@@ -60,6 +61,10 @@ void ff_h264_idct8_dc_add_c(uint8_t *dst, DCTELEM *block, int stride);
 void ff_h264_idct_dc_add_c(uint8_t *dst, DCTELEM *block, int stride);
 void ff_h264_lowres_idct_add_c(uint8_t *dst, int stride, DCTELEM *block);
 void ff_h264_lowres_idct_put_c(uint8_t *dst, int stride, DCTELEM *block);
+void ff_h264_idct_add16_c(uint8_t *dst, const int *blockoffset, DCTELEM *block, int stride, const uint8_t nnzc[6*8]);
+void ff_h264_idct_add16intra_c(uint8_t *dst, const int *blockoffset, DCTELEM *block, int stride, const uint8_t nnzc[6*8]);
+void ff_h264_idct8_add4_c(uint8_t *dst, const int *blockoffset, DCTELEM *block, int stride, const uint8_t nnzc[6*8]);
+void ff_h264_idct_add8_c(uint8_t **dest, const int *blockoffset, DCTELEM *block, int stride, const uint8_t nnzc[6*8]);
 
 void ff_vector_fmul_add_add_c(float *dst, const float *src0, const float *src1,
                               const float *src2, int src3, int blocksize, int step);
@@ -88,6 +93,10 @@ void ff_vp3_idct_add_c(uint8_t *dest/*align 8*/, int line_size, DCTELEM *block/*
 
 void ff_vp3_v_loop_filter_c(uint8_t *src, int stride, int *bounding_values);
 void ff_vp3_h_loop_filter_c(uint8_t *src, int stride, int *bounding_values);
+
+/* VP6 DSP functions */
+void ff_vp6_filter_diag4_c(uint8_t *dst, uint8_t *src, int stride,
+                           const int16_t *h_weights, const int16_t *v_weights);
 
 /* 1/2^n downscaling functions from imgconvert.c */
 void ff_img_copy_plane(uint8_t *dst, int dst_wrap, const uint8_t *src, int src_wrap, int width, int height);
@@ -169,7 +178,7 @@ typedef struct ScanTable{
     const uint8_t *scantable;
     uint8_t permutated[64];
     uint8_t raster_end[64];
-#ifdef ARCH_POWERPC
+#if ARCH_PPC
                 /** Used by dct_quantize_altivec to find last-non-zero */
     DECLARE_ALIGNED(16, uint8_t, inverse[64]);
 #endif
@@ -203,32 +212,33 @@ typedef struct DSPContext {
      */
     void (*gmc )(uint8_t *dst/*align 8*/, uint8_t *src/*align 1*/, int stride, int h, int ox, int oy,
                     int dxx, int dxy, int dyx, int dyy, int shift, int r, int width, int height);
+    void (*clear_block)(DCTELEM *block/*align 16*/);
     void (*clear_blocks)(DCTELEM *blocks/*align 16*/);
     int (*pix_sum)(uint8_t * pix, int line_size);
     int (*pix_norm1)(uint8_t * pix, int line_size);
 // 16x16 8x8 4x4 2x2 16x8 8x4 4x2 8x16 4x8 2x4
 
-    me_cmp_func sad[5]; /* identical to pix_absAxA except additional void * */
-    me_cmp_func sse[5];
-    me_cmp_func hadamard8_diff[5];
-    me_cmp_func dct_sad[5];
-    me_cmp_func quant_psnr[5];
-    me_cmp_func bit[5];
-    me_cmp_func rd[5];
-    me_cmp_func vsad[5];
-    me_cmp_func vsse[5];
-    me_cmp_func nsse[5];
-    me_cmp_func w53[5];
-    me_cmp_func w97[5];
-    me_cmp_func dct_max[5];
-    me_cmp_func dct264_sad[5];
+    me_cmp_func sad[6]; /* identical to pix_absAxA except additional void * */
+    me_cmp_func sse[6];
+    me_cmp_func hadamard8_diff[6];
+    me_cmp_func dct_sad[6];
+    me_cmp_func quant_psnr[6];
+    me_cmp_func bit[6];
+    me_cmp_func rd[6];
+    me_cmp_func vsad[6];
+    me_cmp_func vsse[6];
+    me_cmp_func nsse[6];
+    me_cmp_func w53[6];
+    me_cmp_func w97[6];
+    me_cmp_func dct_max[6];
+    me_cmp_func dct264_sad[6];
 
-    me_cmp_func me_pre_cmp[5];
-    me_cmp_func me_cmp[5];
-    me_cmp_func me_sub_cmp[5];
-    me_cmp_func mb_cmp[5];
-    me_cmp_func ildct_cmp[5]; //only width 16 used
-    me_cmp_func frame_skip_cmp[5]; //only width 8 used
+    me_cmp_func me_pre_cmp[6];
+    me_cmp_func me_cmp[6];
+    me_cmp_func me_sub_cmp[6];
+    me_cmp_func mb_cmp[6];
+    me_cmp_func ildct_cmp[6]; //only width 16 used
+    me_cmp_func frame_skip_cmp[6]; //only width 8 used
 
     int (*ssd_int8_vs_int16)(const int8_t *pix1, const int16_t *pix2,
                              int size);
@@ -339,6 +349,7 @@ typedef struct DSPContext {
      * note, this might read from src1[-1], src2[-1]
      */
     void (*sub_hfyu_median_prediction)(uint8_t *dst, uint8_t *src1, uint8_t *src2, int w, int *left, int *left_top);
+    void (*add_hfyu_median_prediction)(uint8_t *dst, uint8_t *top, uint8_t *diff, int w, int *left, int *left_top);
     /* this might write to dst[w] */
     void (*add_png_paeth_prediction)(uint8_t *dst, uint8_t *src, uint8_t *top, int w, int bpp);
     void (*bswap_buf)(uint32_t *dst, const uint32_t *src, int w);
@@ -346,6 +357,8 @@ typedef struct DSPContext {
     void (*h264_v_loop_filter_luma)(uint8_t *pix/*align 16*/, int stride, int alpha, int beta, int8_t *tc0);
     void (*h264_h_loop_filter_luma)(uint8_t *pix/*align 4 */, int stride, int alpha, int beta, int8_t *tc0);
     /* v/h_loop_filter_luma_intra: align 16 */
+    void (*h264_v_loop_filter_luma_intra)(uint8_t *pix, int stride, int alpha, int beta);
+    void (*h264_h_loop_filter_luma_intra)(uint8_t *pix, int stride, int alpha, int beta);
     void (*h264_v_loop_filter_chroma)(uint8_t *pix/*align 8*/, int stride, int alpha, int beta, int8_t *tc0);
     void (*h264_h_loop_filter_chroma)(uint8_t *pix/*align 4*/, int stride, int alpha, int beta, int8_t *tc0);
     void (*h264_v_loop_filter_chroma_intra)(uint8_t *pix/*align 8*/, int stride, int alpha, int beta);
@@ -364,6 +377,9 @@ typedef struct DSPContext {
 
     void (*vp3_v_loop_filter)(uint8_t *src, int stride, int *bounding_values);
     void (*vp3_h_loop_filter)(uint8_t *src, int stride, int *bounding_values);
+
+    void (*vp6_filter_diag4)(uint8_t *dst, uint8_t *src, int stride,
+                             const int16_t *h_weights,const int16_t *v_weights);
 
     /* assume len is a multiple of 4, and arrays are 16-byte aligned */
     void (*vorbis_inverse_coupling)(float *mag, float *ang, int blocksize);
@@ -435,11 +451,19 @@ typedef struct DSPContext {
 #define EDGE_WIDTH 16
 
     /* h264 functions */
+    /* NOTE!!! if you implement any of h264_idct8_add, h264_idct8_add4 then you must implement all of them
+       NOTE!!! if you implement any of h264_idct_add, h264_idct_add16, h264_idct_add16intra, h264_idct_add8 then you must implement all of them
+        The reason for above, is that no 2 out of one list may use a different permutation.
+    */
     void (*h264_idct_add)(uint8_t *dst/*align 4*/, DCTELEM *block/*align 16*/, int stride);
     void (*h264_idct8_add)(uint8_t *dst/*align 8*/, DCTELEM *block/*align 16*/, int stride);
     void (*h264_idct_dc_add)(uint8_t *dst/*align 4*/, DCTELEM *block/*align 16*/, int stride);
     void (*h264_idct8_dc_add)(uint8_t *dst/*align 8*/, DCTELEM *block/*align 16*/, int stride);
     void (*h264_dct)(DCTELEM block[4][4]);
+    void (*h264_idct_add16)(uint8_t *dst/*align 16*/, const int *blockoffset, DCTELEM *block/*align 16*/, int stride, const uint8_t nnzc[6*8]);
+    void (*h264_idct8_add4)(uint8_t *dst/*align 16*/, const int *blockoffset, DCTELEM *block/*align 16*/, int stride, const uint8_t nnzc[6*8]);
+    void (*h264_idct_add8)(uint8_t **dst/*align 16*/, const int *blockoffset, DCTELEM *block/*align 16*/, int stride, const uint8_t nnzc[6*8]);
+    void (*h264_idct_add16intra)(uint8_t *dst/*align 16*/, const int *blockoffset, DCTELEM *block/*align 16*/, int stride, const uint8_t nnzc[6*8]);
 
     /* snow wavelet */
     void (*vertical_compose97i)(IDWTELEM *b0, IDWTELEM *b1, IDWTELEM *b2, IDWTELEM *b3, IDWTELEM *b4, IDWTELEM *b5, int width);
@@ -484,6 +508,16 @@ typedef struct DSPContext {
      * @param shift number of bits to discard from product
      */
     int32_t (*scalarproduct_int16)(int16_t *v1, int16_t *v2/*align 16*/, int len, int shift);
+
+    /* rv30 functions */
+    qpel_mc_func put_rv30_tpel_pixels_tab[4][16];
+    qpel_mc_func avg_rv30_tpel_pixels_tab[4][16];
+
+    /* rv40 functions */
+    qpel_mc_func put_rv40_qpel_pixels_tab[4][16];
+    qpel_mc_func avg_rv40_qpel_pixels_tab[4][16];
+    h264_chroma_mc_func put_rv40_chroma_pixels_tab[3];
+    h264_chroma_mc_func avg_rv40_chroma_pixels_tab[3];
 } DSPContext;
 
 void dsputil_static_init(void);
@@ -547,7 +581,7 @@ static inline int get_penalty_factor(int lambda, int lambda2, int type){
 int mm_support(void);
 
 void dsputil_init_alpha(DSPContext* c, AVCodecContext *avctx);
-void dsputil_init_armv4l(DSPContext* c, AVCodecContext *avctx);
+void dsputil_init_arm(DSPContext* c, AVCodecContext *avctx);
 void dsputil_init_bfin(DSPContext* c, AVCodecContext *avctx);
 void dsputil_init_mlib(DSPContext* c, AVCodecContext *avctx);
 void dsputil_init_mmi(DSPContext* c, AVCodecContext *avctx);
@@ -558,7 +592,7 @@ void dsputil_init_vis(DSPContext* c, AVCodecContext *avctx);
 
 #define DECLARE_ALIGNED_16(t, v) DECLARE_ALIGNED(16, t, v)
 
-#if defined(HAVE_MMX)
+#if HAVE_MMX
 
 #undef emms_c
 
@@ -582,23 +616,23 @@ static inline void emms(void)
 
 void dsputil_init_pix_mmx(DSPContext* c, AVCodecContext *avctx);
 
-#elif defined(ARCH_ARMV4L)
+#elif ARCH_ARM
 
 extern int mm_flags;
 
-#ifdef HAVE_NEON
+#if HAVE_NEON
 #   define DECLARE_ALIGNED_8(t, v) DECLARE_ALIGNED(16, t, v)
 #   define STRIDE_ALIGN 16
 #endif
 
-#elif defined(ARCH_POWERPC)
+#elif ARCH_PPC
 
 extern int mm_flags;
 
 #define DECLARE_ALIGNED_8(t, v) DECLARE_ALIGNED(16, t, v)
 #define STRIDE_ALIGN 16
 
-#elif defined(HAVE_MMI)
+#elif HAVE_MMI
 
 #define DECLARE_ALIGNED_8(t, v) DECLARE_ALIGNED(16, t, v)
 #define STRIDE_ALIGN 16
@@ -648,6 +682,13 @@ typedef struct FFTContext {
     void (*imdct_half)(struct MDCTContext *s, FFTSample *output, const FFTSample *input);
 } FFTContext;
 
+extern FFTSample* ff_cos_tabs[13];
+
+/**
+ * Sets up a complex FFT.
+ * @param nbits           log2 of the length of the input array
+ * @param inverse         if 0 perform the forward transform, if 1 perform the inverse
+ */
 int ff_fft_init(FFTContext *s, int nbits, int inverse);
 void ff_fft_permute_c(FFTContext *s, FFTComplex *z);
 void ff_fft_permute_sse(FFTContext *s, FFTComplex *z);
@@ -657,10 +698,17 @@ void ff_fft_calc_3dn(FFTContext *s, FFTComplex *z);
 void ff_fft_calc_3dn2(FFTContext *s, FFTComplex *z);
 void ff_fft_calc_altivec(FFTContext *s, FFTComplex *z);
 
+/**
+ * Do the permutation needed BEFORE calling ff_fft_calc().
+ */
 static inline void ff_fft_permute(FFTContext *s, FFTComplex *z)
 {
     s->fft_permute(s, z);
 }
+/**
+ * Do a complex FFT with the parameters defined in ff_fft_init(). The
+ * input data must be permuted before. No 1.0/sqrt(n) normalization is done.
+ */
 static inline void ff_fft_calc(FFTContext *s, FFTComplex *z)
 {
     s->fft_calc(s, z);
@@ -706,7 +754,8 @@ extern float ff_sine_256 [ 256];
 extern float ff_sine_512 [ 512];
 extern float ff_sine_1024[1024];
 extern float ff_sine_2048[2048];
-extern float *ff_sine_windows[5];
+extern float ff_sine_4096[4096];
+extern float *ff_sine_windows[6];
 
 int ff_mdct_init(MDCTContext *s, int nbits, int inverse);
 void ff_imdct_calc_c(MDCTContext *s, FFTSample *output, const FFTSample *input);
@@ -719,6 +768,35 @@ void ff_imdct_calc_sse(MDCTContext *s, FFTSample *output, const FFTSample *input
 void ff_imdct_half_sse(MDCTContext *s, FFTSample *output, const FFTSample *input);
 void ff_mdct_calc(MDCTContext *s, FFTSample *out, const FFTSample *input);
 void ff_mdct_end(MDCTContext *s);
+
+/* Real Discrete Fourier Transform */
+
+enum RDFTransformType {
+    RDFT,
+    IRDFT,
+    RIDFT,
+    IRIDFT,
+};
+
+typedef struct {
+    int nbits;
+    int inverse;
+    int sign_convention;
+
+    /* pre/post rotation tables */
+    FFTSample *tcos;
+    FFTSample *tsin;
+    FFTContext fft;
+} RDFTContext;
+
+/**
+ * Sets up a real FFT.
+ * @param nbits           log2 of the length of the input array
+ * @param trans           the type of transform
+ */
+int ff_rdft_init(RDFTContext *s, int nbits, enum RDFTransformType trans);
+void ff_rdft_calc(RDFTContext *s, FFTSample *data);
+void ff_rdft_end(RDFTContext *s);
 
 #define WRAPPER8_16(name8, name16)\
 static int name16(void /*MpegEncContext*/ *s, uint8_t *dst, uint8_t *src, int stride, int h){\

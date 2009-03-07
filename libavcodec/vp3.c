@@ -19,7 +19,7 @@
  */
 
 /**
- * @file vp3.c
+ * @file libavcodec/vp3.c
  * On2 VP3 Video Decoder
  *
  * VP3 Video Decoder by Mike Melanson (mike at multimedia.cx)
@@ -742,6 +742,8 @@ static int unpack_modes(Vp3DecodeContext *s, GetBitContext *gb)
         /* is it a custom coding scheme? */
         if (scheme == 0) {
             for (i = 0; i < 8; i++)
+                custom_mode_alphabet[i] = MODE_INTER_NO_MV;
+            for (i = 0; i < 8; i++)
                 custom_mode_alphabet[get_bits(gb, 3)] = i;
         }
 
@@ -1402,14 +1404,14 @@ static void render_slice(Vp3DecodeContext *s, int slice)
                     /* dequantize the DCT coefficients */
                     if(s->avctx->idct_algo==FF_IDCT_VP3){
                         Coeff *coeff= s->coeffs + i;
-                        memset(block, 0, sizeof(block));
+                        s->dsp.clear_block(block);
                         while(coeff->next){
                             block[coeff->index]= coeff->coeff * dequantizer[coeff->index];
                             coeff= coeff->next;
                         }
                     }else{
                         Coeff *coeff= s->coeffs + i;
-                        memset(block, 0, sizeof(block));
+                        s->dsp.clear_block(block);
                         while(coeff->next){
                             block[coeff->index]= (coeff->coeff * dequantizer[coeff->index] + 2)>>2;
                             coeff= coeff->next;
@@ -2012,16 +2014,18 @@ static int read_huffman_tree(AVCodecContext *avctx, GetBitContext *gb)
         }
         s->huff_code_size++;
         s->hbits <<= 1;
-        read_huffman_tree(avctx, gb);
+        if (read_huffman_tree(avctx, gb))
+            return -1;
         s->hbits |= 1;
-        read_huffman_tree(avctx, gb);
+        if (read_huffman_tree(avctx, gb))
+            return -1;
         s->hbits >>= 1;
         s->huff_code_size--;
     }
     return 0;
 }
 
-#ifdef CONFIG_THEORA_DECODER
+#if CONFIG_THEORA_DECODER
 static int theora_decode_header(AVCodecContext *avctx, GetBitContext *gb)
 {
     Vp3DecodeContext *s = avctx->priv_data;
@@ -2190,9 +2194,11 @@ static int theora_decode_tables(AVCodecContext *avctx, GetBitContext *gb)
         s->huff_code_size = 1;
         if (!get_bits1(gb)) {
             s->hbits = 0;
-            read_huffman_tree(avctx, gb);
+            if(read_huffman_tree(avctx, gb))
+                return -1;
             s->hbits = 1;
-            read_huffman_tree(avctx, gb);
+            if(read_huffman_tree(avctx, gb))
+                return -1;
         }
     }
 
@@ -2201,7 +2207,7 @@ static int theora_decode_tables(AVCodecContext *avctx, GetBitContext *gb)
     return 0;
 }
 
-static int theora_decode_init(AVCodecContext *avctx)
+static av_cold int theora_decode_init(AVCodecContext *avctx)
 {
     Vp3DecodeContext *s = avctx->priv_data;
     GetBitContext gb;
@@ -2248,7 +2254,8 @@ static int theora_decode_init(AVCodecContext *avctx)
 //            theora_decode_comments(avctx, gb);
             break;
         case 0x82:
-            theora_decode_tables(avctx, &gb);
+            if (theora_decode_tables(avctx, &gb))
+                return -1;
             break;
         default:
             av_log(avctx, AV_LOG_ERROR, "Unknown Theora config packet: %d\n", ptype&~0x80);

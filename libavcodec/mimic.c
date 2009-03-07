@@ -121,7 +121,7 @@ static av_cold int mimic_decode_init(AVCodecContext *avctx)
     return 0;
 }
 
-const static int8_t vlcdec_lookup[9][64] = {
+static const int8_t vlcdec_lookup[9][64] = {
     {    0, },
     {   -1,   1, },
     {   -3,   3,   -2,   2, },
@@ -163,7 +163,7 @@ static int vlc_decode_block(MimicContext *ctx, int num_coeffs, int qscale)
     DCTELEM *block = ctx->dct_block;
     unsigned int pos;
 
-    memset(block, 0, 64 * sizeof(DCTELEM));
+    ctx->dsp.clear_block(block);
 
     block[0] = get_bits(&ctx->gb, 8) << 3;
 

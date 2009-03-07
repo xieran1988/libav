@@ -1,5 +1,5 @@
 /*
- * part of QCELP decoder
+ * QCELP decoder
  * Copyright (c) 2007 Reynaldo H. Verdejo Pinochet
  *
  * This file is part of FFmpeg.
@@ -22,7 +22,48 @@
 #ifndef AVCODEC_QCELPDATA_H
 #define AVCODEC_QCELPDATA_H
 
+/**
+ * @file libavcodec/qcelpdata.h
+ * Data tables for the QCELP decoder
+ * @author Reynaldo H. Verdejo Pinochet
+ * @remark FFmpeg merging spearheaded by Kenan Gillet
+ * @remark Development mentored by Benjamin Larson
+ */
+
+#include <stddef.h>
 #include <stdint.h>
+#include "libavutil/common.h"
+
+/**
+ * QCELP unpacked data frame
+ */
+typedef struct {
+/// @defgroup qcelp_codebook_parameters QCELP excitation codebook parameters
+/// @{
+    uint8_t cbsign[16]; ///!< sign of the codebook gain for each codebook subframe
+    uint8_t cbgain[16]; ///!< unsigned codebook gain for each codebook subframe
+    uint8_t cindex[16]; ///!< codebook index for each codebook subframe
+/// @}
+
+/// @defgroup qcelp_pitch_parameters QCELP pitch prediction parameters
+/// @{
+    uint8_t plag[4];    ///!< pitch lag for each pitch subframe
+    uint8_t pfrac[4];   ///!< fractional pitch lag for each pitch subframe
+    uint8_t pgain[4];   ///!< pitch gain for each pitch subframe
+/// @}
+
+    /**
+     * line spectral pair frequencies (LSP) for RATE_OCTAVE,
+     * line spectral pair frequencies grouped into five vectors
+     * of dimension two (LSPV) for other rates
+     */
+    uint8_t lspv[10];
+
+    /**
+     * reserved bits only present in bitrate 1, 1/4 and 1/8 packets
+     */
+    uint8_t reserved;
+} QCELPFrame;
 
 /**
  * pre-calculated table for hammsinc function
@@ -38,7 +79,7 @@ typedef struct {
     uint8_t bitlen; /*!< number of bits to read */
 } QCELPBitmap;
 
-#define QCELP_OF(variable, bit, len) {offsetof(QCELPContext, variable), bit, len}
+#define QCELP_OF(variable, bit, len) {offsetof(QCELPFrame, variable), bit, len}
 
 /**
  * bitmap unpacking tables for RATE_FULL
@@ -232,7 +273,7 @@ static const QCELPBitmap * const qcelp_unpacking_bitmaps_per_rate[5] = {
     qcelp_rate_full_bitmap,
 };
 
-static const uint16_t qcelp_bits_per_rate[5] = {
+static const uint16_t qcelp_unpacking_bitmaps_lengths[5] = {
     0, ///!< for SILENCE rate
     FF_ARRAY_ELEMS(qcelp_rate_octave_bitmap),
     FF_ARRAY_ELEMS(qcelp_rate_quarter_bitmap),
@@ -377,5 +418,136 @@ static const qcelp_vector * const qcelp_lspvq[5] = {
     qcelp_lspvq4,
     qcelp_lspvq5
 };
+
+/**
+ * the final gain scalefactor before clipping into a usable output float
+ */
+#define QCELP_SCALE 8192.
+
+/**
+ * the upper boundary of the clipping, depends on QCELP_SCALE
+ */
+#define QCELP_CLIP_UPPER_BOUND (8191.75/8192.)
+
+/**
+ * the lower boundary of the clipping, depends on QCELP_SCALE
+ */
+#define QCELP_CLIP_LOWER_BOUND -1.
+
+/**
+ * table for computing Ga (decoded linear codebook gain magnitude)
+ *
+ * @note The table could fit in int16_t in x*8 form, but it seems
+ *       to be slower on x86
+ *
+ * TIA/EIA/IS-733 2.4.6.2.1-3
+ */
+
+static const float qcelp_g12ga[61] = {
+    1.000/QCELP_SCALE,   1.125/QCELP_SCALE,   1.250/QCELP_SCALE,   1.375/QCELP_SCALE,
+    1.625/QCELP_SCALE,   1.750/QCELP_SCALE,   2.000/QCELP_SCALE,   2.250/QCELP_SCALE,
+    2.500/QCELP_SCALE,   2.875/QCELP_SCALE,   3.125/QCELP_SCALE,   3.500/QCELP_SCALE,
+    4.000/QCELP_SCALE,   4.500/QCELP_SCALE,   5.000/QCELP_SCALE,   5.625/QCELP_SCALE,
+    6.250/QCELP_SCALE,   7.125/QCELP_SCALE,   8.000/QCELP_SCALE,   8.875/QCELP_SCALE,
+   10.000/QCELP_SCALE,  11.250/QCELP_SCALE,  12.625/QCELP_SCALE,  14.125/QCELP_SCALE,
+   15.875/QCELP_SCALE,  17.750/QCELP_SCALE,  20.000/QCELP_SCALE,  22.375/QCELP_SCALE,
+   25.125/QCELP_SCALE,  28.125/QCELP_SCALE,  31.625/QCELP_SCALE,  35.500/QCELP_SCALE,
+   39.750/QCELP_SCALE,  44.625/QCELP_SCALE,  50.125/QCELP_SCALE,  56.250/QCELP_SCALE,
+   63.125/QCELP_SCALE,  70.750/QCELP_SCALE,  79.375/QCELP_SCALE,  89.125/QCELP_SCALE,
+  100.000/QCELP_SCALE, 112.250/QCELP_SCALE, 125.875/QCELP_SCALE, 141.250/QCELP_SCALE,
+  158.500/QCELP_SCALE, 177.875/QCELP_SCALE, 199.500/QCELP_SCALE, 223.875/QCELP_SCALE,
+  251.250/QCELP_SCALE, 281.875/QCELP_SCALE, 316.250/QCELP_SCALE, 354.875/QCELP_SCALE,
+  398.125/QCELP_SCALE, 446.625/QCELP_SCALE, 501.125/QCELP_SCALE, 562.375/QCELP_SCALE,
+  631.000/QCELP_SCALE, 708.000/QCELP_SCALE, 794.375/QCELP_SCALE, 891.250/QCELP_SCALE,
+ 1000.000/QCELP_SCALE};
+
+/**
+ * circular codebook for rate 1 frames in x*100 form
+ *
+ * TIA/EIA/IS-733 2.4.6.1-2
+ */
+static const int16_t qcelp_rate_full_codebook[128] = {
+     10,  -65,  -59,   12,  110,   34, -134,  157,
+    104,  -84,  -34, -115,   23, -101,    3,   45,
+   -101,  -16,  -59,   28,  -45,  134,  -67,   22,
+     61,  -29,  226,  -26,  -55, -179,  157,  -51,
+   -220,  -93,  -37,   60,  118,   74,  -48,  -95,
+   -181,  111,   36,  -52, -215,   78, -112,   39,
+    -17,  -47, -223,   19,   12,  -98, -142,  130,
+     54, -127,   21,  -12,   39,  -48,   12,  128,
+      6, -167,   82, -102,  -79,   55,  -44,   48,
+    -20,  -53,    8,  -61,   11,  -70, -157, -168,
+     20,  -56,  -74,   78,   33,  -63, -173,   -2,
+    -75,  -53, -146,   77,   66,  -29,    9,  -75,
+     65,  119,  -43,   76,  233,   98,  125, -156,
+    -27,   78,   -9,  170,  176,  143, -148,   -7,
+     27, -136,    5,   27,   18,  139,  204,    7,
+   -184, -197,   52,   -3,   78, -189,    8,  -65
+};
+#define QCELP_RATE_FULL_CODEBOOK_RATIO .01
+
+/**
+ * circular codebook for rate 1/2 frames in x*2 form
+ *
+ * TIA/EIA/IS-733 2.4.6.1-1
+ */
+static const int8_t qcelp_rate_half_codebook[128] = {
+     0, -4,  0, -3,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,
+     0, -3, -2,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  5,
+     0,  0,  0,  0,  0,  0,  4,  0,
+     0,  3,  2,  0,  3,  4,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  3,  0,  0,
+    -3,  3,  0,  0, -2,  0,  3,  0,
+     0,  0,  0,  0,  0,  0, -5,  0,
+     0,  0,  0,  3,  0,  0,  0,  3,
+     0,  0,  0,  0,  0,  0,  0,  4,
+     0,  0,  0,  0,  0,  0,  0,  0,
+     0,  3,  6, -3, -4,  0, -3, -3,
+     3, -3,  0,  0,  0,  0,  0,  0,
+     0,  0,  0,  0,  0,  0,  0,  0
+};
+#define QCELP_RATE_HALF_CODEBOOK_RATIO 0.5
+
+/**
+ * sqrt(1.887) is the maximum of the pseudorandom
+ * white sequence used to generate the scaled codebook
+ * vector for bitrate 1/4.
+ *
+ * TIA/EIA/IS-733 2.4.8.1.2
+ */
+#define QCELP_SQRT1887 1.373681186
+
+/**
+ * table for impulse response of BPF used to filter
+ * the white excitation for bitrate 1/4 synthesis
+ *
+ * Only half the tables are needed because of symmetry.
+ *
+ * TIA/EIA/IS-733 2.4.8.1.2-1.1
+ */
+static const double qcelp_rnd_fir_coefs[11] = {
+  -1.344519e-1, 1.735384e-2, -6.905826e-2, 2.434368e-2,
+  -8.210701e-2, 3.041388e-2, -9.251384e-2, 3.501983e-2,
+  -9.918777e-2, 3.749518e-2,  8.985137e-1
+};
+
+/**
+ * This spread factor is used, for bitrate 1/8 and I_F_Q,
+ * to force the LSP frequencies to be at least 80 Hz apart.
+ *
+ * TIA/EIA/IS-733 2.4.3.3.2
+ */
+#define QCELP_LSP_SPREAD_FACTOR 0.02
+
+/**
+ * predictor coefficient for the conversion of LSP codes
+ * to LSP frequencies for 1/8 and I_F_Q
+ *
+ * TIA/EIA/IS-733 2.4.3.2.7-2
+ */
+#define QCELP_LSP_OCTAVE_PREDICTOR 29.0/32
 
 #endif /* AVCODEC_QCELPDATA_H */

@@ -1,6 +1,6 @@
 /*
  * RTP input format
- * Copyright (c) 2002 Fabrice Bellard.
+ * Copyright (c) 2002 Fabrice Bellard
  *
  * This file is part of FFmpeg.
  *
@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include "network.h"
 
-#include "rtp_internal.h"
+#include "rtpdec.h"
 #include "rtp_h264.h"
 
 //#define DEBUG
@@ -267,7 +267,7 @@ int rtp_check_and_send_back_rr(RTPDemuxContext *s, int count)
  * rtp demux (otherwise CODEC_ID_MPEG2TS packets are returned)
  * TODO: change this to not take rtp_payload data, and use the new dynamic payload system.
  */
-RTPDemuxContext *rtp_parse_open(AVFormatContext *s1, AVStream *st, URLContext *rtpc, int payload_type, rtp_payload_data_t *rtp_payload_data)
+RTPDemuxContext *rtp_parse_open(AVFormatContext *s1, AVStream *st, URLContext *rtpc, int payload_type, RTPPayloadData *rtp_payload_data)
 {
     RTPDemuxContext *s;
 
@@ -323,7 +323,7 @@ static int rtp_parse_mp4_au(RTPDemuxContext *s, const uint8_t *buf)
 {
     int au_headers_length, au_header_size, i;
     GetBitContext getbitcontext;
-    rtp_payload_data_t *infos;
+    RTPPayloadData *infos;
 
     infos = s->rtp_payload_data;
 
@@ -407,7 +407,7 @@ int rtp_parse_packet(RTPDemuxContext *s, AVPacket *pkt,
         /* return the next packets, if any */
         if(s->st && s->parse_packet) {
             timestamp= 0; ///< Should not be used if buf is NULL, but should be set to the timestamp of the packet returned....
-            rv= s->parse_packet(s->dynamic_protocol_context,
+            rv= s->parse_packet(s->ic, s->dynamic_protocol_context,
                                 s->st, pkt, &timestamp, NULL, 0, flags);
             finalize_packet(s, pkt, timestamp);
             return rv;
@@ -437,6 +437,8 @@ int rtp_parse_packet(RTPDemuxContext *s, AVPacket *pkt,
         return -1;
     }
     payload_type = buf[1] & 0x7f;
+    if (buf[1] & 0x80)
+        flags |= RTP_FLAG_MARKER;
     seq  = AV_RB16(buf + 2);
     timestamp = AV_RB32(buf + 4);
     ssrc = AV_RB32(buf + 8);
@@ -472,7 +474,7 @@ int rtp_parse_packet(RTPDemuxContext *s, AVPacket *pkt,
             return 1;
         }
     } else if (s->parse_packet) {
-        rv = s->parse_packet(s->dynamic_protocol_context,
+        rv = s->parse_packet(s->ic, s->dynamic_protocol_context,
                              s->st, pkt, &timestamp, buf, len, flags);
     } else {
         // at this point, the RTP header has been stripped;  This is ASSUMING that there is only 1 CSRC, which in't wise.
@@ -512,7 +514,7 @@ int rtp_parse_packet(RTPDemuxContext *s, AVPacket *pkt,
             if (rtp_parse_mp4_au(s, buf))
                 return -1;
             {
-                rtp_payload_data_t *infos = s->rtp_payload_data;
+                RTPPayloadData *infos = s->rtp_payload_data;
                 if (infos == NULL)
                     return -1;
                 buf += infos->au_headers_length_bytes + 2;

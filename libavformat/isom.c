@@ -1,6 +1,6 @@
 /*
  * ISO Media common code
- * Copyright (c) 2001 Fabrice Bellard.
+ * Copyright (c) 2001 Fabrice Bellard
  * Copyright (c) 2002 Francois Revol <revol@free.fr>
  * Copyright (c) 2006 Baptiste Coudurier <baptiste.coudurier@free.fr>
  *
@@ -28,6 +28,7 @@
 /* http://www.mp4ra.org */
 /* ordered by muxing preference */
 const AVCodecTag ff_mp4_obj_type[] = {
+    { CODEC_ID_MOV_TEXT  , 0x08 },
     { CODEC_ID_MPEG4     , 0x20 },
     { CODEC_ID_H264      , 0x21 },
     { CODEC_ID_AAC       , 0x40 },
@@ -106,6 +107,8 @@ const AVCodecTag codec_movvideo_tags[] = {
     { CODEC_ID_MSRLE,   MKTAG('W', 'R', 'L', 'E') },
     { CODEC_ID_QDRAW,   MKTAG('q', 'd', 'r', 'w') }, /* QuickDraw */
 
+    { CODEC_ID_RAWVIDEO, MKTAG('W', 'R', 'A', 'W') },
+
     { CODEC_ID_H264, MKTAG('a', 'v', 'c', '1') }, /* AVC-1/H.264 */
 
     { CODEC_ID_MPEG1VIDEO, MKTAG('m', 'p', 'e', 'g') }, /* MPEG */
@@ -146,7 +149,7 @@ const AVCodecTag codec_movvideo_tags[] = {
     { CODEC_ID_MPEG2VIDEO, MKTAG('x', 'd', 'v', 'f') }, /* XDCAM EX 1080p30 VBR */
     { CODEC_ID_MPEG2VIDEO, MKTAG('A', 'V', 'm', 'p') }, /* AVID IMX PAL */
 
-  //{ CODEC_ID_JPEG2000, MKTAG('m', 'j', 'p', '2') }, /* JPEG 2000 produced by FCP */
+    { CODEC_ID_JPEG2000, MKTAG('m', 'j', 'p', '2') }, /* JPEG 2000 produced by FCP */
 
     { CODEC_ID_TARGA, MKTAG('t', 'g', 'a', ' ') }, /* Truevision Targa */
     { CODEC_ID_TIFF,  MKTAG('t', 'i', 'f', 'f') }, /* TIFF embedded in MOV */
@@ -254,7 +257,7 @@ int ff_mov_iso639_to_lang(const char *lang, int mp4)
     }
     /* XXX:can we do that in mov too? */
     if (!mp4)
-        return 0;
+        return -1;
     /* handle undefined as such */
     if (lang[0] == '\0')
         lang = "und";
@@ -262,16 +265,16 @@ int ff_mov_iso639_to_lang(const char *lang, int mp4)
     for (i = 0; i < 3; i++) {
         unsigned char c = (unsigned char)lang[i];
         if (c < 0x60)
-            return 0;
+            return -1;
         if (c > 0x60 + 0x1f)
-            return 0;
+            return -1;
         code <<= 5;
         code |= (c - 0x60);
     }
     return code;
 }
 
-int ff_mov_lang_to_iso639(int code, char *to)
+int ff_mov_lang_to_iso639(unsigned code, char *to)
 {
     int i;
     /* is it the mangled iso code? */

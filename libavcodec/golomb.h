@@ -21,7 +21,7 @@
  */
 
 /**
- * @file golomb.h
+ * @file libavcodec/golomb.h
  * @brief
  *     exp golomb vlc stuff
  * @author Michael Niedermayer <michaelni@gmx.at> and Alex Beregszaszi
@@ -72,6 +72,24 @@ static inline int get_ue_golomb(GetBitContext *gb){
 
         return buf;
     }
+}
+
+ /**
+ * read unsigned exp golomb code, constraint to a max of 31.
+ * the return value is undefined if the stored value exceeds 31.
+ */
+static inline int get_ue_golomb_31(GetBitContext *gb){
+    unsigned int buf;
+
+    OPEN_READER(re, gb);
+    UPDATE_CACHE(re, gb);
+    buf=GET_CACHE(re, gb);
+
+    buf >>= 32 - 9;
+    LAST_SKIP_BITS(re, gb, ff_golomb_vlc_len[buf]);
+    CLOSE_READER(re, gb);
+
+    return ff_ue_golomb_vlc_code[buf];
 }
 
 static inline int svq3_get_ue_golomb(GetBitContext *gb){
@@ -255,7 +273,7 @@ static inline int get_ur_golomb_jpegls(GetBitContext *gb, int k, int limit, int 
 
     log= av_log2(buf);
 
-    if(log - k >= 32-MIN_CACHE_BITS && 32-log < limit){
+    if(log - k >= 32-MIN_CACHE_BITS+(MIN_CACHE_BITS==32) && 32-log < limit){
         buf >>= log - k;
         buf += (30-log)<<k;
         LAST_SKIP_BITS(re, gb, 32 + k - log);

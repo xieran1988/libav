@@ -1,5 +1,5 @@
 Build-Depends: debhelper (>= 5.0.0),
-               doxygen,
+               libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libfaad-dev | libfaad2-dev,
                libfreetype6-dev,
@@ -8,10 +8,12 @@ Build-Depends: debhelper (>= 5.0.0),
                libraw1394-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libsdl1.2-dev,
                libschroedinger-dev,
+               libspeex-dev,
                libtheora-dev (>> 0.0.0.alpha4),
                libvorbis-dev,
                libx11-dev,
                libxext-dev,
+               libxvmc-dev,
                quilt,
                texi2html,
                zlib1g-dev
@@ -35,7 +37,7 @@ Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
-Suggests: liba52-0.7.4, libfaad0
+Suggests: libfaad0
 Conflicts: libavcodec52
 Replaces: libavcodec52
 Description: ffmpeg codec library
@@ -89,6 +91,7 @@ Depends: ${shlibs:Depends},
          ${misc:Depends}
 Conflicts: libavformatcvs52, libavformat52
 Replaces: libavformatcvs52, libavformat52
+Breaks: libavcodec51
 Description: ffmpeg file format library
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).

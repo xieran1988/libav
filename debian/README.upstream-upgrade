@@ -1,0 +1,64 @@
+
+Checklist and howto for ffmpeg upstream upgrades:
+
+Needed packages:
+
+  apt-get install devscripts git-buildpackage pristine-tar
+
+Stage in a tmp directory:
+
+  mkdir /tmp/f ; cd /tmp/f
+  git clone git://git.debian.org/git/pkg-multimedia/ffmpeg-debian.git
+  cd ffmpeg-debian
+  branches="master.unstripped pristine-tar upstream upstream.unstripped"
+  for b in $branches; do git checkout -b $b origin/$b ; done
+
+Prepare the environment:
+
+  SVNDATE=`date +%Y%m%d`
+  git checkout master
+
+Fetch and commit the new upstream version:
+
+  debian/rules get-orig-source SVN_VERSION=${SVNDATE}
+  git-import-orig \
+            --debian-branch=master \
+            --upstream-branch=upstream \
+            --pristine-tar \
+	    --no-dch \
+            --upstream-tag=upstream/0.svn${SVNDATE} \
+            ../ffmpeg-debian_0.svn${SVNDATE}.orig.tar.gz
+
+  git checkout master.unstripped
+  git-import-orig \
+            --debian-branch=master.unstripped \
+            --upstream-branch=upstream.unstripped \
+            --pristine-tar \
+	    --no-dch \
+            --upstream-tag=upstream.unstripped/0.svn${SVNDATE}-unstripped \
+            --upstream-version=0.svn${SVNDATE}-unstripped \
+            ../ffmpeg_0.svn${SVNDATE}.orig.tar.gz
+
+  git checkout master
+
+Check and note the svn revision numbers from
+ffmpeg/{libswscale,}.svnrevision in debian/changelog
+
+  git diff upstream^ Changelog libavcodec/allcodecs.c libavformat/allformats.c
+
+Document new formats additions in debian/changelog
+
+Build, test, and compare against the the version already in the archive:
+  - headers in the -dev packages with 
+  - soname in the libraries
+  - formats.txt in the libavcodecs package
+
+Finialize debian/changelog, package should be upload ready now
+
+Merge improvements and changes from master branch to master.unstripped:
+
+  git checkout master.unstripped
+  git merge master
+
+Resolve the conflicts, hopefully the only conflict is in debian/changelog
+   NB: libavcodec/allcodecs.c must match upstream.unstripped!

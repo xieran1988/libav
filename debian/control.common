@@ -5,7 +5,8 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
            Loic Minier <lool@dooz.org>,
            Reinhard Tartler <siretart@tauware.de>,
            Fabian Greffrath <fabian@debian-unofficial.org>
-Standards-Version: 3.7.3
-Vcs-Svn: https://code.launchpad.net/~siretart/ffmpeg/ffmpeg.jaunty
-Vcs-Browser: https://code.launchpad.net/~siretart/ffmpeg/ffmpeg.jaunty
-Homepage: http://ffmpeg.mplayerhq.hu/
+Standards-Version: 3.8.0
+Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg-debian.git
+Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/ffmpeg-debian.git;a=summary
+Homepage: http://ffmpeg.org/
+Build-Depends-Indep: doxygen

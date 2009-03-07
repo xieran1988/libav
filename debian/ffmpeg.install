@@ -2,3 +2,4 @@ etc
 usr/bin
 usr/share/doc/ffmpeg
 usr/share/man
+usr/share/ffmpeg/*.ffpreset
