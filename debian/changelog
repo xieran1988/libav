@@ -1,3 +1,9 @@
+ffmpeg-debian (3:0.svn20090303-1ubuntu1~ppa1) intrepid; urgency=low
+
+  * recent merge upload to unstable into an intrepid branch.
+  
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 07 Mar 2009 20:13:24 +0100
+
 ffmpeg-debian (3:0.svn20090303-1) unstable; urgency=low
 
   * New Upstream Version (svn revision 17737 libswscale revision 28799)
