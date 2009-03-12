@@ -1,3 +1,12 @@
+ffmpeg-debian (3:0.svn20090303-2) unstable; urgency=low
+
+  * Merge the contents of patents.txt into README.Debian and change some
+    paragraphs to (hopefully) add some more clarity on the removed encoders
+    and the package naming scheme. Based on suggestions by Xavier Douville
+    <debian@douville.org>, thank you very much for the review.
+
+ -- Fabian Greffrath <fabian@debian-unofficial.org>  Thu, 12 Mar 2009 14:41:49 +0100
+
 ffmpeg-debian (3:0.svn20090303-1) unstable; urgency=low
 
   * New Upstream Version (svn revision 17737 libswscale revision 28799)
