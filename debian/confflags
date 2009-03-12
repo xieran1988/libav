@@ -36,9 +36,7 @@ gpl_confflags += --enable-x11grab
 # there is no libfaad in ubuntu/main, on in ubuntu/multiverse
 gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 
-# Common configuration flags; comment out following line for LGPL versions of
-# the libraries
-confflags += $(gpl_confflags)
+# Common configuration flags
 confflags += --extra-version='svn$(SVNREVISION)+$(DEB_VERSION)'
 confflags += --prefix=/usr
 confflags += --enable-avfilter
@@ -53,11 +51,14 @@ confflags += --disable-stripping
 confflags += --disable-vhook
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
-confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
+gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
 confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 confflags += $(call cond_enable,/usr/include/faac.h,libfaac)
-confflags += $(call cond_enable,/usr/include/x264.h,libx264)
+gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
 confflags += $(call cond_enable,/usr/include/vdpau/vdpau.h,vdpau)
+
+# comment out following line for LGPL versions of the libraries
+confflags += $(gpl_confflags)
 
 # Enable IEEE 1394 (FireWire) support on Linux only
 ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
