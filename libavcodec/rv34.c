@@ -787,11 +787,14 @@ static int rv34_decode_mv(RV34DecContext *r, int block_type)
     case RV34_MB_B_DIRECT:
         //surprisingly, it uses motion scheme from next reference frame
         next_bt = s->next_picture_ptr->mb_type[s->mb_x + s->mb_y * s->mb_stride];
-        for(j = 0; j < 2; j++)
-            for(i = 0; i < 2; i++)
-                for(k = 0; k < 2; k++)
-                    for(l = 0; l < 2; l++)
-                        s->current_picture_ptr->motion_val[l][mv_pos + i + j*s->b8_stride][k] = calc_add_mv(r, l, s->next_picture_ptr->motion_val[0][mv_pos + i + j*s->b8_stride][k]);
+        if(IS_INTRA(next_bt))
+            fill_rectangle(s->current_picture_ptr->motion_val[0][s->mb_x * 2 + s->mb_y * 2 * s->b8_stride], 2, 2, s->b8_stride, 0, 4);
+        else
+            for(j = 0; j < 2; j++)
+                for(i = 0; i < 2; i++)
+                    for(k = 0; k < 2; k++)
+                        for(l = 0; l < 2; l++)
+                            s->current_picture_ptr->motion_val[l][mv_pos + i + j*s->b8_stride][k] = calc_add_mv(r, l, s->next_picture_ptr->motion_val[0][mv_pos + i + j*s->b8_stride][k]);
         if(IS_16X16(next_bt)) //we can use whole macroblock MC
             rv34_mc_2mv(r, block_type);
         else
@@ -1396,6 +1399,28 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
     }else
         slice_count = avctx->slice_count;
 
+    //parse first slice header to check whether this frame can be decoded
+    if(get_slice_offset(avctx, slices_hdr, 0) > buf_size){
+        av_log(avctx, AV_LOG_ERROR, "Slice offset is greater than frame size\n");
+        return -1;
+    }
+    init_get_bits(&s->gb, buf+get_slice_offset(avctx, slices_hdr, 0), buf_size-get_slice_offset(avctx, slices_hdr, 0));
+    if(r->parse_slice_header(r, &r->s.gb, &si) < 0 || si.start){
+        av_log(avctx, AV_LOG_ERROR, "First slice header is incorrect\n");
+        return -1;
+    }
+    if((!s->last_picture_ptr || !s->last_picture_ptr->data[0]) && si.type == FF_B_TYPE)
+        return -1;
+    /* skip b frames if we are in a hurry */
+    if(avctx->hurry_up && si.type==FF_B_TYPE) return buf_size;
+    if(   (avctx->skip_frame >= AVDISCARD_NONREF && si.type==FF_B_TYPE)
+       || (avctx->skip_frame >= AVDISCARD_NONKEY && si.type!=FF_I_TYPE)
+       ||  avctx->skip_frame >= AVDISCARD_ALL)
+        return buf_size;
+    /* skip everything if we are in a hurry>=5 */
+    if(avctx->hurry_up>=5)
+        return buf_size;
+
     for(i=0; i<slice_count; i++){
         int offset= get_slice_offset(avctx, slices_hdr, i);
         int size;
@@ -1420,8 +1445,6 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
             }else
                 r->si.end = si.start;
         }
-        if(!i && si.type == FF_B_TYPE && (!s->last_picture_ptr || !s->last_picture_ptr->data[0]))
-            return -1;
         last = rv34_decode_slice(r, r->si.end, buf + offset, size);
         s->mb_num_left = r->s.mb_x + r->s.mb_y*r->s.mb_width - r->si.start;
         if(last)

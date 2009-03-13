@@ -1,3 +1,41 @@
+ffmpeg-debian (3:0.svn20090303-1) unstable; urgency=low
+
+  * New Upstream Version (svn revision 17737 libswscale revision 28799)
+    - Electronic Arts TQI decoder
+    - OpenJPEG based JPEG 2000 decoder
+    - NC (NC4600) camera file demuxer
+    - Gopher client support
+    - MXF D-10 muxer
+    - generic metadata API
+  * debian/get-orig-source.sh: Track the version 0.5 release branch. The
+    version number does not really reflect this, but this package is
+    actually very close to the 0.5 release branch.
+  * various cleanups to improve get-orig-source.sh
+  * Remove liba52 from the suggests field in debian/control.ffmpeg, as
+    ffmpeg does no longer use it since upload 0.svn20080206-10.
+  * Fix the Vcs-Git urls to the correct locations.
+  * The libavformat52 now links against libavcodec52, which breaks
+    applications that *ALSO* link against libavcodec51. Adding a
+    Breaks: libavcodec51 should prevent this and (hopefully) Closes: #516885.
+  * improve parallel builds on SMP/multicores by supporting the parallel
+    flag in DEB_BUILD_OPTIONS, and default to the number of available CPUs
+    on i386 and amd64.
+  * Drop unapplied patches from debian/patches.
+  * bump shlibs version.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 03 Mar 2009 21:01:25 +0100
+
+ffmpeg-debian (3:0.svn20090204-3) unstable; urgency=low
+
+  [ Fabian Greffrath ]
+  * remove libasound2-dev from build-depends on non-Linux archs
+
+  [ Reinhard Tartler ]
+  * fix postinst generation by calling dh_installdeb after dh_makeshlibs
+  * upload to unstable
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 22 Feb 2009 09:32:49 +0100
+
 ffmpeg-debian (3:0.svn20090204-2ubuntu1) jaunty; urgency=low
 
   * merge from debian. Remaining changes:

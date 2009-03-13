@@ -1,5 +1,6 @@
 /*
- * RTP definitions
+ * "Real" compatible muxer and demuxer common code.
+ * Copyright (c) 2009  Aurelien Jacobs <aurel@gnuage.org>
  *
  * This file is part of FFmpeg.
  *
@@ -17,11 +18,12 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#ifndef AVFORMAT_RTP_AAC_H
-#define AVFORMAT_RTP_AAC_H
 
-#include "avformat.h"
+#include "rm.h"
 
-void ff_rtp_send_aac(AVFormatContext *s1, const uint8_t *buff, int size);
-
-#endif /* AVFORMAT_RTP_AAC_H */
+const char *ff_rm_metadata[4] = {
+    "title",
+    "author",
+    "copyright",
+    "comment"
+};

@@ -57,7 +57,6 @@ confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
 confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 confflags += $(call cond_enable,/usr/include/faac.h,libfaac)
 confflags += $(call cond_enable,/usr/include/x264.h,libx264)
-confflags += $(call cond_enable,/usr/include/X11/extensions/XvMClib.h,xvmc)
 confflags += $(call cond_enable,/usr/include/vdpau/vdpau.h,vdpau)
 
 # Enable IEEE 1394 (FireWire) support on Linux only

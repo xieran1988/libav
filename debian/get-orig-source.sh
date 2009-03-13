@@ -63,38 +63,43 @@ done
 dh_testdir
 
 if [ -z $SVNDATE ]; then
-	error "you need to specify an svn date. e.g. 20081230 for Dec 29. 2009"
+	error "you need to specify an svn date. e.g. 20081230 for Dec 29. 2008"
 fi
 
 CLEANUPSCRIPT=`pwd`/debian/strip.sh
 TARBALL=../ffmpeg-debian_0.svn${SVNDATE}.orig.tar.gz
 TARBALL_UNSTRIPPED=../ffmpeg_0.svn${SVNDATE}.orig.tar.gz
+PACKAGENAME=ffmpeg
 
 TMPDIR=`mktemp -d`
 trap 'rm -rf ${TMPDIR}'  EXIT
 
+baseurl="svn://svn.mplayerhq.hu/ffmpeg/branches/0.5"
+
 svn export -r{${SVNDATE}} \
 	--ignore-externals \
-	svn://svn.mplayerhq.hu/ffmpeg/trunk \
-	${TMPDIR}/ffmpeg
+	${baseurl}  \
+	${TMPDIR}/${PACKAGENAME}
 
 svn info -r{${SVNDATE}} \
-	svn://svn.mplayerhq.hu/ffmpeg/trunk \
+	${baseurl} \
 	| awk '/^Revision/ {print $2}' \
-	> ${TMPDIR}/ffmpeg/.svnrevision
+	> ${TMPDIR}/${PACKAGENAME}/.svnrevision
 
-svn export -r{${SVNDATE}} \
-	svn://svn.mplayerhq.hu/mplayer/trunk/libswscale \
-	${TMPDIR}/ffmpeg/libswscale
+# get svn externals
+svn pg svn:externals $baseurl | \
+while read external url; do
+    [ -z $url ] && continue
+    dest="${TMPDIR}/${PACKAGENAME}/${external}"
+    svn export -r{${SVNDATE}} --ignore-externals $url $dest
+    svn info $url -r{${SVNDATE}} \
+      | awk '/^Revision/ {print $2}' \
+      > ${TMPDIR}/${PACKAGENAME}/${external}/.svnrevision
+done
 
-svn info -r{${SVNDATE}} \
-	svn://svn.mplayerhq.hu/mplayer/trunk/libswscale \
-	| awk '/^Revision/ {print $2}' \
-	> ${TMPDIR}/ffmpeg/libswscale/.svnrevision
-
-tar czf ${TARBALL_UNSTRIPPED} -C ${TMPDIR} ffmpeg
+tar czf ${TARBALL_UNSTRIPPED} -C ${TMPDIR} ${PACKAGENAME}
 	
-( cd ${TMPDIR}/ffmpeg && sh ${CLEANUPSCRIPT} )
+( cd ${TMPDIR}/${PACKAGENAME} && sh ${CLEANUPSCRIPT} )
 
-tar czf ${TARBALL} -C ${TMPDIR} ffmpeg
+tar czf ${TARBALL} -C ${TMPDIR} ${PACKAGENAME}
 

@@ -13,37 +13,52 @@ Stage in a tmp directory:
   branches="master.unstripped pristine-tar upstream upstream.unstripped"
   for b in $branches; do git checkout -b $b origin/$b ; done
 
-The following commands are intended to be copy&pastable.
+Prepare the environment:
 
- - run 'SVNDATE=`date +%Y%m%d`'
- - run 'git checkout master'
- - run 'debian/rules get-orig-source SVN_VERSION=${SVNDATE}'
- - run 'git-import-orig \
+  SVNDATE=`date +%Y%m%d`
+  git checkout master
+
+Fetch and commit the new upstream version:
+
+  debian/rules get-orig-source SVN_VERSION=${SVNDATE}
+  git-import-orig \
             --debian-branch=master \
             --upstream-branch=upstream \
             --pristine-tar \
+	    --no-dch \
             --upstream-tag=upstream/0.svn${SVNDATE} \
-            ../ffmpeg-debian_0.svn${SVNDATE}.orig.tar.gz'
- - check and note the svn revision numbers from ffmpeg/{libswscale,}.svnrevision
-   in debian/changelog
- - run 'git diff upstream^ Changelog libavcodec/allcodecs.c libavformat/allformats.c'
- - document new formats additions in debian/changelog
- - commit debian/changelog
- - run 'git checkout master.unstripped'
- - run 'git-import-orig \
+            ../ffmpeg-debian_0.svn${SVNDATE}.orig.tar.gz
+
+  git checkout master.unstripped
+  git-import-orig \
             --debian-branch=master.unstripped \
             --upstream-branch=upstream.unstripped \
             --pristine-tar \
+	    --no-dch \
             --upstream-tag=upstream.unstripped/0.svn${SVNDATE}-unstripped \
             --upstream-version=0.svn${SVNDATE}-unstripped \
-            ../ffmpeg_0.svn${SVNDATE}.orig.tar.gz'
- - run 'git checkout master.unstripped'
- - run 'git merge master'
- - resolve the conflicts, hopefully the only conflict is in debian/changelog
-   NB: libavcodec/allcodecs.c must match upstream.unstripped!
- - run 'git checkout master'
- - build the package, compare against the the version already in the archive
-   - headers in the -dev packages with 
-   - soname in the libraries
-   - formats.txt in the libavcodecs package
+            ../ffmpeg_0.svn${SVNDATE}.orig.tar.gz
 
+  git checkout master
+
+Check and note the svn revision numbers from
+ffmpeg/{libswscale,}.svnrevision in debian/changelog
+
+  git diff upstream^ Changelog libavcodec/allcodecs.c libavformat/allformats.c
+
+Document new formats additions in debian/changelog
+
+Build, test, and compare against the the version already in the archive:
+  - headers in the -dev packages with 
+  - soname in the libraries
+  - formats.txt in the libavcodecs package
+
+Finialize debian/changelog, package should be upload ready now
+
+Merge improvements and changes from master branch to master.unstripped:
+
+  git checkout master.unstripped
+  git merge master
+
+Resolve the conflicts, hopefully the only conflict is in debian/changelog
+   NB: libavcodec/allcodecs.c must match upstream.unstripped!

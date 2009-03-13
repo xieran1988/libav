@@ -7,12 +7,12 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
            Reinhard Tartler <siretart@tauware.de>,
            Fabian Greffrath <fabian@debian-unofficial.org>
 Standards-Version: 3.8.0
-Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg.git
-Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/ffmpeg.git;a=summary
-Homepage: http://ffmpeg.mplayerhq.hu/
+Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg-debian.git
+Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/ffmpeg-debian.git;a=summary
+Homepage: http://ffmpeg.org/
 Build-Depends-Indep: doxygen
 Build-Depends: debhelper (>= 5.0.0),
-               libasound2-dev,
+               libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libfreetype6-dev,
                libgsm1-dev,
@@ -105,6 +105,7 @@ Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
+Breaks: libavcodec51
 Description: ffmpeg file format library
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
