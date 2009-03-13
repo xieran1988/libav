@@ -101,7 +101,8 @@ encoders, for details see debian/strip.sh, rendering those encoders
 unusable.
 
 Currently the following video encoders are disabled in the ffmpeg-debian
-source code: H263, H264, MPEG2 video, MPEG4 and MS-MPEG4.
+source code: H263, H264, MPEG2 video, MPEG4 and MS-MPEG4. No decoders are
+disabled in the ffmpeg-debian packages!
 
 In order to make this fact visible, the source package was renamed from
 ffmpeg to ffmpeg-debian. The plan is to provide a source package called
