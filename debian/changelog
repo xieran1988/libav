@@ -1,3 +1,13 @@
+ffmpeg-debian (3:0.svn20090303-1ubuntu1) jaunty; urgency=low
+
+  * FFE granted in LP: #340303.
+
+  * merge from debian/unstable.
+  * remaining changes to debian:
+    - don't build-depend on libfaad-dev, disabling faad decoder.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 13 Mar 2009 08:54:33 +0100
+
 ffmpeg-debian (3:0.svn20090303-1) unstable; urgency=low
 
   * New Upstream Version (svn revision 17737 libswscale revision 28799)
