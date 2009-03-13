@@ -155,7 +155,7 @@ ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	done
 else
 	for pkg in $(LIB_PKGS); do \
-	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(UPSTREAM_VERSION)), $$pkg (< $(UPSTREAM_VERSION)-99)"; \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(EPOCH)$(UPSTREAM_VERSION)), $$pkg (< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
 	done
 endif
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \

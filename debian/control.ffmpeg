@@ -70,6 +70,8 @@ Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
+Conflicts: libavfilter0
+Replaces: libavfilter0
 Description: ffmpeg video filtering library
  This is the video filtering library from the ffmpeg project.
  .
