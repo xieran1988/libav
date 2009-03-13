@@ -48,6 +48,7 @@ config-extra-includes.h:
 configure-%: configure-stamp-%
 configure-stamp-%: $(QUILT_STAMPFN) config-extra-includes.h
 	dh_testdir
+	cp .svnrevision snapshot_version
 	mkdir -p debian-$*
 	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure $($*_build_confflags)
 ifeq ($(internalencoders),)
@@ -81,6 +82,7 @@ clean-real:
 	rm -f build-stamp $(addprefix build-stamp-, $(FLAVORS)) \
 	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp
 	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
+	dh_clean snapshot_version
 	dh_clean config-extra-includes.h debian/tmp.debhelper.log
 	dh_clean formats.txt
 
