@@ -19,7 +19,7 @@ Build-Depends: debhelper (>= 5.0.0),
                zlib1g-dev
 
 Package: ffmpeg
-Section: graphics
+Section: video
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
@@ -30,7 +30,7 @@ Description: multimedia player, server and encoder
  DivX, MPEG4, AC3, DV...).
 
 Package: ffmpeg-dbg
-Section: libs
+Section: debug
 Priority: extra
 Architecture: any
 Depends: libavutil49 (= ${binary:Version}),
