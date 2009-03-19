@@ -1,8 +1,8 @@
 ffmpeg-debian (3:0.svn20090303-1ubuntu2) jaunty; urgency=low
 
-  * don't disable ffserver in specialised flavors. Fixes LP: #345370
+  * No-change rebuild to fix lpia shared library dependencies.
 
- -- Reinhard Tartler <siretart@tauware.de>  Sat, 21 Mar 2009 14:28:58 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 19 Mar 2009 17:26:36 +0000
 
 ffmpeg-debian (3:0.svn20090303-1ubuntu1) jaunty; urgency=low
 
