@@ -1,3 +1,9 @@
+ffmpeg-debian (3:0.svn20090303-1ubuntu2) jaunty; urgency=low
+
+  * don't disable ffserver in specialised flavors. Fixes LP: #345370
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 21 Mar 2009 14:28:58 +0100
+
 ffmpeg-debian (3:0.svn20090303-1ubuntu1) jaunty; urgency=low
 
   * FFE granted in LP: #340303.
