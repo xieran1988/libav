@@ -1,4 +1,4 @@
-ffmpeg-debian (3:0.svn20090303-1ubuntu1~ppa2) unstable; urgency=low
+ffmpeg-debian (3:0.svn20090303-1ubuntu1~ppa2) intrepid; urgency=low
 
   * don't disable ffserver in specialised flavors. Fixes LP: #345370
 
