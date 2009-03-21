@@ -1,3 +1,10 @@
+ffmpeg-debian (3:0.svn20090303-1ubuntu4) jaunty; urgency=low
+
+  * brown paperbag upload. Actually include the patch intended for the
+    last upload.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 21 Mar 2009 14:55:46 +0100
+
 ffmpeg-debian (3:0.svn20090303-1ubuntu3) jaunty; urgency=low
 
   * don't disable ffserver in specialised flavors. Fixes LP: #345370
