@@ -1,3 +1,9 @@
+ffmpeg-debian (3:0.svn20090303-1ubuntu1~ppa2) unstable; urgency=low
+
+  * don't disable ffserver in specialised flavors. Fixes LP: #345370
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 21 Mar 2009 11:18:57 +0100
+
 ffmpeg-debian (3:0.svn20090303-1ubuntu1~ppa1) intrepid; urgency=low
 
   * recent merge upload to unstable into an intrepid branch.
