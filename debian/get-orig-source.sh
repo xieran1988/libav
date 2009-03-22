@@ -74,7 +74,7 @@ PACKAGENAME=ffmpeg
 TMPDIR=`mktemp -d`
 trap 'rm -rf ${TMPDIR}'  EXIT
 
-baseurl="svn://svn.mplayerhq.hu/ffmpeg/branches/0.5"
+baseurl="svn://svn.ffmpeg.org/ffmpeg/branches/0.5"
 
 svn export -r{${SVNDATE}} \
 	--ignore-externals \
