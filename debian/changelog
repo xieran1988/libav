@@ -1,6 +1,11 @@
+ffmpeg-debian (3:0.svn20090303-1ubuntu6) jaunty; urgency=low
+
+  * vfp CFLAGS: add "-mfpu=vfp -mfloat-abi=softfp".
+
+ -- Loic Minier <lool@dooz.org>  Fri, 10 Apr 2009 21:34:29 +0200
+
 ffmpeg-debian (3:0.svn20090303-1ubuntu5) jaunty; urgency=low
 
-  [ Loïc Minier ]
   * Disable more autodetected ARM arch features.
   * Add neon and vfp flavors to armel disabled for now.
   * Enable vfp pass on armel; leave the neon disabled.
