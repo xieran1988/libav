@@ -16,8 +16,9 @@ SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 
 # the other flavors always build dynamic versions
 ifeq      ($(DEB_HOST_ARCH),armel)
-# disabled for now as we need hwcaps support in glibc first
-#FLAVORS += neon vfp
+# disabled for now as NEON support deadlocks the Babbage
+#FLAVORS += neon
+FLAVORS += vfp
 else ifeq ($(DEB_HOST_ARCH),i386)
 FLAVORS += cmov
 else ifeq ($(DEB_HOST_ARCH),powerpc)
