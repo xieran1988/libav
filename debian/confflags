@@ -106,6 +106,7 @@ vfp_build_confflags += --shlibdir=/usr/lib/vfp
 vfp_build_confflags += --enable-armvfp
 vfp_build_confflags += --enable-shared
 vfp_build_confflags += --disable-static
+vfp_build_confflags += --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
 vfp_build_confflags += --disable-ffmpeg
 vfp_build_confflags += --disable-ffplay
 neon_build_confflags += $(confflags)
