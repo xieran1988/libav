@@ -1,3 +1,12 @@
+ffmpeg-debian (3:0.svn20090303-1ubuntu5) jaunty; urgency=low
+
+  [ Loïc Minier ]
+  * Disable more autodetected ARM arch features.
+  * Add neon and vfp flavors to armel disabled for now.
+  * Enable vfp pass on armel; leave the neon disabled.
+
+ -- Loïc Minier <lool@dooz.org>  Fri, 10 Apr 2009 17:58:52 +0200
+
 ffmpeg-debian (3:0.svn20090303-1ubuntu4) jaunty; urgency=low
 
   * brown paperbag upload. Actually include the patch intended for the
