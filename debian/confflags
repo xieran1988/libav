@@ -77,7 +77,7 @@ ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 endif
 
 # Disable architecture-specific optimizations for default shared build
-nooptflags += --disable-armv5te --disable-armv6
+nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2 --disable-armvfp --disable-neon
 nooptflags += --disable-altivec
 nooptflags += --disable-vis
 
