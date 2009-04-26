@@ -26,8 +26,8 @@ Fetch and commit the new upstream version:
             --upstream-branch=upstream \
             --pristine-tar \
 	    --no-dch \
-            --upstream-tag=upstream/0.svn${SVNDATE} \
-            ../ffmpeg-debian_0.svn${SVNDATE}.orig.tar.gz
+            --upstream-tag=upstream/0.5+svn${SVNDATE} \
+            ../ffmpeg-debian_0.5+svn${SVNDATE}.orig.tar.gz
 
   git checkout master.unstripped
   git-import-orig \
@@ -35,9 +35,9 @@ Fetch and commit the new upstream version:
             --upstream-branch=upstream.unstripped \
             --pristine-tar \
 	    --no-dch \
-            --upstream-tag=upstream.unstripped/0.svn${SVNDATE}-unstripped \
-            --upstream-version=0.svn${SVNDATE}-unstripped \
-            ../ffmpeg_0.svn${SVNDATE}.orig.tar.gz
+            --upstream-tag=upstream.unstripped/0.5+svn${SVNDATE}-unstripped \
+            --upstream-version=0.5+svn${SVNDATE}-unstripped \
+            ../ffmpeg_0.5+svn${SVNDATE}.orig.tar.gz
 
   git checkout master
 
