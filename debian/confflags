@@ -15,7 +15,10 @@ export DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 
 # the other flavors always build dynamic versions
-ifeq      ($(DEB_HOST_ARCH),i386)
+ifeq      ($(DEB_HOST_ARCH),armel)
+# disabled for now as we need hwcaps support in glibc first
+#FLAVORS += neon vfp
+else ifeq ($(DEB_HOST_ARCH),i386)
 FLAVORS += cmov
 else ifeq ($(DEB_HOST_ARCH),powerpc)
 FLAVORS += altivec
@@ -77,7 +80,7 @@ ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 endif
 
 # Disable architecture-specific optimizations for default shared build
-nooptflags += --disable-armv5te --disable-armv6
+nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2 --disable-armvfp --disable-neon
 nooptflags += --disable-altivec
 nooptflags += --disable-vis
 
@@ -95,6 +98,24 @@ shared_build_confflags += $(nooptflags)
 endif
 shared_build_confflags += --enable-shared
 shared_build_confflags += --disable-static
+
+## armel architecture specific
+# Configuration flags for the optimised shared libraries
+vfp_build_confflags += $(confflags)
+vfp_build_confflags += --shlibdir=/usr/lib/vfp
+vfp_build_confflags += --enable-armvfp
+vfp_build_confflags += --enable-shared
+vfp_build_confflags += --disable-static
+vfp_build_confflags += --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
+vfp_build_confflags += --disable-ffmpeg
+vfp_build_confflags += --disable-ffplay
+neon_build_confflags += $(confflags)
+neon_build_confflags += --shlibdir=/usr/lib/neon
+neon_build_confflags += --enable-neon
+neon_build_confflags += --enable-shared
+neon_build_confflags += --disable-static
+neon_build_confflags += --disable-ffmpeg
+neon_build_confflags += --disable-ffplay
 
 ## i386 architecture specific
 # Configuration flags for the optimized shared libraries
