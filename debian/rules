@@ -6,8 +6,12 @@ EPOCH=3:
 DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
 DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
-SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+\.svn([0-9]+)$$/\1/p')
+SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+[+.]svn([0-9]+)$$/\1/p')
 SHLIBS_VERSION := $(EPOCH)0.svn20090303-1
+
+ifeq ($(SVN_VERSION),)
+$(error UPSTREAM_VERSION: $(UPSTREAM_VERSION) - but SVN_VERSION is empty! - check debian/rules)
+endif
 
 LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-unstripped-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 
@@ -90,7 +94,7 @@ get-orig-source:
 	dh_testdir
 	# strip patented code
 	chmod +x debian/strip.sh
-	sh debian/get-orig-source.sh -d$(SVN_VERSION)
+	sh debian/get-orig-source.sh -d $(SVN_VERSION)
 
 # The trailing newline is important!
 define install_flavor
