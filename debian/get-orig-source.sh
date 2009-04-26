@@ -67,8 +67,8 @@ if [ -z $SVNDATE ]; then
 fi
 
 CLEANUPSCRIPT=`pwd`/debian/strip.sh
-TARBALL=../ffmpeg-debian_0.svn${SVNDATE}.orig.tar.gz
-TARBALL_UNSTRIPPED=../ffmpeg_0.svn${SVNDATE}.orig.tar.gz
+TARBALL=../ffmpeg-debian_0.5+svn${SVNDATE}.orig.tar.gz
+TARBALL_UNSTRIPPED=../ffmpeg_0.5+svn${SVNDATE}.orig.tar.gz
 PACKAGENAME=ffmpeg
 
 TMPDIR=`mktemp -d`
