@@ -1,4 +1,4 @@
-ffmpeg-debian (4:0.5+svn20090303-1) unstable; urgency=low
+ffmpeg-debian (4:0.5+svn20090420-1) unstable; urgency=low
 
   [ Fabian Greffrath ]
   * Merge the contents of patents.txt into README.Debian and change some
@@ -8,6 +8,7 @@ ffmpeg-debian (4:0.5+svn20090303-1) unstable; urgency=low
   * Reorder some confflags to account for GPL licensed libraries.
 
   [ Reinhard Tartler ]
+  * New Upstream Version (svn revision 18630)
   * bump epoch as 0.5 was released. Future version will use '+' to indicate 
     that the package is based on a release branch and '~' to indicate that
     the package is based on the 'trunk' branch.
