@@ -87,7 +87,7 @@ svn info -r{${SVNDATE}} \
 	> ${TMPDIR}/${PACKAGENAME}/.svnrevision
 
 # get svn externals
-svn pg svn:externals $baseurl | \
+svn pg svn:externals -r${${SVNDATE}} $baseurl | \
 while read external url; do
     [ -z $url ] && continue
     dest="${TMPDIR}/${PACKAGENAME}/${external}"
