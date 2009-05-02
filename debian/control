@@ -150,7 +150,7 @@ Description: ffmpeg video scaling library
 Package: libavutil-dev
 Section: libdevel
 Architecture: any
-Depends: libavutil49 (= ${binary:Version})
+Depends: libavutil49 (= ${binary:Version}) | libavutil-unstripped-49 (= ${binary:Version}),
 Description: development files for libavutil
  This is the common utility library from the ffmpeg project. It is required
  by all other ffmpeg libraries.
@@ -161,7 +161,7 @@ Description: development files for libavutil
 Package: libavcodec-dev
 Section: libdevel
 Architecture: any
-Depends: libavcodec52 (= ${binary:Version}),
+Depends: libavcodec52 (= ${binary:Version}) | libavcodec-unstripped-52 (= ${binary:Version}),
          libavutil-dev (= ${binary:Version})
 Suggests: libfaad-dev,
           libgsm1-dev,
@@ -184,7 +184,7 @@ Description: development files for libavcodec
 Package: libavdevice-dev
 Section: libdevel
 Architecture: any
-Depends: libavdevice52 (= ${binary:Version}),
+Depends: libavdevice52 (= ${binary:Version}) | libavdevice-unstripped-52 (= ${binary:Version}),
          libavformat-dev (= ${binary:Version})
 Description: development files for libavdevice
  This is the device handling library from the ffmpeg project.
@@ -195,7 +195,7 @@ Description: development files for libavdevice
 Package: libavformat-dev
 Section: libdevel
 Architecture: any
-Depends: libavformat52 (= ${binary:Version}),
+Depends: libavformat52 (= ${binary:Version}) | libavformat-unstripped-52 (= ${binary:Version}),
          libavcodec-dev (= ${binary:Version})
 Description: development files for libavformat
  This is the demuxer library from the ffmpeg project. It supports most
@@ -207,7 +207,7 @@ Description: development files for libavformat
 Package: libavfilter-dev
 Section: libdevel
 Architecture: any
-Depends: libavfilter0 (= ${binary:Version}),
+Depends: libavfilter0 (= ${binary:Version}) | libavfilter-unstripped-0 (= ${binary:Version}),
          libavcodec-dev (= ${binary:Version})
 Description: development files for libavfilter
  This is the video filtering library from the ffmpeg project.
@@ -218,7 +218,7 @@ Description: development files for libavfilter
 Package: libpostproc-dev
 Section: libdevel
 Architecture: any
-Depends: libpostproc51 (= ${binary:Version}),
+Depends: libpostproc51 (= ${binary:Version}) | libpostproc-unstripped-51 (= ${binary:Version}),
          libavutil-dev (= ${binary:Version})
 Description: development files for libpostproc
  This is the video postprocessing library from the ffmpeg project.
@@ -229,7 +229,7 @@ Description: development files for libpostproc
 Package: libswscale-dev
 Section: libdevel
 Architecture: any
-Depends: libswscale0 (= ${binary:Version}),
+Depends: libswscale0 (= ${binary:Version}) | libswscale-unstripped-0 (= ${binary:Version}),
          libavutil-dev (= ${binary:Version})
 Description: development files for libswscale
  This is the video scaling library from the ffmpeg project.
