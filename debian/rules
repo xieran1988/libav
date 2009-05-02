@@ -137,6 +137,7 @@ binary-arch: build install formats.txt
 	dh_installdocs $(extradoc) doc/optimization.txt
 	dh_installdocs -A MAINTAINERS CREDITS doc/TODO
 	dh_installdocs -A debian/README.Debian
+	dh_installdocs LICENSE RELEASE
 ifeq ($(DEB_SOURCE),ffmpeg)
 	dh_installdocs -p libavcodec-unstripped-52 formats.txt
 else
