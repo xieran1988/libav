@@ -6,6 +6,13 @@ ffmpeg-debian (4:0.5+svn20090420-1) unstable; urgency=low
     and the package naming scheme. Based on suggestions by Xavier Douville
     <debian@douville.org>, thank you very much for the review.
   * Reorder some confflags to account for GPL licensed libraries.
+  * Remove patents.txt
+  * Explicitely mention that no decoders are disabled in our packages.
+  
+  [ Loïc Minier ]
+  * Disable more autodetecter ARM arch features
+  * Add neon and vfp flavors to armel disabled for now
+  * vfp CFLAGS: add "-mfpu=vfp -mfloat-abi=softfp"
 
   [ Reinhard Tartler ]
   * New Upstream Version (svn revision 18630)
@@ -14,8 +21,19 @@ ffmpeg-debian (4:0.5+svn20090420-1) unstable; urgency=low
     the package is based on the 'trunk' branch.
   * update from the upstream release branch to generate a new upstream
     tarball.
-
- -- Reinhard Tartler <siretart@tauware.de>  Thu, 12 Mar 2009 15:54:05 +0100
+  * add a git-buildpackage config file at debian/gbp.conf
+  * beautify identification string
+  * debian/rules: bump epoch to '4'
+  * update section names in control file
+  * update upstream svn server url
+  * fixup get-orig-source rules in debian/rules
+  * create right filenames for the orig.tar.gz files
+  * update README.upstream-upgrate for new versioning scheme
+  * remove debian/005_release_branch_changes.diff
+  * remove reference to 020_visibility_patch
+  * install the upstream license file and release notes
+  
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 02 May 2009 09:09:54 +0200
 
 ffmpeg-debian (3:0.svn20090303-1) unstable; urgency=low
 
