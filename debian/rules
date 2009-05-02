@@ -86,6 +86,7 @@ clean-real:
 	rm -f build-stamp $(addprefix build-stamp-, $(FLAVORS)) \
 	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp
 	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
+	dh_clean build-doxy-stamp EXTRA
 	dh_clean config-extra-includes.h debian/tmp.debhelper.log
 	dh_clean formats.txt
 
