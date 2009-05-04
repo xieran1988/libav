@@ -1,3 +1,9 @@
+ffmpeg-debian (4:0.5+svn20090420-2) unstable; urgency=low
+
+  * prepare new upload
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 04 May 2009 07:41:19 +0200
+
 ffmpeg-debian (4:0.5+svn20090420-1) unstable; urgency=low
 
   [ Fabian Greffrath ]
