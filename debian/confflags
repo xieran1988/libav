@@ -15,15 +15,23 @@ export DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 
 # the other flavors always build dynamic versions
+# Also, disable architecture-specific optimizations for default shared build
 ifeq      ($(DEB_HOST_ARCH),armel)
+nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2
+nooptflags += --disable-armvfp --disable-neon
 # disabled for now as we need hwcaps support in glibc first
 #FLAVORS += neon vfp
+else ifeq ($(DEB_HOST_ARCH),arm)
+nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2
+nooptflags += --disable-armvfp --disable-neon
 else ifeq ($(DEB_HOST_ARCH),i386)
 FLAVORS += cmov
 else ifeq ($(DEB_HOST_ARCH),powerpc)
 FLAVORS += altivec
+nooptflags += --disable-altivec
 else ifeq ($(DEB_HOST_ARCH),sparc)
 FLAVORS += vis
+nooptflags += --disable-vis
 endif
 
 define cond_enable
@@ -78,11 +86,6 @@ ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
   confflags += --disable-optimizations
   confflags += --disable-mmx
 endif
-
-# Disable architecture-specific optimizations for default shared build
-nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2 --disable-armvfp --disable-neon
-nooptflags += --disable-altivec
-nooptflags += --disable-vis
 
 # Configuration flags for the static libraries
 static_build_confflags += $(confflags)
