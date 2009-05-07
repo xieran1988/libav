@@ -1,6 +1,10 @@
 ffmpeg-debian (4:0.5+svn20090420-2) unstable; urgency=low
 
-  * prepare new upload
+  * debian/control: fix dependencies for libavutil-dev and libavfilter-dev
+    so that they can be used with the unstripped variants properly.
+  * debian/rules: set nooptflags only for relevant architectures.
+  * explicitly disable 'dangerous' encoders on the --configure line.
+  * fix SHLIBS_VERSION in debian/rules (Closes: #527350).
 
  -- Reinhard Tartler <siretart@tauware.de>  Mon, 04 May 2009 07:41:19 +0200
 
