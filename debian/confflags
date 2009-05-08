@@ -61,7 +61,7 @@ disable_encoders += --disable-encoder=msmpeg4v3
 # though
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 confflags += $(disable_encoders)
-endef
+endif
 
 # Common configuration flags
 confflags += --extra-version='$(DEB_VERSION)'
