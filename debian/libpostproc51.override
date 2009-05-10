@@ -1,4 +1,4 @@
 # ffmpeg is being built with -fPIC yet the result binaries still get these
-# TEXTRELs. This requires further investigation.
+# TEXTRELs. This requires further work. Please see bug #528080.
 libpostproc51: shlib-with-non-pic-code usr/lib/i686/cmov/libpostproc.so.51.2.0
 libpostproc51: shlib-with-non-pic-code usr/lib/libpostproc.so.51.2.0

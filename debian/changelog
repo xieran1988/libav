@@ -20,6 +20,8 @@ ffmpeg-debian (4:0.5+svn20090420-3) unstable; urgency=low
     + Don't install LICENSE. The licensing information should be, and is,
       covered in debian/copyright.
     + Fix 'breaks-without-version libavcodec51' warning.
+    + Reorder when dh_strip is done so qt-faststart is also stripped.
+    + Write man page for qt-faststart.
   * Register ffmpeg documentation with doc-base.
   * Install documentation with dh_installdocs.
 

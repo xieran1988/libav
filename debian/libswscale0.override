@@ -1,4 +1,4 @@
 # ffmpeg is being built with -fPIC yet the result binaries still get these
-# TEXTRELs. This requires further investigation.
+# TEXTRELs. This requires further work. Please see bug #528080.
 libswscale0: shlib-with-non-pic-code usr/lib/i686/cmov/libswscale.so.0.7.1
 libswscale0: shlib-with-non-pic-code usr/lib/libswscale.so.0.7.1
