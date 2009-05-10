@@ -1,3 +1,29 @@
+ffmpeg-debian (4:0.5+svn20090420-3) unstable; urgency=low
+
+  * Add myself to Uploaders list.
+  * Add DM-Upload-Allowed: yes field.
+  * Bump Standards-Version to 3.8.1.
+  * Add libopenjpeg support. (Closes: #527811)
+  * Add bzlib support. (Closes: #527844)
+  * Explicitely enable zlib and bzlib support in configure script.
+  * Build static libraries for ffmpeg-debian and ffmpeg packages.
+    (Closes: #527761)
+  * Modify control.ffmpeg-debian to match Depends of *-dev packages in control
+    file introduced in previous pacakage version.
+  * Some changes recommended by lintian.
+    + Add watch file.
+    + Fix ordering of debhelper calls.
+    + Remove redundant Section fields in control file for binary packages.
+    + Add comment in patch, also refreshed it.
+    + Fix lintian error shlib-with-non-pic-code.
+    + Don't install LICENSE. The licensing information should be, and is,
+      covered in debian/copyright.
+    + Fix 'breaks-without-version libavcodec51' warning.
+  * Register ffmpeg documentation with doc-base.
+  * Install documentation with dh_installdocs.
+
+ -- Andres Mejia <mcitadel@gmail.com>  Sat, 09 May 2009 14:07:24 -0400
+
 ffmpeg-debian (4:0.5+svn20090420-2) unstable; urgency=low
 
   * debian/control: fix dependencies for libavutil-dev and libavfilter-dev

@@ -1,12 +1,8 @@
 # -*- mode: makefile -*-
 # vim:syntax=make
 #
-# build a static version on every architecture in the ffmpeg-debian package
 # shared is generic, i.e. without arch specific opcodes
-FLAVORS := shared
-ifeq ($(DEB_SOURCE),ffmpeg-debian)
-FLAVORS += static
-endif
+FLAVORS := shared static
 
 export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
@@ -68,12 +64,16 @@ confflags += --extra-version='$(DEB_VERSION)'
 confflags += --prefix=/usr
 confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf
+confflags += --enable-bzlib
+# confflags += --enable-libdirac # Waiting for libdirac to enter Debian
 confflags += --enable-libgsm
+confflags += --enable-libopenjpeg
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
 confflags += --enable-libtheora
 confflags += --enable-libvorbis
 confflags += --enable-pthreads
+confflags += --enable-zlib
 confflags += --disable-stripping
 confflags += --disable-vhook
 
@@ -117,6 +117,7 @@ shared_build_confflags += $(nooptflags)
 endif
 shared_build_confflags += --enable-shared
 shared_build_confflags += --disable-static
+shared_build_confflags += --extra-cflags="-fPIC -DPIC"
 
 ## armel architecture specific
 # Configuration flags for the optimised shared libraries
@@ -144,6 +145,7 @@ cmov_build_confflags += --shlibdir=/usr/lib/i686/cmov
 cmov_build_confflags += --cpu='i686'
 cmov_build_confflags += --enable-shared
 cmov_build_confflags += --disable-static
+cmov_build_confflags += --extra-cflags="-fPIC -DPIC"
 cmov_build_confflags += --disable-ffmpeg
 cmov_build_confflags += --disable-ffserver
 cmov_build_confflags += --disable-ffplay
