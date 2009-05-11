@@ -138,8 +138,8 @@ binary-arch: build install formats.txt
 	dh_testroot
 	install -D -m 0644 debian/libswscale0.override \
 		$(CURDIR)/debian/libswscale0/usr/share/lintian/overrides/libswscale0
-	install -D -m 0644 debian/libpostproc51.override \
-		$(CURDIR)/debian/libpostproc51/usr/share/lintian/overrides/libpostproc51
+#	install -D -m 0644 debian/libpostproc51.override \
+#		$(CURDIR)/debian/libpostproc51/usr/share/lintian/overrides/libpostproc51
 	install -D -m 0644 debian/libavcodec52.override \
 		$(CURDIR)/debian/libavcodec52/usr/share/lintian/overrides/libavcodec52
 	dh_installman -pffmpeg debian/qt-faststart.1
