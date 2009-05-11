@@ -117,9 +117,7 @@ shared_build_confflags += $(nooptflags)
 endif
 shared_build_confflags += --enable-shared
 shared_build_confflags += --disable-static
-ifneq (,$(findstring fix-fpic,$(DEB_BUILD_OPTIONS)))
 shared_build_confflags += --extra-cflags="-fPIC -DPIC"
-endif
 
 ## armel architecture specific
 # Configuration flags for the optimised shared libraries
@@ -147,9 +145,7 @@ cmov_build_confflags += --shlibdir=/usr/lib/i686/cmov
 cmov_build_confflags += --cpu='i686'
 cmov_build_confflags += --enable-shared
 cmov_build_confflags += --disable-static
-ifneq (,$(findstring fix-fpic,$(DEB_BUILD_OPTIONS)))
 cmov_build_confflags += --extra-cflags="-fPIC -DPIC"
-endif
 cmov_build_confflags += --disable-ffmpeg
 cmov_build_confflags += --disable-ffserver
 cmov_build_confflags += --disable-ffplay
