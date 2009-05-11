@@ -142,7 +142,6 @@ binary-arch: build install formats.txt
 		$(CURDIR)/debian/libpostproc51/usr/share/lintian/overrides/libpostproc51
 	install -D -m 0644 debian/libavcodec52.override \
 		$(CURDIR)/debian/libavcodec52/usr/share/lintian/overrides/libavcodec52
-	dh_installman -pffmpeg debian/qt-faststart.1
 	dh_installdocs $(extradoc) doc/optimization.txt
 	dh_installdocs -A MAINTAINERS CREDITS doc/TODO
 	dh_installdocs -A debian/README.Debian
@@ -156,13 +155,13 @@ endif
 	dh_installexamples -plibavcodec-dev libavcodec/apiexample.c
 	dh_installchangelogs Changelog
 	dh_link
-	dh_compress
-	dh_fixperms
 ifneq ($(DEB_SOURCE),ffmpeg-debian)
 	dh_strip
 else
 	dh_strip --dbg-package=ffmpeg-dbg
 endif
+	dh_compress
+	dh_fixperms
 # strict internal dependencies
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \
