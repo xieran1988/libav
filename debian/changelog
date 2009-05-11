@@ -15,8 +15,6 @@ ffmpeg-debian (4:0.5+svn20090420-3) unstable; urgency=low
     + Fix ordering of debhelper calls.
     + Remove redundant Section fields in control file for binary packages.
     + Add comment in patch, also refreshed it.
-    + Partially fix for lintian error shlib-with-non-pic-code, remaining fix
-      needs further investigation. Overrides will be installed in the meanwhile.
     + Don't install LICENSE. The licensing information should be, and is,
       covered in debian/copyright.
     + Fix 'breaks-without-version libavcodec51' warning.
