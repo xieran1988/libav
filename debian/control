@@ -13,7 +13,7 @@ Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg-debian.git
 Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/ffmpeg-debian.git;a=summary
 Homepage: http://ffmpeg.org/
 Build-Depends-Indep: doxygen
-Build-Depends: debhelper (>= 5.0.0),
+Build-Depends: debhelper (>= 6.0.7~),
                libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libfaad-dev | libfaad2-dev,
