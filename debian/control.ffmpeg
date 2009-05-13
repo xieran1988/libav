@@ -11,15 +11,16 @@ Build-Depends: debhelper (>= 5.0.0),
                libspeex-dev,
                libtheora-dev (>> 0.0.0.alpha4),
                libvorbis-dev,
+               libopenjpeg-dev,
                libx11-dev,
                libxext-dev,
                libxvmc-dev,
                quilt,
                texi2html,
-               zlib1g-dev
+               zlib1g-dev,
+               libbz2-dev
 
 Package: libavutil-unstripped-49
-Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
@@ -33,7 +34,6 @@ Description: ffmpeg utility library
  object that should only be used by Debian packages.
 
 Package: libavcodec-unstripped-52
-Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
@@ -48,7 +48,6 @@ Description: ffmpeg codec library
  object that should only be used by Debian packages.
 
 Package: libavdevice-unstripped-52
-Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
@@ -61,7 +60,6 @@ Description: ffmpeg device handling library
  object that should only be used by Debian packages.
 
 Package: libavfilter-unstripped-0
-Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
@@ -72,7 +70,6 @@ Description: ffmpeg video filtering library
  object that should only be used by Debian packages.
 
 Package: libpostproc-unstripped-51
-Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
@@ -85,13 +82,12 @@ Description: ffmpeg video postprocessing library
  object that should only be used by Debian packages.
 
 Package: libavformat-unstripped-52
-Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Conflicts: libavformatcvs52, libavformat52
 Replaces: libavformatcvs52, libavformat52
-Breaks: libavcodec51
+Breaks: libavcodec51  (<< 3:0.svn20090303-1)
 Description: ffmpeg file format library
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
@@ -100,7 +96,6 @@ Description: ffmpeg file format library
  object that should only be used by Debian packages.
 
 Package: libswscale-unstripped-0
-Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
@@ -111,4 +106,3 @@ Description: ffmpeg video scaling library
  .
  This package contains a unrestricted version of the libswscale shared
  object that should only be used by Debian packages.
-
