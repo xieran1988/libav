@@ -1,0 +1,4 @@
+# ffmpeg is being built with -fPIC yet the result binaries still get these
+# TEXTRELs. This requires further work. Please see bug #528080.
+libavdevice52: shlib-with-non-pic-code usr/lib/i686/cmov/libavdevice.so.52.1.0
+libavdevice52: shlib-with-non-pic-code usr/lib/libavdevice.so.52.1.0

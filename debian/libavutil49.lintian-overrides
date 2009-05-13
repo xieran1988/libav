@@ -1,0 +1,4 @@
+# ffmpeg is being built with -fPIC yet the result binaries still get these
+# TEXTRELs. This requires further work. Please see bug #528080.
+libavutil49: shlib-with-non-pic-code usr/lib/i686/cmov/libavutil.so.49.15.0
+libavutil49: shlib-with-non-pic-code usr/lib/libavutil.so.49.15.0
