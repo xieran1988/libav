@@ -1,1 +1,4 @@
 900_doxyfile
+# fpic-ftbfs-fix.patch
+# fpic-libpostproc-fix.patch
+# fpic-libswscale-fix.patch
