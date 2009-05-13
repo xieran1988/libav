@@ -1,4 +1,5 @@
 This patch resolves all non-PIC issues from the libpostproc library.
+For inquiries about this patch, please see bug #528080.
 ==========================================================================
 --- a/libpostproc/postprocess_template.c
 +++ b/libpostproc/postprocess_template.c

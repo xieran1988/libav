@@ -1,5 +1,6 @@
 This patch is currently being worked on to resolve all non-PIC issues with
 the libswscale library.
+For inquiries about this patch, please see bug #528080.
 ==========================================================================
 --- a/libswscale/rgb2rgb_template.c
 +++ b/libswscale/rgb2rgb_template.c

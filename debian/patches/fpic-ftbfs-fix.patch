@@ -1,4 +1,5 @@
 This patch fixes FTBFS issue when using -fPIC.
+For inquiries about this patch, please see bug #528080.
 ==========================================================================
 --- a/libavcodec/x86/dsputil_mmx.c
 +++ b/libavcodec/x86/dsputil_mmx.c
