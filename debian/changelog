@@ -1,3 +1,9 @@
+ffmpeg-debian (4:0.5+svn20090420-3) UNRELEASED; urgency=low
+
+  * Start on new release.
+
+ -- Andres Mejia <mcitadel@gmail.com>  Tue, 12 May 2009 23:40:45 -0400
+
 ffmpeg-debian (4:0.5+svn20090420-2) unstable; urgency=low
 
   * debian/control: fix dependencies for libavutil-dev and libavfilter-dev
