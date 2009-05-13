@@ -6,6 +6,9 @@
 FLAVORS := shared
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 FLAVORS += static
+else ifneq (,$(shell cat debian/control | grep -m 1 -e '^Package: .*-dev$$'))
+# always build static library if we're building dev packages
+FLAVORS += static
 endif
 
 export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
