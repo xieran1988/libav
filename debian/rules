@@ -35,12 +35,6 @@ internalencoders := $(findstring internalencoders,$(DEB_BUILD_OPTIONS))
 
 include debian/confflags
 
-debian/control: debian/changelog $(wildcard debian/control.*)
-	dh_testdir
-	dpkg-parsechangelog | head -1 > $@
-	cat debian/control.common >> $@
-	cat debian/control.$(DEB_SOURCE) >> $@
-
 $(info FLAVORS = $(FLAVORS))
 $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
 $(info CFLAGS = $(CFLAGS))
