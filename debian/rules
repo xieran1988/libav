@@ -47,7 +47,8 @@ configure-%: configure-stamp-%
 configure-stamp-%: $(QUILT_STAMPFN) config-extra-includes.h
 	dh_testdir
 	mkdir -p debian-$*
-	cp .svnrevision debian-$*/snapshot_version
+	[ -r .svnrevision ] && \
+		echo "SVN-r$$(cat .svnrevision)" > debian-$*/snapshot_version
 	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
 		$($*_build_confflags) $(extra_$*_build_confflags)
 ifeq ($(internalencoders),)
