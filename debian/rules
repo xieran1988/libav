@@ -54,7 +54,8 @@ configure-stamp-%: $(QUILT_STAMPFN) config-extra-includes.h
 	dh_testdir
 	mkdir -p debian-$*
 	cp .svnrevision debian-$*/snapshot_version
-	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure $($*_build_confflags)
+	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
+		$($*_build_confflags) $(extra_$*_build_confflags)
 ifeq ($(internalencoders),)
 	echo "#include \"config-extra-includes.h\"" >> debian-$*/config.h
 endif
