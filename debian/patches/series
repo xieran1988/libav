@@ -1,5 +1,7 @@
 100_kfreebsd
 900_doxyfile
+ffmpeg-libamrnb-detection.patch
+ffmpeg-libamrwb-ifdef-encoder.patch
 # fpic-ftbfs-fix.patch
 # fpic-libpostproc-fix.patch
 # fpic-libswscale-fix.patch
