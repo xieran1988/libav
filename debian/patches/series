@@ -1,4 +1,5 @@
 100_kfreebsd
+ffmpeg-debian_hurd.patch
 900_doxyfile
 ffmpeg-libamrnb-detection.patch
 ffmpeg-libamrwb-ifdef-encoder.patch
