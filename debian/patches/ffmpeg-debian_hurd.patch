@@ -2,13 +2,13 @@ Fix build failures for the GNU Hurd OS
 ===================================================================
 --- a/configure
 +++ b/configure
-@@ -1609,6 +1609,9 @@
-     linux)
-         enable dv1394
+@@ -1642,6 +1642,9 @@
+         ;;
+     gnu/kfreebsd)
          ;;
 +    gnu)
 +        disable dv1394
 +        ;;
-     irix*)
-         target_os=irix
-         ranlib="echo ignoring ranlib"
+ 
+     *)
+         die "Unknown OS '$target_os'."
