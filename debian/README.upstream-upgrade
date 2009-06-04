@@ -35,8 +35,8 @@ Fetch and commit the new upstream version:
             --upstream-branch=upstream.unstripped \
             --pristine-tar \
 	    --no-dch \
-            --upstream-tag=upstream.unstripped/0.5+svn${SVNDATE}-unstripped \
-            --upstream-version=0.5+svn${SVNDATE}-unstripped \
+            --upstream-tag=upstream.unstripped/0.5+svn${SVNDATE} \
+            --upstream-version=0.5+svn${SVNDATE} \
             ../ffmpeg_0.5+svn${SVNDATE}.orig.tar.gz
 
   git checkout master
