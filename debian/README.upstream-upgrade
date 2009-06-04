@@ -27,6 +27,7 @@ Fetch and commit the new upstream version:
             --pristine-tar \
 	    --no-dch \
             --upstream-tag=upstream/0.5+svn${SVNDATE} \
+            --upstream-version=0.5+svn${SVNDATE} \
             ../ffmpeg-debian_0.5+svn${SVNDATE}.orig.tar.gz
 
   git checkout master.unstripped
