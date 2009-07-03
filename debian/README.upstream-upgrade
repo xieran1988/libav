@@ -30,6 +30,10 @@ Fetch and commit the new upstream version:
             --upstream-version=0.5+svn${SVNDATE} \
             ../ffmpeg-debian_0.5+svn${SVNDATE}.orig.tar.gz
 
+  # ffmpeg (formerly ffmpeg-debian) and ffmpeg-extra share the same tarball now
+  cp ../ffmpeg-debian_0.5+svn${SVNDATE}.orig.tar.gz \
+     ../ffmpeg_0.5+svn${SVNDATE}.orig.tar.gz
+
   git checkout master.unstripped
   git-import-orig \
             --debian-branch=master.unstripped \
