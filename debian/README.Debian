@@ -8,14 +8,12 @@ a naming scheme which would fit known use cases and avoid confusion.
 Some of the constraints and proposed solutions on the new names follow:
 
  1. Distributions such as Debian and Ubuntu want to carry multiple version of
-    the source package to fit component divisions and please users; e.g. an
+    the package to fit component divisions and please users; e.g. an
     Ubuntu/universe and an Ubuntu/multiverse version, or a Debian/main and a
     Debian/non-free version.  It is conceived that there are usually two
-    sources in these distributions: a) the vanilla upstream source shipped in
-    the most permissible component if possible and b) a stripped source
-    suitable for the most constrained component.  It seems natural to use the
-    "ffmpeg" source package name for the former and a branch package name for
-    the later such as "ffmpeg-debian".
+    variants of the ffmpeg package in these distributions: a) the vanilla
+    version shipped in the most permissible component if possible and b) a
+    'stripped' package suitable for the most constrained component.
 
     For details why such a stripping is necessary in the first place, please
     look further below in this document ("Disabled MPEG encoders").
@@ -37,37 +35,10 @@ Some of the constraints and proposed solutions on the new names follow:
     This scheme can be extended for third party repositories if it still needs
     to be.
 
-These new package names were imaginated at the time where the package names
-were as follow in Debian and Ubuntu (July 2008).
-debian:
-     ffmpeg   | 0.cvs20050313-2sarge1    |     oldstable
-     ffmpeg   | 0.cvs20060823-8          |        stable
-ffmpeg-free   | 0.svn20080206-8          |       testing
-ffmpeg-debian | 0.svn20080206-9          |      unstable
-ubuntu:
-     ffmpeg   | 3:0.cvs20070307-5ubuntu4 |         gutsy
-     ffmpeg   | 3:0.cvs20070307-5ubuntu7 |         hardy
-ffmpeg-debian | 3:0.svn20080206-9ubuntu1 |      intrepid
-
-Source          Version                 Binaries
-------------------------------------------------
-ffmpeg          0.cvs20050313-2sarge1   ffmpeg, libavcodec-dev,
-                                        libavformat-dev, libpostproc-dev
-ffmpeg          0.cvs20060823-8         ffmpeg, libavcodec-dev, libavcodec0d,
-                                        libavformat-dev, libavformat0d,
-                                        libpostproc-dev, libpostproc0d
-ffmpeg-debian   0.svn20080206-9         ffmpeg, ffmpeg-dbg, libavutil49,
-                                        libavcodec51, libavdevice52,
-                                        libpostproc51, libavformat52,
-                                        libswscale0, libavutil-dev,
-                                        libavcodec-dev, libavdevice-dev,
-                                        libpostproc-dev, libavformat-dev,
-                                        libswscale-dev
-
-For consistency at this date, Debian is missing a ffmpeg unstripped
-source package and Ubuntu had two source packages in the same component
-for a short time.  The binary package names are not unified and shlibs
-do not allow to install one or the other library.
+For consistency at this date, Debian is missing a ffmpeg-extra source
+package and Ubuntu had two source packages in the same component for a
+short time.  The binary package names are not unified and shlibs do not
+allow to install one or the other library.
 
 To avoid gratuitous package renames, the proposed changes against the above
 packages are:
@@ -75,9 +46,11 @@ packages are:
   * For Debian and Ubuntu the binary packages in the 'main' component will
     keep their original names without any additional marker.
 
-  * The unstripped replacement packages in the 'non-free' (Debian) and
-    'multiverse' (ubuntu) component will carry an '-unstripped-' marker in the
-    name right between the library name and its SONAME.
+  * The extra (unstripped) replacement packages in the 'non-free'
+    (Debian) and 'multiverse' (ubuntu) component will be built from a
+    source package named 'ffmpeg-extra'. The resulting binary packages
+    carry an '-extra-' marker in the name right between the library name
+    and its SONAME.
 
   * Ubuntu will track the ffmpeg packages in Debian and tries to minimize the
     diff for maintenance reason.
@@ -85,8 +58,7 @@ packages are:
   * If you disagree with the naming, please speak up on
     pkg-multimedia-maintainers@lists.alioth.debian.org
 
-
- -- Reinhard Tartler <siretart@tauware.de>  Wed, 02 Jul 2008 08:08:56 +0200
+ -- Reinhard Tartler <siretart@tauware.de>, Fri,  3 Jul 2009 22:11:09 +0200
 
 
 2) Disabled MPEG encoders
@@ -100,15 +72,13 @@ them. We agreed on a plan that rather disables than removes the
 encoders, for details see debian/strip.sh, rendering those encoders
 unusable.
 
-Currently the following video encoders are disabled in the ffmpeg-debian
-source code: H263, H264, MPEG2 video, MPEG4 and MS-MPEG4. No decoders are
-disabled in the ffmpeg-debian packages!
+Currently the following video encoders are disabled in the ffmpeg
+package: H263, H264, MPEG2 video, MPEG4 and MS-MPEG4. No *decoders* are
+disabled in any the ffmpeg package!
 
-In order to make this fact visible, the source package was renamed from
-ffmpeg to ffmpeg-debian. The plan is to provide a source package called
-'ffmpeg' (without the -debian) suffix, which builds drop-in replacement
-binary package with the mpeg encoders enabled. Ideally, we would be
-allowed to include those mpeg encoders enabled in non-free, but we
+The plan is to provide a source package called 'ffmpeg-extra', which builds
+drop-in replacement binary package with the mpeg encoders enabled. Ideally, we
+would be allowed to include those mpeg encoders enabled in non-free, but we
 haven't heared back from the ftpteam about that idea.
 
 
