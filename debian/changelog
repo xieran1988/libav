@@ -1,8 +1,64 @@
-ffmpeg-debian (4:0.5+svn20090420-3) UNRELEASED; urgency=low
+ffmpeg-debian (4:0.5+svn20090420-3) unstable; urgency=low
 
-  * Start on new release.
+  [ Andres Mejia ]
+  * Add myself to Uploaders list.
+  * Reorder when dh_strip is done so qt-faststart is also
+    stripped.
+  * Update to control files.
+  * Add new confflags for new build dependencies.
+  * Use <package>.docs files to add ffmpeg and ffmpeg-doc documentation.
+  * Use <package>.docs files for installing documentation.
+  * Add comment to 900_doxyfile patch.
+  * Add man page for qt-faststart.
+  * Bump version in changelog to prepare new release
+  * Fix FTBFS for ffmpeg source package with -dev packages (Closes: #527761)
+  * Use dh_lintian to install lintian overrides
+  * Update comment on fpic-* patches
+  * Build-Depend on debhelper (>= 6.0.7~) for dh_lintian.
+  * Add lintian overrides for remaining fpic lintian errors.
+  * Shorten comment on lintian-overrides.
+  * Allow passing in extra confflags, removes the need for fix-fpic
+    DEB_BUILD_OPTIONS.
+  * Fix FTBFS on kfreebsd. (Closes: #528591)
+  * Include patches to allow us to use opencore-amr libraries.
 
- -- Andres Mejia <mcitadel@gmail.com>  Tue, 12 May 2009 23:40:45 -0400
+  [ Reinhard Tartler ]
+  * remove debian/control.* mechanism
+  * improve patch description for debian/patches/100_kfreebsd
+
+  [ Andres Mejia ]
+  * Add lintian overrides for ffmpeg-debian source warnings.
+  * Only use .svnrevision if it's readable.
+  * Update source lintian-overrides for modifications to debian/rules.
+  * Add fix for FTBFS for GNU Hurd OS. Thanks Marc Dequènes.
+    (Closes: #530436)
+
+  [ Felipe Sateler ]
+  * Don't add -unstripped to the unstripped variant version number
+    in debian/README.upstream-upgrade.
+  * In the same file, pass explicit version to git-import-orig
+
+  [ Fabian Greffrath ]
+  * Cleaned up debian/watch file.
+  * Add notes why we no longer strip the orig.tar.gz.
+
+  [ Andres Mejia ]
+  * Fix watch file to ignore daily snapshots.
+  * Make get-orig-source.sh executable.
+
+  [ Reinhard Tartler ]
+  * add patch for qtrle encoding (Closes: #530016)
+  * Enable xvmc support by adding libxvmc-dev to build dependencies
+  * really add libopenjpeg-dev to build depends, actually enabling
+    the openjpeg decoder.
+  * reorganise README.Debian for the new plan [tm]
+  * no longer strip the source on upstream upgrades
+  * Imported Upstream version 0.5+svn20090609
+  * adjust notes in README.upstream-upgrade for the now unstripped
+    debian source package
+  * remove hack to build with stripped sources
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 05 Jul 2009 20:37:15 +0200
 
 ffmpeg-debian (4:0.5+svn20090420-2) unstable; urgency=low
 
