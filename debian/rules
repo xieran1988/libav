@@ -31,29 +31,20 @@ NUMJOBS := -j$(shell getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 endif
 endif
 
-internalencoders := $(findstring internalencoders,$(DEB_BUILD_OPTIONS))
-
 include debian/confflags
 
 $(info FLAVORS = $(FLAVORS))
 $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
 $(info CFLAGS = $(CFLAGS))
-$(info internalencoders = $(internalencoders))
-
-config-extra-includes.h:
-	sh debian/fixup-config.sh > $@
 
 configure-%: configure-stamp-%
-configure-stamp-%: $(QUILT_STAMPFN) config-extra-includes.h
+configure-stamp-%: $(QUILT_STAMPFN)
 	dh_testdir
 	mkdir -p debian-$*
 	[ ! -r .svnrevision ] || \
 		echo "SVN-r`cat .svnrevision`" > debian-$*/snapshot_version
 	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
 		$($*_build_confflags) $(extra_$*_build_confflags)
-ifeq ($(internalencoders),)
-	echo "#include \"config-extra-includes.h\"" >> debian-$*/config.h
-endif
 	touch $@
 
 build-%: build-stamp-%
