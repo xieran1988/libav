@@ -57,8 +57,9 @@ ffmpeg-debian (4:0.5+svn20090609-1) unstable; urgency=low
   * adjust notes in README.upstream-upgrade for the now unstripped
     debian source package
   * remove hack to build with stripped sources
+  * bump standards version, no changes needed
 
- -- Reinhard Tartler <siretart@tauware.de>  Sun, 05 Jul 2009 20:37:15 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 05 Jul 2009 22:52:43 +0200
 
 ffmpeg-debian (4:0.5+svn20090420-2) unstable; urgency=low
 
