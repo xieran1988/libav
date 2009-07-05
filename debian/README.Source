@@ -1,0 +1,49 @@
+
+In the past, Debian used to ship "stripped" ffmpeg packages, i.e. the
+source code of the ffmpeg-debian package has been modified to disable
+specific codecs (mostly encoders like H263, H264, MPEG2 video, MPEG4 and
+MS-MPEG4) whose usage may represent patent infringement in certain
+jurisdictions. To serve the purpose to remain free of patented encoding
+technologies, the modifications to the ffmpeg source code have been done
+in a "non-reversible" way by removing several lines from the source code
+before packaging the release tarball. To reflect this divergence from
+upstream ffmpeg, the Debian package has been renamed to ffmpeg-debian.
+However, please note that only the code calling the affected codecs was
+removed in previous versions to make them unavailable to the resulting
+ffmpeg libraries. No encoder code was actually ever removed from the
+Debian packages!
+
+Several complications have come along with the aforementioned measures:
+* Further packaging hacks (e.g. debian/fixup-config.sh) have become
+  necessary in order to build the source code without the stripped
+  encoders.
+* It was impossible to rebuild unstripped packages for private usage
+  from the ffmpeg-debian source code
+* Ffmpeg upstream was not very happy about Debian redistributing a
+  stripped fork of their code, to say the least.
+
+Nowadays, while the situation remains pretty unchanged with regard to
+the patent threat, the ffmpeg build system has seen a lot of
+improvements. It now provides the possibility to explicitly disable
+specific codecs from the libraries at configure time, allowing to remain
+free of patent encumbered codecs without the need to strip the source
+code anymore. The effect on the resulting binary packages would remain
+the same as before, i.e. Debian will not ship any patent encumbered
+encoders in its packages.
+
+Regarding the source code, however, this would mean some significant
+improvements:
+* There is no more need to strip the source code in order to disable the
+  codecs and to apply further Debian-specific hacks to still make it
+  compile cleanly.
+* In order to rebuild unstripped ffmpeg libraries for private usage, it
+  would be sufficient to comment out a few configure flags.
+* Debian would not need to fork the ffmpeg source code anymore and call
+  their packages by a different name.
+
+Therefore, the pkg-multimedia-maintainers (the maintainers of the ffmpeg
+packages in Debian) decided to not strip the ffmpeg source code in
+further releases anymore but disable the patent encumbered codecs during
+the configure phase of the packages as intended upstream. We are sure
+this is the right thing to do with regard to the aforementioned
+advantages for both our users and ourselves as maintainers.
