@@ -42,7 +42,7 @@ configure-stamp-%: $(QUILT_STAMPFN)
 	dh_testdir
 	mkdir -p debian-$*
 	[ ! -r .svnrevision ] || \
-		echo "SVN-r`cat .svnrevision`" > debian-$*/snapshot_version
+		cp .svnrevision debian-$*/snapshot_version
 	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
 		$($*_build_confflags) $(extra_$*_build_confflags)
 	touch $@
