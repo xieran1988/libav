@@ -34,7 +34,8 @@ Build-Depends: debhelper (>= 6.0.7~),
                texi2html,
                zlib1g-dev,
                libxvmc-dev,
-               libbz2-dev
+               libbz2-dev,
+               yasm [i386 amd64],
 
 Package: ffmpeg
 Section: video
