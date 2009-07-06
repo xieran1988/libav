@@ -3,9 +3,11 @@ Subject: [PATCH] Fix FTBFS for kfreebsd
 X-Upstream-Discussion: <http://comments.gmane.org/gmane.comp.video.ffmpeg.devel/90686>
 
 ==========================================================================
---- a/configure
-+++ b/configure
-@@ -1640,6 +1640,8 @@
+Index: ffmpeg-debian/configure
+===================================================================
+--- ffmpeg-debian.orig/configure	2009-07-06 13:12:54.000000000 -0400
++++ ffmpeg-debian/configure	2009-07-06 13:14:02.000000000 -0400
+@@ -1649,6 +1649,8 @@
      interix)
          disable vhook
          ;;
