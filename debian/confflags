@@ -59,10 +59,8 @@ disable_encoders += --disable-encoder=msmpeg4v1
 disable_encoders += --disable-encoder=msmpeg4v2
 disable_encoders += --disable-encoder=msmpeg4v3
 
-# disabling the next three lines might enable some additional encoders,
-# not in debian at this point, as we munge the source there as well,
-# though
-ifeq ($(DEB_SOURCE),ffmpeg-debian)
+# don't disable encoders if internalencoders is set in DEB_BUILD_OPTIONS
+ifeq (,$(filter internalencoders,$(DEB_BUILD_OPTIONS)))
 confflags += $(disable_encoders)
 endif
 
