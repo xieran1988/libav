@@ -174,7 +174,7 @@ Suggests: libfaad-dev,
           libx11-dev,
           libxext-dev,
           zlib1g-dev,
-          lib1394-dev,
+          ${lib1394-dev}
 Description: development files for libavcodec
  This is the codec library from the ffmpeg project. It supports most existing
  encoding formats (MPEG, DivX, MPEG4, AC3, DV...).
