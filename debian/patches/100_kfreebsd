@@ -5,7 +5,7 @@ X-Upstream-Discussion: <http://comments.gmane.org/gmane.comp.video.ffmpeg.devel/
 ==========================================================================
 --- a/configure
 +++ b/configure
-@@ -1640,6 +1640,8 @@
+@@ -1649,6 +1649,8 @@ case $target_os in
      interix)
          disable vhook
          ;;
