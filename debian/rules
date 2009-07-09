@@ -93,7 +93,7 @@ endef
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 	dh_installdirs -ptmp usr/share/doc/ffmpeg/html etc
 	dh_installdirs -ptmp usr/share/doc/ffmpeg-doc/html
 	$(foreach flavor,$(FLAVORS),$(call install_flavor,$(flavor)))
