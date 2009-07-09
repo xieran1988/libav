@@ -72,11 +72,10 @@ clean-real:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp $(addprefix build-stamp-, $(FLAVORS)) \
-	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp
+	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp \
+	    build-doxy-stamp
 	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
-	dh_clean build-doxy-stamp EXTRA
-	dh_clean config-extra-includes.h debian/tmp.debhelper.log
-	dh_clean formats.txt
+	dh_clean
 
 get-orig-source:
 	dh_testdir
