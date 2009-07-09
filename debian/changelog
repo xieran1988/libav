@@ -1,3 +1,9 @@
+ffmpeg-debian (4:0.5+svn20090609-2) UNRELEASED; urgency=low
+
+  * Prepare new release.
+
+ -- Andres Mejia <mcitadel@gmail.com>  Mon, 06 Jul 2009 13:04:17 -0400
+
 ffmpeg-debian (4:0.5+svn20090609-1) unstable; urgency=low
 
   [ Andres Mejia ]
