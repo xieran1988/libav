@@ -20,6 +20,7 @@ ifneq ($(DEB_SOURCE),ffmpeg-debian)
 DEB_BUILD_OPTIONS += ,internalencoders
 endif
 
+# Support multiple makes at once
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 NUMJOBS = -j$(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 else

@@ -182,13 +182,6 @@ vis_build_confflags += --disable-ffmpeg
 vis_build_confflags += --disable-ffserver
 vis_build_confflags += --disable-ffplay
 
-# Support multiple makes at once (taken from the qemu package)
-ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
-  NJOBS := $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
-else
-  NJOBS := 1
-endif
-
 # Additional documentation for PowerPC
 ifneq (,$(findstring powerpc,$(DEB_BUILD_GNU_TYPE)))
   extradoc := doc/ffmpeg_powerpc_performance_evaluation_howto.txt
