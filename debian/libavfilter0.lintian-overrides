@@ -1,0 +1,3 @@
+# Overriding these fpic lintian errors. Please see bug #528080.
+libavfilter0: shlib-with-non-pic-code usr/lib/i686/cmov/libavfilter.so.0.4.0
+libavfilter0: shlib-with-non-pic-code usr/lib/libavfilter.so.0.4.0

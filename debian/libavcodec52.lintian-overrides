@@ -1,0 +1,3 @@
+# Overriding these fpic lintian errors. Please see bug #528080.
+libavcodec52: shlib-with-non-pic-code usr/lib/i686/cmov/libavcodec.so.52.20.0
+libavcodec52: shlib-with-non-pic-code usr/lib/libavcodec.so.52.20.0
