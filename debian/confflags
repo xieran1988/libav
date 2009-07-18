@@ -6,6 +6,9 @@
 FLAVORS := shared
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 FLAVORS += static
+else ifneq (,$(shell cat debian/control | grep -m 1 -e '^Package: .*-dev$$'))
+# always build static library if we're building dev packages
+FLAVORS += static
 endif
 
 export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
@@ -15,16 +18,24 @@ export DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 
 # the other flavors always build dynamic versions
+# Also, disable architecture-specific optimizations for default shared build
 ifeq      ($(DEB_HOST_ARCH),armel)
+nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2
+nooptflags += --disable-armvfp --disable-neon
 # disabled for now as NEON support deadlocks the Babbage
 #FLAVORS += neon
 FLAVORS += vfp
+else ifeq ($(DEB_HOST_ARCH),arm)
+nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2
+nooptflags += --disable-armvfp --disable-neon
 else ifeq ($(DEB_HOST_ARCH),i386)
 FLAVORS += cmov
 else ifeq ($(DEB_HOST_ARCH),powerpc)
 FLAVORS += altivec
+nooptflags += --disable-altivec
 else ifeq ($(DEB_HOST_ARCH),sparc)
 FLAVORS += vis
+nooptflags += --disable-vis
 endif
 
 define cond_enable
@@ -40,28 +51,50 @@ gpl_confflags += --enable-x11grab
 # there is no libfaad in ubuntu/main, on in ubuntu/multiverse
 gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 
-# Common configuration flags; comment out following line for LGPL versions of
-# the libraries
-confflags += $(gpl_confflags)
-confflags += --extra-version='svn$(SVNREVISION)+$(DEB_VERSION)'
+# "forbidden" encoders, see README.Debian for details
+disable_encoders += --disable-encoder=h263
+disable_encoders += --disable-encoder=h263p
+disable_encoders += --disable-encoder=mpeg2video
+disable_encoders += --disable-encoder=mpeg4
+disable_encoders += --disable-encoder=msmpeg4v1
+disable_encoders += --disable-encoder=msmpeg4v2
+disable_encoders += --disable-encoder=msmpeg4v3
+
+# disabling the next three lines might enable some additional encoders,
+# not in debian at this point, as we munge the source there as well,
+# though
+ifeq ($(DEB_SOURCE),ffmpeg-debian)
+confflags += $(disable_encoders)
+endif
+
+# Common configuration flags
+confflags += --extra-version='$(DEB_VERSION)'
 confflags += --prefix=/usr
 confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf
+confflags += --enable-bzlib
+# confflags += --enable-libdirac # Waiting for libdirac to enter Debian
 confflags += --enable-libgsm
+confflags += --enable-libopenjpeg
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
 confflags += --enable-libtheora
 confflags += --enable-libvorbis
 confflags += --enable-pthreads
+confflags += --enable-zlib
 confflags += --disable-stripping
 confflags += --disable-vhook
+confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
-confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
+gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
 confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 confflags += $(call cond_enable,/usr/include/faac.h,libfaac)
-confflags += $(call cond_enable,/usr/include/x264.h,libx264)
+gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
 confflags += $(call cond_enable,/usr/include/vdpau/vdpau.h,vdpau)
+
+# comment out following line for LGPL versions of the libraries
+confflags += $(gpl_confflags)
 
 # Enable IEEE 1394 (FireWire) support on Linux only
 ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
@@ -78,11 +111,6 @@ ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
   confflags += --disable-optimizations
   confflags += --disable-mmx
 endif
-
-# Disable architecture-specific optimizations for default shared build
-nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2 --disable-armvfp --disable-neon
-nooptflags += --disable-altivec
-nooptflags += --disable-vis
 
 # Configuration flags for the static libraries
 static_build_confflags += $(confflags)

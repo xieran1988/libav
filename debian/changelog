@@ -1,3 +1,117 @@
+ffmpeg-debian (4:0.5+svn20090609-1) unstable; urgency=low
+
+  [ Andres Mejia ]
+  * Add myself to Uploaders list.
+  * Reorder when dh_strip is done so qt-faststart is also
+    stripped.
+  * Update to control files.
+  * Add new confflags for new build dependencies.
+  * Use <package>.docs files to add ffmpeg and ffmpeg-doc documentation.
+  * Use <package>.docs files for installing documentation.
+  * Add comment to 900_doxyfile patch.
+  * Add man page for qt-faststart.
+  * Bump version in changelog to prepare new release
+  * Fix FTBFS for ffmpeg source package with -dev packages (Closes: #527761)
+  * Use dh_lintian to install lintian overrides
+  * Update comment on fpic-* patches
+  * Build-Depend on debhelper (>= 6.0.7~) for dh_lintian.
+  * Add lintian overrides for remaining fpic lintian errors.
+  * Shorten comment on lintian-overrides.
+  * Allow passing in extra confflags, removes the need for fix-fpic
+    DEB_BUILD_OPTIONS.
+  * Fix FTBFS on kfreebsd. (Closes: #528591)
+  * Include patches to allow us to use opencore-amr libraries.
+
+  [ Reinhard Tartler ]
+  * remove debian/control.* mechanism
+  * improve patch description for debian/patches/100_kfreebsd
+
+  [ Andres Mejia ]
+  * Add lintian overrides for ffmpeg-debian source warnings.
+  * Only use .svnrevision if it's readable.
+  * Update source lintian-overrides for modifications to debian/rules.
+  * Add fix for FTBFS for GNU Hurd OS. Thanks Marc Dequènes.
+    (Closes: #530436)
+
+  [ Felipe Sateler ]
+  * Don't add -unstripped to the unstripped variant version number
+    in debian/README.upstream-upgrade.
+  * In the same file, pass explicit version to git-import-orig
+
+  [ Fabian Greffrath ]
+  * Cleaned up debian/watch file.
+  * Add notes why we no longer strip the orig.tar.gz.
+
+  [ Andres Mejia ]
+  * Fix watch file to ignore daily snapshots.
+  * Make get-orig-source.sh executable.
+
+  [ Reinhard Tartler ]
+  * add patch for qtrle encoding (Closes: #530016)
+  * Enable xvmc support by adding libxvmc-dev to build dependencies
+  * really add libopenjpeg-dev to build depends, actually enabling
+    the openjpeg decoder.
+  * reorganise README.Debian for the new plan [tm]
+  * no longer strip the source on upstream upgrades
+  * Imported Upstream version 0.5+svn20090609
+  * adjust notes in README.upstream-upgrade for the now unstripped
+    debian source package
+  * remove hack to build with stripped sources
+  * bump standards version, no changes needed
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 05 Jul 2009 22:52:43 +0200
+
+ffmpeg-debian (4:0.5+svn20090420-2) unstable; urgency=low
+
+  * debian/control: fix dependencies for libavutil-dev and libavfilter-dev
+    so that they can be used with the unstripped variants properly.
+  * debian/rules: set nooptflags only for relevant architectures.
+  * explicitly disable 'dangerous' encoders on the --configure line.
+  * fix SHLIBS_VERSION in debian/rules (Closes: #527350).
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 04 May 2009 07:41:19 +0200
+
+ffmpeg-debian (4:0.5+svn20090420-1) unstable; urgency=low
+
+  [ Fabian Greffrath ]
+  * Merge the contents of patents.txt into README.Debian and change some
+    paragraphs to (hopefully) add some more clarity on the removed encoders
+    and the package naming scheme. Based on suggestions by Xavier Douville
+    <debian@douville.org>, thank you very much for the review. (Closes: #519025)
+  * Reorder some confflags to account for GPL licensed libraries.
+  * Remove patents.txt
+  * Explicitely mention that no decoders are disabled in our packages.
+  
+  [ Loïc Minier ]
+  * Disable more autodetecter ARM arch features
+  * Add neon and vfp flavors to armel disabled for now
+  * vfp CFLAGS: add "-mfpu=vfp -mfloat-abi=softfp"
+
+  [ Reinhard Tartler ]
+  * New Upstream Version (svn revision 18630)
+  * bump epoch as 0.5 was released. Future version will use '+' to indicate 
+    that the package is based on a release branch and '~' to indicate that
+    the package is based on the 'trunk' branch.
+  * update from the upstream release branch to generate a new upstream
+    tarball.
+  * add a git-buildpackage config file at debian/gbp.conf
+  * beautify identification string
+  * debian/rules: bump epoch to '4'
+  * update section names in control file
+  * update upstream svn server url
+  * fixup get-orig-source rules in debian/rules
+  * create right filenames for the orig.tar.gz files
+  * update README.upstream-upgrate for new versioning scheme
+  * remove debian/005_release_branch_changes.diff
+  * remove reference to 020_visibility_patch
+  * install the upstream license file and release notes
+  * allow -dev packages be installed with the unstripped variants
+    Closes: #526007, LP: #312898
+  * be more careful with svn:externals in debian/get-orig-source.sh.
+    (Closes: #525348)
+  
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 02 May 2009 09:09:54 +0200
+
 ffmpeg-debian (3:0.svn20090303-1ubuntu6) jaunty; urgency=low
 
   * vfp CFLAGS: add "-mfpu=vfp -mfloat-abi=softfp".

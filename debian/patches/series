@@ -1,3 +1,7 @@
-# 020_visibility_patch
-005_release_branch_changes.diff
+100_kfreebsd
+ffmpeg-debian_hurd.patch
+fix-qtrle-encoding-when-previous-frame-linesize.patch
 900_doxyfile
+# fpic-ftbfs-fix.patch
+# fpic-libpostproc-fix.patch
+# fpic-libswscale-fix.patch

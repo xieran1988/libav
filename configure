@@ -75,6 +75,7 @@ show_help(){
   echo "  --enable-shared          build shared libraries [no]"
   echo "  --enable-gpl             allow use of GPL code, the resulting libs"
   echo "                           and binaries will be under GPL [no]"
+  echo "  --enable-version3        upgrade (L)GPL to version 3 [no]"
   echo "  --enable-nonfree         allow use of nonfree code, the resulting libs"
   echo "                           and binaries will be unredistributable [no]"
   echo "  --disable-ffmpeg         disable ffmpeg build"
@@ -148,6 +149,8 @@ show_help(){
   echo "  --enable-bzlib           enable bzlib [autodetect]"
   echo "  --enable-libamr-nb       enable libamr-nb floating point audio codec [no]"
   echo "  --enable-libamr-wb       enable libamr-wb floating point audio codec [no]"
+  echo "  --enable-libopencore-amrnb enable AMR-NB de/encoding via libopencore-amrnb [no]"
+  echo "  --enable-libopencore-amrwb enable AMR-WB decoding via libopencore-amrwb [no]"
   echo "  --enable-libdc1394       enable IIDC-1394 grabbing using libdc1394"
   echo "                           and libraw1394 [no]"
   echo "  --enable-libdirac        enable Dirac support via libdirac [no]"
@@ -779,6 +782,8 @@ CONFIG_LIST="
     libgsm
     libmp3lame
     libnut
+    libopencore_amrnb
+    libopencore_amrwb
     libopenjpeg
     libschroedinger
     libspeex
@@ -801,6 +806,7 @@ CONFIG_LIST="
     swscale
     vdpau
     vhook
+    version3
     x11grab
     zlib
 "
@@ -917,6 +923,8 @@ HAVE_LIST="
 
 # options emitted with CONFIG_ prefix but not available on command line
 CONFIG_EXTRA="
+    gplv3
+    lgplv3
     oldscaler
 "
 
@@ -990,7 +998,6 @@ oldscaler_deps="!swscale"
 
 # decoders / encoders
 aac_decoder_select="fft mdct"
-ac3_decoder_deps="gpl"
 ac3_decoder_select="fft mdct"
 atrac3_decoder_select="fft mdct"
 cavs_decoder_select="golomb"
@@ -999,7 +1006,6 @@ cscd_decoder_suggest="zlib"
 dca_decoder_select="fft mdct"
 dnxhd_encoder_select="aandct"
 dxa_decoder_select="zlib"
-eac3_decoder_deps="gpl"
 eac3_decoder_select="fft mdct"
 eatgq_decoder_select="aandct"
 eatqi_decoder_select="aandct"
@@ -1077,6 +1083,9 @@ libgsm_encoder_deps="libgsm"
 libgsm_ms_decoder_deps="libgsm"
 libgsm_ms_encoder_deps="libgsm"
 libmp3lame_encoder_deps="libmp3lame"
+libopencore_amrnb_decoder_deps="libopencore_amrnb"
+libopencore_amrnb_encoder_deps="libopencore_amrnb"
+libopencore_amrwb_decoder_deps="libopencore_amrwb"
 libopenjpeg_decoder_deps="libopenjpeg"
 libschroedinger_decoder_deps="libschroedinger"
 libschroedinger_encoder_deps="libschroedinger"
@@ -1572,6 +1581,7 @@ case $target_os in
         SHFLAGS='-shared -Wl,--output-def,$$(@:$(SLIBSUF)=.def) -Wl,--enable-runtime-pseudo-reloc -Wl,--enable-auto-image-base'
         objformat="win32"
         enable dos_paths
+        check_cflags -fno-common
         if ! enabled x86_64; then
             check_cpp_condition _mingw.h "(__MINGW32_MAJOR_VERSION > 3) || (__MINGW32_MAJOR_VERSION == 3 && __MINGW32_MINOR_VERSION >= 15)" ||
                 die "ERROR: MinGW runtime version must be >= 3.15."
@@ -1596,6 +1606,7 @@ case $target_os in
         SHFLAGS='-shared -Wl,--enable-auto-image-base'
         objformat="win32"
         enable dos_paths
+        check_cflags -fno-common
         ;;
     *-dos|freedos|opendos)
         disable ffplay ffserver vhook
@@ -1680,23 +1691,25 @@ EOF
 fi
 
 
-if ! enabled gpl; then
-    die_gpl_disabled(){
-        name=$1
-        shift
-        enabled_any $@ && die "$name is under GPL and --enable-gpl is not specified."
-    }
-    die_gpl_disabled "The Postprocessing code" postproc
-    die_gpl_disabled "libx264"                 libx264
-    die_gpl_disabled "libxvidcore"             libxvid
-    die_gpl_disabled "FAAD2"                   libfaad2
-    die_gpl_disabled "The X11 grabber"         x11grab
-    die_gpl_disabled "The software scaler"     swscale
-fi
+die_license_disabled() {
+    enabled $1 || { enabled $2 && die "$2 is $1 and --enable-$1 is not specified."; }
+}
 
-if ! enabled nonfree && enabled_any libamr_nb libamr_wb; then
-    die "libamr is nonfree and --enable-nonfree is not specified."
-fi
+die_license_disabled gpl libfaad2
+die_license_disabled gpl libx264
+die_license_disabled gpl libxvid
+die_license_disabled gpl postproc
+die_license_disabled gpl swscale
+die_license_disabled gpl x11grab
+
+die_license_disabled nonfree libamr_nb
+die_license_disabled nonfree libamr_wb
+die_license_disabled nonfree libfaac
+
+die_license_disabled version3 libopencore_amrnb
+die_license_disabled version3 libopencore_amrwb
+
+enabled version3 && { enabled gpl && enable gplv3 || enable lgplv3; }
 
 check_deps $ARCH_EXT_LIST
 
@@ -1987,6 +2000,8 @@ enabled libfaad    && require2 libfaad faad.h faacDecOpen -lfaad
 enabled libgsm     && require  libgsm gsm.h gsm_create -lgsm
 enabled libmp3lame && require  libmp3lame lame/lame.h lame_init -lmp3lame -lm
 enabled libnut     && require  libnut libnut.h nut_demuxer_init -lnut
+enabled libopencore_amrnb  && require libopencore_amrnb opencore-amrnb/interf_dec.h Decoder_Interface_init -lopencore-amrnb -lm
+enabled libopencore_amrwb  && require libopencore_amrwb opencore-amrwb/dec_if.h D_IF_init -lopencore-amrwb -lm
 enabled libopenjpeg && require libopenjpeg openjpeg.h opj_version -lopenjpeg
 enabled libschroedinger && add_cflags $(pkg-config --cflags schroedinger-1.0) &&
                            require libschroedinger schroedinger/schro.h schro_init $(pkg-config --libs schroedinger-1.0)
@@ -2314,6 +2329,8 @@ echo "libfaad dlopened          ${libfaadbin-no}"
 echo "libgsm enabled            ${libgsm-no}"
 echo "libmp3lame enabled        ${libmp3lame-no}"
 echo "libnut enabled            ${libnut-no}"
+echo "libopencore-amrnb support ${libopencore_amrnb-no}"
+echo "libopencore-amrwb support ${libopencore_amrwb-no}"
 echo "libopenjpeg enabled       ${libopenjpeg-no}"
 echo "libschroedinger enabled   ${libschroedinger-no}"
 echo "libspeex enabled          ${libspeex-no}"
@@ -2335,11 +2352,15 @@ for type in decoder encoder parser demuxer muxer protocol filter bsf indev outde
     echo
 done
 
-license="LGPL"
+license="LGPL version 2.1 or later"
 if enabled nonfree; then
-    license="unredistributable"
+    license="nonfree and unredistributable"
+elif enabled gplv3; then
+    license="GPL version 3 or later"
+elif enabled lgplv3; then
+    license="LGPL version 3 or later"
 elif enabled gpl; then
-    license="GPL"
+    license="GPL version 2 or later"
 fi
 
 echo "License: $license"

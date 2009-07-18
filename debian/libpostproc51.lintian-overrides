@@ -1,0 +1,3 @@
+# Overriding these fpic lintian errors. Please see bug #528080.
+libpostproc51: shlib-with-non-pic-code usr/lib/i686/cmov/libpostproc.so.51.2.0
+libpostproc51: shlib-with-non-pic-code usr/lib/libpostproc.so.51.2.0

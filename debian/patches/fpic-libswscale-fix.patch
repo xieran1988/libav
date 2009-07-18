@@ -1,0 +1,578 @@
+This patch is currently being worked on to resolve all non-PIC issues with
+the libswscale library.
+For inquiries about this patch, please see bug #528080.
+==========================================================================
+--- a/libswscale/rgb2rgb_template.c
++++ b/libswscale/rgb2rgb_template.c
+@@ -1424,9 +1424,12 @@
+     __asm__ volatile (
+     "test             %%"REG_a", %%"REG_a"          \n\t"
+     "jns                     2f                     \n\t"
+-    "movq     "MANGLE(mask24r)", %%mm5              \n\t"
+-    "movq     "MANGLE(mask24g)", %%mm6              \n\t"
+-    "movq     "MANGLE(mask24b)", %%mm7              \n\t"
++    "movq                    %0, %%mm5              \n\t"
++    "movq                    %1, %%mm6              \n\t"
++    "movq                    %2, %%mm7              \n\t"
++    : : "m"(mask24r), "m"(mask24g), "m"(mask24b)
++    );
++    __asm__ volatile (
+     ASMALIGN(4)
+     "1:                                             \n\t"
+     PREFETCH" 32(%1, %%"REG_a")                     \n\t"
+@@ -2147,8 +2150,8 @@
+         {
+             __asm__ volatile(
+             "mov                        %2, %%"REG_a"   \n\t"
+-            "movq  "MANGLE(ff_bgr2YCoeff)", %%mm6       \n\t"
+-            "movq       "MANGLE(ff_w1111)", %%mm5       \n\t"
++            "movq                       %3, %%mm6       \n\t"
++            "movq                       %4, %%mm5       \n\t"
+             "pxor                    %%mm7, %%mm7       \n\t"
+             "lea (%%"REG_a", %%"REG_a", 2), %%"REG_d"   \n\t"
+             ASMALIGN(4)
+@@ -2206,12 +2209,13 @@
+             "psraw                      $7, %%mm4       \n\t"
+ 
+             "packuswb                %%mm4, %%mm0       \n\t"
+-            "paddusb "MANGLE(ff_bgr2YOffset)", %%mm0    \n\t"
++            "paddusb                    %5, %%mm0       \n\t"
+ 
+             MOVNTQ"                  %%mm0, (%1, %%"REG_a") \n\t"
+             "add                        $8,      %%"REG_a"  \n\t"
+             " js                        1b                  \n\t"
+-            : : "r" (src+width*3), "r" (ydst+width), "g" (-width)
++            : : "r" (src+width*3), "r" (ydst+width), "g" (-width),
++                "m"(ff_bgr2YCoeff), "m"(ff_w1111), "m"(ff_bgr2YOffset)
+             : "%"REG_a, "%"REG_d
+             );
+             ydst += lumStride;
+@@ -2220,8 +2224,8 @@
+         src -= srcStride*2;
+         __asm__ volatile(
+         "mov                        %4, %%"REG_a"   \n\t"
+-        "movq       "MANGLE(ff_w1111)", %%mm5       \n\t"
+-        "movq  "MANGLE(ff_bgr2UCoeff)", %%mm6       \n\t"
++        "movq                       %5, %%mm5       \n\t"
++        "movq                       %6, %%mm6       \n\t"
+         "pxor                    %%mm7, %%mm7       \n\t"
+         "lea (%%"REG_a", %%"REG_a", 2), %%"REG_d"   \n\t"
+         "add                 %%"REG_d", %%"REG_d"   \n\t"
+@@ -2270,8 +2274,8 @@
+         "psrlw                      $2, %%mm0       \n\t"
+         "psrlw                      $2, %%mm2       \n\t"
+ #endif
+-        "movq  "MANGLE(ff_bgr2VCoeff)", %%mm1       \n\t"
+-        "movq  "MANGLE(ff_bgr2VCoeff)", %%mm3       \n\t"
++        "movq                       %7, %%mm1       \n\t"
++        "movq                       %7, %%mm3       \n\t"
+ 
+         "pmaddwd                 %%mm0, %%mm1       \n\t"
+         "pmaddwd                 %%mm2, %%mm3       \n\t"
+@@ -2328,12 +2332,12 @@
+         "paddw                   %%mm1, %%mm5       \n\t"
+         "paddw                   %%mm3, %%mm2       \n\t"
+         "paddw                   %%mm5, %%mm2       \n\t"
+-        "movq       "MANGLE(ff_w1111)", %%mm5       \n\t"
++        "movq                       %5, %%mm5       \n\t"
+         "psrlw                      $2, %%mm4       \n\t"
+         "psrlw                      $2, %%mm2       \n\t"
+ #endif
+-        "movq  "MANGLE(ff_bgr2VCoeff)", %%mm1       \n\t"
+-        "movq  "MANGLE(ff_bgr2VCoeff)", %%mm3       \n\t"
++        "movq                       %7, %%mm1       \n\t"
++        "movq                       %7, %%mm3       \n\t"
+ 
+         "pmaddwd                 %%mm4, %%mm1       \n\t"
+         "pmaddwd                 %%mm2, %%mm3       \n\t"
+@@ -2357,13 +2361,16 @@
+         "punpckldq               %%mm4, %%mm0           \n\t"
+         "punpckhdq               %%mm4, %%mm1           \n\t"
+         "packsswb                %%mm1, %%mm0           \n\t"
+-        "paddb "MANGLE(ff_bgr2UVOffset)", %%mm0         \n\t"
++        "paddb                      %8, %%mm0           \n\t"
+         "movd                    %%mm0, (%2, %%"REG_a") \n\t"
+         "punpckhdq               %%mm0, %%mm0           \n\t"
+         "movd                    %%mm0, (%3, %%"REG_a") \n\t"
+         "add                        $4, %%"REG_a"       \n\t"
+         " js                        1b                  \n\t"
+-        : : "r" (src+chromWidth*6), "r" (src+srcStride+chromWidth*6), "r" (udst+chromWidth), "r" (vdst+chromWidth), "g" (-chromWidth)
++        : : "r" (src+chromWidth*6), "r" (src+srcStride+chromWidth*6),
++            "r" (udst+chromWidth), "r" (vdst+chromWidth), "g" (-chromWidth),
++            "m"(ff_w1111), "m"(ff_bgr2UCoeff), "m"(ff_bgr2VCoeff),
++            "m"(ff_bgr2UVOffset)
+         : "%"REG_a, "%"REG_d
+         );
+ 
+--- a/libswscale/rgb2rgb.c
++++ b/libswscale/rgb2rgb.c
+@@ -123,6 +123,18 @@
+ DECLARE_ASM_CONST(8, uint64_t, red_15mask)   = 0x00007c0000007c00ULL;
+ DECLARE_ASM_CONST(8, uint64_t, green_15mask) = 0x000003e0000003e0ULL;
+ DECLARE_ASM_CONST(8, uint64_t, blue_15mask)  = 0x0000001f0000001fULL;
++
++// Some constants from swscale.c that are used here
++extern const uint64_t __attribute__((visibility("hidden"))) ff_bgr2YCoeff;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_bgr2UCoeff;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_bgr2VCoeff;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_bgr2YOffset;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_bgr2UVOffset;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_w1111;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_M24A;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_M24B;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_M24C;
++
+ #endif /* ARCH_X86 */
+ 
+ #define RGB2YUV_SHIFT 8
+--- a/libswscale/swscale_template.c
++++ b/libswscale/swscale_template.c
+@@ -669,9 +669,9 @@
+ #define WRITEBGR32(dst, dstw, index, b, g, r, a, q0, q2, q3, t)  REAL_WRITEBGR32(dst, dstw, index, b, g, r, a, q0, q2, q3, t)
+ 
+ #define REAL_WRITERGB16(dst, dstw, index) \
+-    "pand "MANGLE(bF8)", %%mm2  \n\t" /* B */\
+-    "pand "MANGLE(bFC)", %%mm4  \n\t" /* G */\
+-    "pand "MANGLE(bF8)", %%mm5  \n\t" /* R */\
++    "pand            %6, %%mm2  \n\t" /* B */\
++    "pand            %7, %%mm4  \n\t" /* G */\
++    "pand            %6, %%mm5  \n\t" /* R */\
+     "psrlq           $3, %%mm2  \n\t"\
+ \
+     "movq         %%mm2, %%mm1  \n\t"\
+@@ -695,11 +695,18 @@
+     "cmp        "#dstw", "#index"   \n\t"\
+     " jb             1b             \n\t"
+ #define WRITERGB16(dst, dstw, index)  REAL_WRITERGB16(dst, dstw, index)
++#define WRITERGB16_END                 \
++    :: "r" (&c->redDither),                   \
++        "m" (dummy), "m" (dummy), "m" (dummy),\
++        "r" (dest), "m" (dstW), "m" (bF8),    \
++        "m" (bFC)                             \
++    : "%"REG_a, "%"REG_d, "%"REG_S            \
++    );
+ 
+ #define REAL_WRITERGB15(dst, dstw, index) \
+-    "pand "MANGLE(bF8)", %%mm2  \n\t" /* B */\
+-    "pand "MANGLE(bF8)", %%mm4  \n\t" /* G */\
+-    "pand "MANGLE(bF8)", %%mm5  \n\t" /* R */\
++    "pand            %6, %%mm2  \n\t" /* B */\
++    "pand            %6, %%mm4  \n\t" /* G */\
++    "pand            %6, %%mm5  \n\t" /* R */\
+     "psrlq           $3, %%mm2  \n\t"\
+     "psrlq           $1, %%mm5  \n\t"\
+ \
+@@ -724,6 +731,12 @@
+     "cmp        "#dstw", "#index"   \n\t"\
+     " jb             1b             \n\t"
+ #define WRITERGB15(dst, dstw, index)  REAL_WRITERGB15(dst, dstw, index)
++#define WRITERGB15_END                 \
++    :: "r" (&c->redDither),                   \
++        "m" (dummy), "m" (dummy), "m" (dummy),\
++        "r" (dest), "m" (dstW), "m" (bF8)     \
++    : "%"REG_a, "%"REG_d, "%"REG_S            \
++    );
+ 
+ #define WRITEBGR24OLD(dst, dstw, index) \
+     /* mm2=B, %%mm4=G, %%mm5=R, %%mm7=0 */\
+@@ -1063,7 +1076,7 @@
+ #endif
+ 
+                 WRITERGB15(%4, %5, %%REGa)
+-                YSCALEYUV2PACKEDX_END
++                WRITERGB15_END
+                 return;
+             case PIX_FMT_RGB565:
+                 YSCALEYUV2PACKEDX_ACCURATE
+@@ -1077,7 +1090,7 @@
+ #endif
+ 
+                 WRITERGB16(%4, %5, %%REGa)
+-                YSCALEYUV2PACKEDX_END
++                WRITERGB16_END
+                 return;
+             case PIX_FMT_YUYV422:
+                 YSCALEYUV2PACKEDX_ACCURATE
+@@ -1127,7 +1140,7 @@
+ #endif
+ 
+                 WRITERGB15(%4, %5, %%REGa)
+-                YSCALEYUV2PACKEDX_END
++                WRITERGB15_END
+                 return;
+             case PIX_FMT_RGB565:
+                 YSCALEYUV2PACKEDX
+@@ -1141,7 +1154,7 @@
+ #endif
+ 
+                 WRITERGB16(%4, %5, %%REGa)
+-                YSCALEYUV2PACKEDX_END
++                WRITERGB16_END
+                 return;
+             case PIX_FMT_YUYV422:
+                 YSCALEYUV2PACKEDX
+@@ -1238,7 +1251,7 @@
+                 "mov "ESP_OFFSET"(%5), %%"REG_b"        \n\t"
+ 
+                 :: "c" (buf0), "d" (buf1), "S" (uvbuf0), "D" (uvbuf1), "m" (dest),
+-                "a" (&c->redDither)
++                "a" (&c->redDither), "m" (bF8)
+                 );
+                 return;
+             case PIX_FMT_RGB565:
+@@ -1259,7 +1272,7 @@
+                 "pop %%"REG_BP"                         \n\t"
+                 "mov "ESP_OFFSET"(%5), %%"REG_b"        \n\t"
+                 :: "c" (buf0), "d" (buf1), "S" (uvbuf0), "D" (uvbuf1), "m" (dest),
+-                "a" (&c->redDither)
++                "a" (&c->redDither), "m" (bF8), "m" (bFC)
+                 );
+                 return;
+             case PIX_FMT_YUYV422:
+@@ -1354,7 +1367,7 @@
+                 "mov "ESP_OFFSET"(%5), %%"REG_b"        \n\t"
+ 
+                 :: "c" (buf0), "d" (buf1), "S" (uvbuf0), "D" (uvbuf1), "m" (dest),
+-                "a" (&c->redDither)
++                "a" (&c->redDither), "m" (bF8)
+                 );
+                 return;
+             case PIX_FMT_RGB565:
+@@ -1376,7 +1389,7 @@
+                 "mov "ESP_OFFSET"(%5), %%"REG_b"        \n\t"
+ 
+                 :: "c" (buf0), "d" (buf1), "S" (uvbuf0), "D" (uvbuf1), "m" (dest),
+-                "a" (&c->redDither)
++                "a" (&c->redDither), "m" (bF8), "m" (bFC)
+                 );
+                 return;
+             case PIX_FMT_YUYV422:
+@@ -1447,7 +1460,7 @@
+                 "mov "ESP_OFFSET"(%5), %%"REG_b"        \n\t"
+ 
+                 :: "c" (buf0), "d" (buf1), "S" (uvbuf0), "D" (uvbuf1), "m" (dest),
+-                "a" (&c->redDither)
++                "a" (&c->redDither), "m" (bF8)
+                 );
+                 return;
+             case PIX_FMT_RGB565:
+@@ -1469,7 +1482,7 @@
+                 "mov "ESP_OFFSET"(%5), %%"REG_b"        \n\t"
+ 
+                 :: "c" (buf0), "d" (buf1), "S" (uvbuf0), "D" (uvbuf1), "m" (dest),
+-                "a" (&c->redDither)
++                "a" (&c->redDither), "m" (bF8), "m" (bFC)
+                 );
+                 return;
+             case PIX_FMT_YUYV422:
+@@ -1504,7 +1517,7 @@
+ {
+ #if HAVE_MMX
+     __asm__ volatile(
+-    "movq "MANGLE(bm01010101)", %%mm2           \n\t"
++    "movq                   %3, %%mm2           \n\t"
+     "mov                    %0, %%"REG_a"       \n\t"
+     "1:                                         \n\t"
+     "movq    (%1, %%"REG_a",2), %%mm0           \n\t"
+@@ -1515,7 +1528,7 @@
+     "movq                %%mm0, (%2, %%"REG_a") \n\t"
+     "add                    $8, %%"REG_a"       \n\t"
+     " js                    1b                  \n\t"
+-    : : "g" (-width), "r" (src+width*2), "r" (dst+width)
++    : : "g" (-width), "r" (src+width*2), "r" (dst+width), "m"(bm01010101)
+     : "%"REG_a
+     );
+ #else
+@@ -1529,7 +1542,7 @@
+ {
+ #if HAVE_MMX
+     __asm__ volatile(
+-    "movq "MANGLE(bm01010101)", %%mm4           \n\t"
++    "movq                   %4, %%mm4           \n\t"
+     "mov                    %0, %%"REG_a"       \n\t"
+     "1:                                         \n\t"
+     "movq    (%1, %%"REG_a",4), %%mm0           \n\t"
+@@ -1546,7 +1559,8 @@
+     "movd                %%mm1, (%2, %%"REG_a") \n\t"
+     "add                    $4, %%"REG_a"       \n\t"
+     " js                    1b                  \n\t"
+-    : : "g" (-width), "r" (src1+width*4), "r" (dstU+width), "r" (dstV+width)
++    : : "g" (-width), "r" (src1+width*4), "r" (dstU+width), "r" (dstV+width),
++        "m"(bm01010101)
+     : "%"REG_a
+     );
+ #else
+@@ -1590,7 +1604,7 @@
+ {
+ #if HAVE_MMX
+     __asm__ volatile(
+-    "movq "MANGLE(bm01010101)", %%mm4           \n\t"
++    "movq                   %4, %%mm4           \n\t"
+     "mov                    %0, %%"REG_a"       \n\t"
+     "1:                                         \n\t"
+     "movq    (%1, %%"REG_a",4), %%mm0           \n\t"
+@@ -1607,7 +1621,8 @@
+     "movd                %%mm1, (%2, %%"REG_a") \n\t"
+     "add                    $4, %%"REG_a"       \n\t"
+     " js                    1b                  \n\t"
+-    : : "g" (-width), "r" (src1+width*4), "r" (dstU+width), "r" (dstV+width)
++    : : "g" (-width), "r" (src1+width*4), "r" (dstU+width), "r" (dstV+width),
++        "m"(bm01010101)
+     : "%"REG_a
+     );
+ #else
+@@ -1688,20 +1703,20 @@
+ 
+     if(srcFormat == PIX_FMT_BGR24){
+         __asm__ volatile(
+-            "movq  "MANGLE(ff_bgr24toY1Coeff)", %%mm5       \n\t"
+-            "movq  "MANGLE(ff_bgr24toY2Coeff)", %%mm6       \n\t"
+-            :
++            "movq  %0, %%mm5       \n\t"
++            "movq  %1, %%mm6       \n\t"
++            : : "m"(ff_bgr24toY1Coeff), "m"(ff_bgr24toY2Coeff)
+         );
+     }else{
+         __asm__ volatile(
+-            "movq  "MANGLE(ff_rgb24toY1Coeff)", %%mm5       \n\t"
+-            "movq  "MANGLE(ff_rgb24toY2Coeff)", %%mm6       \n\t"
+-            :
++            "movq  %0, %%mm5       \n\t"
++            "movq  %1, %%mm6       \n\t"
++            : : "m"(ff_rgb24toY1Coeff), "m"(ff_rgb24toY2Coeff)
+         );
+     }
+ 
+     __asm__ volatile(
+-        "movq  "MANGLE(ff_bgr24toYOffset)", %%mm4   \n\t"
++        "movq                       %3, %%mm4       \n\t"
+         "mov                        %2, %%"REG_a"   \n\t"
+         "pxor                    %%mm7, %%mm7       \n\t"
+         "1:                                         \n\t"
+@@ -1731,7 +1746,7 @@
+         "add                        $4, %%"REG_a"   \n\t"
+         " js                        1b              \n\t"
+     : "+r" (src)
+-    : "r" (dst+width), "g" (-width)
++    : "r" (dst+width), "g" (-width), "m"(ff_bgr24toYOffset)
+     : "%"REG_a
+     );
+ }
+@@ -1771,7 +1786,7 @@
+         "paddd                   %%mm3, %%mm1       \n\t"
+         "paddd                   %%mm5, %%mm4       \n\t"
+ 
+-        "movq "MANGLE(ff_bgr24toUVOffset)", %%mm3       \n\t"
++        "movq                       %4, %%mm3       \n\t"
+         "paddd                   %%mm3, %%mm0       \n\t"
+         "paddd                   %%mm3, %%mm2       \n\t"
+         "paddd                   %%mm3, %%mm1       \n\t"
+@@ -1789,7 +1804,8 @@
+         "add                        $4, %%"REG_a"   \n\t"
+         " js                        1b              \n\t"
+     : "+r" (src)
+-    : "r" (dstU+width), "r" (dstV+width), "g" (-width), "m"(ff_bgr24toUV[srcFormat == PIX_FMT_RGB24][0])
++    : "r" (dstU+width), "r" (dstV+width), "g" (-width),
++      "m"(ff_bgr24toUV[srcFormat == PIX_FMT_RGB24][0]), "m"(ff_bgr24toUVOffset)
+     : "%"REG_a
+     );
+ }
+--- a/libswscale/yuv2rgb_template.c
++++ b/libswscale/yuv2rgb_template.c
+@@ -74,7 +74,7 @@
+ \
+     /* convert the luma part */\
+     "movq %%mm6, %%mm7;" /* Copy 8 Y Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */\
+-    "pand "MANGLE(mmx_00ffw)", %%mm6;" /* get Y even 00 Y6 00 Y4 00 Y2 00 Y0 */\
++    "pand    %9, %%mm6;" /* get Y even 00 Y6 00 Y4 00 Y2 00 Y0 */\
+ \
+     "psrlw $8, %%mm7;" /* get Y odd 00 Y7 00 Y5 00 Y3 00 Y1 */\
+ \
+@@ -158,21 +158,63 @@
+         PREFETCH" 64(%2) \n\t"                                             \
+         */                                                                 \
+ 
+-#define YUV2RGB_ENDLOOP(depth) \
++#define YUV2RGB16_ENDLOOP(depth) \
+         "add $"AV_STRINGIFY(depth*8)", %1    \n\t" \
+         "add                       $4, %0    \n\t" \
+         " js                       1b        \n\t" \
+ \
+         : "+r" (index), "+r" (image) \
+-        : "r" (pu - index), "r" (pv - index), "r"(&c->redDither), "r" (py - 2*index) \
++        : "r" (pu - index), "r" (pv - index), "r"(&c->redDither), "r" (py - 2*index), \
++          "m"(mmx_redmask), "m"(mmx_grnmask), "m"(dummy), "m"(mmx_00ffw) \
+         ); \
+     } \
+     __asm__ volatile (EMMS); \
+     return srcSliceH; \
+ 
++#define YUV2RGB15_ENDLOOP(depth) \
++        "add $"AV_STRINGIFY(depth*8)", %1    \n\t" \
++        "add                       $4, %0    \n\t" \
++        " js                       1b        \n\t" \
++\
++        : "+r" (index), "+r" (image) \
++        : "r" (pu - index), "r" (pv - index), "r"(&c->redDither), "r" (py - 2*index), \
++          "m"(mmx_redmask), "m"(dummy), "m"(dummy), "m"(mmx_00ffw) \
++        ); \
++    } \
++    __asm__ volatile (EMMS); \
++    return srcSliceH; \
++
++#define YUV2RGB24_ENDLOOP(depth) \
++        "add $"AV_STRINGIFY(depth*8)", %1    \n\t" \
++        "add                       $4, %0    \n\t" \
++        " js                       1b        \n\t" \
++\
++        : "+r" (index), "+r" (image) \
++        : "r" (pu - index), "r" (pv - index), "r"(&c->redDither), "r" (py - 2*index), \
++          "m"(ff_M24A), "m"(ff_M24C), "m"(ff_M24B), "m"(mmx_00ffw) \
++        ); \
++    } \
++    __asm__ volatile (EMMS); \
++    return srcSliceH; \
++
++#define YUV2RGB32_ENDLOOP(depth) \
++        "add $"AV_STRINGIFY(depth*8)", %1    \n\t" \
++        "add                       $4, %0    \n\t" \
++        " js                       1b        \n\t" \
++\
++        : "+r" (index), "+r" (image) \
++        : "r" (pu - index), "r" (pv - index), "r"(&c->redDither), "r" (py - 2*index), \
++          "m"(dummy), "m"(dummy), "m"(dummy), "m"(mmx_00ffw) \
++        ); \
++    } \
++    __asm__ volatile (EMMS); \
++    return srcSliceH; \
++
++
+ static inline int RENAME(yuv420_rgb16)(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY,
+                                        int srcSliceH, uint8_t* dst[], int dstStride[]){
+     int y, h_size;
++    long dummy=0;
+ 
+     YUV422_UNSHIFT
+     YUV2RGB_LOOP(2)
+@@ -190,9 +232,9 @@
+         "paddusb "RED_DITHER"(%4), %%mm1;"
+ #endif
+         /* mask unneeded bits off */
+-        "pand "MANGLE(mmx_redmask)", %%mm0;" /* b7b6b5b4 b3_0_0_0 b7b6b5b4 b3_0_0_0 */
+-        "pand "MANGLE(mmx_grnmask)", %%mm2;" /* g7g6g5g4 g3g2_0_0 g7g6g5g4 g3g2_0_0 */
+-        "pand "MANGLE(mmx_redmask)", %%mm1;" /* r7r6r5r4 r3_0_0_0 r7r6r5r4 r3_0_0_0 */
++        "pand    %6, %%mm0;" /* b7b6b5b4 b3_0_0_0 b7b6b5b4 b3_0_0_0 */
++        "pand    %7, %%mm2;" /* g7g6g5g4 g3g2_0_0 g7g6g5g4 g3g2_0_0 */
++        "pand    %6, %%mm1;" /* r7r6r5r4 r3_0_0_0 r7r6r5r4 r3_0_0_0 */
+ 
+         "psrlw   $3, %%mm0;" /* 0_0_0_b7 b6b5b4b3 0_0_0_b7 b6b5b4b3 */
+         "pxor %%mm4, %%mm4;" /* zero mm4 */
+@@ -222,12 +264,13 @@
+ 
+         MOVNTQ "   %%mm5, 8 (%1);" /* store pixel 4-7 */
+ 
+-    YUV2RGB_ENDLOOP(2)
++    YUV2RGB16_ENDLOOP(2)
+ }
+ 
+ static inline int RENAME(yuv420_rgb15)(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY,
+                                        int srcSliceH, uint8_t* dst[], int dstStride[]){
+     int y, h_size;
++    long dummy=0;
+ 
+     YUV422_UNSHIFT
+     YUV2RGB_LOOP(2)
+@@ -246,9 +289,9 @@
+ #endif
+ 
+         /* mask unneeded bits off */
+-        "pand "MANGLE(mmx_redmask)", %%mm0;" /* b7b6b5b4 b3_0_0_0 b7b6b5b4 b3_0_0_0 */
+-        "pand "MANGLE(mmx_redmask)", %%mm2;" /* g7g6g5g4 g3_0_0_0 g7g6g5g4 g3_0_0_0 */
+-        "pand "MANGLE(mmx_redmask)", %%mm1;" /* r7r6r5r4 r3_0_0_0 r7r6r5r4 r3_0_0_0 */
++        "pand    %6, %%mm0;" /* b7b6b5b4 b3_0_0_0 b7b6b5b4 b3_0_0_0 */
++        "pand    %6, %%mm2;" /* g7g6g5g4 g3_0_0_0 g7g6g5g4 g3_0_0_0 */
++        "pand    %6, %%mm1;" /* r7r6r5r4 r3_0_0_0 r7r6r5r4 r3_0_0_0 */
+ 
+         "psrlw   $3, %%mm0;" /* 0_0_0_b7 b6b5b4b3 0_0_0_b7 b6b5b4b3 */
+         "psrlw   $1, %%mm1;" /* 0_r7r6r5  r4r3_0_0 0_r7r6r5 r4r3_0_0 */
+@@ -279,12 +322,13 @@
+ 
+         MOVNTQ " %%mm5, 8 (%1);" /* store pixel 4-7 */
+ 
+-    YUV2RGB_ENDLOOP(2)
++    YUV2RGB15_ENDLOOP(2)
+ }
+ 
+ static inline int RENAME(yuv420_rgb24)(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY,
+                                        int srcSliceH, uint8_t* dst[], int dstStride[]){
+     int y, h_size;
++    long dummy=0;
+ 
+     YUV422_UNSHIFT
+     YUV2RGB_LOOP(3)
+@@ -293,8 +337,8 @@
+         YUV2RGB
+         /* mm0=B, %%mm2=G, %%mm1=R */
+ #if HAVE_MMX2
+-        "movq "MANGLE(ff_M24A)", %%mm4     \n\t"
+-        "movq "MANGLE(ff_M24C)", %%mm7     \n\t"
++        "movq      %6, %%mm4            \n\t"
++        "movq      %7, %%mm7            \n\t"
+         "pshufw $0x50, %%mm0, %%mm5     \n\t" /* B3 B2 B3 B2  B1 B0 B1 B0 */
+         "pshufw $0x50, %%mm2, %%mm3     \n\t" /* G3 G2 G3 G2  G1 G0 G1 G0 */
+         "pshufw $0x00, %%mm1, %%mm6     \n\t" /* R1 R0 R1 R0  R1 R0 R1 R0 */
+@@ -313,7 +357,7 @@
+         "pshufw $0x55, %%mm2, %%mm3     \n\t" /* G4 G3 G4 G3  G4 G3 G4 G3 */
+         "pshufw $0xA5, %%mm1, %%mm6     \n\t" /* R5 R4 R5 R4  R3 R2 R3 R2 */
+ 
+-        "pand "MANGLE(ff_M24B)", %%mm5     \n\t" /* B5       B4        B3    */
++        "pand             %8, %%mm5     \n\t" /* B5       B4        B3    */
+         "pand          %%mm7, %%mm3     \n\t" /*       G4        G3       */
+         "pand          %%mm4, %%mm6     \n\t" /*    R4        R3       R2 */
+ 
+@@ -328,7 +372,7 @@
+ 
+         "pand          %%mm7, %%mm5     \n\t" /*       B7        B6       */
+         "pand          %%mm4, %%mm3     \n\t" /*    G7        G6       G5 */
+-        "pand "MANGLE(ff_M24B)", %%mm6     \n\t" /* R7       R6        R5    */
++        "pand             %8, %%mm6     \n\t" /* R7       R6        R5    */
+         "movd 4 (%3, %0), %%mm1;" /* Load 4 Cr 00 00 00 00 v3 v2 v1 v0 */
+ \
+         "por          %%mm5, %%mm3      \n\t"
+@@ -393,7 +437,7 @@
+         "pxor      %%mm4, %%mm4     \n\t"
+ #endif
+ 
+-    YUV2RGB_ENDLOOP(3)
++    YUV2RGB24_ENDLOOP(3)
+ }
+ 
+ #define RGB_PLANAR2PACKED32                                             \
+@@ -440,6 +484,7 @@
+ static inline int RENAME(yuv420_rgb32)(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY,
+                                        int srcSliceH, uint8_t* dst[], int dstStride[]){
+     int y, h_size;
++    long dummy=0;
+ 
+     YUV422_UNSHIFT
+     YUV2RGB_LOOP(4)
+@@ -449,5 +494,5 @@
+         "pcmpeqd   %%mm3, %%mm3;"   /* fill mm3 */
+         RGB_PLANAR2PACKED32
+ 
+-    YUV2RGB_ENDLOOP(4)
++    YUV2RGB32_ENDLOOP(4)
+ }
+--- a/libswscale/yuv2rgb.c
++++ b/libswscale/yuv2rgb.c
+@@ -47,6 +47,10 @@
+ DECLARE_ASM_CONST(8, uint64_t, mmx_redmask) = 0xf8f8f8f8f8f8f8f8ULL;
+ DECLARE_ASM_CONST(8, uint64_t, mmx_grnmask) = 0xfcfcfcfcfcfcfcfcULL;
+ 
++extern const uint64_t __attribute__((visibility("hidden"))) ff_M24A;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_M24B;
++extern const uint64_t __attribute__((visibility("hidden"))) ff_M24C;
++
+ //MMX versions
+ #undef RENAME
+ #undef HAVE_MMX2

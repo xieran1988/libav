@@ -2,12 +2,16 @@
 
 include /usr/share/quilt/quilt.make
 
-EPOCH=3:
+EPOCH=4:
 DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
 DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
-SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+\.svn([0-9]+)$$/\1/p')
-SHLIBS_VERSION := $(EPOCH)0.svn20090303-1
+SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+[+.]svn([0-9]+)$$/\1/p')
+SHLIBS_VERSION := 3:0.svn20090303-1
+
+ifeq ($(SVN_VERSION),)
+$(error UPSTREAM_VERSION: $(UPSTREAM_VERSION) - but SVN_VERSION is empty! - check debian/rules)
+endif
 
 LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-unstripped-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 
@@ -27,32 +31,20 @@ NUMJOBS := -j$(shell getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 endif
 endif
 
-internalencoders := $(findstring internalencoders,$(DEB_BUILD_OPTIONS))
-
 include debian/confflags
-
-debian/control: debian/changelog $(wildcard debian/control.*)
-	dh_testdir
-	dpkg-parsechangelog | head -1 > $@
-	cat debian/control.common >> $@
-	cat debian/control.$(DEB_SOURCE) >> $@
 
 $(info FLAVORS = $(FLAVORS))
 $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
 $(info CFLAGS = $(CFLAGS))
-$(info internalencoders = $(internalencoders))
-
-config-extra-includes.h:
-	sh debian/fixup-config.sh > $@
 
 configure-%: configure-stamp-%
-configure-stamp-%: $(QUILT_STAMPFN) config-extra-includes.h
+configure-stamp-%: $(QUILT_STAMPFN)
 	dh_testdir
 	mkdir -p debian-$*
-	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure $($*_build_confflags)
-ifeq ($(internalencoders),)
-	echo "#include \"config-extra-includes.h\"" >> debian-$*/config.h
-endif
+	[ ! -r .svnrevision ] || \
+		cp .svnrevision debian-$*/snapshot_version
+	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
+		$($*_build_confflags) $(extra_$*_build_confflags)
 	touch $@
 
 build-%: build-stamp-%
@@ -81,6 +73,7 @@ clean-real:
 	rm -f build-stamp $(addprefix build-stamp-, $(FLAVORS)) \
 	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp
 	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
+	dh_clean build-doxy-stamp EXTRA
 	dh_clean config-extra-includes.h debian/tmp.debhelper.log
 	dh_clean formats.txt
 
@@ -88,7 +81,7 @@ get-orig-source:
 	dh_testdir
 	# strip patented code
 	chmod +x debian/strip.sh
-	sh debian/get-orig-source.sh -d$(SVN_VERSION)
+	sh debian/get-orig-source.sh -d $(SVN_VERSION)
 
 # The trailing newline is important!
 define install_flavor
@@ -110,9 +103,11 @@ install: build
 	install -m 644 -D doc/ffserver.conf debian/tmp/etc/
 	install -m 644 -D debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
 ifneq ($(DEB_SOURCE),ffmpeg-debian)
-	dh_install --list-missing --sourcedir=debian/tmp
+	dh_install -Xusr/share/doc/ffmpeg-doc -Xusr/share/doc/ffmpeg \
+		--list-missing --sourcedir=debian/tmp
 else
-	dh_install --fail-missing --sourcedir=debian/tmp
+	dh_install -Xusr/share/doc/ffmpeg-doc -Xusr/share/doc/ffmpeg \
+		--fail-missing --sourcedir=debian/tmp
 endif
 
 formats.txt: install
@@ -128,9 +123,11 @@ endif
 binary-arch: build install formats.txt
 	dh_testdir
 	dh_testroot
+	dh_installman -pffmpeg debian/qt-faststart.1
 	dh_installdocs $(extradoc) doc/optimization.txt
 	dh_installdocs -A MAINTAINERS CREDITS doc/TODO
-	dh_installdocs -A debian/patents.txt debian/README.Debian
+	dh_installdocs -A debian/README.Debian
+	dh_installdocs RELEASE
 ifeq ($(DEB_SOURCE),ffmpeg)
 	dh_installdocs -p libavcodec-unstripped-52 formats.txt
 else
@@ -139,14 +136,15 @@ endif
 	dh_installexamples -pffmpeg doc/ffserver.conf debian/recordshow.sh
 	dh_installexamples -plibavcodec-dev libavcodec/apiexample.c
 	dh_installchangelogs Changelog
+	dh_lintian
 	dh_link
+	dh_compress
+	dh_fixperms
 ifneq ($(DEB_SOURCE),ffmpeg-debian)
 	dh_strip
 else
 	dh_strip --dbg-package=ffmpeg-dbg
 endif
-	dh_compress
-	dh_fixperms
 # strict internal dependencies
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \

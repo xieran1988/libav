@@ -1,0 +1,3 @@
+# Overriding these fpic lintian errors. Please see bug #528080.
+libswscale0: shlib-with-non-pic-code usr/lib/i686/cmov/libswscale.so.0.7.1
+libswscale0: shlib-with-non-pic-code usr/lib/libswscale.so.0.7.1

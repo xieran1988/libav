@@ -941,3 +941,16 @@ AVCodec mpeg1video_encoder = {
     .long_name= NULL_IF_CONFIG_SMALL("MPEG-1 video"),
 };
 
+AVCodec mpeg2video_encoder = {
+    "mpeg2video",
+    CODEC_TYPE_VIDEO,
+    CODEC_ID_MPEG2VIDEO,
+    sizeof(MpegEncContext),
+    encode_init,
+    MPV_encode_picture,
+    MPV_encode_end,
+    .supported_framerates= ff_frame_rate_tab+1,
+    .pix_fmts= (enum PixelFormat[]){PIX_FMT_YUV420P, PIX_FMT_YUV422P, PIX_FMT_NONE},
+    .capabilities= CODEC_CAP_DELAY,
+    .long_name= NULL_IF_CONFIG_SMALL("MPEG-2 video"),
+};

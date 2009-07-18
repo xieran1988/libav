@@ -1,0 +1,21 @@
+Workaround to get ffmpeg packages built with i386 using -fPIC.
+This disables -fPIC for the problematic files.
+==========================================================================
+--- a/Makefile
++++ b/Makefile
+@@ -83,6 +83,15 @@
+ 
+ VHOOKCFLAGS += $(filter-out -mdynamic-no-pic,$(CFLAGS))
+ 
++# Disable use of -fPIC on problematic files for i386
++ifeq (,$(findstring i386 i486 i586 i686,$(shell uname -m)))
++I386CFLAGS += $(filter-out -fPIC -DPIC,$(CFLAGS))
++libavcodec/x86/dsputil_mmx.o: libavcodec/x86/dsputil_mmx.c
++	$(CC) $(I386CFLAGS) $(LIBOBJFLAGS) -c -o $@ $<
++libavcodec/x86/flacdsp_mmx.o: libavcodec/x86/flacdsp_mmx.c
++	$(CC) $(I386CFLAGS) $(LIBOBJFLAGS) -c -o $@ $<
++endif
++
+ BASEHOOKS = fish null watermark
+ ALLHOOKS = $(BASEHOOKS) drawtext imlib2 ppm
+ ALLHOOKS_SRCS = $(addprefix vhook/, $(addsuffix .c, $(ALLHOOKS)))

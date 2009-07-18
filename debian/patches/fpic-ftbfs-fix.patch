@@ -1,0 +1,262 @@
+This patch fixes FTBFS issue when using -fPIC.
+For inquiries about this patch, please see bug #528080.
+==========================================================================
+--- a/libavcodec/x86/dsputil_mmx.c
++++ b/libavcodec/x86/dsputil_mmx.c
+@@ -695,14 +695,14 @@
+         "punpckhdq %%mm1, %%mm1         \n\t"
+         "movd  %%mm1, %3                \n\t"
+ 
+-        : "=m" (*(uint32_t*)(dst + 0*dst_stride)),
+-          "=m" (*(uint32_t*)(dst + 1*dst_stride)),
+-          "=m" (*(uint32_t*)(dst + 2*dst_stride)),
+-          "=m" (*(uint32_t*)(dst + 3*dst_stride))
+-        :  "m" (*(uint32_t*)(src + 0*src_stride)),
+-           "m" (*(uint32_t*)(src + 1*src_stride)),
+-           "m" (*(uint32_t*)(src + 2*src_stride)),
+-           "m" (*(uint32_t*)(src + 3*src_stride))
++        : "=r" (*(uint32_t*)(dst + 0*dst_stride)),
++          "=r" (*(uint32_t*)(dst + 1*dst_stride)),
++          "=r" (*(uint32_t*)(dst + 2*dst_stride)),
++          "=r" (*(uint32_t*)(dst + 3*dst_stride))
++        :  "r" (*(uint32_t*)(src + 0*src_stride)),
++           "r" (*(uint32_t*)(src + 1*src_stride)),
++           "r" (*(uint32_t*)(src + 2*src_stride)),
++           "r" (*(uint32_t*)(src + 3*src_stride))
+     );
+ }
+ 
+--- a/libavcodec/x86/h264dsp_mmx.c
++++ b/libavcodec/x86/h264dsp_mmx.c
+@@ -943,8 +943,8 @@
+ \
+     __asm__ volatile(\
+         "pxor %%mm7, %%mm7          \n\t"\
+-        "movq %5, %%mm4             \n\t"\
+-        "movq %6, %%mm5             \n\t"\
++        "movq ff_pw_5, %%mm4        \n\t"\
++        "movq ff_pw_16, %%mm5       \n\t"\
+         "1:                         \n\t"\
+         "movd  -1(%0), %%mm1        \n\t"\
+         "movd    (%0), %%mm2        \n\t"\
+@@ -974,17 +974,15 @@
+         "decl %2                    \n\t"\
+         " jnz 1b                    \n\t"\
+         : "+a"(src), "+c"(dst), "+g"(h)\
+-        : "d"((x86_reg)srcStride), "S"((x86_reg)dstStride), "m"(ff_pw_5), "m"(ff_pw_16)\
+-        : "memory"\
++        : "d"((x86_reg)srcStride), "S"((x86_reg)dstStride)\
+     );\
+ }\
+ static av_noinline void OPNAME ## h264_qpel4_h_lowpass_l2_ ## MMX(uint8_t *dst, uint8_t *src, uint8_t *src2, int dstStride, int src2Stride){\
+     int h=4;\
+     __asm__ volatile(\
+-        "pxor %%mm7, %%mm7          \n\t"\
+-        "movq %0, %%mm4             \n\t"\
+-        "movq %1, %%mm5             \n\t"\
+-        :: "m"(ff_pw_5), "m"(ff_pw_16)\
++        "pxor %mm7, %mm7          \n\t"\
++        "movq ff_pw_5, %mm4        \n\t"\
++        "movq ff_pw_16, %mm5       \n\t"\
+     );\
+     do{\
+     __asm__ volatile(\
+@@ -1117,7 +1115,7 @@
+     int h=8;\
+     __asm__ volatile(\
+         "pxor %%mm7, %%mm7          \n\t"\
+-        "movq %5, %%mm6             \n\t"\
++        "movq ff_pw_5, %%mm6        \n\t"\
+         "1:                         \n\t"\
+         "movq    (%0), %%mm0        \n\t"\
+         "movq   1(%0), %%mm2        \n\t"\
+@@ -1151,7 +1149,7 @@
+         "punpcklbw %%mm7, %%mm5     \n\t"\
+         "paddw %%mm3, %%mm2         \n\t"\
+         "paddw %%mm5, %%mm4         \n\t"\
+-        "movq %6, %%mm5             \n\t"\
++        "movq ff_pw_16, %%mm5       \n\t"\
+         "paddw %%mm5, %%mm2         \n\t"\
+         "paddw %%mm5, %%mm4         \n\t"\
+         "paddw %%mm2, %%mm0         \n\t"\
+@@ -1165,17 +1163,15 @@
+         "decl %2                    \n\t"\
+         " jnz 1b                    \n\t"\
+         : "+a"(src), "+c"(dst), "+g"(h)\
+-        : "d"((x86_reg)srcStride), "S"((x86_reg)dstStride), "m"(ff_pw_5), "m"(ff_pw_16)\
+-        : "memory"\
++        : "d"((x86_reg)srcStride), "S"((x86_reg)dstStride)\
+     );\
+ }\
+ \
+ static av_noinline void OPNAME ## h264_qpel8_h_lowpass_l2_ ## MMX(uint8_t *dst, uint8_t *src, uint8_t *src2, int dstStride, int src2Stride){\
+     int h=8;\
+     __asm__ volatile(\
+-        "pxor %%mm7, %%mm7          \n\t"\
+-        "movq %0, %%mm6             \n\t"\
+-        :: "m"(ff_pw_5)\
++        "pxor %mm7, %mm7          \n\t"\
++        "movq ff_pw_5, %mm6        \n\t"\
+     );\
+     do{\
+     __asm__ volatile(\
+@@ -1211,7 +1207,7 @@
+         "punpcklbw %%mm7, %%mm5     \n\t"\
+         "paddw %%mm3, %%mm2         \n\t"\
+         "paddw %%mm5, %%mm4         \n\t"\
+-        "movq %5, %%mm5             \n\t"\
++        "movq ff_pw_16, %%mm5       \n\t"\
+         "paddw %%mm5, %%mm2         \n\t"\
+         "paddw %%mm5, %%mm4         \n\t"\
+         "paddw %%mm2, %%mm0         \n\t"\
+@@ -1226,9 +1222,7 @@
+         "add %4, %1                 \n\t"\
+         "add %3, %2                 \n\t"\
+         : "+a"(src), "+c"(dst), "+d"(src2)\
+-        : "D"((x86_reg)src2Stride), "S"((x86_reg)dstStride),\
+-          "m"(ff_pw_16)\
+-        : "memory"\
++        : "D"((x86_reg)src2Stride), "S"((x86_reg)dstStride)\
+     );\
+     }while(--h);\
+ }\
+@@ -1494,8 +1488,8 @@
+     int h=16;\
+     __asm__ volatile(\
+         "pxor %%xmm15, %%xmm15      \n\t"\
+-        "movdqa %6, %%xmm14         \n\t"\
+-        "movdqa %7, %%xmm13         \n\t"\
++        "movdqa ff_pw_5, %%xmm14    \n\t"\
++        "movdqa ff_pw_16, %%xmm13   \n\t"\
+         "1:                         \n\t"\
+         "lddqu    3(%0), %%xmm1     \n\t"\
+         "lddqu   -5(%0), %%xmm7     \n\t"\
+@@ -1549,9 +1543,7 @@
+         "decl %3                    \n\t"\
+         "jg 1b                      \n\t"\
+         : "+a"(src), "+c"(dst), "+d"(src2), "+g"(h)\
+-        : "D"((x86_reg)src2Stride), "S"((x86_reg)dstStride),\
+-          "m"(ff_pw_5), "m"(ff_pw_16)\
+-        : "memory"\
++        : "D"((x86_reg)src2Stride), "S"((x86_reg)dstStride)\
+     );\
+ }
+ #else // ARCH_X86_64
+@@ -1571,9 +1563,8 @@
+ static av_noinline void OPNAME ## h264_qpel8_h_lowpass_l2_ ## MMX(uint8_t *dst, uint8_t *src, uint8_t *src2, int dstStride, int src2Stride){\
+     int h=8;\
+     __asm__ volatile(\
+-        "pxor %%xmm7, %%xmm7        \n\t"\
+-        "movdqa %0, %%xmm6          \n\t"\
+-        :: "m"(ff_pw_5)\
++        "pxor %xmm7, %xmm7        \n\t"\
++        "movdqa ff_pw_5, %xmm6     \n\t"\
+     );\
+     do{\
+     __asm__ volatile(\
+@@ -1596,7 +1587,7 @@
+         "psllw   $2,     %%xmm2     \n\t"\
+         "movq    (%2),   %%xmm3     \n\t"\
+         "psubw   %%xmm1, %%xmm2     \n\t"\
+-        "paddw   %5,     %%xmm5     \n\t"\
++        "paddw   ff_pw_16,%%xmm5    \n\t"\
+         "pmullw  %%xmm6, %%xmm2     \n\t"\
+         "paddw   %%xmm5, %%xmm2     \n\t"\
+         "psraw   $5,     %%xmm2     \n\t"\
+@@ -1607,9 +1598,7 @@
+         "add %4, %1                 \n\t"\
+         "add %3, %2                 \n\t"\
+         : "+a"(src), "+c"(dst), "+d"(src2)\
+-        : "D"((x86_reg)src2Stride), "S"((x86_reg)dstStride),\
+-          "m"(ff_pw_16)\
+-        : "memory"\
++        : "D"((x86_reg)src2Stride), "S"((x86_reg)dstStride)\
+     );\
+     }while(--h);\
+ }\
+@@ -1619,7 +1608,7 @@
+     int h=8;\
+     __asm__ volatile(\
+         "pxor %%xmm7, %%xmm7        \n\t"\
+-        "movdqa %5, %%xmm6          \n\t"\
++        "movdqa ff_pw_5, %%xmm6     \n\t"\
+         "1:                         \n\t"\
+         "lddqu   -5(%0), %%xmm1     \n\t"\
+         "movdqa  %%xmm1, %%xmm0     \n\t"\
+@@ -1639,7 +1628,7 @@
+         "paddw   %%xmm4, %%xmm1     \n\t"\
+         "psllw   $2,     %%xmm2     \n\t"\
+         "psubw   %%xmm1, %%xmm2     \n\t"\
+-        "paddw   %6,     %%xmm5     \n\t"\
++        "paddw   ff_pw_16, %%xmm5   \n\t"\
+         "pmullw  %%xmm6, %%xmm2     \n\t"\
+         "paddw   %%xmm5, %%xmm2     \n\t"\
+         "psraw   $5,     %%xmm2     \n\t"\
+@@ -1650,9 +1639,7 @@
+         "decl %2                    \n\t"\
+         " jnz 1b                    \n\t"\
+         : "+a"(src), "+c"(dst), "+g"(h)\
+-        : "D"((x86_reg)srcStride), "S"((x86_reg)dstStride),\
+-          "m"(ff_pw_5), "m"(ff_pw_16)\
+-        : "memory"\
++        : "D"((x86_reg)srcStride), "S"((x86_reg)dstStride)\
+     );\
+ }\
+ static void OPNAME ## h264_qpel16_h_lowpass_ ## MMX(uint8_t *dst, uint8_t *src, int dstStride, int srcStride){\
+--- a/libavcodec/x86/flacdsp_mmx.c
++++ b/libavcodec/x86/flacdsp_mmx.c
+@@ -89,12 +89,12 @@
+                 "movsd    "MANGLE(ff_pd_1)", %%xmm1 \n\t"
+                 "movsd    "MANGLE(ff_pd_1)", %%xmm2 \n\t"
+                 "1:                                 \n\t"
+-                "movapd   (%4,%0), %%xmm3           \n\t"
+-                "movupd -8(%5,%0), %%xmm4           \n\t"
+-                "movapd   (%5,%0), %%xmm5           \n\t"
++                "movapd   (%2,%0), %%xmm3           \n\t"
++                "movupd -8(%3,%0), %%xmm4           \n\t"
++                "movapd   (%3,%0), %%xmm5           \n\t"
+                 "mulpd     %%xmm3, %%xmm4           \n\t"
+                 "mulpd     %%xmm3, %%xmm5           \n\t"
+-                "mulpd -16(%5,%0), %%xmm3           \n\t"
++                "mulpd -16(%3,%0), %%xmm3           \n\t"
+                 "addpd     %%xmm4, %%xmm1           \n\t"
+                 "addpd     %%xmm5, %%xmm0           \n\t"
+                 "addpd     %%xmm3, %%xmm2           \n\t"
+@@ -107,9 +107,9 @@
+                 "addsd     %%xmm4, %%xmm1           \n\t"
+                 "addsd     %%xmm5, %%xmm2           \n\t"
+                 "movsd     %%xmm0, %1               \n\t"
+-                "movsd     %%xmm1, %2               \n\t"
+-                "movsd     %%xmm2, %3               \n\t"
+-                :"+&r"(i), "=m"(autoc[j]), "=m"(autoc[j+1]), "=m"(autoc[j+2])
++                "movsd     %%xmm1, 8%1               \n\t"
++                "movsd     %%xmm2, 16%1               \n\t"
++                :"+&r"(i), "=m"(autoc[j])
+                 :"r"(data1+len), "r"(data1+len-j)
+             );
+         } else {
+@@ -117,10 +117,10 @@
+                 "movsd    "MANGLE(ff_pd_1)", %%xmm0 \n\t"
+                 "movsd    "MANGLE(ff_pd_1)", %%xmm1 \n\t"
+                 "1:                                 \n\t"
+-                "movapd   (%3,%0), %%xmm3           \n\t"
+-                "movupd -8(%4,%0), %%xmm4           \n\t"
++                "movapd   (%2,%0), %%xmm3           \n\t"
++                "movupd -8(%3,%0), %%xmm4           \n\t"
+                 "mulpd     %%xmm3, %%xmm4           \n\t"
+-                "mulpd    (%4,%0), %%xmm3           \n\t"
++                "mulpd    (%3,%0), %%xmm3           \n\t"
+                 "addpd     %%xmm4, %%xmm1           \n\t"
+                 "addpd     %%xmm3, %%xmm0           \n\t"
+                 "add       $16,    %0               \n\t"
+@@ -130,8 +130,8 @@
+                 "addsd     %%xmm3, %%xmm0           \n\t"
+                 "addsd     %%xmm4, %%xmm1           \n\t"
+                 "movsd     %%xmm0, %1               \n\t"
+-                "movsd     %%xmm1, %2               \n\t"
+-                :"+&r"(i), "=m"(autoc[j]), "=m"(autoc[j+1])
++                "movsd     %%xmm1, 8%1               \n\t"
++                :"+&r"(i), "=m"(autoc[j])
+                 :"r"(data1+len), "r"(data1+len-j)
+             );
+         }

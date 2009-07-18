@@ -1,0 +1,315 @@
+This patch resolves all non-PIC issues from the libpostproc library.
+For inquiries about this patch, please see bug #528080.
+==========================================================================
+--- a/libpostproc/postprocess_template.c
++++ b/libpostproc/postprocess_template.c
+@@ -369,16 +369,16 @@
+ // FIXME rounding
+     __asm__ volatile(
+         "pxor %%mm7, %%mm7                      \n\t" // 0
+-        "movq "MANGLE(b80)", %%mm6              \n\t" // MIN_SIGNED_BYTE
++        "movq %2, %%mm6                         \n\t" // MIN_SIGNED_BYTE
+         "leal (%0, %1), %%"REG_a"               \n\t"
+         "leal (%%"REG_a", %1, 4), %%"REG_c"     \n\t"
+ //      0       1       2       3       4       5       6       7       8       9
+ //      %0      eax     eax+%1  eax+2%1 %0+4%1  ecx     ecx+%1  ecx+2%1 %0+8%1  ecx+4%1
+-        "movq "MANGLE(pQPb)", %%mm0             \n\t" // QP,..., QP
++        "movq %3, %%mm0                         \n\t" // QP,..., QP
+         "movq %%mm0, %%mm1                      \n\t" // QP,..., QP
+-        "paddusb "MANGLE(b02)", %%mm0           \n\t"
++        "paddusb %4, %%mm0                      \n\t"
+         "psrlw $2, %%mm0                        \n\t"
+-        "pand "MANGLE(b3F)", %%mm0              \n\t" // QP/4,..., QP/4
++        "pand %5, %%mm0                         \n\t" // QP/4,..., QP/4
+         "paddusb %%mm1, %%mm0                   \n\t" // QP*1.25 ...
+         "movq (%0, %1, 4), %%mm2                \n\t" // line 4
+         "movq (%%"REG_c"), %%mm3                \n\t" // line 5
+@@ -407,8 +407,8 @@
+ 
+         "paddb %%mm6, %%mm5                     \n\t"
+         "psrlw $2, %%mm5                        \n\t"
+-        "pand "MANGLE(b3F)", %%mm5              \n\t"
+-        "psubb "MANGLE(b20)", %%mm5             \n\t" // (l5-l4)/8
++        "pand %5, %%mm5                         \n\t"
++        "psubb %6, %%mm5                        \n\t" // (l5-l4)/8
+ 
+         "movq (%%"REG_a", %1, 2), %%mm2         \n\t"
+         "paddb %%mm6, %%mm2                     \n\t" // line 3 + 0x80
+@@ -423,7 +423,8 @@
+         "movq %%mm2, (%%"REG_c", %1)            \n\t"
+ 
+         :
+-        : "r" (src), "r" ((x86_reg)stride)
++        : "r" (src), "r" ((x86_reg)stride), "m"(b80), "m"(pQPb), "m"(b02),
++          "m"(b3f), "m"(b20)
+         : "%"REG_a, "%"REG_c
+     );
+ #else //HAVE_MMX2 || HAVE_AMD3DNOW
+@@ -496,7 +497,7 @@
+         "paddusb %%mm0, %%mm0                   \n\t"
+         "psubusb %%mm0, %%mm4                   \n\t"
+         "pcmpeqb %%mm7, %%mm4                   \n\t" // d <= QP ? -1 : 0
+-        "psubusb "MANGLE(b01)", %%mm3           \n\t"
++        "psubusb %3, %%mm3                      \n\t"
+         "pand %%mm4, %%mm3                      \n\t" // d <= QP ? d : 0
+ 
+         PAVGB(%%mm7, %%mm3)                           // d/2
+@@ -545,7 +546,7 @@
+         "movq %%mm0, (%%"REG_c", %1, 2)         \n\t" // line 7
+ 
+         :
+-        : "r" (src), "r" ((x86_reg)stride), "m" (co->pQPb)
++        : "r" (src), "r" ((x86_reg)stride), "m" (co->pQPb), "m"(b01)
+         : "%"REG_a, "%"REG_c
+     );
+ #else //HAVE_MMX2 || HAVE_AMD3DNOW
+@@ -675,17 +676,17 @@
+ 
+         PMINUB(%%mm2, %%mm1, %%mm4)                   // MIN(|lenergy|,|renergy|)/8
+         "movq %2, %%mm4                         \n\t" // QP //FIXME QP+1 ?
+-        "paddusb "MANGLE(b01)", %%mm4           \n\t"
++        "paddusb %5, %%mm4                      \n\t"
+         "pcmpgtb %%mm3, %%mm4                   \n\t" // |menergy|/8 < QP
+         "psubusb %%mm1, %%mm3                   \n\t" // d=|menergy|/8-MIN(|lenergy|,|renergy|)/8
+         "pand %%mm4, %%mm3                      \n\t"
+ 
+         "movq %%mm3, %%mm1                      \n\t"
+-//        "psubusb "MANGLE(b01)", %%mm3           \n\t"
++//        "psubusb %5, %%mm3                    \n\t"
+         PAVGB(%%mm7, %%mm3)
+         PAVGB(%%mm7, %%mm3)
+         "paddusb %%mm1, %%mm3                   \n\t"
+-//        "paddusb "MANGLE(b01)", %%mm3           \n\t"
++//        "paddusb %5, %%mm3                    \n\t"
+ 
+         "movq (%%"REG_a", %1, 2), %%mm6         \n\t" //l3
+         "movq (%0, %1, 4), %%mm5                \n\t" //l4
+@@ -698,7 +699,7 @@
+         "pand %%mm0, %%mm3                      \n\t"
+         PMINUB(%%mm5, %%mm3, %%mm0)
+ 
+-        "psubusb "MANGLE(b01)", %%mm3           \n\t"
++        "psubusb %5, %%mm3                      \n\t"
+         PAVGB(%%mm7, %%mm3)
+ 
+         "movq (%%"REG_a", %1, 2), %%mm0         \n\t"
+@@ -730,7 +731,7 @@
+         "movq (%%"REG_a", %1), %%mm3            \n\t" // l2
+         "pxor %%mm6, %%mm2                      \n\t" // -l5-1
+         "movq %%mm2, %%mm5                      \n\t" // -l5-1
+-        "movq "MANGLE(b80)", %%mm4              \n\t" // 128
++        "movq %3, %%mm4                         \n\t" // 128
+         "lea (%%"REG_a", %1, 4), %%"REG_c"      \n\t"
+         PAVGB(%%mm3, %%mm2)                           // (l2-l5+256)/2
+         PAVGB(%%mm0, %%mm4)                           // ~(l4-l3)/4 + 128
+@@ -742,7 +743,7 @@
+         "pxor %%mm6, %%mm2                      \n\t" // -l1-1
+         PAVGB(%%mm3, %%mm2)                           // (l2-l1+256)/2
+         PAVGB((%0), %%mm1)                            // (l0-l3+256)/2
+-        "movq "MANGLE(b80)", %%mm3              \n\t" // 128
++        "movq %3, %%mm3                        \n\t" // 128
+         PAVGB(%%mm2, %%mm3)                           // ~(l2-l1)/4 + 128
+         PAVGB(%%mm1, %%mm3)                           // ~(l0-l3)/4 +(l2-l1)/8 + 128
+         PAVGB(%%mm2, %%mm3)                           // ~(l0-l3)/8 +5(l2-l1)/16 + 128
+@@ -752,14 +753,14 @@
+         "movq (%%"REG_c", %1, 2), %%mm1         \n\t" // l7
+         "pxor %%mm6, %%mm1                      \n\t" // -l7-1
+         PAVGB((%0, %1, 4), %%mm1)                     // (l4-l7+256)/2
+-        "movq "MANGLE(b80)", %%mm2              \n\t" // 128
++        "movq %3, %%mm2                        \n\t" // 128
+         PAVGB(%%mm5, %%mm2)                           // ~(l6-l5)/4 + 128
+         PAVGB(%%mm1, %%mm2)                           // ~(l4-l7)/4 +(l6-l5)/8 + 128
+         PAVGB(%%mm5, %%mm2)                           // ~(l4-l7)/8 +5(l6-l5)/16 + 128
+ // mm0=128-q, mm2=renergy/16 + 128, mm3=lenergy/16 + 128, mm4= menergy/16 + 128
+ 
+-        "movq "MANGLE(b00)", %%mm1              \n\t" // 0
+-        "movq "MANGLE(b00)", %%mm5              \n\t" // 0
++        "movq %4, %%mm1                         \n\t" // 0
++        "movq %4, %%mm5                         \n\t" // 0
+         "psubb %%mm2, %%mm1                     \n\t" // 128 - renergy/16
+         "psubb %%mm3, %%mm5                     \n\t" // 128 - lenergy/16
+         PMAXUB(%%mm1, %%mm2)                          // 128 + |renergy/16|
+@@ -768,7 +769,7 @@
+ 
+ // mm0=128-q, mm3=128 + MIN(|lenergy|,|renergy|)/16, mm4= menergy/16 + 128
+ 
+-        "movq "MANGLE(b00)", %%mm7              \n\t" // 0
++        "movq %4, %%mm7                         \n\t" // 0
+         "movq %2, %%mm2                         \n\t" // QP
+         PAVGB(%%mm6, %%mm2)                           // 128 + QP/2
+         "psubb %%mm6, %%mm2                     \n\t"
+@@ -782,13 +783,13 @@
+ // mm0=128-q, mm1= SIGN(menergy), mm2= |menergy|/16 < QP/2, mm4= d/16
+ 
+         "movq %%mm4, %%mm3                      \n\t" // d
+-        "psubusb "MANGLE(b01)", %%mm4           \n\t"
++        "psubusb %5, %%mm4                      \n\t"
+         PAVGB(%%mm7, %%mm4)                           // d/32
+         PAVGB(%%mm7, %%mm4)                           // (d + 32)/64
+         "paddb %%mm3, %%mm4                     \n\t" // 5d/64
+         "pand %%mm2, %%mm4                      \n\t"
+ 
+-        "movq "MANGLE(b80)", %%mm5              \n\t" // 128
++        "movq %3, %%mm5                         \n\t" // 128
+         "psubb %%mm0, %%mm5                     \n\t" // q
+         "paddsb %%mm6, %%mm5                    \n\t" // fix bad rounding
+         "pcmpgtb %%mm5, %%mm7                   \n\t" // SIGN(q)
+@@ -810,7 +811,8 @@
+         "movq %%mm2, (%0, %1, 4)                \n\t"
+ 
+         :
+-        : "r" (src), "r" ((x86_reg)stride), "m" (c->pQPb)
++        : "r" (src), "r" ((x86_reg)stride), "m" (c->pQPb), "m"(b80),
++          "m"(b00), "m"(b01)
+         : "%"REG_a, "%"REG_c
+     );
+ 
+@@ -1045,10 +1047,10 @@
+         "psubusw %%mm1, %%mm5                   \n\t" // ld
+ 
+ 
+-        "movq "MANGLE(w05)", %%mm2              \n\t" // 5
++        "movq %3, %%mm2                         \n\t" // 5
+         "pmullw %%mm2, %%mm4                    \n\t"
+         "pmullw %%mm2, %%mm5                    \n\t"
+-        "movq "MANGLE(w20)", %%mm2              \n\t" // 32
++        "movq %4, %%mm2                         \n\t" // 32
+         "paddw %%mm2, %%mm4                     \n\t"
+         "paddw %%mm2, %%mm5                     \n\t"
+         "psrlw $6, %%mm4                        \n\t"
+@@ -1098,7 +1100,7 @@
+         "movq %%mm0, (%0, %1)                   \n\t"
+ 
+         : "+r" (src)
+-        : "r" ((x86_reg)stride), "m" (c->pQPb)
++        : "r" ((x86_reg)stride), "m" (c->pQPb), "m"(w05), "m"(w20)
+         : "%"REG_a, "%"REG_c
+     );
+ #else //HAVE_MMX2 || HAVE_AMD3DNOW
+@@ -1237,7 +1239,7 @@
+         "movq %%mm6, %%mm0                      \n\t" // max
+         "psubb %%mm7, %%mm6                     \n\t" // max - min
+         "movd %%mm6, %%ecx                      \n\t"
+-        "cmpb "MANGLE(deringThreshold)", %%cl   \n\t"
++        "cmpb %4, %%cl                          \n\t"
+         " jb 1f                                 \n\t"
+         "lea -24(%%"REG_SP"), %%"REG_c"         \n\t"
+         "and "ALIGN_MASK", %%"REG_c"            \n\t"
+@@ -1264,9 +1266,9 @@
+         "psubusb %%mm7, %%mm0                   \n\t"
+         "psubusb %%mm7, %%mm2                   \n\t"
+         "psubusb %%mm7, %%mm3                   \n\t"
+-        "pcmpeqb "MANGLE(b00)", %%mm0           \n\t" // L10 > a ? 0 : -1
+-        "pcmpeqb "MANGLE(b00)", %%mm2           \n\t" // L20 > a ? 0 : -1
+-        "pcmpeqb "MANGLE(b00)", %%mm3           \n\t" // L00 > a ? 0 : -1
++        "pcmpeqb %5, %%mm0                      \n\t" // L10 > a ? 0 : -1
++        "pcmpeqb %5, %%mm2                      \n\t" // L20 > a ? 0 : -1
++        "pcmpeqb %5, %%mm3                      \n\t" // L00 > a ? 0 : -1
+         "paddb %%mm2, %%mm0                     \n\t"
+         "paddb %%mm3, %%mm0                     \n\t"
+ 
+@@ -1287,9 +1289,9 @@
+         "psubusb %%mm7, %%mm2                   \n\t"
+         "psubusb %%mm7, %%mm4                   \n\t"
+         "psubusb %%mm7, %%mm5                   \n\t"
+-        "pcmpeqb "MANGLE(b00)", %%mm2           \n\t" // L11 > a ? 0 : -1
+-        "pcmpeqb "MANGLE(b00)", %%mm4           \n\t" // L21 > a ? 0 : -1
+-        "pcmpeqb "MANGLE(b00)", %%mm5           \n\t" // L01 > a ? 0 : -1
++        "pcmpeqb %5, %%mm2                      \n\t" // L11 > a ? 0 : -1
++        "pcmpeqb %5, %%mm4                      \n\t" // L21 > a ? 0 : -1
++        "pcmpeqb %5, %%mm5                      \n\t" // L01 > a ? 0 : -1
+         "paddb %%mm4, %%mm2                     \n\t"
+         "paddb %%mm5, %%mm2                     \n\t"
+ // 0, 2, 3, 1
+@@ -1314,7 +1316,7 @@
+         "psubusb " #lx ", " #t1 "               \n\t"\
+         "psubusb " #lx ", " #t0 "               \n\t"\
+         "psubusb " #lx ", " #sx "               \n\t"\
+-        "movq "MANGLE(b00)", " #lx "            \n\t"\
++        "movq %5, " #lx "                       \n\t"\
+         "pcmpeqb " #lx ", " #t1 "               \n\t" /* src[-1] > a ? 0 : -1*/\
+         "pcmpeqb " #lx ", " #t0 "               \n\t" /* src[+1] > a ? 0 : -1*/\
+         "pcmpeqb " #lx ", " #sx "               \n\t" /* src[0]  > a ? 0 : -1*/\
+@@ -1330,8 +1332,8 @@
+         PMINUB(t1, pplx, t0)\
+         "paddb " #sx ", " #ppsx "               \n\t"\
+         "paddb " #psx ", " #ppsx "              \n\t"\
+-        "#paddb "MANGLE(b02)", " #ppsx "        \n\t"\
+-        "pand "MANGLE(b08)", " #ppsx "          \n\t"\
++        "#paddb %6, " #ppsx "                   \n\t"\
++        "pand %7, " #ppsx "                     \n\t"\
+         "pcmpeqb " #lx ", " #ppsx "             \n\t"\
+         "pand " #ppsx ", " #pplx "              \n\t"\
+         "pandn " #dst ", " #ppsx "              \n\t"\
+@@ -1367,7 +1369,8 @@
+ DERING_CORE((%0, %1, 8)    ,(%%REGd, %1, 4),%%mm2,%%mm4,%%mm0,%%mm3,%%mm5,%%mm1,%%mm6,%%mm7)
+ 
+         "1:                        \n\t"
+-        : : "r" (src), "r" ((x86_reg)stride), "m" (c->pQPb), "m"(c->pQPb2)
++        : : "r" (src), "r" ((x86_reg)stride), "m" (c->pQPb), "m"(c->pQPb2),
++            "m"(deringThreshold), "m"(b00), "m"(b02), "m"(b08)
+         : "%"REG_a, "%"REG_d, "%"REG_c
+     );
+ #else //HAVE_MMX2 || HAVE_AMD3DNOW
+@@ -2227,7 +2230,7 @@
+ #else //L1_DIFF
+ #if defined (FAST_L2_DIFF)
+         "pcmpeqb %%mm7, %%mm7                   \n\t"
+-        "movq "MANGLE(b80)", %%mm6              \n\t"
++        "movq %4, %%mm6                         \n\t"
+         "pxor %%mm0, %%mm0                      \n\t"
+ #define REAL_L2_DIFF_CORE(a, b)\
+         "movq " #a ", %%mm5                     \n\t"\
+@@ -2476,7 +2479,8 @@
+ 
+         "4:                                     \n\t"
+ 
+-        :: "r" (src), "r" (tempBlurred), "r"((x86_reg)stride), "m" (tempBlurredPast)
++        :: "r" (src), "r" (tempBlurred), "r"((x86_reg)stride),
++           "m" (tempBlurredPast), "m"(b80)
+         : "%"REG_a, "%"REG_d, "%"REG_c, "memory"
+     );
+ #else //HAVE_MMX2 || HAVE_AMD3DNOW
+@@ -2730,8 +2734,8 @@
+             "movq %%mm6, %%mm1                      \n\t"
+             "psllw $2, %%mm0                        \n\t"
+             "psllw $2, %%mm1                        \n\t"
+-            "paddw "MANGLE(w04)", %%mm0             \n\t"
+-            "paddw "MANGLE(w04)", %%mm1             \n\t"
++            "paddw %5, %%mm0                        \n\t"
++            "paddw %5, %%mm1                        \n\t"
+ 
+ #define NEXT\
+             "movq (%0), %%mm2                       \n\t"\
+@@ -2820,7 +2824,7 @@
+             "mov %4, %0                             \n\t" //FIXME
+ 
+             : "+&r"(src)
+-            : "r" ((x86_reg)step), "m" (c->pQPb), "r"(sums), "g"(src)
++            : "r" ((x86_reg)step), "m" (c->pQPb), "r"(sums), "g"(src), "m"(w04)
+         );
+ 
+         src+= step; // src points to begin of the 8x8 Block
+@@ -3037,10 +3041,10 @@
+             "psubusw %%mm1, %%mm5                   \n\t" // ld
+ 
+ 
+-            "movq "MANGLE(w05)", %%mm2              \n\t" // 5
++            "movq %4, %%mm2                         \n\t" // 5
+             "pmullw %%mm2, %%mm4                    \n\t"
+             "pmullw %%mm2, %%mm5                    \n\t"
+-            "movq "MANGLE(w20)", %%mm2              \n\t" // 32
++            "movq %5, %%mm2                         \n\t" // 32
+             "paddw %%mm2, %%mm4                     \n\t"
+             "paddw %%mm2, %%mm5                     \n\t"
+             "psrlw $6, %%mm4                        \n\t"
+@@ -3092,7 +3096,8 @@
+             "movq %%mm0, (%0, %1)                   \n\t"
+ 
+             : "+r" (temp_src)
+-            : "r" ((x86_reg)step), "m" (c->pQPb), "m"(eq_mask)
++            : "r" ((x86_reg)step), "m" (c->pQPb), "m"(eq_mask), "m"(w05),
++              "m"(w20)
+             : "%"REG_a, "%"REG_c
+         );
+     }

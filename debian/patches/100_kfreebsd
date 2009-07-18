@@ -1,0 +1,16 @@
+From: Aurelien Jarno <aurel32@debian.org>
+Subject: [PATCH] Fix FTBFS for kfreebsd
+X-Upstream-Discussion: <http://comments.gmane.org/gmane.comp.video.ffmpeg.devel/90686>
+
+==========================================================================
+--- a/configure
++++ b/configure
+@@ -1640,6 +1640,8 @@
+     interix)
+         disable vhook
+         ;;
++    gnu/kfreebsd)
++        ;;
+ 
+     *)
+         die "Unknown OS '$target_os'."

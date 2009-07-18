@@ -1,0 +1,14 @@
+Fix build failures for the GNU Hurd OS
+===================================================================
+--- a/configure
++++ b/configure
+@@ -1642,6 +1642,9 @@
+         ;;
+     gnu/kfreebsd)
+         ;;
++    gnu)
++        disable dv1394
++        ;;
+ 
+     *)
+         die "Unknown OS '$target_os'."

@@ -1,0 +1,4 @@
+# The dependencies for packages within ffmpeg are different than the
+# dependencies for packages that depend on the ffmpeg libraries.
+ffmpeg-debian source: debian-rules-calls-debhelper-in-odd-order dh_makeshlibs (line 174)
+ffmpeg-debian source: debian-rules-calls-debhelper-in-odd-order dh_makeshlibs (line 178)

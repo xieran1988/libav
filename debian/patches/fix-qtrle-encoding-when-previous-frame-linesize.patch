@@ -1,0 +1,72 @@
+From: Peter Fritzsche <peter.fritzsche@gmx.de>
+Date: Sat, 23 May 2009 05:55:29 +0000
+Subject: [PATCH] fix qtrle encoding when previous frame linesize differs
+
+Applied upstream as revision 18908:
+
+------------------------------------------------------------------------
+r18908 | bcoudurier | 2009-05-23 07:55:29 +0200 (Sa, 23. Mai 2009) | 1 line
+
+fix qtrle encoding when previous frame linesize differs, fix #998
+
+
+diff --git a/libavcodec/qtrleenc.c b/libavcodec/qtrleenc.c
+index 171ac25..46bb573 100644
+--- a/libavcodec/qtrleenc.c
++++ b/libavcodec/qtrleenc.c
+@@ -121,18 +121,20 @@ static void qtrle_encode_line(QtrleEncContext *s, AVFrame *p, int line, uint8_t
+     /* The cost of the three different possibilities */
+     int total_bulk_cost;
+     int total_skip_cost;
+     int total_repeat_cost;
+ 
+     int temp_cost;
+     int j;
+ 
+-    uint8_t *this_line = p->               data[0] + line*p->linesize[0] + (width - 1)*s->pixel_size;
+-    uint8_t *prev_line = s->previous_frame.data[0] + line*p->linesize[0] + (width - 1)*s->pixel_size;
++    uint8_t *this_line = p->               data[0] + line*p->               linesize[0] +
++        (width - 1)*s->pixel_size;
++    uint8_t *prev_line = s->previous_frame.data[0] + line*s->previous_frame.linesize[0] +
++        (width - 1)*s->pixel_size;
+ 
+     s->length_table[width] = 0;
+     skipcount = 0;
+ 
+     for (i = width - 1; i >= 0; i--) {
+ 
+         if (!s->frame.key_frame && !memcmp(this_line, prev_line, s->pixel_size))
+             skipcount = FFMIN(skipcount + 1, MAX_RLE_SKIP);
+@@ -235,26 +237,27 @@ static void qtrle_encode_line(QtrleEncContext *s, AVFrame *p, int line, uint8_t
+ static int encode_frame(QtrleEncContext *s, AVFrame *p, uint8_t *buf)
+ {
+     int i;
+     int start_line = 0;
+     int end_line = s->avctx->height;
+     uint8_t *orig_buf = buf;
+ 
+     if (!s->frame.key_frame) {
++        unsigned line_size = s->avctx->width * s->pixel_size;
+         for (start_line = 0; start_line < s->avctx->height; start_line++)
+             if (memcmp(p->data[0] + start_line*p->linesize[0],
+-                       s->previous_frame.data[0] + start_line*p->linesize[0],
+-                       p->linesize[0]))
++                       s->previous_frame.data[0] + start_line*s->previous_frame.linesize[0],
++                       line_size))
+                 break;
+ 
+         for (end_line=s->avctx->height; end_line > start_line; end_line--)
+             if (memcmp(p->data[0] + (end_line - 1)*p->linesize[0],
+-                       s->previous_frame.data[0] + (end_line - 1)*p->linesize[0],
+-                       p->linesize[0]))
++                       s->previous_frame.data[0] + (end_line - 1)*s->previous_frame.linesize[0],
++                       line_size))
+                 break;
+     }
+ 
+     bytestream_put_be32(&buf, 0);                         // CHUNK SIZE, patched later
+ 
+     if ((start_line == 0 && end_line == s->avctx->height) || start_line == s->avctx->height)
+         bytestream_put_be16(&buf, 0);                     // header
+     else {
+
