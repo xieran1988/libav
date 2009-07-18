@@ -1,3 +1,9 @@
+ffmpeg-debian (4:0.5+svn20090609-1ubuntu1) karmic; urgency=low
+
+  * prepare new upload.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 18 Jul 2009 10:55:24 +0200
+
 ffmpeg-debian (4:0.5+svn20090609-1) unstable; urgency=low
 
   [ Andres Mejia ]
