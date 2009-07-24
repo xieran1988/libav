@@ -1,6 +1,10 @@
 ffmpeg-debian (4:0.5+svn20090609-1ubuntu1) karmic; urgency=low
 
-  * prepare new upload.
+  * merge from debian. Remaining changes:
+    - don't build-depend on libfaad-dev, disabling faad decoder.
+    - build arm vfp variant
+  * update gbp.conf
+  * move gbp.conf to debian/
 
  -- Reinhard Tartler <siretart@tauware.de>  Sat, 18 Jul 2009 10:55:24 +0200
 
