@@ -1,3 +1,10 @@
+ffmpeg-debian (4:0.5+svn20090609-1ubuntu2) karmic; urgency=low
+
+  * remove libopenjpeg-dev from build depends (fixes FTBFS)
+  * remove duplicate libxvmc-dev build-dependency
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 24 Jul 2009 21:53:47 +0200
+
 ffmpeg-debian (4:0.5+svn20090609-1ubuntu1) karmic; urgency=low
 
   * merge from debian. Remaining changes:
