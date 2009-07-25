@@ -75,7 +75,6 @@ confflags += --enable-avfilter-lavf
 confflags += --enable-bzlib
 # confflags += --enable-libdirac # Waiting for libdirac to enter Debian
 confflags += --enable-libgsm
-confflags += --enable-libopenjpeg
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
 confflags += --enable-libtheora
