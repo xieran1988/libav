@@ -88,7 +88,6 @@ confflags += $(extra_common_confflags)
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
 gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
 confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
-confflags += $(call cond_enable,/usr/include/faac.h,libfaac)
 gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
 confflags += $(call cond_enable,/usr/include/vdpau/vdpau.h,vdpau)
 
