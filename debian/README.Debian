@@ -1,3 +1,19 @@
+lintian override shlib-with-non-pic-codeshlib-with-non-pic-code
+==================================================================
+
+The lintian overrides for the non-pic shared libs error messages is not
+really a matter of silencing lintian. The general idea is that the
+override would serve as an indication that we know about the error
+message and we're avoiding any bug reports or complaints by others about
+the errors.
+
+We are aware that this override is too strict. It should only cover the
+i386 architecture, as we know that the upstream build system will
+produce PIC libraries where necessary. Only architectures like i386 will
+be built non-PIC, mainly for performance reasons.
+
+ -- Reinhard Tartler <siretart@tauware.de>, Mon, 27 Jul 2009 12:08:55 +0200
+
 FFmpeg package names
 ====================
 
