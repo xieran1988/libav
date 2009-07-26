@@ -1,5 +1,5 @@
-1) FFmpeg package names
-=======================
+FFmpeg package names
+====================
 
 The ffmpeg packaging has seen many renames in the course of its history.
 Looking for more stable names, the ffmpeg maintainers agreed on moving to
@@ -58,11 +58,11 @@ packages are:
   * If you disagree with the naming, please speak up on
     pkg-multimedia-maintainers@lists.alioth.debian.org
 
- -- Reinhard Tartler <siretart@tauware.de>, Fri,  3 Jul 2009 22:11:09 +0200
+ -- Reinhard Tartler <siretart@tauware.de>, Sun, 26 Jul 2009 10:38:10 +0200
 
 
-2) Disabled MPEG encoders
-=========================
+Disabled MPEG encoders
+======================
 
 On Debconf 7, the ffmpeg maintainers had a conversation with James Troup
 from the ftpteam about mpeg encoders in the ffmpeg package. The ftpteam
@@ -85,8 +85,8 @@ haven't heared back from the ftpteam about that idea.
  -- Reinhard Tartler <siretart@tauware.de>, Sun, 20 Apr 2008 08:43:23 +0200
 
 
-3) Further patent issues with ffmpeg
-====================================
+Further patent issues with ffmpeg
+=================================
 
 In addition to the aforementioned MPEG encoders, some patents related to
 ffmpeg which seem to be enforced against open source software cover the
@@ -103,8 +103,8 @@ libavformat. More details on these three issues are given in the following
 paragraphs:
 
 
-3.1) The MP3 audio coding format
-================================
+The MP3 audio coding format
+===========================
 
    Much has already been said about MP3 and the huge patent portfolio of
 the MPEG members, especially the Fraunhofer institute. Eric Scheirer's
@@ -117,8 +117,8 @@ covered in this document.
 [1.1] http://web.media.mit.edu/~eds/mpeg-patents-faq
 
 
-3.2) The AAC audio coding format
-================================
+The AAC audio coding format
+===========================
 
    Dolby's AAC (Advanced Audio Coding) is covered by patents owned by
 Dolby Laboratories, AT&T Laboratories, Fraunhofer Institute and Sony
@@ -146,8 +146,8 @@ completely legal and that Dolby cannot forbid such distribution.
 [2.5] http://www.hydrogenaudio.org/index.php?showtopic=310&
 
 
-3.3) The ASF file encapsulation format
-======================================
+The ASF file encapsulation format
+=================================
 
    Microsoft obtained a patent on the ASF (Active Stream Format) audio
 file format on March 21, 2000:
@@ -191,8 +191,8 @@ Microsoft.
 [3.4] http://swpat.ffii.org/patents/effects/asf/index.en.html
 
 
-4) License of the Debian ffmpeg packages
-========================================
+License of the Debian ffmpeg packages
+=====================================
 
 The license for the whole work is the GPL, not the LGPL, because GPL-only
 parts of ffmpeg were activated -- namely libpostproc, libswscale, x11grab and
@@ -200,8 +200,8 @@ parts of ffmpeg were activated -- namely libpostproc, libswscale, x11grab and
 comment out the appropriate line in debian/confflags.
 
 
-5) Differences with unofficial ffmpeg packages
-==============================================
+Differences with unofficial ffmpeg packages
+===========================================
 
    There are popular unofficial ffmpeg packages at the following URL:
 
