@@ -20,6 +20,7 @@ ifneq ($(DEB_SOURCE),ffmpeg-debian)
 DEB_BUILD_OPTIONS += ,internalencoders
 endif
 
+# Support multiple makes at once
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 NUMJOBS = -j$(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 else
@@ -71,11 +72,10 @@ clean-real:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp $(addprefix build-stamp-, $(FLAVORS)) \
-	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp
+	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp \
+	    build-doxy-stamp
 	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
-	dh_clean build-doxy-stamp EXTRA
-	dh_clean config-extra-includes.h debian/tmp.debhelper.log
-	dh_clean formats.txt
+	dh_clean
 
 get-orig-source:
 	dh_testdir
@@ -93,7 +93,7 @@ endef
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 	dh_installdirs -ptmp usr/share/doc/ffmpeg/html etc
 	dh_installdirs -ptmp usr/share/doc/ffmpeg-doc/html
 	$(foreach flavor,$(FLAVORS),$(call install_flavor,$(flavor)))

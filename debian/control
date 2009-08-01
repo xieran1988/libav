@@ -14,15 +14,17 @@ Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg-debian.git
 Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/ffmpeg-debian.git;a=summary
 Homepage: http://ffmpeg.org/
 Build-Depends-Indep: doxygen
-Build-Depends: debhelper (>= 6.0.7~),
+Build-Depends: debhelper (>= 7),
                libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+               libbz2-dev,
                libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                libfreetype6-dev,
                libgsm1-dev,
                libimlib2-dev,
+               libopenjpeg-dev,
                libraw1394-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
-               libsdl1.2-dev,
                libschroedinger-dev,
+               libsdl1.2-dev,
                libspeex-dev,
                libtheora-dev (>> 0.0.0.alpha4),
                libvorbis-dev,
@@ -30,9 +32,8 @@ Build-Depends: debhelper (>= 6.0.7~),
                libxext-dev,
                quilt,
                texi2html,
-               zlib1g-dev,
-               libxvmc-dev,
-               libbz2-dev
+               yasm [i386 amd64],
+               zlib1g-dev
 
 Package: ffmpeg
 Section: video

@@ -1,3 +1,41 @@
+ffmpeg-debian (4:0.5+svn20090609-2) unstable; urgency=low
+
+  [ Fabian Greffrath ]
+  * Remove .install files for unstripped packages that we do not build
+    from this branch anyway.
+  * Remove debian/fixup-config.sh which was only a hack needed to repair
+    the crippled config.h
+  * Finally remove strip.sh.
+
+  [ Andres Mejia ]
+  * Add vdpau support by including vdpau headers in deb packaging.
+    (Closes: #511544)
+  * Don't disable encoders if internalencoders is set in
+    DEB_BUILD_OPTIONS.
+  * Enable yasm for i386 and amd64.
+
+  [ Reinhard Tartler ]
+  * clarifications suggested by upstream in README.Source
+  * refresh patches
+
+  [ Fabian Greffrath ]
+  * Document the copyright notice and license for the VDPAU headers in
+    debian/copyright.
+  * Remove parallel make support from debian/confflags, it's overridden
+    in debian/rules anyway.
+  * Quote opts in debian/watch.
+  * Bump debhelper compat to 7.
+  * Clean up clean target in debian/rules in favour of debian/clean.
+  * Replace "dh_clean -k" by dh_prep.
+
+  [ Reinhard Tartler ]
+  * remove duplicated libxvmc-dev build dependency
+  * sort build dependencies alphabetically
+  * remove section numbering from README.Debian
+  * add note about the lintian override
+
+ -- Andres Mejia <mcitadel@gmail.com>  Mon, 06 Jul 2009 13:04:17 -0400
+
 ffmpeg-debian (4:0.5+svn20090609-1ubuntu3) karmic; urgency=low
 
   * do not forcefully enable objenjpeg, it is not avaiable in this build

@@ -25,11 +25,10 @@ Several complications have come along with the aforementioned measures:
 Nowadays, while the situation remains pretty unchanged with regard to
 the patent threat, the ffmpeg build system has seen a lot of
 improvements. It now provides the possibility to explicitly disable
-specific codecs from the libraries at configure time, allowing to remain
-free of patent encumbered codecs without the need to strip the source
-code anymore. The effect on the resulting binary packages would remain
-the same as before, i.e. Debian will not ship any patent encumbered
-encoders in its packages.
+specific codecs from the libraries at configure time, allowing disabling
+some patent encumbered codecs without the need to strip the source code.
+The effect on the resulting binary packages would remain the same as
+before.
 
 Regarding the source code, however, this would mean some significant
 improvements:

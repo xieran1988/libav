@@ -2,7 +2,7 @@ Fix build failures for the GNU Hurd OS
 ===================================================================
 --- a/configure
 +++ b/configure
-@@ -1642,6 +1642,9 @@
+@@ -1651,6 +1651,9 @@ case $target_os in
          ;;
      gnu/kfreebsd)
          ;;
