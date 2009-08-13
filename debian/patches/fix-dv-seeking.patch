@@ -1,0 +1,65 @@
+fix seeking in DIF (DV) movies, closes Bug: #540424
+
+Thanks to Dan Dennedy <dan@dennedy.org> for identifying the patch!
+
+------------------------------------------------------------------------
+r19192 | bcoudurier | 2009-06-15 00:34:28 +0200 (Mo, 15. Jun 2009) | 1 line
+
+check if frame size matches old sys and assumes corrupted input, fixes #1192
+------------------------------------------------------------------------
+
+--- a/libavcodec/dv.c
++++ b/libavcodec/dv.c
+@@ -1115,7 +1115,7 @@ static int dvvideo_decode_frame(AVCodecC
+ {
+     DVVideoContext *s = avctx->priv_data;
+ 
+-    s->sys = dv_frame_profile(buf);
++    s->sys = dv_frame_profile(s->sys, buf, buf_size);
+     if (!s->sys || buf_size < s->sys->frame_size || dv_init_dynamic_tables(s->sys))
+         return -1; /* NOTE: we only accept several full frames */
+ 
+--- a/libavcodec/dvdata.h
++++ b/libavcodec/dvdata.h
+@@ -698,7 +698,9 @@ enum dv_pack_type {
+  */
+ #define DV_MAX_BPM 8
+ 
+-static inline const DVprofile* dv_frame_profile(const uint8_t* frame)
++static inline
++const DVprofile* dv_frame_profile(const DVprofile *sys,
++                                  const uint8_t* frame, unsigned buf_size)
+ {
+    int i;
+ 
+@@ -715,6 +717,10 @@ static inline const DVprofile* dv_frame_
+        if (dsf == dv_profiles[i].dsf && stype == dv_profiles[i].video_stype)
+            return &dv_profiles[i];
+ 
++   /* check if old sys matches and assumes corrupted input */
++   if (sys && buf_size == sys->frame_size)
++       return sys;
++
+    return NULL;
+ }
+ 
+--- a/libavformat/dv.c
++++ b/libavformat/dv.c
+@@ -322,7 +322,7 @@ int dv_produce_packet(DVDemuxContext *c,
+     uint8_t *ppcm[4] = {0};
+ 
+     if (buf_size < DV_PROFILE_BYTES ||
+-        !(c->sys = dv_frame_profile(buf)) ||
++        !(c->sys = dv_frame_profile(c->sys, buf, buf_size)) ||
+         buf_size < c->sys->frame_size) {
+           return -1;   /* Broken frame, or not enough data */
+     }
+@@ -421,7 +421,7 @@ static int dv_read_header(AVFormatContex
+         url_fseek(s->pb, -DV_PROFILE_BYTES, SEEK_CUR) < 0)
+         return AVERROR(EIO);
+ 
+-    c->dv_demux->sys = dv_frame_profile(c->buf);
++    c->dv_demux->sys = dv_frame_profile(c->dv_demux->sys, c->buf, DV_PROFILE_BYTES);
+     if (!c->dv_demux->sys) {
+         av_log(s, AV_LOG_ERROR, "Can't determine profile of DV input stream.\n");
+         return -1;
