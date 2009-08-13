@@ -79,8 +79,6 @@ clean-real:
 
 get-orig-source:
 	dh_testdir
-	# strip patented code
-	chmod +x debian/strip.sh
 	sh debian/get-orig-source.sh -d $(SVN_VERSION)
 
 # The trailing newline is important!

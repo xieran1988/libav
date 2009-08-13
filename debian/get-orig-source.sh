@@ -66,7 +66,7 @@ if [ -z $SVNDATE ]; then
 	error "you need to specify an svn date. e.g. 20081230 for Dec 29. 2008"
 fi
 
-TARBALL=../ffmpeg-debian_0.5+svn${SVNDATE}.orig.tar.gz
+TARBALL=../ffmpeg_0.5+svn${SVNDATE}.orig.tar.gz
 PACKAGENAME=ffmpeg
 
 TMPDIR=`mktemp -d`
