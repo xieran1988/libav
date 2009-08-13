@@ -116,9 +116,6 @@ endif
 
 # Configuration flags for the static libraries
 static_build_confflags += $(confflags)
-static_build_confflags += --disable-ffmpeg
-static_build_confflags += --disable-ffserver
-static_build_confflags += --disable-ffplay
 
 # Configuration flags for the non-optimized shared libraries
 shared_build_confflags += $(confflags)
