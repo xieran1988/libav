@@ -22,29 +22,10 @@ Fetch and commit the new upstream version:
 
   debian/rules get-orig-source SVN_VERSION=${SVNDATE}
   git-import-orig \
-            --debian-branch=master \
-            --upstream-branch=upstream \
-            --pristine-tar \
 	    --no-dch \
             --upstream-tag=upstream/0.5+svn${SVNDATE} \
             --upstream-version=0.5+svn${SVNDATE} \
-            ../ffmpeg-debian_0.5+svn${SVNDATE}.orig.tar.gz
-
-  # ffmpeg (formerly ffmpeg-debian) and ffmpeg-extra share the same tarball now
-  cp ../ffmpeg-debian_0.5+svn${SVNDATE}.orig.tar.gz \
-     ../ffmpeg_0.5+svn${SVNDATE}.orig.tar.gz
-
-  git checkout master.unstripped
-  git-import-orig \
-            --debian-branch=master.unstripped \
-            --upstream-branch=upstream.unstripped \
-            --pristine-tar \
-	    --no-dch \
-            --upstream-tag=upstream.unstripped/0.5+svn${SVNDATE} \
-            --upstream-version=0.5+svn${SVNDATE} \
             ../ffmpeg_0.5+svn${SVNDATE}.orig.tar.gz
-
-  git checkout master
 
 Check and note the svn revision numbers from
 ffmpeg/{libswscale,}.svnrevision in debian/changelog
@@ -59,11 +40,3 @@ Build, test, and compare against the the version already in the archive:
   - formats.txt in the libavcodecs package
 
 Finialize debian/changelog, package should be upload ready now
-
-Merge improvements and changes from master branch to master.unstripped:
-
-  git checkout master.unstripped
-  git merge master
-
-Resolve the conflicts, hopefully the only conflict is in debian/changelog
-   NB: libavcodec/allcodecs.c must match upstream.unstripped!
