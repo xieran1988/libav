@@ -1,3 +1,23 @@
+ffmpeg (4:0.5+svn20090706-1) unstable; urgency=low
+
+  * preparing new upstream version, 0.5 release branch, rev 19352
+    - this version is capable of compiling swscale in LGPL mode
+  * rename source package back
+    - The replacement package with the 'missing bits' will be called
+      'ffmpeg-extra'
+    - simplify README.upstream-upgrade
+    - rename the source package from 'ffmpeg-debian' -> 'ffmpeg'
+  * fix aac playback regression, thanks to Matthew Wakeling for reporting
+     (Closes: #540729)
+  * fix seeking in DIF (DV) movies
+     Thanks to Dan Dennedy for identifying the patch! (Closes: #540424)
+  * debian/rules:
+    - merge cond_enable_nf macro from master.extra branch
+    - don't disable ffserver in various optimized variants
+    - don't disable building of statically linked helper binaries
+
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 13 Aug 2009 12:48:27 +0200
+
 ffmpeg-debian (4:0.5+svn20090609-2) unstable; urgency=low
 
   [ Fabian Greffrath ]
@@ -34,7 +54,7 @@ ffmpeg-debian (4:0.5+svn20090609-2) unstable; urgency=low
   * remove section numbering from README.Debian
   * add note about the lintian override
 
- -- Andres Mejia <mcitadel@gmail.com>  Mon, 06 Jul 2009 13:04:17 -0400
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 13 Aug 2009 12:46:46 +0200
 
 ffmpeg-debian (4:0.5+svn20090609-1ubuntu3) karmic; urgency=low
 

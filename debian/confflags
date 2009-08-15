@@ -42,6 +42,11 @@ define cond_enable
 	$(shell test -r $(1) && echo --enable-$(2) )
 endef
 
+# variant that also require --enable-nonfree
+define cond_enable_nf
+	$(shell test -r $(1) && echo --enable-$(2) --enable-nonfree )
+endef
+
 # Configuration flags causing the libs to be GPL tainted
 gpl_confflags += --enable-gpl
 gpl_confflags += --enable-postproc
@@ -89,6 +94,13 @@ gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
 confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
 
+confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
+confflags += $(call cond_enable_nf,/usr/include/amrnb/sp_dec.h,libamr-nb)
+confflags += $(call cond_enable_nf,/usr/include/amrwb/dec.h,libamr-wb)
+
+# AAC is considered non-free upstream
+confflags += $(call cond_enable_nf,/usr/include/faac.h,libfaac)
+
 # comment out following line for LGPL versions of the libraries
 confflags += $(gpl_confflags)
 
@@ -113,9 +125,6 @@ endif
 
 # Configuration flags for the static libraries
 static_build_confflags += $(confflags)
-static_build_confflags += --disable-ffmpeg
-static_build_confflags += --disable-ffserver
-static_build_confflags += --disable-ffplay
 
 # Configuration flags for the non-optimized shared libraries
 shared_build_confflags += $(confflags)

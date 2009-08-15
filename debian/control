@@ -1,4 +1,4 @@
-Source: ffmpeg-debian
+Source: ffmpeg
 Section: libs
 Priority: optional
 Maintainer: Ubuntu Core Developers <ubuntu-devel-discuss@lists.ubuntu.com>
