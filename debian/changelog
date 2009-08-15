@@ -1,3 +1,12 @@
+ffmpeg (4:0.5+svn20090706-1ubuntu1) karmic; urgency=low
+
+  * merge from debian. Remaining changes:
+    - don't build-depend on libfaad-dev, disabling faad decoder.
+    - build arm vfp variant
+    - don't build libopenjpeg support (not in main)
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 15 Aug 2009 18:18:23 +0200
+
 ffmpeg (4:0.5+svn20090706-1) unstable; urgency=low
 
   * preparing new upstream version, 0.5 release branch, rev 19352
