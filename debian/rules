@@ -13,7 +13,7 @@ ifeq ($(SVN_VERSION),)
 $(error UPSTREAM_VERSION: $(UPSTREAM_VERSION) - but SVN_VERSION is empty! - check debian/rules)
 endif
 
-LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-unstripped-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
+LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-extra-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 
 # we don't need to strip if we are not building the package ffmpeg-debian
 ifneq ($(DEB_SOURCE),ffmpeg-debian)
@@ -127,7 +127,7 @@ binary-arch: build install formats.txt
 	dh_installdocs -A debian/README.Debian
 	dh_installdocs RELEASE
 ifeq ($(DEB_SOURCE),ffmpeg)
-	dh_installdocs -p libavcodec-unstripped-52 formats.txt
+	dh_installdocs -p libavcodec-extra-52 formats.txt
 else
 	dh_installdocs -p libavcodec52 formats.txt
 endif
@@ -146,7 +146,7 @@ endif
 # strict internal dependencies
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \
-	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-unstripped-\1/'); \
+	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-extra-\1/'); \
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(EPOCH)$(UPSTREAM_VERSION)) | $$upkg (>= $(EPOCH)$(UPSTREAM_VERSION)), $$pkg (< $(EPOCH)$(UPSTREAM_VERSION)-99) | $$upkg (< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
 	done
 else
@@ -159,7 +159,7 @@ endif
 # target dependencies for external packages
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \
-	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-unstripped-\1/'); \
+	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-extra-\1/'); \
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION)) | $$upkg (>= $(SHLIBS_VERSION))"; \
 	done
 else
