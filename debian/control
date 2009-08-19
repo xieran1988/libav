@@ -33,7 +33,6 @@ Build-Depends: debhelper (>= 7),
                libxvmc-dev,
                quilt,
                texi2html,
-               yasm [i386 amd64],
                zlib1g-dev
 
 Package: ffmpeg
