@@ -1,21 +1,11 @@
-ffmpeg (4:0.5+svn20090706-1ubuntu1~ppa2) karmic; urgency=low
-
-  * change shlibs file to make applications depend on the -extra- packages
-
- -- Reinhard Tartler <siretart@tauware.de>  Wed, 19 Aug 2009 19:11:07 +0200
-
-ffmpeg (4:0.5+svn20090706-1ubuntu1~ppa1) karmic; urgency=low
-
-  * motumedia test upload
-
- -- Reinhard Tartler <siretart@tauware.de>  Sat, 15 Aug 2009 18:22:09 +0200
-
 ffmpeg (4:0.5+svn20090706-1ubuntu1) karmic; urgency=low
 
   * merge from debian. Remaining changes:
     - don't build-depend on libfaad-dev, disabling faad decoder.
     - build arm vfp variant
     - don't build libopenjpeg support (not in main)
+  * change shlibs file to make applications depend on the -extra- packages.
+  * don't build depend on yasm.
 
  -- Reinhard Tartler <siretart@tauware.de>  Sat, 15 Aug 2009 18:18:23 +0200
 
