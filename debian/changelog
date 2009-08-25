@@ -1,3 +1,10 @@
+ffmpeg (4:0.5+svn20090706-1ubuntu3) karmic; urgency=low
+
+  * update the dependencies of the -dev packages for the
+    unstripped -> extra renaming
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 25 Aug 2009 16:37:23 +0200
+
 ffmpeg (4:0.5+svn20090706-1ubuntu2) karmic; urgency=low
 
   * really drop libopenjpeg from build depends.
