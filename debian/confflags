@@ -73,7 +73,6 @@ confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf
 confflags += --enable-vdpau
 confflags += --enable-bzlib
-confflags += --enable-libdirac
 confflags += --enable-libgsm
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
