@@ -1,13 +1,9 @@
 # -*- mode: makefile -*-
 # vim:syntax=make
 #
-# build a static version on every architecture in the ffmpeg-debian package
-ifeq ($(DEB_SOURCE),ffmpeg-debian)
+# build a static version on every architecture in the 'debian' ffmpeg package
 FLAVORS += static
-else ifneq (,$(shell cat debian/control | grep -m 1 -e '^Package: .*-dev$$'))
-# always build static library if we're building dev packages
-FLAVORS += static
-endif
+
 # shared is generic, i.e. without arch specific opcodes
 FLAVORS += shared
 
