@@ -1,14 +1,15 @@
-ffmpeg (4:0.5+svn20090706-2ubuntu1~ppa3) karmic; urgency=low
+ffmpeg (4:0.5+svn20090706-2ubuntu1) karmic; urgency=low
 
-  * loosen dependencies further
+  * merge from debian. Remaining changes:
+    - disabled output decoders: faad, openjpeg, dirac (all not in main)
+    - build arm vfp variant
+    - don't build depend on yasm.
+  * fix dependencies on -extra packages: LP: #418705, #416348
+  * no need to remove mpeg encoders in the ubuntu package, unless we hear
+    otherwise from some patent owner. This brings back the mpeg2video
+    encoder is available. cf. formats.txt.gz LP: #416585
 
- -- Reinhard Tartler <siretart@tauware.de>  Wed, 26 Aug 2009 10:50:45 +0200
-
-ffmpeg (4:0.5+svn20090706-2ubuntu1~ppa2) karmic; urgency=low
-
-  * test upload to ppa
-
- -- Reinhard Tartler <siretart@tauware.de>  Wed, 26 Aug 2009 09:53:23 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Wed, 26 Aug 2009 11:20:03 +0200
 
 ffmpeg (4:0.5+svn20090706-2) unstable; urgency=low
 
