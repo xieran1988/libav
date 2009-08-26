@@ -15,11 +15,6 @@ endif
 
 LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-extra-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 
-# we don't need to strip if we are not building the package ffmpeg-debian
-ifneq ($(DEB_SOURCE),ffmpeg-debian)
-DEB_BUILD_OPTIONS += ,internalencoders
-endif
-
 # Support multiple makes at once
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 NUMJOBS = -j$(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
@@ -100,23 +95,14 @@ install: build
 	[ ! -d doxy ] || cp doxy/html/* debian/tmp/usr/share/doc/ffmpeg-doc/html
 	install -m 644 -D doc/ffserver.conf debian/tmp/etc/
 	install -m 644 -D debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
-ifneq ($(DEB_SOURCE),ffmpeg-debian)
-	dh_install -Xusr/share/doc/ffmpeg-doc -Xusr/share/doc/ffmpeg \
-		--list-missing --sourcedir=debian/tmp
-else
 	dh_install -Xusr/share/doc/ffmpeg-doc -Xusr/share/doc/ffmpeg \
 		--fail-missing --sourcedir=debian/tmp
-endif
 
 formats.txt: install
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
 	debian/tmp/usr/bin/ffmpeg -formats | tee $@
 
-ifneq ($(DEB_SOURCE),ffmpeg-debian)
-binary-indep: install
-else
 binary-indep: build-doxy install
-endif
 
 binary-arch: build install formats.txt
 	dh_testdir
@@ -126,11 +112,7 @@ binary-arch: build install formats.txt
 	dh_installdocs -A MAINTAINERS CREDITS doc/TODO
 	dh_installdocs -A debian/README.Debian
 	dh_installdocs RELEASE
-ifeq ($(DEB_SOURCE),ffmpeg)
-	dh_installdocs -p libavcodec-extra-52 formats.txt
-else
 	dh_installdocs -p libavcodec52 formats.txt
-endif
 	dh_installexamples -pffmpeg doc/ffserver.conf debian/recordshow.sh
 	dh_installexamples -plibavcodec-dev libavcodec/apiexample.c
 	dh_installchangelogs Changelog
@@ -138,35 +120,20 @@ endif
 	dh_link
 	dh_compress
 	dh_fixperms
-ifneq ($(DEB_SOURCE),ffmpeg-debian)
-	dh_strip
-else
 	dh_strip --dbg-package=ffmpeg-dbg
-endif
+
 # strict internal dependencies
-ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-extra-\1/'); \
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(EPOCH)$(UPSTREAM_VERSION)) | $$upkg (>= $(EPOCH)$(UPSTREAM_VERSION)), $$pkg (< $(EPOCH)$(UPSTREAM_VERSION)-99) | $$upkg (< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
 	done
-else
-	for pkg in $(LIB_PKGS); do \
-	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(EPOCH)$(UPSTREAM_VERSION)), $$pkg (< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
-	done
-endif
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
 	dh_shlibdeps
 # target dependencies for external packages
-ifeq ($(DEB_SOURCE),ffmpeg-debian)
 	for pkg in $(LIB_PKGS); do \
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-extra-\1/'); \
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION)) | $$upkg (>= $(SHLIBS_VERSION))"; \
 	done
-else
-	for pkg in $(LIB_PKGS); do \
-	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION))"; \
-	done
-endif
 	dh_installdeb
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"
 	dh_md5sums

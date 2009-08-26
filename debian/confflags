@@ -1,15 +1,11 @@
 # -*- mode: makefile -*-
 # vim:syntax=make
 #
-# build a static version on every architecture in the ffmpeg-debian package
+# build a static version on every architecture in the 'debian' ffmpeg package
+FLAVORS += static
+
 # shared is generic, i.e. without arch specific opcodes
-FLAVORS := shared
-ifeq ($(DEB_SOURCE),ffmpeg-debian)
-FLAVORS += static
-else ifneq (,$(shell cat debian/control | grep -m 1 -e '^Package: .*-dev$$'))
-# always build static library if we're building dev packages
-FLAVORS += static
-endif
+FLAVORS += shared
 
 export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
@@ -77,7 +73,7 @@ confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf
 confflags += --enable-vdpau
 confflags += --enable-bzlib
-# confflags += --enable-libdirac # Waiting for libdirac to enter Debian
+confflags += --enable-libdirac
 confflags += --enable-libgsm
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
