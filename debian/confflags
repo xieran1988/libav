@@ -2,14 +2,14 @@
 # vim:syntax=make
 #
 # build a static version on every architecture in the ffmpeg-debian package
-# shared is generic, i.e. without arch specific opcodes
-FLAVORS := shared
 ifeq ($(DEB_SOURCE),ffmpeg-debian)
 FLAVORS += static
 else ifneq (,$(shell cat debian/control | grep -m 1 -e '^Package: .*-dev$$'))
 # always build static library if we're building dev packages
 FLAVORS += static
 endif
+# shared is generic, i.e. without arch specific opcodes
+FLAVORS += shared
 
 export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
