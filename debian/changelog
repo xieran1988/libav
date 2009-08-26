@@ -1,6 +1,15 @@
 ffmpeg (4:0.5+svn20090706-2) unstable; urgency=low
 
+  [ Fabian Greffrath ]
+  * Enable support for libdirac, now that it has entered Debian.
+
+  [ Andres Mejia ]
+  * Fix ordering of FLAVORS that are installed. (Closes: #543595)
+
+  [ Reinhard Tartler ]
   * prepare new upload
+  * simply debian/confflags by removing the case of renaming the source
+    package
 
  -- Reinhard Tartler <siretart@tauware.de>  Wed, 26 Aug 2009 09:12:49 +0200
 
