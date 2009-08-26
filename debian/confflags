@@ -1,8 +1,8 @@
 # -*- mode: makefile -*-
 # vim:syntax=make
-#
+
 # build a static version on every architecture in the 'debian' ffmpeg package
-FLAVORS += static
+FLAVORS := static
 
 # shared is generic, i.e. without arch specific opcodes
 FLAVORS += shared
@@ -60,10 +60,8 @@ disable_encoders += --disable-encoder=msmpeg4v1
 disable_encoders += --disable-encoder=msmpeg4v2
 disable_encoders += --disable-encoder=msmpeg4v3
 
-# don't disable encoders if internalencoders is set in DEB_BUILD_OPTIONS
-ifeq (,$(filter internalencoders,$(DEB_BUILD_OPTIONS)))
+# Comment out the following line to *not* disable the above encoders
 confflags += $(disable_encoders)
-endif
 
 # Common configuration flags
 confflags += --extra-version='$(DEB_VERSION)'
