@@ -146,7 +146,7 @@ Description: ffmpeg video scaling library
 Package: libavutil-dev
 Section: libdevel
 Architecture: any
-Depends: libavutil49 (>= ${binary:Version}) | libavutil-extra-49 (>= ${binary:Version}),
+Depends: libavutil49 (>= ${binary:Version}) | libavutil-extra-49 (>= ${source:Upstream-Version}),
          libavutil49 (<= ${source:Upstream-Version}-99) | libavutil-extra-49 (<= ${source:Upstream-Version}-99)
 Description: development files for libavutil
  This is the common utility library from the ffmpeg project. It is required
@@ -158,7 +158,7 @@ Description: development files for libavutil
 Package: libavcodec-dev
 Section: libdevel
 Architecture: any
-Depends: libavcodec52 (>= ${binary:Version}) | libavcodec-extra-52 (>= ${binary:Version}),
+Depends: libavcodec52 (>= ${binary:Version}) | libavcodec-extra-52 (>= ${source:Upstream-Version}),
          libavcodec52 (<= ${source:Upstream-Version}-99) | libavcodec-extra-52 (<= ${source:Upstream-Version}-99),
          libavutil-dev (= ${binary:Version})
 Suggests: libfaad-dev,
@@ -182,7 +182,7 @@ Description: development files for libavcodec
 Package: libavdevice-dev
 Section: libdevel
 Architecture: any
-Depends: libavdevice52 (>= ${binary:Version}) | libavdevice-extra-52 (>= ${binary:Version}),
+Depends: libavdevice52 (>= ${binary:Version}) | libavdevice-extra-52 (>= ${source:Upstream-Version}),
          libavdevice52 (<= ${source:Upstream-Version}-99) | libavdevice-extra-52 (<= ${source:Upstream-Version}-99),
          libavformat-dev (= ${binary:Version})
 Description: development files for libavdevice
@@ -194,7 +194,7 @@ Description: development files for libavdevice
 Package: libavformat-dev
 Section: libdevel
 Architecture: any
-Depends: libavformat52 (>= ${binary:Version}) | libavformat-extra-52 (>= ${binary:Version}),
+Depends: libavformat52 (>= ${binary:Version}) | libavformat-extra-52 (>= ${source:Upstream-Version}),
          libavformat52 (<= ${source:Upstream-Version}-99) | libavformat-extra-52 (<= ${source:Upstream-Version}-99),
          libavcodec-dev (= ${binary:Version})
 Description: development files for libavformat
@@ -207,7 +207,7 @@ Description: development files for libavformat
 Package: libavfilter-dev
 Section: libdevel
 Architecture: any
-Depends: libavfilter0 (>= ${binary:Version}) | libavfilter-extra-0 (>= ${binary:Version}),
+Depends: libavfilter0 (>= ${binary:Version}) | libavfilter-extra-0 (>= ${source:Upstream-Version}),
          libavfilter0 (<= ${source:Upstream-Version}-99) | libavfilter-extra-0 (<= ${source:Upstream-Version}-99),
          libavcodec-dev (= ${binary:Version})
 Description: development files for libavfilter
@@ -219,7 +219,7 @@ Description: development files for libavfilter
 Package: libpostproc-dev
 Section: libdevel
 Architecture: any
-Depends: libpostproc51 (>= ${binary:Version}) | libpostproc-extra-51 (>= ${binary:Version}),
+Depends: libpostproc51 (>= ${binary:Version}) | libpostproc-extra-51 (>= ${source:Upstream-Version}),
          libpostproc51 (<= ${source:Upstream-Version}-99) | libpostproc-extra-51 (<= ${source:Upstream-Version}-99),
          libavutil-dev (= ${binary:Version})
 Description: development files for libpostproc
@@ -231,7 +231,7 @@ Description: development files for libpostproc
 Package: libswscale-dev
 Section: libdevel
 Architecture: any
-Depends: libswscale0 (>= ${binary:Version}) | libswscale-extra-0 (>= ${binary:Version}),
+Depends: libswscale0 (>= ${binary:Version}) | libswscale-extra-0 (>= ${source:Upstream-Version}),
          libswscale0 (<= ${source:Upstream-Version}-99) | libswscale-extra-0 (<= ${source:Upstream-Version}-99),
          libavutil-dev (= ${binary:Version})
 Description: development files for libswscale
