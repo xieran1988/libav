@@ -1,3 +1,9 @@
+ffmpeg (4:0.5+svn20090706-3) UNRELEASED; urgency=low
+
+  * Prepare new release.
+
+ -- Andres Mejia <mcitadel@gmail.com>  Sat, 05 Sep 2009 11:35:29 -0400
+
 ffmpeg (4:0.5+svn20090706-2) unstable; urgency=low
 
   [ Fabian Greffrath ]
