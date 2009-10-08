@@ -20,8 +20,7 @@ ifeq      ($(DEB_HOST_ARCH),armel)
 nooptflags += --enable-armv6 --disable-armv6t2
 nooptflags += --enable-armvfp --disable-neon
 #FLAVORS += vfp
-# disabled for now as NEON support deadlocks the Babbage
-#FLAVORS += neon
+FLAVORS += neon
 else ifeq ($(DEB_HOST_ARCH),arm)
 nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2
 nooptflags += --disable-armvfp --disable-neon
