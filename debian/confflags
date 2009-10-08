@@ -131,10 +131,13 @@ vfp_build_confflags += --disable-static
 vfp_build_confflags += --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
 vfp_build_confflags += --disable-ffmpeg
 vfp_build_confflags += --disable-ffplay
+# NB: NEON always implies v7+ and ffmpeg's NEON implementation requires VFP
 neon_build_confflags += $(confflags)
-neon_build_confflags += --shlibdir=/usr/lib/neon
+neon_build_confflags += --shlibdir=/usr/lib/neon/vfp
 neon_build_confflags += --enable-neon
+neon_build_confflags += --enable-armvfp
 neon_build_confflags += --enable-shared
+neon_build_confflags += --extra-cflags="-mfpu=neon -mfloat-abi=softfp"
 neon_build_confflags += --disable-static
 neon_build_confflags += --disable-ffmpeg
 neon_build_confflags += --disable-ffplay
