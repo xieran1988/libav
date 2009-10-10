@@ -10,3 +10,26 @@ issue1245.patch
 # fpic-ftbfs-fix.patch
 # fpic-libpostproc-fix.patch
 # fpic-libswscale-fix.patch
+
+# NEON backport
+neon/0001-ARM-NEON-optimised-add_pixels_clamped.patch
+neon/0002-ARM-NEON-optimized-put_signed_pixels_clamped.patch
+neon/0003-Add-guaranteed-alignment-for-loading-dest-pixels-in-.patch
+neon/0004-Reorganise-intreadwrite.h.patch
+neon/0005-ARM-asm-for-AV_RN.patch
+neon/0006-ARM-NEON-put_pixels_clamped.patch
+neon/0007-ARM-Use-fewer-register-in-NEON-put_pixels-_y2-and-_x.patch
+neon/0008-ARM-NEON-VP3-Loop-Filter.patch
+neon/0009-ARM-actually-add-VP3-loop-filter.patch
+neon/0010-ARM-add-some-PLD-in-NEON-IDCT.patch
+neon/0011-ARM-slightly-faster-NEON-H264-horizontal-loop-filter.patch
+neon/0012-ARM-enable-fast_unaligned-when-cpu-armv-67-is-specif.patch
+neon/0013-ARM-NEON-VP3-IDCT.patch
+neon/0014-ARM-NEON-optimised-vorbis_inverse_coupling.patch
+neon/0015-ARM-handle-VFP-register-arguments-in-ff_vector_fmul_.patch
+neon/0016-ARM-NEON-optimised-FFT-and-MDCT.patch
+neon/0017-ARM-faster-NEON-IMDCT.patch
+neon/0018-Prepare-for-optimised-forward-MDCT-implementations.patch
+neon/0019-ARM-NEON-optimised-MDCT.patch
+neon/0020-ARM-remove-unnecessary-.fpu-neon-directives.patch
+neon/0021-ARM-check-for-VFP-register-arguments.patch

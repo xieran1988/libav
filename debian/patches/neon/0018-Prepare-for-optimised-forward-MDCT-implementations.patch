@@ -1,0 +1,86 @@
+From 696f65e4e5d92a8777d922269558cc9f03ca1145 Mon Sep 17 00:00:00 2001
+From: mru <mru@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Fri, 11 Sep 2009 02:24:19 +0000
+Subject: [PATCH 18/27] Prepare for optimised forward MDCT implementations
+
+This adds a function pointer for forward MDCT to FFTContext and
+initialises it with the existing C function.  ff_calc_mdct() is
+changed to an inline function calling the selected version as
+done for other fft/mdct functions.
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19818 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+ libavcodec/dsputil.h |    9 ++++++++-
+ libavcodec/fft.c     |    1 +
+ libavcodec/mdct.c    |    2 +-
+ 3 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/dsputil.h b/libavcodec/dsputil.h
+index c4abd14..e299ade 100644
+--- a/libavcodec/dsputil.h
++++ b/libavcodec/dsputil.h
+@@ -680,6 +680,7 @@ typedef struct FFTContext {
+     void (*fft_calc)(struct FFTContext *s, FFTComplex *z);
+     void (*imdct_calc)(struct MDCTContext *s, FFTSample *output, const FFTSample *input);
+     void (*imdct_half)(struct MDCTContext *s, FFTSample *output, const FFTSample *input);
++    void (*mdct_calc)(struct MDCTContext *s, FFTSample *output, const FFTSample *input);
+ } FFTContext;
+ 
+ extern FFTSample* ff_cos_tabs[13];
+@@ -737,6 +738,12 @@ static inline void ff_imdct_half(MDCTContext *s, FFTSample *output, const FFTSam
+     s->fft.imdct_half(s, output, input);
+ }
+ 
++static inline void ff_mdct_calc(MDCTContext *s, FFTSample *output,
++                                const FFTSample *input)
++{
++    s->fft.mdct_calc(s, output, input);
++}
++
+ /**
+  * Generate a Kaiser-Bessel Derived Window.
+  * @param   window  pointer to half window
+@@ -762,6 +769,7 @@ extern float *ff_sine_windows[6];
+ int ff_mdct_init(MDCTContext *s, int nbits, int inverse);
+ void ff_imdct_calc_c(MDCTContext *s, FFTSample *output, const FFTSample *input);
+ void ff_imdct_half_c(MDCTContext *s, FFTSample *output, const FFTSample *input);
++void ff_mdct_calc_c(MDCTContext *s, FFTSample *output, const FFTSample *input);
+ void ff_imdct_calc_3dn(MDCTContext *s, FFTSample *output, const FFTSample *input);
+ void ff_imdct_half_3dn(MDCTContext *s, FFTSample *output, const FFTSample *input);
+ void ff_imdct_calc_3dn2(MDCTContext *s, FFTSample *output, const FFTSample *input);
+@@ -770,7 +778,6 @@ void ff_imdct_calc_sse(MDCTContext *s, FFTSample *output, const FFTSample *input
+ void ff_imdct_half_sse(MDCTContext *s, FFTSample *output, const FFTSample *input);
+ void ff_imdct_calc_neon(MDCTContext *s, FFTSample *output, const FFTSample *input);
+ void ff_imdct_half_neon(MDCTContext *s, FFTSample *output, const FFTSample *input);
+-void ff_mdct_calc(MDCTContext *s, FFTSample *out, const FFTSample *input);
+ void ff_mdct_end(MDCTContext *s);
+ 
+ /* Real Discrete Fourier Transform */
+diff --git a/libavcodec/fft.c b/libavcodec/fft.c
+index b05ddda..655acd3 100644
+--- a/libavcodec/fft.c
++++ b/libavcodec/fft.c
+@@ -86,6 +86,7 @@ av_cold int ff_fft_init(FFTContext *s, int nbits, int inverse)
+     s->fft_calc    = ff_fft_calc_c;
+     s->imdct_calc  = ff_imdct_calc_c;
+     s->imdct_half  = ff_imdct_half_c;
++    s->mdct_calc   = ff_mdct_calc_c;
+     s->exptab1     = NULL;
+ 
+ #if HAVE_MMX && HAVE_YASM
+diff --git a/libavcodec/mdct.c b/libavcodec/mdct.c
+index cb3388f..b0816b0 100644
+--- a/libavcodec/mdct.c
++++ b/libavcodec/mdct.c
+@@ -179,7 +179,7 @@ void ff_imdct_calc_c(MDCTContext *s, FFTSample *output, const FFTSample *input)
+  * @param input N samples
+  * @param out N/2 samples
+  */
+-void ff_mdct_calc(MDCTContext *s, FFTSample *out, const FFTSample *input)
++void ff_mdct_calc_c(MDCTContext *s, FFTSample *out, const FFTSample *input)
+ {
+     int i, j, n, n8, n4, n2, n3;
+     FFTSample re, im;
+-- 
+1.6.3.3
+
