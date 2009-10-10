@@ -16,9 +16,9 @@ SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 # the other flavors always build dynamic versions
 # Also, disable architecture-specific optimizations for default shared build
 ifeq      ($(DEB_HOST_ARCH),armel)
-# Ubuntu karmic and later assume v6 + VFP
-nooptflags += --enable-armv6 --disable-armv6t2
-nooptflags += --enable-armvfp --disable-neon
+# Ubuntu karmic and later assume v6 + VFP; just override CPU since it defaults
+# to uname -m
+nooptflags += --cpu=armv6 --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
 #FLAVORS += vfp
 FLAVORS += neon
 else ifeq ($(DEB_HOST_ARCH),arm)
@@ -134,10 +134,9 @@ vfp_build_confflags += --disable-ffplay
 # NB: NEON always implies v7+ and ffmpeg's NEON implementation requires VFP
 neon_build_confflags += $(confflags)
 neon_build_confflags += --shlibdir=/usr/lib/neon/vfp
-neon_build_confflags += --enable-neon
-neon_build_confflags += --enable-armvfp
-neon_build_confflags += --enable-shared
+neon_build_confflags += --cpu=armv7-a
 neon_build_confflags += --extra-cflags="-mfpu=neon -mfloat-abi=softfp"
+neon_build_confflags += --enable-shared
 neon_build_confflags += --disable-static
 neon_build_confflags += --disable-ffmpeg
 neon_build_confflags += --disable-ffplay
