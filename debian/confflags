@@ -135,7 +135,7 @@ vfp_build_confflags += --disable-ffplay
 neon_build_confflags += $(confflags)
 neon_build_confflags += --shlibdir=/usr/lib/neon/vfp
 neon_build_confflags += --cpu=armv7-a
-neon_build_confflags += --extra-cflags="-mfpu=neon -mfloat-abi=softfp"
+neon_build_confflags += --extra-cflags="-mfpu=neon -mfloat-abi=softfp -fPIC -DPIC"
 neon_build_confflags += --enable-shared
 neon_build_confflags += --disable-static
 neon_build_confflags += --disable-ffmpeg
