@@ -1,0 +1,29 @@
+------------------------------------------------------------------------
+r19319 | michael | 2009-07-01 20:50:31 +0200 (Mi, 01. Jul 2009) | 3 lines
+
+Make arguments of av_set_pts_info() unsigned.
+Fixes issue1240/mpeg1/smclockmpeg1.avi.3.1
+
+
+--- a/libavformat/avformat.h
++++ b/libavformat/avformat.h
+@@ -1035,7 +1035,7 @@ AVChapter *ff_new_chapter(AVFormatContex
+  * @param pts_den denominator to convert to seconds (MPEG: 90000)
+  */
+ void av_set_pts_info(AVStream *s, int pts_wrap_bits,
+-                     int pts_num, int pts_den);
++                     unsigned int pts_num, unsigned int pts_den);
+ 
+ #define AVSEEK_FLAG_BACKWARD 1 ///< seek backward
+ #define AVSEEK_FLAG_BYTE     2 ///< seeking based on position in bytes
+--- a/libavformat/utils.c
++++ b/libavformat/utils.c
+@@ -3286,7 +3286,7 @@ char *ff_data_to_hex(char *buff, const u
+ }
+ 
+ void av_set_pts_info(AVStream *s, int pts_wrap_bits,
+-                     int pts_num, int pts_den)
++                     unsigned int pts_num, unsigned int pts_den)
+ {
+     unsigned int gcd= av_gcd(pts_num, pts_den);
+     s->pts_wrap_bits = pts_wrap_bits;
