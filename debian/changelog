@@ -1,8 +1,21 @@
 ffmpeg (4:0.5+svn20090706-2ubuntu2) karmic; urgency=low
 
-  * prepare new upload
+  [ Reinhard Tartler ]
+  * Make arguments of av_set_pts_info() unsigned.
+  * update debian/changelog
+  * use patch for issue1245 from git.ffmpeg.org
+  * Support constant-quant encoding for libtheora, LP: #356322
+  * increase swscale compile time width (VOF/VOFW), LP: #443264
 
- -- Reinhard Tartler <siretart@tauware.de>  Tue, 13 Oct 2009 23:12:37 +0200
+  [ Loïc Minier ]
+  * Update config for karmic's armel toolchain.
+  * Enable neon flavour; LP: #383240.
+  * Update NEON confflags to assume v7 and VFP.
+  * Add backported NEON patches from ffmpeg trunk; see debian/patches/neon/.
+  * Pass proper --cpu and --extra-flags on armel.
+  * Pass -fPIC -DPIC to neon pass.
+
+ -- Loïc Minier <loic.minier@ubuntu.com>  Tue, 13 Oct 2009 23:56:04 +0200
 
 ffmpeg (4:0.5+svn20090706-2ubuntu1) karmic; urgency=low
 
