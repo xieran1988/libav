@@ -3,6 +3,7 @@ ffmpeg-debian_hurd.patch
 fix-qtrle-encoding-when-previous-frame-linesize.patch
 aac-regression.patch
 fix-dv-seeking.patch
+fix-constant-quant-encoding.patch
 issue1245.patch
 900_doxyfile
 # fpic-ftbfs-fix.patch
