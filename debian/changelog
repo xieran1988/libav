@@ -1,3 +1,9 @@
+ffmpeg (4:0.5+svn20090706-2ubuntu2) karmic; urgency=low
+
+  * prepare new upload
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 13 Oct 2009 23:12:37 +0200
+
 ffmpeg (4:0.5+svn20090706-2ubuntu1) karmic; urgency=low
 
   * merge from debian. Remaining changes:
