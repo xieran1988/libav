@@ -33,3 +33,17 @@ neon/0018-Prepare-for-optimised-forward-MDCT-implementations.patch
 neon/0019-ARM-NEON-optimised-MDCT.patch
 neon/0020-ARM-remove-unnecessary-.fpu-neon-directives.patch
 neon/0021-ARM-check-for-VFP-register-arguments.patch
+
+#vorbis_dec security backports
+security/vorbis_dec/0001-Check-dimensions-against-0-too.patch
+security/vorbis_dec/0002-typo.patch
+security/vorbis_dec/0003-Sanity-checks-for-magnitude-and-angle.patch
+security/vorbis_dec/0004-Fix-book_idx-check.patch
+security/vorbis_dec/0005-Check-classbook-value.patch
+security/vorbis_dec/0006-Add-checks-for-per-packet-mode-indexes-and-per-heade.patch
+security/vorbis_dec/0007-Check-masterbook-index-and-subclass-book-index.patch
+security/vorbis_dec/0008-Check-res_setup-books.patch
+security/vorbis_dec/0009-Check-begin-end-partition_size.patch
+security/vorbis_dec/0010-Make-error-return-sign-consistent.patch
+security/vorbis_dec/0011-Check-submap-indexes.patch
+security/vorbis_dec/0012-Fix-format-string-to-match-the-types-printed.patch
