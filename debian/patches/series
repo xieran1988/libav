@@ -47,3 +47,6 @@ security/vorbis_dec/0009-Check-begin-end-partition_size.patch
 security/vorbis_dec/0010-Make-error-return-sign-consistent.patch
 security/vorbis_dec/0011-Check-submap-indexes.patch
 security/vorbis_dec/0012-Fix-format-string-to-match-the-types-printed.patch
+
+# vorbis security backports
+security/oggparsevorbis/0001-Fix-possible-buffer-over-read-in-vorbis_comment-fix-.patch
