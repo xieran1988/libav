@@ -50,3 +50,7 @@ security/vorbis_dec/0012-Fix-format-string-to-match-the-types-printed.patch
 
 # vorbis security backports
 security/oggparsevorbis/0001-Fix-possible-buffer-over-read-in-vorbis_comment-fix-.patch
+
+# libavcodec vp3 fixes
+security/vp3/0003-Make-sure-that-all-memory-allocations-succeed.patch
+security/vp3/0001-Fix-init_get_bits-buffer-size.patch
