@@ -54,3 +54,6 @@ security/oggparsevorbis/0001-Fix-possible-buffer-over-read-in-vorbis_comment-fix
 # libavcodec vp3 fixes
 security/vp3/0003-Make-sure-that-all-memory-allocations-succeed.patch
 security/vp3/0001-Fix-init_get_bits-buffer-size.patch
+
+# ffv1 fix
+security/ffv1/0001-Fix-a-possibly-exploitable-buffer-overflow.patch
