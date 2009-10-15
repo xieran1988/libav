@@ -62,3 +62,6 @@ security/ffv1/0001-Fix-a-possibly-exploitable-buffer-overflow.patch
 security/mpegaudiodec/0001-check-data_size-in-decode_frame.patch
 security/mpegaudiodec/0002-Check-data_size-in-decode_frame_mp3on4.patch
 security/mpegaudiodec/0003-Set-data_size-to-0-to-avoid-having-it-uninitialized.patch
+
+# h264 security backports
+security/h264/0001-Check-num_units_in_tick-time_scale-to-be-valid-and-w.patch
