@@ -1,0 +1,26 @@
+From 59a7d76f26091bb379e41e546c561d6987b2df3b Mon Sep 17 00:00:00 2001
+From: bcoudurier <bcoudurier@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Mon, 7 Sep 2009 22:42:51 +0000
+Subject: [PATCH] check entries against field_size, potential malloc overflow in read_stsz, fix #1357
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19793 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+ libavformat/mov.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/mov.c b/libavformat/mov.c
+index 5f11ebe..05fdfa3 100644
+--- a/libavformat/mov.c
++++ b/libavformat/mov.c
+@@ -1256,7 +1256,7 @@ static int mov_read_stsz(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
+         return -1;
+     }
+ 
+-    if(entries >= UINT_MAX / sizeof(int))
++    if (entries >= UINT_MAX / sizeof(int) || entries >= (UINT_MAX - 4) / field_size)
+         return -1;
+     sc->sample_sizes = av_malloc(entries * sizeof(int));
+     if (!sc->sample_sizes)
+-- 
+1.6.3.3
+
