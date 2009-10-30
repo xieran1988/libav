@@ -67,6 +67,7 @@ security/mpegaudiodec/0003-Set-data_size-to-0-to-avoid-having-it-uninitialized.p
 security/h264/0001-Check-num_units_in_tick-time_scale-to-be-valid-and-w.patch
 
 # mov security backports
+security/mov/0000-MOV-Support-stz2-Compact-Sample-Size-Box.patch
 security/mov/0001-check-entries-against-field_size-potential-malloc-ov.patch
 security/mov/0002-add-one-missing-check-for-stream-existence-in-read_e.patch
 security/mov/0003-check-stream-existence-before-assignment-fix-1222.patch

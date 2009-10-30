@@ -10,7 +10,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
 
 --- a/libavformat/mov.c
 +++ b/libavformat/mov.c
-@@ -238,10 +238,15 @@ static int mov_read_default(MOVContext *
+@@ -239,10 +239,15 @@ static int mov_read_default(MOVContext *
  
  static int mov_read_dref(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -28,7 +28,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      get_be32(pb); // version + flags
      entries = get_be32(pb);
      if (entries >= UINT_MAX / sizeof(*sc->drefs))
-@@ -381,9 +386,13 @@ static const AVCodecTag mp4_audio_types[
+@@ -382,9 +387,13 @@ static const AVCodecTag mp4_audio_types[
  
  static int mov_read_esds(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -43,7 +43,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      get_be32(pb); /* version + flags */
      len = mp4_read_descr(c, pb, &tag);
      if (tag == MP4ESDescrTag) {
-@@ -440,7 +449,12 @@ static int mov_read_pasp(MOVContext *c, 
+@@ -441,7 +450,12 @@ static int mov_read_pasp(MOVContext *c, 
  {
      const int num = get_be32(pb);
      const int den = get_be32(pb);
@@ -57,7 +57,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      if (den != 0) {
          if ((st->sample_aspect_ratio.den != 1 || st->sample_aspect_ratio.num) && // default
              (den != st->sample_aspect_ratio.den || num != st->sample_aspect_ratio.num))
-@@ -494,12 +508,18 @@ static int mov_read_moof(MOVContext *c, 
+@@ -495,12 +509,18 @@ static int mov_read_moof(MOVContext *c, 
  
  static int mov_read_mdhd(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -79,7 +79,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      if (version > 1)
          return -1; /* unsupported */
  
-@@ -561,7 +581,11 @@ static int mov_read_mvhd(MOVContext *c, 
+@@ -562,7 +582,11 @@ static int mov_read_mvhd(MOVContext *c, 
  
  static int mov_read_smi(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -92,7 +92,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
  
      if((uint64_t)atom.size > (1<<30))
          return -1;
-@@ -581,9 +605,14 @@ static int mov_read_smi(MOVContext *c, B
+@@ -582,9 +606,14 @@ static int mov_read_smi(MOVContext *c, B
  
  static int mov_read_enda(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -109,7 +109,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      dprintf(c->fc, "enda %d\n", little_endian);
      if (little_endian == 1) {
          switch (st->codec->codec_id) {
-@@ -633,7 +662,11 @@ static int mov_read_extradata(MOVContext
+@@ -634,7 +663,11 @@ static int mov_read_extradata(MOVContext
  
  static int mov_read_wave(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -122,7 +122,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
  
      if((uint64_t)atom.size > (1<<30))
          return -1;
-@@ -660,7 +693,11 @@ static int mov_read_wave(MOVContext *c, 
+@@ -661,7 +694,11 @@ static int mov_read_wave(MOVContext *c, 
   */
  static int mov_read_glbl(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -135,7 +135,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
  
      if((uint64_t)atom.size > (1<<30))
          return -1;
-@@ -676,10 +713,15 @@ static int mov_read_glbl(MOVContext *c, 
+@@ -677,10 +714,15 @@ static int mov_read_glbl(MOVContext *c, 
  
  static int mov_read_stco(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -153,7 +153,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      get_byte(pb); /* version */
      get_be24(pb); /* flags */
  
-@@ -742,10 +784,15 @@ static enum CodecID mov_get_lpcm_codec_i
+@@ -743,10 +785,15 @@ static enum CodecID mov_get_lpcm_codec_i
  
  static int mov_read_stsd(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -171,7 +171,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      get_byte(pb); /* version */
      get_be24(pb); /* flags */
  
-@@ -1064,10 +1111,15 @@ static int mov_read_stsd(MOVContext *c, 
+@@ -1065,10 +1112,15 @@ static int mov_read_stsd(MOVContext *c, 
  
  static int mov_read_stsc(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -189,7 +189,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      get_byte(pb); /* version */
      get_be24(pb); /* flags */
  
-@@ -1092,10 +1144,15 @@ static int mov_read_stsc(MOVContext *c, 
+@@ -1093,10 +1145,15 @@ static int mov_read_stsc(MOVContext *c, 
  
  static int mov_read_stss(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -207,7 +207,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      get_byte(pb); /* version */
      get_be24(pb); /* flags */
  
-@@ -1119,10 +1176,15 @@ static int mov_read_stss(MOVContext *c, 
+@@ -1120,12 +1177,17 @@ static int mov_read_stss(MOVContext *c, 
  
  static int mov_read_stsz(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -215,7 +215,9 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
 -    MOVStreamContext *sc = st->priv_data;
 +    AVStream *st;
 +    MOVStreamContext *sc;
-     unsigned int i, entries, sample_size;
+     unsigned int i, entries, sample_size, field_size, num_bytes;
+     GetBitContext gb;
+     unsigned char* buf;
  
 +    if (c->fc->nb_streams < 1)
 +        return 0;
@@ -225,7 +227,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      get_byte(pb); /* version */
      get_be24(pb); /* flags */
  
-@@ -1150,12 +1212,17 @@ static int mov_read_stsz(MOVContext *c, 
+@@ -1183,12 +1245,17 @@ static int mov_read_stsz(MOVContext *c, 
  
  static int mov_read_stts(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -245,7 +247,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      get_byte(pb); /* version */
      get_be24(pb); /* flags */
      entries = get_be32(pb);
-@@ -1194,10 +1261,15 @@ static int mov_read_stts(MOVContext *c, 
+@@ -1227,10 +1294,15 @@ static int mov_read_stts(MOVContext *c, 
  
  static int mov_read_ctts(MOVContext *c, ByteIOContext *pb, MOVAtom atom)
  {
@@ -263,7 +265,7 @@ git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19259 9553f0bf-9b14-0410
      get_byte(pb); /* version */
      get_be24(pb); /* flags */
      entries = get_be32(pb);
-@@ -1504,10 +1576,16 @@ static int mov_read_tkhd(MOVContext *c, 
+@@ -1537,10 +1609,16 @@ static int mov_read_tkhd(MOVContext *c, 
      int height;
      int64_t disp_transform[2];
      int display_matrix[3][2];
