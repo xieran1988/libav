@@ -35,42 +35,42 @@ neon/0020-ARM-remove-unnecessary-.fpu-neon-directives.patch
 neon/0021-ARM-check-for-VFP-register-arguments.patch
 
 #vorbis_dec security backports
-security/vorbis_dec/0001-Check-dimensions-against-0-too.patch
-security/vorbis_dec/0002-typo.patch
-security/vorbis_dec/0003-Sanity-checks-for-magnitude-and-angle.patch
-security/vorbis_dec/0004-Fix-book_idx-check.patch
-security/vorbis_dec/0005-Check-classbook-value.patch
-security/vorbis_dec/0006-Add-checks-for-per-packet-mode-indexes-and-per-heade.patch
-security/vorbis_dec/0007-Check-masterbook-index-and-subclass-book-index.patch
-security/vorbis_dec/0008-Check-res_setup-books.patch
-security/vorbis_dec/0009-Check-begin-end-partition_size.patch
-security/vorbis_dec/0010-Make-error-return-sign-consistent.patch
-security/vorbis_dec/0011-Check-submap-indexes.patch
-security/vorbis_dec/0012-Fix-format-string-to-match-the-types-printed.patch
+security/libavcodec/vorbis_dec/0001-Check-dimensions-against-0-too.patch
+security/libavcodec/vorbis_dec/0002-typo.patch
+security/libavcodec/vorbis_dec/0003-Sanity-checks-for-magnitude-and-angle.patch
+security/libavcodec/vorbis_dec/0004-Fix-book_idx-check.patch
+security/libavcodec/vorbis_dec/0005-Check-classbook-value.patch
+security/libavcodec/vorbis_dec/0006-Add-checks-for-per-packet-mode-indexes-and-per-heade.patch
+security/libavcodec/vorbis_dec/0007-Check-masterbook-index-and-subclass-book-index.patch
+security/libavcodec/vorbis_dec/0008-Check-res_setup-books.patch
+security/libavcodec/vorbis_dec/0009-Check-begin-end-partition_size.patch
+security/libavcodec/vorbis_dec/0010-Make-error-return-sign-consistent.patch
+security/libavcodec/vorbis_dec/0011-Check-submap-indexes.patch
+security/libavcodec/vorbis_dec/0012-Fix-format-string-to-match-the-types-printed.patch
 
 # vorbis security backports
-security/oggparsevorbis/0001-Fix-possible-buffer-over-read-in-vorbis_comment-fix-.patch
+security/libavformat/oggparsevorbis/0001-Fix-possible-buffer-over-read-in-vorbis_comment-fix-.patch
 
 # libavcodec vp3 fixes
-security/vp3/0003-Make-sure-that-all-memory-allocations-succeed.patch
-security/vp3/0001-Fix-init_get_bits-buffer-size.patch
+security/libavcodec/vp3/0003-Make-sure-that-all-memory-allocations-succeed.patch
+security/libavcodec/vp3/0001-Fix-init_get_bits-buffer-size.patch
 
 # ffv1 fix
-security/ffv1/0001-Fix-a-possibly-exploitable-buffer-overflow.patch
+security/libavcodec/ffv1/0001-Fix-a-possibly-exploitable-buffer-overflow.patch
 
 # mpegaudiodec backports
-security/mpegaudiodec/0001-check-data_size-in-decode_frame.patch
-security/mpegaudiodec/0002-Check-data_size-in-decode_frame_mp3on4.patch
-security/mpegaudiodec/0003-Set-data_size-to-0-to-avoid-having-it-uninitialized.patch
+security/libavcodec/mpegaudiodec/0001-check-data_size-in-decode_frame.patch
+security/libavcodec/mpegaudiodec/0002-Check-data_size-in-decode_frame_mp3on4.patch
+security/libavcodec/mpegaudiodec/0003-Set-data_size-to-0-to-avoid-having-it-uninitialized.patch
 
 # h264 security backports
-security/h264/0001-Check-num_units_in_tick-time_scale-to-be-valid-and-w.patch
+security/libavcodec/h264/0001-Check-num_units_in_tick-time_scale-to-be-valid-and-w.patch
 
 # mov security backports
-security/mov/0000-MOV-Support-stz2-Compact-Sample-Size-Box.patch
-security/mov/0001-check-entries-against-field_size-potential-malloc-ov.patch
-security/mov/0002-add-one-missing-check-for-stream-existence-in-read_e.patch
-security/mov/0003-check-stream-existence-before-assignment-fix-1222.patch
+security/libavformat/mov/0000-MOV-Support-stz2-Compact-Sample-Size-Box.patch
+security/libavformat/mov/0001-check-entries-against-field_size-potential-malloc-ov.patch
+security/libavformat/mov/0002-add-one-missing-check-for-stream-existence-in-read_e.patch
+security/libavformat/mov/0003-check-stream-existence-before-assignment-fix-1222.patch
 
 # oggedc backports
-security/oggdec/0001-Disable-parsing-for-ogg-streams-where-no-ogg-header-.patch
+security/libavformat/oggdec/0001-Disable-parsing-for-ogg-streams-where-no-ogg-header-.patch
