@@ -1,8 +1,16 @@
-ffmpeg (4:0.5+svn20090706-2ubuntu3) karmic; urgency=low
+ffmpeg (4:0.5+svn20090706-2ubuntu3) lucid; urgency=low
 
-  * prepare new upload
+  * security backports from ffmpeg trunk (Closes: #550442)
+   - libavcodec/mpegaudiodec
+   - libavcodec/vorbis_dec
+   - libavcodec/ffv1
+   - libavcodec/vp3
+   - libavcodec/h264
+   - libavformat/mov
+   - libavformat/oggdec
+   - libavformat/oggparsevorbis
 
- -- Reinhard Tartler <siretart@tauware.de>  Thu, 15 Oct 2009 08:59:55 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 05 Nov 2009 20:31:29 +0100
 
 ffmpeg (4:0.5+svn20090706-2ubuntu2) karmic; urgency=low
 
