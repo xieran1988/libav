@@ -1,3 +1,9 @@
+ffmpeg (4:0.5+svn20090706-2ubuntu4) lucid; urgency=low
+
+  * add build dependency on 'yasm', since it is now moved to main.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 21 Dec 2009 23:57:34 +0100
+
 ffmpeg (4:0.5+svn20090706-2ubuntu3) lucid; urgency=low
 
   * security backports from ffmpeg trunk (Closes: #550442)
