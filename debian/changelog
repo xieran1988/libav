@@ -1,3 +1,9 @@
+ffmpeg (4:0.5+svn20090706-2ubuntu5~ppa2) lucid; urgency=low
+
+  * export *all* symbols of libswscale, fixes FTBFS in mplayer
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 02 Jan 2010 23:37:21 +0100
+
 ffmpeg (4:0.5+svn20090706-2ubuntu5~ppa1) lucid; urgency=low
 
   * Imported Debian patch 0.5+svn20090706-2ubuntu4
