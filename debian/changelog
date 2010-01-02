@@ -1,8 +1,11 @@
-ffmpeg (4:0.5+svn20090706-2ubuntu5) lucid; urgency=low
+ffmpeg (4:0.5+svn20090706-2ubuntu5~ppa1) lucid; urgency=low
 
-  * prepare new upload
+  * Imported Debian patch 0.5+svn20090706-2ubuntu4
+  * revert gbp.conf to point to lucid branch
+  * enable symbol versioning
+  * bump shlibs version
 
- -- Reinhard Tartler <siretart@tauware.de>  Sat, 02 Jan 2010 14:56:33 +0100
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 02 Jan 2010 15:03:09 +0100
 
 ffmpeg (4:0.5+svn20090706-2ubuntu4) lucid; urgency=low
 
