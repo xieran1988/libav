@@ -1,0 +1,44 @@
+From 8ff644b871f3afe9529e451d86efb2f08014b53b Mon Sep 17 00:00:00 2001
+From: michael <michael@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Wed, 23 Sep 2009 12:17:54 +0000
+Subject: [PATCH 07/12] Check masterbook index and subclass book index.
+ 14_floor_masterbook_index.patch by chrome
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19991 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+ libavcodec/vorbis_dec.c |   14 ++++++++++++--
+ 1 files changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/vorbis_dec.c b/libavcodec/vorbis_dec.c
+index ec305ba..3daba8f 100644
+--- a/libavcodec/vorbis_dec.c
++++ b/libavcodec/vorbis_dec.c
+@@ -487,13 +487,23 @@ static int vorbis_parse_setup_hdr_floors(vorbis_context *vc) {
+                 AV_DEBUG(" %d floor %d class dim: %d subclasses %d \n", i, j, floor_setup->data.t1.class_dimensions[j], floor_setup->data.t1.class_subclasses[j]);
+ 
+                 if (floor_setup->data.t1.class_subclasses[j]) {
+-                    floor_setup->data.t1.class_masterbook[j]=get_bits(gb, 8);
++                    int bits=get_bits(gb, 8);
++                    if (bits>=vc->codebook_count) {
++                        av_log(vc->avccontext, AV_LOG_ERROR, "Masterbook index %d is out of range.\n", bits);
++                        return 1;
++                    }
++                    floor_setup->data.t1.class_masterbook[j]=bits;
+ 
+                     AV_DEBUG("   masterbook: %d \n", floor_setup->data.t1.class_masterbook[j]);
+                 }
+ 
+                 for(k=0;k<(1<<floor_setup->data.t1.class_subclasses[j]);++k) {
+-                    floor_setup->data.t1.subclass_books[j][k]=(int16_t)get_bits(gb, 8)-1;
++                    int16_t bits=get_bits(gb, 8)-1;
++                    if (bits!=-1 && bits>=vc->codebook_count) {
++                        av_log(vc->avccontext, AV_LOG_ERROR, "Subclass book index %d is out of range.\n", bits);
++                        return 1;
++                    }
++                    floor_setup->data.t1.subclass_books[j][k]=bits;
+ 
+                     AV_DEBUG("    book %d. : %d \n", k, floor_setup->data.t1.subclass_books[j][k]);
+                 }
+-- 
+1.6.3.3
+

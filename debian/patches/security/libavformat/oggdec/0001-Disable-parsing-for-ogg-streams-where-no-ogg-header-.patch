@@ -1,0 +1,37 @@
+From 7fb2fe280374bcb1c41c2a8e7aa5632d18dc4279 Mon Sep 17 00:00:00 2001
+From: reimar <reimar@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Wed, 30 Sep 2009 09:46:48 +0000
+Subject: [PATCH] Disable parsing for ogg streams where no ogg header was found,
+ if no header was found the parser was not initialized and thus will
+ crash when trying to use it.
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@20093 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+ libavformat/oggdec.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
+
+diff --git a/libavformat/oggdec.c b/libavformat/oggdec.c
+index 5d42db7..adf0ad0 100644
+--- a/libavformat/oggdec.c
++++ b/libavformat/oggdec.c
+@@ -477,12 +477,17 @@ static int
+ ogg_read_header (AVFormatContext * s, AVFormatParameters * ap)
+ {
+     struct ogg *ogg = s->priv_data;
++    int i;
+     ogg->curidx = -1;
+     //linear headers seek from start
+     if (ogg_get_headers (s) < 0){
+         return -1;
+     }
+ 
++    for (i = 0; i < ogg->nstreams; i++)
++        if (ogg->streams[i].header < 0)
++            ogg->streams[i].codec = NULL;
++
+     //linear granulepos seek from end
+     ogg_get_length (s);
+ 
+-- 
+1.6.3.3
+

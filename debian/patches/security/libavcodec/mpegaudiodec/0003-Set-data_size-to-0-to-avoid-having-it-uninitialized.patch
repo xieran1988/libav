@@ -1,0 +1,26 @@
+From 7565e59ef9effe28962d7103f78c2d25e76524e0 Mon Sep 17 00:00:00 2001
+From: michael <michael@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Wed, 23 Sep 2009 11:44:30 +0000
+Subject: [PATCH 3/3] Set data_size to 0 to avoid having it uninitialized.
+ based on 31_mp3_outlen.patch by chrome.
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19988 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+ libavcodec/mpegaudiodec.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/libavcodec/mpegaudiodec.c b/libavcodec/mpegaudiodec.c
+index 3003e18..dd986bd 100644
+--- a/libavcodec/mpegaudiodec.c
++++ b/libavcodec/mpegaudiodec.c
+@@ -2278,6 +2278,7 @@ static int decode_frame(AVCodecContext * avctx,
+ 
+     if(*data_size < 1152*avctx->channels*sizeof(OUT_INT))
+         return -1;
++    *data_size = 0;
+ 
+     if(s->frame_size<=0 || s->frame_size > buf_size){
+         av_log(avctx, AV_LOG_ERROR, "incomplete frame\n");
+-- 
+1.6.3.3
+

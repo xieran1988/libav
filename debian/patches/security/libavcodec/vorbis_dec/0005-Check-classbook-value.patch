@@ -1,0 +1,29 @@
+From 093a791b172df483199fe81ac59ffcdbb63bf6c7 Mon Sep 17 00:00:00 2001
+From: michael <michael@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Wed, 23 Sep 2009 12:02:31 +0000
+Subject: [PATCH 05/12] Check classbook value.
+ 11_vorbis_residue_book_index.patch by chrome.
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19989 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+ libavcodec/vorbis_dec.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+diff --git a/libavcodec/vorbis_dec.c b/libavcodec/vorbis_dec.c
+index ce5a139..2d5e610 100644
+--- a/libavcodec/vorbis_dec.c
++++ b/libavcodec/vorbis_dec.c
+@@ -630,6 +630,10 @@ static int vorbis_parse_setup_hdr_residues(vorbis_context *vc){
+         res_setup->partition_size=get_bits(gb, 24)+1;
+         res_setup->classifications=get_bits(gb, 6)+1;
+         res_setup->classbook=get_bits(gb, 8);
++        if (res_setup->classbook>=vc->codebook_count) {
++            av_log(vc->avccontext, AV_LOG_ERROR, "classbook value %d out of range. \n", res_setup->classbook);
++            return 1;
++        }
+ 
+         AV_DEBUG("    begin %d end %d part.size %d classif.s %d classbook %d \n", res_setup->begin, res_setup->end, res_setup->partition_size,
+           res_setup->classifications, res_setup->classbook);
+-- 
+1.6.3.3
+

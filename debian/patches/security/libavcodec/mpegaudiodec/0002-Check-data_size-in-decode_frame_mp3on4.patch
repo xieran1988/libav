@@ -1,0 +1,27 @@
+From f6a0f8074a6ad33ebb90b687c77d33cd552f7005 Mon Sep 17 00:00:00 2001
+From: michael <michael@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Wed, 23 Sep 2009 11:33:44 +0000
+Subject: [PATCH 2/3] Check data_size in decode_frame_mp3on4().
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@19987 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+ libavcodec/mpegaudiodec.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
+
+diff --git a/libavcodec/mpegaudiodec.c b/libavcodec/mpegaudiodec.c
+index 6f451c3..3003e18 100644
+--- a/libavcodec/mpegaudiodec.c
++++ b/libavcodec/mpegaudiodec.c
+@@ -2466,6 +2466,9 @@ static int decode_frame_mp3on4(AVCodecContext * avctx,
+     OUT_INT *outptr, *bp;
+     int fr, j, n;
+ 
++    if(*data_size < MPA_FRAME_SIZE * MPA_MAX_CHANNELS * s->frames * sizeof(OUT_INT))
++        return -1;
++
+     *data_size = 0;
+     // Discard too short frames
+     if (buf_size < HEADER_SIZE)
+-- 
+1.6.3.3
+

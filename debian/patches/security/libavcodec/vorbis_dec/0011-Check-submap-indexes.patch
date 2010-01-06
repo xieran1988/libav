@@ -1,0 +1,43 @@
+From c1fe0583d44a67f94047bd3e59f2b53f304db4ec Mon Sep 17 00:00:00 2001
+From: michael <michael@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Wed, 23 Sep 2009 14:19:17 +0000
+Subject: [PATCH 11/12] Check submap indexes.
+ 10_vorbis_submap_indexes.patch by chrome.
+ Iam applying this even though reimar had some comments to improve it as it fixes
+ a serious security issue and i do not want to leave such things unfixed.
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@20001 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+ libavcodec/vorbis_dec.c |   15 +++++++++++++--
+ 1 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/vorbis_dec.c b/libavcodec/vorbis_dec.c
+index 2152f5f..ed4dace 100644
+--- a/libavcodec/vorbis_dec.c
++++ b/libavcodec/vorbis_dec.c
+@@ -752,9 +752,20 @@ static int vorbis_parse_setup_hdr_mappings(vorbis_context *vc) {
+         }
+ 
+         for(j=0;j<mapping_setup->submaps;++j) {
++            int bits;
+             skip_bits(gb, 8); // FIXME check?
+-            mapping_setup->submap_floor[j]=get_bits(gb, 8);
+-            mapping_setup->submap_residue[j]=get_bits(gb, 8);
++            bits=get_bits(gb, 8);
++            if (bits>=vc->floor_count) {
++                av_log(vc->avccontext, AV_LOG_ERROR, "submap floor value %d out of range. \n", bits);
++                return -1;
++            }
++            mapping_setup->submap_floor[j]=bits;
++            bits=get_bits(gb, 8);
++            if (bits>=vc->residue_count) {
++                av_log(vc->avccontext, AV_LOG_ERROR, "submap residue value %d out of range. \n", bits);
++                return -1;
++            }
++            mapping_setup->submap_residue[j]=bits;
+ 
+             AV_DEBUG("   %d mapping %d submap : floor %d, residue %d \n", i, j, mapping_setup->submap_floor[j], mapping_setup->submap_residue[j]);
+         }
+-- 
+1.6.3.3
+

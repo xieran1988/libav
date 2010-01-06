@@ -16,10 +16,11 @@ SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 # the other flavors always build dynamic versions
 # Also, disable architecture-specific optimizations for default shared build
 ifeq      ($(DEB_HOST_ARCH),armel)
-nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2
-nooptflags += --disable-armvfp --disable-neon
-# disabled for now as we need hwcaps support in glibc first
-#FLAVORS += neon vfp
+# Ubuntu karmic and later assume v6 + VFP; just override CPU since it defaults
+# to uname -m
+nooptflags += --cpu=armv6 --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
+#FLAVORS += vfp
+FLAVORS += neon
 else ifeq ($(DEB_HOST_ARCH),arm)
 nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2
 nooptflags += --disable-armvfp --disable-neon
@@ -85,6 +86,7 @@ confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
 gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
+confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
 
 confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
@@ -138,9 +140,11 @@ vfp_build_confflags += --disable-static
 vfp_build_confflags += --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
 vfp_build_confflags += --disable-ffmpeg
 vfp_build_confflags += --disable-ffplay
+# NB: NEON always implies v7+ and ffmpeg's NEON implementation requires VFP
 neon_build_confflags += $(confflags)
-neon_build_confflags += --shlibdir=/usr/lib/neon
-neon_build_confflags += --enable-neon
+neon_build_confflags += --shlibdir=/usr/lib/neon/vfp
+neon_build_confflags += --cpu=armv7-a
+neon_build_confflags += --extra-cflags="-mfpu=neon -mfloat-abi=softfp -fPIC -DPIC"
 neon_build_confflags += --enable-shared
 neon_build_confflags += --disable-static
 neon_build_confflags += --disable-ffmpeg
