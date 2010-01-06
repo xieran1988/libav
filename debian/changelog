@@ -37,6 +37,8 @@ ffmpeg (4:0.5+svn20090706-3) experimental; urgency=low
        to fix FTBFS
   * enable symbol versioning
   * bump shlibs version
+  * add README.source describing how this source package manages patches
+  * make sure the ${misc:Depends} substvar is used for each binary package
 
  -- Reinhard Tartler <siretart@tauware.de>  Wed, 06 Jan 2010 16:27:40 +0100
 
