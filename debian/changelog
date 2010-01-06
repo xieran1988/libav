@@ -1,8 +1,43 @@
-ffmpeg (4:0.5+svn20090706-3) UNRELEASED; urgency=low
+ffmpeg (4:0.5+svn20090706-3) experimental; urgency=low
 
-  * Prepare new release.
+  [ Loïc Minier ]
+  * Disable more autodetecter ARM arch features
+  * Enable neon flavour
+  * Update NEON confflags to assume v7 and VFP
+  * Add backported NEON patches from ffmpeg trunk
+  * Pass proper --cpu and --extra-flags on armel
+  * Pass -fPIC -DPIC to neon pass
 
- -- Andres Mejia <mcitadel@gmail.com>  Sat, 05 Sep 2009 11:35:29 -0400
+  [ Fabian Greffrath ]
+  * Initialize the FLAVORS variable to static instead of appending to
+    it. Also, we do not support the internalencoders variable anymore.
+
+  [ Andres Mejia ]
+  * Remove unused patches from packaging.
+  * Update Vcs-* entries to new location.
+  * Bump Standards-Version to 3.8.3.
+
+  [ Reinhard Tartler ]
+  * change shlibs file to make applications depend on the -extra- packages
+  * loosen dependencies further, so that the -dev packages remain
+    installable even if ffmpeg-extra is 'out-of-date'
+  * add patch for issue1245: Make arguments of av_set_pts_info() unsigned.
+  * Support constant-quant encoding for libtheora, LP: #356322
+  * increase swscale compile time width (VOF/VOFW), LP: #443264
+  * backport fixes for vorbis_dec
+  * backport oggparsevorbis fix
+  * backport vp3 fixes
+  * backport ffv1 fix
+  * libavcodec/mpegaudiodec.c backports
+  * h264 security backports
+  * backported libavformat/mov.c security fixes
+  * backported libavformat/oggdec.c security fixes
+  * backport svn r18016 aka 'MOV-Support-stz2-Compact-Sample-Size-Box'
+    to fix FTBFS
+  * enable symbol versioning
+  * bump shlibs version
+
+ -- Reinhard Tartler <siretart@tauware.de>  Wed, 06 Jan 2010 16:27:40 +0100
 
 ffmpeg (4:0.5+svn20090706-2) unstable; urgency=low
 
