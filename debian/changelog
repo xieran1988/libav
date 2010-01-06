@@ -24,16 +24,17 @@ ffmpeg (4:0.5+svn20090706-3) experimental; urgency=low
   * add patch for issue1245: Make arguments of av_set_pts_info() unsigned.
   * Support constant-quant encoding for libtheora, LP: #356322
   * increase swscale compile time width (VOF/VOFW), LP: #443264
-  * backport fixes for vorbis_dec
-  * backport oggparsevorbis fix
-  * backport vp3 fixes
-  * backport ffv1 fix
-  * libavcodec/mpegaudiodec.c backports
-  * h264 security backports
-  * backported libavformat/mov.c security fixes
-  * backported libavformat/oggdec.c security fixes
-  * backport svn r18016 aka 'MOV-Support-stz2-Compact-Sample-Size-Box'
-    to fix FTBFS
+  * Backports of various security patches, Closes: #550442, including:
+     - backport fixes for vorbis_dec
+     - backport oggparsevorbis fix
+     - backport vp3 fixes
+     - backport ffv1 fix
+     - libavcodec/mpegaudiodec.c backports
+     - h264 security backports
+     - backported libavformat/mov.c security fixes
+     - backported libavformat/oggdec.c security fixes
+     - backport svn r18016 aka 'MOV-Support-stz2-Compact-Sample-Size-Box'
+       to fix FTBFS
   * enable symbol versioning
   * bump shlibs version
 
