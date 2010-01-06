@@ -58,7 +58,8 @@ Depends: libavutil49 (= ${binary:Version}),
          libpostproc51 (= ${binary:Version}),
          libavformat52 (= ${binary:Version}),
          libswscale0 (= ${binary:Version}),
-         ffmpeg (= ${binary:Version})
+         ffmpeg (= ${binary:Version}),
+         ${misc:Depends}
 Description: Debug symbols for ffmpeg related packages
  This package contains debug data of the ffmpeg related shared libraries.
  .
@@ -150,7 +151,8 @@ Package: libavutil-dev
 Section: libdevel
 Architecture: any
 Depends: libavutil49 (>= ${binary:Version}) | libavutil-extra-49 (>= ${source:Upstream-Version}),
-         libavutil49 (<= ${source:Upstream-Version}-99) | libavutil-extra-49 (<= ${source:Upstream-Version}-99)
+         libavutil49 (<= ${source:Upstream-Version}-99) | libavutil-extra-49 (<= ${source:Upstream-Version}-99),
+         ${misc:Depends}
 Description: development files for libavutil
  This is the common utility library from the ffmpeg project. It is required
  by all other ffmpeg libraries.
@@ -163,7 +165,8 @@ Section: libdevel
 Architecture: any
 Depends: libavcodec52 (>= ${binary:Version}) | libavcodec-extra-52 (>= ${source:Upstream-Version}),
          libavcodec52 (<= ${source:Upstream-Version}-99) | libavcodec-extra-52 (<= ${source:Upstream-Version}-99),
-         libavutil-dev (= ${binary:Version})
+         libavutil-dev (= ${binary:Version}),
+         ${misc:Depends}
 Suggests: libfaad-dev,
           libgsm1-dev,
           libogg-dev,
@@ -187,7 +190,8 @@ Section: libdevel
 Architecture: any
 Depends: libavdevice52 (>= ${binary:Version}) | libavdevice-extra-52 (>= ${source:Upstream-Version}),
          libavdevice52 (<= ${source:Upstream-Version}-99) | libavdevice-extra-52 (<= ${source:Upstream-Version}-99),
-         libavformat-dev (= ${binary:Version})
+         libavformat-dev (= ${binary:Version}),
+         ${misc:Depends}
 Description: development files for libavdevice
  This is the device handling library from the ffmpeg project.
  .
@@ -199,7 +203,8 @@ Section: libdevel
 Architecture: any
 Depends: libavformat52 (>= ${binary:Version}) | libavformat-extra-52 (>= ${source:Upstream-Version}),
          libavformat52 (<= ${source:Upstream-Version}-99) | libavformat-extra-52 (<= ${source:Upstream-Version}-99),
-         libavcodec-dev (= ${binary:Version})
+         libavcodec-dev (= ${binary:Version}),
+         ${misc:Depends}
 Description: development files for libavformat
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
@@ -212,7 +217,8 @@ Section: libdevel
 Architecture: any
 Depends: libavfilter0 (>= ${binary:Version}) | libavfilter-extra-0 (>= ${source:Upstream-Version}),
          libavfilter0 (<= ${source:Upstream-Version}-99) | libavfilter-extra-0 (<= ${source:Upstream-Version}-99),
-         libavcodec-dev (= ${binary:Version})
+         libavcodec-dev (= ${binary:Version}),
+         ${misc:Depends}
 Description: development files for libavfilter
  This is the video filtering library from the ffmpeg project.
  .
@@ -224,7 +230,8 @@ Section: libdevel
 Architecture: any
 Depends: libpostproc51 (>= ${binary:Version}) | libpostproc-extra-51 (>= ${source:Upstream-Version}),
          libpostproc51 (<= ${source:Upstream-Version}-99) | libpostproc-extra-51 (<= ${source:Upstream-Version}-99),
-         libavutil-dev (= ${binary:Version})
+         libavutil-dev (= ${binary:Version}),
+         ${misc:Depends}
 Description: development files for libpostproc
  This is the video postprocessing library from the ffmpeg project.
  .
@@ -236,7 +243,8 @@ Section: libdevel
 Architecture: any
 Depends: libswscale0 (>= ${binary:Version}) | libswscale-extra-0 (>= ${source:Upstream-Version}),
          libswscale0 (<= ${source:Upstream-Version}-99) | libswscale-extra-0 (<= ${source:Upstream-Version}-99),
-         libavutil-dev (= ${binary:Version})
+         libavutil-dev (= ${binary:Version}),
+         ${misc:Depends}
 Description: development files for libswscale
  This is the video scaling library from the ffmpeg project.
  .
