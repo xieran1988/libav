@@ -7,7 +7,7 @@ DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
 DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
 SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+[+.]svn([0-9]+)$$/\1/p')
-SHLIBS_VERSION := 4:0.5+svn20090706-2ubuntu5~
+SHLIBS_VERSION := 4:0.5+svn20090706-3
 
 ifeq ($(SVN_VERSION),)
 $(error UPSTREAM_VERSION: $(UPSTREAM_VERSION) - but SVN_VERSION is empty! - check debian/rules)
