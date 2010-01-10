@@ -105,9 +105,6 @@ ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
   lib1394-dev += libraw1394-dev, libdc1394-22-dev
 endif
 
-# We add vdpau headers ourselves so ffmpeg can stay in main
-confflags += --extra-cflags="-I$(CURDIR)/debian/include"
-
 # XXX this probably needs fixing
 CFLAGS :=
 
