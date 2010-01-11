@@ -5,7 +5,7 @@ Maintainer: Debian multimedia packages maintainers <pkg-multimedia-maintainers@l
 Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
            Loic Minier <lool@dooz.org>,
            Reinhard Tartler <siretart@tauware.de>,
-           Fabian Greffrath <fabian@debian-unofficial.org>,
+           Fabian Greffrath <fabian+debian@greffrath.com>,
            Andres Mejia <mcitadel@gmail.com>
 DM-Upload-Allowed: yes
 Standards-Version: 3.8.3
