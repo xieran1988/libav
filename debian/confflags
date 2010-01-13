@@ -16,9 +16,7 @@ SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 # the other flavors always build dynamic versions
 # Also, disable architecture-specific optimizations for default shared build
 ifeq      ($(DEB_HOST_ARCH),armel)
-# Ubuntu karmic and later assume v6 + VFP; just override CPU since it defaults
-# to uname -m
-nooptflags += --extra-cflags="-mfpu=vfpv3-d16 -mfloat-abi=softfp"
+# Ubuntu's toolchain default to vfp anyway
 #FLAVORS += vfp
 FLAVORS += neon
 else ifeq ($(DEB_HOST_ARCH),arm)
@@ -77,8 +75,6 @@ ifeq      ($(DEB_HOST_ARCH),armel)
 # this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
 # plenty of incompatible assembly
 confflags += --extra-cflags="-marm -fPIC -DPIC"
-# Ubuntu lucid and above require v7 for Thumb 2
-confflags += --cpu=armv7-a
 endif
 confflags += $(extra_common_confflags)
 
