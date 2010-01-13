@@ -41,9 +41,6 @@ ifeq ($(DEB_HOST_ARCH),armel)
     ifneq ($(has_neon),1)
     FLAVORS += neon
     endif
-else ifeq ($(DEB_HOST_ARCH),arm)
-    nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2
-    nooptflags += --disable-armvfp --disable-neon
 else ifeq ($(DEB_HOST_ARCH),i386)
     FLAVORS += cmov
 else ifeq ($(DEB_HOST_ARCH),powerpc)
@@ -97,7 +94,7 @@ confflags += --disable-stripping
 confflags += --disable-vhook
 ifeq      ($(DEB_HOST_ARCH),armel)
 # this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
-# plenty of incompatible assembly
+# plenty of incompatible assembly; not sure how to detect that properly
 confflags += --extra-cflags="-marm -fPIC -DPIC"
 endif
 confflags += $(extra_common_confflags)
@@ -152,7 +149,6 @@ shared_build_confflags += --disable-static
 # Configuration flags for the optimised shared libraries
 vfp_build_confflags += $(confflags)
 vfp_build_confflags += --shlibdir=/usr/lib/vfp
-vfp_build_confflags += --enable-armvfp
 vfp_build_confflags += --enable-shared
 vfp_build_confflags += --disable-static
 vfp_build_confflags += --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
