@@ -5,7 +5,8 @@ ffmpeg (4:0.5+svn20090706-2ubuntu5) lucid; urgency=low
     be set to "generic" but -march=generic or -mcpu=generic will NOT be added
     to the build flags.
   * Build all armel flavours with -marm since ffmpeg has a lot of hand crafted
-    assembly which doesn't build in the new lucid default mode (Thumb 2).
+    assembly which doesn't build in the new lucid default mode (Thumb 2);
+    LP: #488267
   * Build all armel flavours with -fPIC -DPIC instead of just the neon flavour
     as the new flags/toolchain require this in Ubuntu lucid.
   * Build some assembly test code -- just like configure -- to decide whether
