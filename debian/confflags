@@ -18,7 +18,7 @@ SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 ifeq      ($(DEB_HOST_ARCH),armel)
 # Ubuntu karmic and later assume v6 + VFP; just override CPU since it defaults
 # to uname -m
-nooptflags += --cpu=armv6 --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
+nooptflags += --extra-cflags="-mfpu=vfpv3-d16 -mfloat-abi=softfp"
 #FLAVORS += vfp
 FLAVORS += neon
 else ifeq ($(DEB_HOST_ARCH),arm)
@@ -73,6 +73,13 @@ confflags += --enable-pthreads
 confflags += --enable-zlib
 confflags += --disable-stripping
 confflags += --disable-vhook
+ifeq      ($(DEB_HOST_ARCH),armel)
+# this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
+# plenty of incompatible assembly
+confflags += --extra-cflags="-marm -fPIC -DPIC"
+# Ubuntu lucid and above require v7 for Thumb 2
+confflags += --cpu=armv7-a
+endif
 confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
@@ -134,7 +141,6 @@ vfp_build_confflags += --disable-ffplay
 # NB: NEON always implies v7+ and ffmpeg's NEON implementation requires VFP
 neon_build_confflags += $(confflags)
 neon_build_confflags += --shlibdir=/usr/lib/neon/vfp
-neon_build_confflags += --cpu=armv7-a
 neon_build_confflags += --extra-cflags="-mfpu=neon -mfloat-abi=softfp -fPIC -DPIC"
 neon_build_confflags += --enable-shared
 neon_build_confflags += --disable-static
