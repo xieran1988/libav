@@ -13,26 +13,45 @@ export DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 
+# this is only used for the check_asm macro
+ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
+    CC := gcc
+else
+    CC := $(DEB_HOST_GNU_TYPE)-gcc
+endif
+
+# this outputs 0 or 1 depending on whether a piece of assembly can be compiled
+# with the *default* gcc flags; this is used to test the toolchain *default*
+# configuration
+check_asm = $(shell echo 'void foo(void) { __asm__ volatile("$(1)"); }' | $(CC) -x c -c - -o /dev/null 2>/dev/null && echo 1 || echo 0)
+
 # the other flavors always build dynamic versions
 # Also, disable architecture-specific optimizations for default shared build
-ifeq      ($(DEB_HOST_ARCH),armel)
-# Ubuntu karmic and later assume v6 + VFP; just override CPU since it defaults
-# to uname -m
-nooptflags += --cpu=armv6 --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
-#FLAVORS += vfp
-FLAVORS += neon
-else ifeq ($(DEB_HOST_ARCH),arm)
-nooptflags += --disable-armv5te --disable-armv6 --disable-armv6t2
-nooptflags += --disable-armvfp --disable-neon
+ifeq ($(DEB_HOST_ARCH),armel)
+    # whether the toolchain *default* configuration includes vfp and neon
+    vfp_asm := fadds s0, s0, s0
+    has_vfp := $(call check_asm, $(vfp_asm))
+    neon_asm := vadd.i16 q0, q0, q0
+    has_neon := $(call check_asm, $(neon_asm))
+
+    # only build 
+    ifneq ($(has_vfp),1)
+    FLAVORS += vfp
+    endif
+    ifneq ($(has_neon),1)
+    FLAVORS += neon
+    endif
 else ifeq ($(DEB_HOST_ARCH),i386)
-FLAVORS += cmov
+    FLAVORS += cmov
 else ifeq ($(DEB_HOST_ARCH),powerpc)
-FLAVORS += altivec
-nooptflags += --disable-altivec
+    FLAVORS += altivec
+    nooptflags += --disable-altivec
 else ifeq ($(DEB_HOST_ARCH),sparc)
-FLAVORS += vis
-nooptflags += --disable-vis
+    FLAVORS += vis
+    nooptflags += --disable-vis
 endif
+
+$(info Building FLAVORS=$(FLAVORS))
 
 define cond_enable
 	$(shell test -r $(1) && echo --enable-$(2) )
@@ -82,6 +101,11 @@ confflags += --enable-pthreads
 confflags += --enable-zlib
 confflags += --disable-stripping
 confflags += --disable-vhook
+ifeq      ($(DEB_HOST_ARCH),armel)
+# this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
+# plenty of incompatible assembly; not sure how to detect that properly
+confflags += --extra-cflags="-marm -fPIC -DPIC"
+endif
 confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
@@ -131,7 +155,6 @@ shared_build_confflags += --disable-static
 # Configuration flags for the optimised shared libraries
 vfp_build_confflags += $(confflags)
 vfp_build_confflags += --shlibdir=/usr/lib/vfp
-vfp_build_confflags += --enable-armvfp
 vfp_build_confflags += --enable-shared
 vfp_build_confflags += --disable-static
 vfp_build_confflags += --extra-cflags="-mfpu=vfp -mfloat-abi=softfp"
@@ -140,7 +163,6 @@ vfp_build_confflags += --disable-ffplay
 # NB: NEON always implies v7+ and ffmpeg's NEON implementation requires VFP
 neon_build_confflags += $(confflags)
 neon_build_confflags += --shlibdir=/usr/lib/neon/vfp
-neon_build_confflags += --cpu=armv7-a
 neon_build_confflags += --extra-cflags="-mfpu=neon -mfloat-abi=softfp -fPIC -DPIC"
 neon_build_confflags += --enable-shared
 neon_build_confflags += --disable-static

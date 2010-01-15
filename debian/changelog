@@ -1,8 +1,22 @@
 ffmpeg (4:0.5+svn20090706-4) experimental; urgency=low
 
-  * prepare new upload
+  * Use default toolchain setup on ARM flavors for noopt and only add FPU
+    CFLAGS in the VFP and NEON flavors; this is ok since internally, cpu will
+    be set to "generic" but -march=generic or -mcpu=generic will NOT be added
+    to the build flags.
+  * Build all armel flavours with -marm since ffmpeg has a lot of hand crafted
+    assembly which doesn't build in the new lucid default mode (Thumb 2);
+    LP: #488267
+  * Build all armel flavours with -fPIC -DPIC instead of just the neon flavour
+    as the new flags/toolchain require this in Ubuntu lucid.
+  * Build some assembly test code -- just like configure -- to decide whether
+    the *default* toolchain uses vfp or neon to decided whether to build the
+    vfp and neon flavors.
+  * Drop --disable/--enable opt flags such as --disable-neon or
+    --enable-armvfp on ARM since the upstream configure script will do the
+    right thing when the proper flags are set.
 
- -- Reinhard Tartler <siretart@tauware.de>  Fri, 08 Jan 2010 19:51:19 +0100
+ -- Loïc Minier <lool@dooz.org>  Wed, 13 Jan 2010 12:57:32 +0100
 
 ffmpeg (4:0.5+svn20090706-3) experimental; urgency=low
 
