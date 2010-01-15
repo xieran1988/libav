@@ -6,6 +6,7 @@ fix-dv-seeking.patch
 fix-constant-quant-encoding.patch
 increase-VOFW-on-x86.patch
 issue1245.patch
+build-pic-on-ppc.patch
 enable-versioning.patch
 use-normal-check_func-test-for-math-functions.patch
 900_doxyfile

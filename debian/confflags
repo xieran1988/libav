@@ -165,7 +165,6 @@ altivec_build_confflags += --shlibdir=/usr/lib/altivec
 altivec_build_confflags += --cpu='g4'
 altivec_build_confflags += --enable-shared
 altivec_build_confflags += --disable-static
-altivec_build_confflags += --extra-cflags="-fPIC -DPIC"
 altivec_build_confflags += --enable-altivec
 altivec_build_confflags += --disable-ffmpeg
 altivec_build_confflags += --disable-ffplay

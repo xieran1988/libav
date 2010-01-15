@@ -1,0 +1,17 @@
+Author: Reinhard Tartler <siretart@tauware.de>
+Bug: 561956
+Description: Build with pic on G3 macs
+
+diff --git a/configure b/configure
+index fd11501..d0cadb7 100755
+--- a/configure
++++ b/configure
+@@ -2205,7 +2205,7 @@ if enabled shared; then
+     # LIBOBJFLAGS may have already been set in the OS configuration
+     if test -z "$LIBOBJFLAGS" ; then
+         case "${subarch-$arch}" in
+-            x86_64|ia64|alpha|sparc*|power*|parisc*|mips*) LIBOBJFLAGS='$(PIC)' ;;
++            x86_64|ia64|alpha|sparc*|ppc|power*|parisc*|mips*) LIBOBJFLAGS='$(PIC)' ;;
+         esac
+     fi
+ fi
