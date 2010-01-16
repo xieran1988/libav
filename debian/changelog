@@ -1,4 +1,4 @@
-ffmpeg (4:0.5+svn20090706-4) experimental; urgency=low
+ffmpeg (4:0.5+svn20090706-4) unstable; urgency=low
 
   [ Loïc Minier ]
   * Use default toolchain setup on ARM flavors for noopt and only add FPU
