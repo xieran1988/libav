@@ -1,4 +1,11 @@
-ffmpeg (4:0.5+svn20090706-4) unstable; urgency=low
+ffmpeg (4:0.5+svn20090706-5) unstable; urgency=medium
+
+  * Upload to unstable
+  * Urgency medium because of fixed RC bugs (security issues)
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 22 Jan 2010 16:04:39 +0000
+
+ffmpeg (4:0.5+svn20090706-4) experimental; urgency=low
 
   [ Loïc Minier ]
   * Use default toolchain setup on ARM flavors for noopt and only add FPU
