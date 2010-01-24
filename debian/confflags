@@ -65,7 +65,6 @@ endef
 # Configuration flags causing the libs to be GPL tainted
 gpl_confflags += --enable-gpl
 gpl_confflags += --enable-postproc
-gpl_confflags += --enable-swscale
 gpl_confflags += --enable-x11grab
 
 # there is no libfaad in ubuntu/main, on in ubuntu/multiverse
@@ -100,7 +99,6 @@ confflags += --enable-libvorbis
 confflags += --enable-pthreads
 confflags += --enable-zlib
 confflags += --disable-stripping
-confflags += --disable-vhook
 ifeq      ($(DEB_HOST_ARCH),armel)
 # this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
 # plenty of incompatible assembly; not sure how to detect that properly
