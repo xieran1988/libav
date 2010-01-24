@@ -26,6 +26,7 @@
 
 #include "avcodec.h"
 #include "raw.h"
+#include "libavutil/intreadwrite.h"
 
 typedef struct RawVideoContext {
     unsigned char * buffer;  /* block of memory for holding one frame */
@@ -45,13 +46,15 @@ static const PixelFormatTag pixelFormatBpsAVI[] = {
 };
 
 static const PixelFormatTag pixelFormatBpsMOV[] = {
-    /* FIXME fix swscaler to support those */
-    /* http://developer.apple.com/documentation/QuickTime/QTFF/QTFFChap3/chapter_4_section_2.html */
+    { PIX_FMT_MONOWHITE, 1 },
+    { PIX_FMT_PAL8,      2 },
     { PIX_FMT_PAL8,      4 },
     { PIX_FMT_PAL8,      8 },
-    { PIX_FMT_BGR555,   16 },
+    // FIXME swscale does not support 16 bit in .mov, sample 16bit.mov
+    // http://developer.apple.com/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html
+    { PIX_FMT_RGB555BE, 16 },
     { PIX_FMT_RGB24,    24 },
-    { PIX_FMT_BGR32_1,  32 },
+    { PIX_FMT_ARGB,     32 },
     { PIX_FMT_NONE, 0 },
 };
 
@@ -86,7 +89,8 @@ static av_cold int raw_init_decoder(AVCodecContext *avctx)
     if (!context->buffer)
         return -1;
 
-    if(avctx->extradata_size >= 9 && !memcmp(avctx->extradata + avctx->extradata_size - 9, "BottomUp", 9))
+    if((avctx->extradata_size >= 9 && !memcmp(avctx->extradata + avctx->extradata_size - 9, "BottomUp", 9)) ||
+       avctx->codec_tag == MKTAG( 3 ,  0 ,  0 ,  0 ))
         context->flip=1;
 
     return 0;
@@ -99,8 +103,10 @@ static void flip(AVCodecContext *avctx, AVPicture * picture){
 
 static int raw_decode(AVCodecContext *avctx,
                             void *data, int *data_size,
-                            const uint8_t *buf, int buf_size)
+                            AVPacket *avpkt)
 {
+    const uint8_t *buf = avpkt->data;
+    int buf_size = avpkt->size;
     RawVideoContext *context = avctx->priv_data;
 
     AVFrame * frame = (AVFrame *) data;
@@ -109,17 +115,30 @@ static int raw_decode(AVCodecContext *avctx,
     frame->interlaced_frame = avctx->coded_frame->interlaced_frame;
     frame->top_field_first = avctx->coded_frame->top_field_first;
 
-    //4bpp raw in avi and mov (yes this is ugly ...)
-    if(avctx->bits_per_coded_sample == 4 && avctx->pix_fmt==PIX_FMT_PAL8 &&
+    //2bpp and 4bpp raw in avi and mov (yes this is ugly ...)
+    if((avctx->bits_per_coded_sample == 4 || avctx->bits_per_coded_sample == 2) &&
+       avctx->pix_fmt==PIX_FMT_PAL8 &&
        (!avctx->codec_tag || avctx->codec_tag == MKTAG('r','a','w',' '))){
         int i;
-        for(i=256*2; i+1 < context->length>>1; i++){
-            context->buffer[2*i+0]= buf[i-256*2]>>4;
-            context->buffer[2*i+1]= buf[i-256*2]&15;
-        }
-        buf= context->buffer + 256*4;
-        buf_size= context->length - 256*4;
+        uint8_t *dst = context->buffer + 256*4;
+        buf_size = context->length - 256*4;
+        if (avctx->bits_per_coded_sample == 4){
+            for(i=0; 2*i+1 < buf_size; i++){
+                dst[2*i+0]= buf[i]>>4;
+                dst[2*i+1]= buf[i]&15;
+            }
+        } else
+            for(i=0; 4*i+3 < buf_size; i++){
+                dst[4*i+0]= buf[i]>>6;
+                dst[4*i+1]= buf[i]>>4&3;
+                dst[4*i+2]= buf[i]>>2&3;
+                dst[4*i+3]= buf[i]   &3;
+            }
+        buf= dst;
     }
+
+    if(avctx->codec_tag == MKTAG('A', 'V', '1', 'x'))
+        buf += buf_size - context->length;
 
     if(buf_size < context->length - (avctx->pix_fmt==PIX_FMT_PAL8 ? 256*4 : 0))
         return -1;
@@ -136,12 +155,19 @@ static int raw_decode(AVCodecContext *avctx,
     if(context->flip)
         flip(avctx, picture);
 
-    if (avctx->codec_tag == MKTAG('Y', 'V', '1', '2'))
-    {
-        // swap fields
-        unsigned char *tmp = picture->data[1];
-        picture->data[1] = picture->data[2];
-        picture->data[2] = tmp;
+    if (   avctx->codec_tag == MKTAG('Y', 'V', '1', '2')
+        || avctx->codec_tag == MKTAG('Y', 'V', 'U', '9'))
+        FFSWAP(uint8_t *, picture->data[1], picture->data[2]);
+
+    if(avctx->codec_tag == AV_RL32("yuv2") &&
+       avctx->pix_fmt   == PIX_FMT_YUYV422) {
+        int x, y;
+        uint8_t *line = picture->data[0];
+        for(y = 0; y < avctx->height; y++) {
+            for(x = 0; x < avctx->width; x++)
+                line[2*x + 1] ^= 0x80;
+            line += picture->linesize[0];
+        }
     }
 
     *data_size = sizeof(AVPicture);

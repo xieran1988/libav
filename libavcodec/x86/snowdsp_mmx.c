@@ -25,7 +25,7 @@
 
 void ff_snow_horizontal_compose97i_sse2(IDWTELEM *b, int width){
     const int w2= (width+1)>>1;
-    DECLARE_ALIGNED_16(IDWTELEM, temp[width>>1]);
+    DECLARE_ALIGNED_16(IDWTELEM, temp)[width>>1];
     const int w_l= (width>>1);
     const int w_r= w2 - 1;
     int i;
@@ -667,7 +667,7 @@ void ff_snow_vertical_compose97i_mmx(IDWTELEM *b0, IDWTELEM *b1, IDWTELEM *b2, I
              "jnz 1b                         \n\t"\
              :"+m"(dst8),"+m"(dst_array),"=&r"(tmp)\
              :\
-             "rm"((x86_reg)(src_x<<1)),"m"(obmc),"a"(block),"m"((x86_reg)b_h),"m"((x86_reg)src_stride):\
+             "rm"((x86_reg)(src_x<<1)),"m"(obmc),"a"(block),"m"(b_h),"m"(src_stride):\
              "%"REG_c"","%"REG_S"","%"REG_D"","%"REG_d"");
 
 #define snow_inner_add_yblock_sse2_end_8\
@@ -815,7 +815,7 @@ snow_inner_add_yblock_sse2_end_16
              "jnz 1b                         \n\t"\
              :"+m"(dst8),"+m"(dst_array),"=&r"(tmp)\
              :\
-             "rm"((x86_reg)(src_x<<1)),"m"(obmc),"a"(block),"m"((x86_reg)b_h),"m"((x86_reg)src_stride):\
+             "rm"((x86_reg)(src_x<<1)),"m"(obmc),"a"(block),"m"(b_h),"m"(src_stride):\
              "%"REG_c"","%"REG_S"","%"REG_D"","%"REG_d"");
 
 static void inner_add_yblock_bw_8_obmc_16_mmx(const uint8_t *obmc, const x86_reg obmc_stride, uint8_t * * block, int b_w, x86_reg b_h,

@@ -107,9 +107,10 @@ static av_cold int amr_nb_decode_close(AVCodecContext *avctx)
 }
 
 static int amr_nb_decode_frame(AVCodecContext *avctx, void *data,
-                               int *data_size,
-                               const uint8_t *buf, int buf_size)
+                               int *data_size, AVPacket *avpkt)
 {
+    const uint8_t *buf = avpkt->data;
+    int buf_size       = avpkt->size;
     AMRContext *s = avctx->priv_data;
     const uint8_t *amrData = buf;
     static const uint8_t block_size[16] = { 12, 13, 15, 17, 19, 20, 26, 31, 5, 0, 0, 0, 0, 0, 0, 0 };
@@ -221,7 +222,7 @@ AVCodec libopencore_amrnb_encoder = {
     amr_nb_encode_frame,
     amr_nb_encode_close,
     NULL,
-    .sample_fmts = (enum SampleFormat[]){SAMPLE_FMT_S16,SAMPLE_FMT_NONE},
+    .sample_fmts = (const enum SampleFormat[]){SAMPLE_FMT_S16,SAMPLE_FMT_NONE},
     .long_name = NULL_IF_CONFIG_SMALL("OpenCORE Adaptive Multi-Rate (AMR) Narrow-Band"),
 };
 
@@ -271,10 +272,11 @@ static av_cold int amr_wb_decode_init(AVCodecContext *avctx)
     return 0;
 }
 
-static int amr_wb_decode_frame(AVCodecContext *avctx,
-                               void *data, int *data_size,
-                               const uint8_t *buf, int buf_size)
+static int amr_wb_decode_frame(AVCodecContext *avctx, void *data,
+                               int *data_size, AVPacket *avpkt)
 {
+    const uint8_t *buf = avpkt->data;
+    int buf_size       = avpkt->size;
     AMRWBContext *s = avctx->priv_data;
     const uint8_t *amrData = buf;
     int mode;

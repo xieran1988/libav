@@ -94,7 +94,7 @@ int url_open_protocol (URLContext **puc, struct URLProtocol *up,
         return err;
     }
 
-    //We must be carefull here as url_seek() could be slow, for example for http
+    //We must be careful here as url_seek() could be slow, for example for http
     if(   (flags & (URL_WRONLY | URL_RDWR))
        || !strcmp(up->name, "file"))
         if(!uc->is_streamed && url_seek(uc, 0, SEEK_SET) < 0)
@@ -147,6 +147,22 @@ int url_read(URLContext *h, unsigned char *buf, int size)
         return AVERROR(EIO);
     ret = h->prot->url_read(h, buf, size);
     return ret;
+}
+
+int url_read_complete(URLContext *h, unsigned char *buf, int size)
+{
+    int ret, len;
+
+    len = 0;
+    while (len < size) {
+        ret = url_read(h, buf+len, size-len);
+        if (ret == AVERROR(EAGAIN)) {
+            ret = 0;
+        } else if (ret < 1)
+            return ret < 0 ? ret : len;
+        len += ret;
+    }
+    return len;
 }
 
 int url_write(URLContext *h, unsigned char *buf, int size)
@@ -204,6 +220,13 @@ int64_t url_filesize(URLContext *h)
         url_seek(h, pos, SEEK_SET);
     }
     return size;
+}
+
+int url_get_file_handle(URLContext *h)
+{
+    if (!h->prot->url_get_file_handle)
+        return -1;
+    return h->prot->url_get_file_handle(h);
 }
 
 int url_get_max_packet_size(URLContext *h)

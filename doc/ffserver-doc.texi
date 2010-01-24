@@ -237,14 +237,7 @@ ffserver [options]
 @section Options
 @c man begin OPTIONS
 @table @option
-@item -version
-Show version.
-@item -L
-Show license.
-@item -formats
-Show available formats, codecs, protocols, ...
-@item -h
-Show help.
+@include fftools-common-opts.texi
 @item -f @var{configfile}
 Use @file{configfile} instead of @file{/etc/ffserver.conf}.
 @item -n
