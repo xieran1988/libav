@@ -23,7 +23,7 @@ Fetch and commit the new upstream version:
   debian/rules get-orig-source SVN_VERSION=${SVNDATE}
   git-import-orig \
 	    --no-dch \
-            --upstream-tag=upstream/0.6~~svn${SVNDATE} \
+            --upstream-tag=upstream/0.6.svn${SVNDATE} \
             --upstream-version=0.6~~svn${SVNDATE} \
             ../ffmpeg_0.6~~svn${SVNDATE}.orig.tar.gz
 
