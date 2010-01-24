@@ -495,11 +495,12 @@ static int vp56_size_changed(AVCodecContext *avctx)
 }
 
 int vp56_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
-                      const uint8_t *buf, int buf_size)
+                      AVPacket *avpkt)
 {
+    const uint8_t *buf = avpkt->data;
     VP56Context *s = avctx->priv_data;
     AVFrame *const p = s->framep[VP56_FRAME_CURRENT];
-    int remaining_buf_size = buf_size;
+    int remaining_buf_size = avpkt->size;
     int is_alpha, av_uninit(alpha_offset);
 
     if (s->has_alpha) {
@@ -641,7 +642,7 @@ int vp56_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     *(AVFrame*)data = *p;
     *data_size = sizeof(AVFrame);
 
-    return buf_size;
+    return avpkt->size;
 }
 
 av_cold void vp56_init(AVCodecContext *avctx, int flip, int has_alpha)
@@ -686,9 +687,9 @@ av_cold int vp56_free(AVCodecContext *avctx)
 {
     VP56Context *s = avctx->priv_data;
 
-    av_free(s->above_blocks);
-    av_free(s->macroblocks);
-    av_free(s->edge_emu_buffer_alloc);
+    av_freep(&s->above_blocks);
+    av_freep(&s->macroblocks);
+    av_freep(&s->edge_emu_buffer_alloc);
     if (s->framep[VP56_FRAME_GOLDEN]->data[0])
         avctx->release_buffer(avctx, s->framep[VP56_FRAME_GOLDEN]);
     if (s->framep[VP56_FRAME_GOLDEN2]->data[0])
