@@ -1,3 +1,10 @@
+ffmpeg (4:0.6~~svn20100124-1) experimental; urgency=low
+
+  * update to new upstream
+  * Many upstream changes, see upstream Changelog for details
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 24 Jan 2010 21:24:56 +0100
+
 ffmpeg (4:0.5+svn20090706-5) unstable; urgency=medium
 
   * Upload to unstable
