@@ -66,13 +66,13 @@ if [ -z $SVNDATE ]; then
 	error "you need to specify an svn date. e.g. 20081230 for Dec 29. 2008"
 fi
 
-TARBALL=../ffmpeg_0.5+svn${SVNDATE}.orig.tar.gz
+TARBALL=../ffmpeg_0.6~~svn${SVNDATE}.orig.tar.gz
 PACKAGENAME=ffmpeg
 
 TMPDIR=`mktemp -d`
 trap 'rm -rf ${TMPDIR}'  EXIT
 
-baseurl="svn://svn.ffmpeg.org/ffmpeg/branches/0.5"
+baseurl="svn://svn.ffmpeg.org/ffmpeg/trunk"
 
 svn export -r{${SVNDATE}} \
 	--ignore-externals \
@@ -83,6 +83,17 @@ svn info -r{${SVNDATE}} \
 	${baseurl} \
 	| awk '/^Revision/ {print $2}' \
 	> ${TMPDIR}/${PACKAGENAME}/.svnrevision
+
+# get svn externals
+svn pg svn:externals -r{${SVNDATE}} $baseurl | \
+while read external url; do
+    [ -z $url ] && continue
+    dest="${TMPDIR}/${PACKAGENAME}/${external}"
+    svn export -r{${SVNDATE}} --ignore-externals $url $dest
+    svn info $url -r{${SVNDATE}} \
+      | awk '/^Revision/ {print $2}' \
+      > ${TMPDIR}/${PACKAGENAME}/${external}/.svnrevision
+done
 
 tar czf ${TARBALL} -C ${TMPDIR} ${PACKAGENAME}
 
