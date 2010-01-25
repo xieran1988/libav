@@ -53,7 +53,7 @@ Package: ffmpeg-dbg
 Section: debug
 Priority: extra
 Architecture: any
-Depends: libavutil49 (= ${binary:Version}),
+Depends: libavutil50 (= ${binary:Version}),
          libavcodec52 (= ${binary:Version}),
          libavdevice52 (= ${binary:Version}),
          libpostproc51 (= ${binary:Version}),
@@ -74,7 +74,7 @@ Depends: ${misc:Depends}
 Description: documentation of the ffmpeg API
  This package contains the html doxygen documentation of the ffmpeg API.
 
-Package: libavutil49
+Package: libavutil50
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
@@ -118,7 +118,7 @@ Description: ffmpeg file format library
  This package contains a Debian-specific version of the libavformat shared
  object that should only be used by Debian packages.
 
-Package: libavfilter0
+Package: libavfilter1
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
@@ -151,8 +151,8 @@ Description: ffmpeg video scaling library
 Package: libavutil-dev
 Section: libdevel
 Architecture: any
-Depends: libavutil49 (>= ${binary:Version}) | libavutil-extra-49 (>= ${source:Upstream-Version}),
-         libavutil49 (<= ${source:Upstream-Version}-99) | libavutil-extra-49 (<= ${source:Upstream-Version}-99),
+Depends: libavutil50 (>= ${binary:Version}) | libavutil-extra-50 (>= ${source:Upstream-Version}),
+         libavutil50 (<= ${source:Upstream-Version}-99) | libavutil-extra-50 (<= ${source:Upstream-Version}-99),
          ${misc:Depends}
 Description: development files for libavutil
  This is the common utility library from the ffmpeg project. It is required
@@ -216,8 +216,8 @@ Description: development files for libavformat
 Package: libavfilter-dev
 Section: libdevel
 Architecture: any
-Depends: libavfilter0 (>= ${binary:Version}) | libavfilter-extra-0 (>= ${source:Upstream-Version}),
-         libavfilter0 (<= ${source:Upstream-Version}-99) | libavfilter-extra-0 (<= ${source:Upstream-Version}-99),
+Depends: libavfilter1 (>= ${binary:Version}) | libavfilter-extra-0 (>= ${source:Upstream-Version}),
+         libavfilter1 (<= ${source:Upstream-Version}-99) | libavfilter-extra-1 (<= ${source:Upstream-Version}-99),
          libavcodec-dev (= ${binary:Version}),
          ${misc:Depends}
 Description: development files for libavfilter
