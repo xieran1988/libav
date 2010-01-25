@@ -1,3 +1,4 @@
 config-extra-includes.h
 EXTRA
+codecs.txt
 formats.txt
