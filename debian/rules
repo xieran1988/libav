@@ -111,7 +111,6 @@ binary-arch: build install formats.txt
 	dh_installdocs $(extradoc) doc/optimization.txt
 	dh_installdocs -A MAINTAINERS CREDITS doc/TODO
 	dh_installdocs -A debian/README.Debian
-	dh_installdocs RELEASE
 	dh_installdocs -p libavcodec52 formats.txt
 	dh_installexamples -pffmpeg doc/ffserver.conf debian/recordshow.sh
 	dh_installexamples -plibavcodec-dev libavcodec/apiexample.c
