@@ -33,12 +33,15 @@ $(info FLAVORS = $(FLAVORS))
 $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
 $(info CFLAGS = $(CFLAGS))
 
+snapshot_version:
+	[ ! -r .svnrevision ] || \
+		cp .svnrevision $@
+	touch $@
+
 configure-%: configure-stamp-%
-configure-stamp-%: $(QUILT_STAMPFN)
+configure-stamp-%: $(QUILT_STAMPFN) snapshot_version
 	dh_testdir
 	mkdir -p debian-$*
-	[ ! -r .svnrevision ] || \
-		cp .svnrevision debian-$*/snapshot_version
 	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
 		$($*_build_confflags) $(extra_$*_build_confflags)
 	touch $@
