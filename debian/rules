@@ -113,7 +113,7 @@ binary-arch: build install formats.txt
 	dh_installdocs -A debian/README.Debian
 	dh_installdocs -p libavcodec52 formats.txt
 	dh_installexamples -pffmpeg doc/ffserver.conf debian/recordshow.sh
-	dh_installexamples -plibavcodec-dev libavcodec/apiexample.c
+	dh_installexamples -plibavcodec-dev libavcodec/api-example.c
 	dh_installchangelogs Changelog
 	dh_lintian
 	dh_link
