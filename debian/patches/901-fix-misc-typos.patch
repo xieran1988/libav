@@ -1,0 +1,45 @@
+From: stefano <stefano@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Wed, 27 Jan 2010 00:31:52 +0000 (+0000)
+Subject: Fix misc typos, patch by
+X-Git-Url: http://git.ffmpeg.org/?p=ffmpeg;a=commitdiff_plain;h=ba4f92903641af2f11d47d1ee845a62abfd5dd38
+
+Fix misc typos, patch by
+Fabian Greffrath base64_decode(PGZhYmlhbkBncmVmZnJhdGguY29tPg==).
+
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@21473 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+
+--- ffmpeg.orig/libavcodec/mjpegdec.c
++++ ffmpeg/libavcodec/mjpegdec.c
+@@ -967,7 +967,7 @@
+     }
+ 
+     if(s->avctx->debug & FF_DEBUG_PICT_INFO)
+-        av_log(s->avctx, AV_LOG_DEBUG, "%s %s p:%d >>:%d ilv:%d bits:%d %s\n", s->lossless ? "lossless" : "sequencial DCT", s->rgb ? "RGB" : "",
++        av_log(s->avctx, AV_LOG_DEBUG, "%s %s p:%d >>:%d ilv:%d bits:%d %s\n", s->lossless ? "lossless" : "sequential DCT", s->rgb ? "RGB" : "",
+                predictor, point_transform, ilv, s->bits,
+                s->pegasus_rct ? "PRCT" : (s->rct ? "RCT" : ""));
+ 
+--- ffmpeg.orig/libavcodec/opt.c
++++ ffmpeg/libavcodec/opt.c
+@@ -424,7 +424,7 @@
+             break;
+             case FF_OPT_TYPE_INT64:
+                 if((double)(opt->default_val+0.6) == opt->default_val)
+-                    av_log(s, AV_LOG_DEBUG, "loss of precission in default of %s\n", opt->name);
++                    av_log(s, AV_LOG_DEBUG, "loss of precision in default of %s\n", opt->name);
+                 av_set_int(s, opt->name, opt->default_val);
+             break;
+             case FF_OPT_TYPE_FLOAT: {
+--- ffmpeg.orig/libavcodec/options.c
++++ ffmpeg/libavcodec/options.c
+@@ -156,7 +156,7 @@
+ {"very", "strictly conform to a older more strict version of the spec or reference software", 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_VERY_STRICT, INT_MIN, INT_MAX, V|D|E, "strict"},
+ {"strict", "strictly conform to all the things in the spec no matter what consequences", 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_STRICT, INT_MIN, INT_MAX, V|D|E, "strict"},
+ {"normal", NULL, 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_NORMAL, INT_MIN, INT_MAX, V|D|E, "strict"},
+-{"inofficial", "allow inofficial extensions", 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_INOFFICIAL, INT_MIN, INT_MAX, V|D|E, "strict"},
++{"inofficial", "allow unofficial extensions", 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_INOFFICIAL, INT_MIN, INT_MAX, V|D|E, "strict"},
+ {"experimental", "allow non standardized experimental things", 0, FF_OPT_TYPE_CONST, FF_COMPLIANCE_EXPERIMENTAL, INT_MIN, INT_MAX, V|D|E, "strict"},
+ {"b_qoffset", "qp offset between P and B frames", OFFSET(b_quant_offset), FF_OPT_TYPE_FLOAT, 1.25, -FLT_MAX, FLT_MAX, V|E},
+ {"er", "set error detection aggressivity", OFFSET(error_recognition), FF_OPT_TYPE_INT, FF_ER_CAREFUL, INT_MIN, INT_MAX, A|V|D, "er"},

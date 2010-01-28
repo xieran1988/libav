@@ -10,6 +10,7 @@ build-pic-on-ppc.patch
 enable-versioning.patch
 use-normal-check_func-test-for-math-functions.patch
 900_doxyfile
+901-fix-misc-typos.patch
 # fpic-ftbfs-fix.patch
 # fpic-libpostproc-fix.patch
 # fpic-libswscale-fix.patch
