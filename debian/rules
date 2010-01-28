@@ -122,6 +122,13 @@ binary-arch: build install formats.txt
 	dh_fixperms
 	dh_strip --dbg-package=ffmpeg-dbg
 
+# We generate the shlibs file twice: First time for the internal
+# dependencies, and then we regenerate them for inclusion in the
+# packages. The point of this excercice is to have the 'internal'
+# dependencies more strict than 'external' ones. We have implemented this
+# so that mixing ffmpeg libraries with the unofficial ones from
+# debian-multimedia.org will be harder.
+
 # strict internal dependencies
 	for pkg in $(LIB_PKGS); do \
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-extra-\1/'); \
@@ -134,6 +141,7 @@ binary-arch: build install formats.txt
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-extra-\1/'); \
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION)) | $$upkg (>= $(SHLIBS_VERSION))"; \
 	done
+
 	dh_installdeb
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"
 	dh_md5sums
