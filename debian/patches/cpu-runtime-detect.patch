@@ -1,0 +1,110 @@
+From: ramiro <ramiro@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
+Date: Wed, 8 Apr 2009 20:26:18 +0000 (+0000)
+Subject: configure: Add --enable-runtime-cpudetect
+X-Git-Url: http://git.ffmpeg.org/?p=ffmpeg;a=commitdiff_plain;h=dd47be64953f558826456ee3696220f587ec8a20
+
+configure: Add --enable-runtime-cpudetect
+
+git-svn-id: file:///var/local/repositories/ffmpeg/trunk@18380 9553f0bf-9b14-0410-a0b8-cfaf0461ba5b
+---
+
+diff --git a/configure b/configure
+index a9cc2fd..eae40c6 100755
+--- a/configure
++++ b/configure
+@@ -100,6 +100,7 @@ show_help(){
+   echo "  --disable-golomb         disable Golomb code"
+   echo "  --disable-mdct           disable MDCT code"
+   echo "  --disable-rdft           disable RDFT code"
++  echo "  --enable-runtime-cpudetect detect cpu capabilities at runtime (bigger binary)"
+   echo "  --enable-hardcoded-tables use hardcoded tables instead of runtime generation"
+   echo "  --enable-memalign-hack   emulate memalign, interferes with memory debuggers"
+   echo "  --enable-beos-netserver  enable BeOS netserver"
+@@ -806,6 +807,7 @@ CONFIG_LIST="
+     postproc
+     powerpc_perf
+     rdft
++    runtime_cpudetect
+     shared
+     small
+     static
+@@ -2282,6 +2284,7 @@ if test "$extra_version" != ""; then
+     echo "version string suffix     $extra_version"
+ fi
+ echo "big-endian                ${bigendian-no}"
++echo "runtime cpu detection     ${runtime_cpudetect-no}"
+ if enabled x86; then
+     echo "yasm                      ${yasm-no}"
+     echo "MMX enabled               ${mmx-no}"
+diff --git a/libavcodec/ppc/check_altivec.c b/libavcodec/ppc/check_altivec.c
+index e034ceb..08cc0f4 100644
+--- a/libavcodec/ppc/check_altivec.c
++++ b/libavcodec/ppc/check_altivec.c
+@@ -63,7 +63,7 @@ int has_altivec(void)
+ 
+     if (err == 0) return has_vu != 0;
+     return 0;
+-#elif defined(RUNTIME_CPUDETECT)
++#elif CONFIG_RUNTIME_CPUDETECT
+     int proc_ver;
+     // Support of mfspr PVR emulation added in Linux 2.6.17.
+     __asm__ volatile("mfspr %0, 287" : "=r" (proc_ver));
+diff --git a/libpostproc/postprocess.c b/libpostproc/postprocess.c
+index 4cfbaad..b5b6649 100644
+--- a/libpostproc/postprocess.c
++++ b/libpostproc/postprocess.c
+@@ -554,7 +554,7 @@ static av_always_inline void do_a_deblock_C(uint8_t *src, int step, int stride,
+ 
+ //Note: we have C, MMX, MMX2, 3DNOW version there is no 3DNOW+MMX2 one
+ //Plain C versions
+-#if !(HAVE_MMX || HAVE_ALTIVEC) || defined (RUNTIME_CPUDETECT)
++#if !(HAVE_MMX || HAVE_ALTIVEC) || CONFIG_RUNTIME_CPUDETECT
+ #define COMPILE_C
+ #endif
+ 
+@@ -564,15 +564,15 @@ static av_always_inline void do_a_deblock_C(uint8_t *src, int step, int stride,
+ 
+ #if ARCH_X86
+ 
+-#if (HAVE_MMX && !HAVE_AMD3DNOW && !HAVE_MMX2) || defined (RUNTIME_CPUDETECT)
++#if (HAVE_MMX && !HAVE_AMD3DNOW && !HAVE_MMX2) || CONFIG_RUNTIME_CPUDETECT
+ #define COMPILE_MMX
+ #endif
+ 
+-#if HAVE_MMX2 || defined (RUNTIME_CPUDETECT)
++#if HAVE_MMX2 || CONFIG_RUNTIME_CPUDETECT
+ #define COMPILE_MMX2
+ #endif
+ 
+-#if (HAVE_AMD3DNOW && !HAVE_MMX2) || defined (RUNTIME_CPUDETECT)
++#if (HAVE_AMD3DNOW && !HAVE_MMX2) || CONFIG_RUNTIME_CPUDETECT
+ #define COMPILE_3DNOW
+ #endif
+ #endif /* ARCH_X86 */
+@@ -645,7 +645,7 @@ static inline void postProcess(const uint8_t src[], int srcStride, uint8_t dst[]
+     // Using ifs here as they are faster than function pointers although the
+     // difference would not be measurable here but it is much better because
+     // someone might exchange the CPU whithout restarting MPlayer ;)
+-#ifdef RUNTIME_CPUDETECT
++#if CONFIG_RUNTIME_CPUDETECT
+ #if ARCH_X86
+     // ordered per speed fastest first
+     if(c->cpuCaps & PP_CPU_CAPS_MMX2)
+@@ -664,7 +664,7 @@ static inline void postProcess(const uint8_t src[], int srcStride, uint8_t dst[]
+ #endif
+             postProcess_C(src, srcStride, dst, dstStride, width, height, QPs, QPStride, isColor, c);
+ #endif
+-#else //RUNTIME_CPUDETECT
++#else //CONFIG_RUNTIME_CPUDETECT
+ #if   HAVE_MMX2
+             postProcess_MMX2(src, srcStride, dst, dstStride, width, height, QPs, QPStride, isColor, c);
+ #elif HAVE_AMD3DNOW
+@@ -676,7 +676,7 @@ static inline void postProcess(const uint8_t src[], int srcStride, uint8_t dst[]
+ #else
+             postProcess_C(src, srcStride, dst, dstStride, width, height, QPs, QPStride, isColor, c);
+ #endif
+-#endif //!RUNTIME_CPUDETECT
++#endif //!CONFIG_RUNTIME_CPUDETECT
+ }
+ 
+ //static void postProcess(uint8_t src[], int srcStride, uint8_t dst[], int dstStride, int width, int height,
