@@ -1,6 +1,14 @@
 ffmpeg (4:0.5+svn20090706-6) unstable; urgency=low
 
-  * prepare new upload
+  [ Fabian Greffrath ]
+  * debian/patches/901-fix-misc-typos.patch: New patch taken from
+    upstream GIT (slightly modified) to fix some spelling errors.
+
+  [ Reinhard Tartler ]
+  * document some unattributed patches
+
+  [ Christopher Martin ]
+  * backport wmapro codec from ffmpeg trunk
 
  -- Reinhard Tartler <siretart@tauware.de>  Sun, 31 Jan 2010 16:53:47 +0100
 
