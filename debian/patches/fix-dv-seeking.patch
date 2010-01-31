@@ -1,3 +1,5 @@
+Author: Reinhard Tartler <siretart@tauware.de>
+
 fix seeking in DIF (DV) movies, closes Bug: #540424
 
 Thanks to Dan Dennedy <dan@dennedy.org> for identifying the patch!

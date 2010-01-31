@@ -1,3 +1,5 @@
+Author: Andres Mejia <mcitadel@gmail.com>
+
 Fix build failures for the GNU Hurd OS
 ===================================================================
 --- a/configure

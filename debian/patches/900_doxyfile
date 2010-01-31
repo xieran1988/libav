@@ -1,4 +1,7 @@
+Author: Reinhard Tartler <siretart@tauware.de>
+
 Exclude some directories we use for packaging.
+
 ==========================================================================
 --- a/Doxyfile
 +++ b/Doxyfile

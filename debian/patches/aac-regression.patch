@@ -1,3 +1,5 @@
+Author: Reinhard Tartler <siretart@tauware.de>
+
 fix aac playback regression
 
 patch taken from upstream svn:
