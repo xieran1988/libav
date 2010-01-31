@@ -101,6 +101,7 @@ confflags += --enable-pthreads
 confflags += --enable-zlib
 confflags += --disable-stripping
 confflags += --disable-vhook
+confflags += --enable-runtime-cpudetect
 ifeq      ($(DEB_HOST_ARCH),armel)
 # this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
 # plenty of incompatible assembly; not sure how to detect that properly
