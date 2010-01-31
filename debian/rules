@@ -41,9 +41,6 @@ configure-stamp-%: $(QUILT_STAMPFN)
 		cp .svnrevision debian-$*/snapshot_version
 	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
 		$($*_build_confflags) $(extra_$*_build_confflags)
-# cf. #567725
-	sed -i 's,^#endif.*,#define CONFIG_RUNTIME_CPUDETECT 1\n#endif,' \
-		debian-$*/config.h
 	touch $@
 
 build-%: build-stamp-%
