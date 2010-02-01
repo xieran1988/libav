@@ -2,6 +2,7 @@ From: ramiro <ramiro@b3059339-0415-0410-9bf9-f77b7e298cf2>
 Date: Wed, 8 Apr 2009 20:21:21 +0000 (+0000)
 Subject: Rename RUNTIME_CPUDETECT to CONFIG_RUNTIME_CPUDETECT and always define it.
 X-Git-Url: http://git.ffmpeg.org/?p=libswscale;a=commitdiff_plain;h=ac1d1adfeecb0373e9a03d73b898eb6dcdeba334
+Forwarded: http://permalink.gmane.org/gmane.comp.video.ffmpeg.devel/103682
 
 Rename RUNTIME_CPUDETECT to CONFIG_RUNTIME_CPUDETECT and always define it.
 

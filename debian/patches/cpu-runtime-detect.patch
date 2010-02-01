@@ -2,6 +2,7 @@ From: ramiro <ramiro@9553f0bf-9b14-0410-a0b8-cfaf0461ba5b>
 Date: Wed, 8 Apr 2009 20:26:18 +0000 (+0000)
 Subject: configure: Add --enable-runtime-cpudetect
 X-Git-Url: http://git.ffmpeg.org/?p=ffmpeg;a=commitdiff_plain;h=dd47be64953f558826456ee3696220f587ec8a20
+Forwarded: http://permalink.gmane.org/gmane.comp.video.ffmpeg.devel/103682
 
 configure: Add --enable-runtime-cpudetect
 
