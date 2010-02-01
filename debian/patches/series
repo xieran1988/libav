@@ -1,5 +1,4 @@
 100_kfreebsd
-ffmpeg-debian_hurd.patch
 fix-qtrle-encoding-when-previous-frame-linesize.patch
 aac-regression.patch
 fix-dv-seeking.patch
