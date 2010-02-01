@@ -1,6 +1,6 @@
 Author: Reinhard Tartler <siretart@tauware.de>
-
-backport symbol versioning patch
+Subject: backport symbol versioning patch
+Forwarded: http://permalink.gmane.org/gmane.comp.video.ffmpeg.devel/103672
 
 Index: ffmpeg/common.mak
 ===================================================================
