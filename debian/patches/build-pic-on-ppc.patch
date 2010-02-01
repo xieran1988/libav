@@ -1,6 +1,7 @@
 Author: Reinhard Tartler <siretart@tauware.de>
-Bug: 561956
+Bug-Debian: http://bugs.debian.org/561956
 Description: Build with pic on G3 macs
+Forwarded: http://permalink.gmane.org/gmane.comp.video.ffmpeg.devel/103697
 
 diff --git a/configure b/configure
 index fd11501..d0cadb7 100755
