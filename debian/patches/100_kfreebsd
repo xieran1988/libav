@@ -1,6 +1,7 @@
 From: Aurelien Jarno <aurel32@debian.org>
 Subject: [PATCH] Fix FTBFS for kfreebsd
-X-Upstream-Discussion: <http://comments.gmane.org/gmane.comp.video.ffmpeg.devel/90686>
+X-Upstream-Discussion: http://comments.gmane.org/gmane.comp.video.ffmpeg.devel/90686
+Forwarded: http://permalink.gmane.org/gmane.comp.video.ffmpeg.devel/103713
 
 ==========================================================================
 --- a/configure
