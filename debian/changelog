@@ -1,3 +1,9 @@
+ffmpeg (4:0.5+svn20090706-7) unstable; urgency=low
+
+  * start new upload
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 01 Feb 2010 13:33:31 +0100
+
 ffmpeg (4:0.5+svn20090706-6) unstable; urgency=low
 
   [ Fabian Greffrath ]
