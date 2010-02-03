@@ -9,6 +9,8 @@ ffmpeg (4:0.5+svn20090706-6) unstable; urgency=low
   [ Fabian Greffrath ]
   * debian/patches/901-fix-misc-typos.patch: New patch taken from
     upstream GIT (slightly modified) to fix some spelling errors.
+  * Document our calling of debhelper programs in an odd order in
+    debian/rules.
 
   [ Reinhard Tartler ]
   * document some unattributed patches
