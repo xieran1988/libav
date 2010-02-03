@@ -23,7 +23,7 @@ usage() {
 	cat >&2 <<EOF
 usage: $0 [-dh]
   -h : display help
-  -r : svn revision
+  -d : date of svn snapshot
   -o : output tarball name
   -c : path to cleanup script
 EOF
