@@ -1,1 +1,2 @@
 usr/lib/{,*/,*/*/}libavcodec.so.*
+usr/share/ffmpeg/*.ffpreset
