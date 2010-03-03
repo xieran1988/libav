@@ -6,12 +6,8 @@ EPOCH=4:
 DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
 DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
-SVN_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed -nr 's/^[0-9.:-]+[+.]svn([0-9]+)$$/\1/p')
 SHLIBS_VERSION := 4:0.5+svn20090706-3
 
-ifeq ($(SVN_VERSION),)
-$(error UPSTREAM_VERSION: $(UPSTREAM_VERSION) - but SVN_VERSION is empty! - check debian/rules)
-endif
 
 LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-extra-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 
@@ -37,8 +33,7 @@ configure-%: configure-stamp-%
 configure-stamp-%: $(QUILT_STAMPFN)
 	dh_testdir
 	mkdir -p debian-$*
-	[ ! -r .svnrevision ] || \
-		cp .svnrevision debian-$*/snapshot_version
+	echo $(UPSTREAM_VERSION) > debian-$*/snapshot_version
 	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
 		$($*_build_confflags) $(extra_$*_build_confflags)
 	touch $@
@@ -71,10 +66,6 @@ clean-real:
 	    build-doxy-stamp
 	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
 	dh_clean
-
-get-orig-source:
-	dh_testdir
-	sh debian/get-orig-source.sh -d $(SVN_VERSION)
 
 # The trailing newline is important!
 define install_flavor
