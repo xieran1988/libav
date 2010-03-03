@@ -43,6 +43,8 @@
 
 #define FRAGMENT_PIXELS 8
 
+static av_cold int vp3_decode_end(AVCodecContext *avctx);
+
 typedef struct Coeff {
     struct Coeff *next;
     DCTELEM coeff;
@@ -1684,6 +1686,11 @@ static av_cold int vp3_decode_init(AVCodecContext *avctx)
     s->coeffs = av_malloc(s->fragment_count * sizeof(Coeff) * 65);
     s->coded_fragment_list = av_malloc(s->fragment_count * sizeof(int));
     s->pixel_addresses_initialized = 0;
+    if (!s->superblock_coding || !s->all_fragments || !s->coeff_counts ||
+        !s->coeffs || !s->coded_fragment_list) {
+        vp3_decode_end(avctx);
+        return -1;
+    }
 
     if (!s->theora_tables)
     {
@@ -1737,29 +1744,34 @@ static av_cold int vp3_decode_init(AVCodecContext *avctx)
         for (i = 0; i < 16; i++) {
 
             /* DC histograms */
-            init_vlc(&s->dc_vlc[i], 5, 32,
+            if (init_vlc(&s->dc_vlc[i], 5, 32,
                 &s->huffman_table[i][0][1], 4, 2,
-                &s->huffman_table[i][0][0], 4, 2, 0);
+                &s->huffman_table[i][0][0], 4, 2, 0) < 0)
+                goto vlc_fail;
 
             /* group 1 AC histograms */
-            init_vlc(&s->ac_vlc_1[i], 5, 32,
+            if (init_vlc(&s->ac_vlc_1[i], 5, 32,
                 &s->huffman_table[i+16][0][1], 4, 2,
-                &s->huffman_table[i+16][0][0], 4, 2, 0);
+                &s->huffman_table[i+16][0][0], 4, 2, 0) < 0)
+                goto vlc_fail;
 
             /* group 2 AC histograms */
-            init_vlc(&s->ac_vlc_2[i], 5, 32,
+            if (init_vlc(&s->ac_vlc_2[i], 5, 32,
                 &s->huffman_table[i+16*2][0][1], 4, 2,
-                &s->huffman_table[i+16*2][0][0], 4, 2, 0);
+                &s->huffman_table[i+16*2][0][0], 4, 2, 0) < 0)
+                goto vlc_fail;
 
             /* group 3 AC histograms */
-            init_vlc(&s->ac_vlc_3[i], 5, 32,
+            if (init_vlc(&s->ac_vlc_3[i], 5, 32,
                 &s->huffman_table[i+16*3][0][1], 4, 2,
-                &s->huffman_table[i+16*3][0][0], 4, 2, 0);
+                &s->huffman_table[i+16*3][0][0], 4, 2, 0) < 0)
+                goto vlc_fail;
 
             /* group 4 AC histograms */
-            init_vlc(&s->ac_vlc_4[i], 5, 32,
+            if (init_vlc(&s->ac_vlc_4[i], 5, 32,
                 &s->huffman_table[i+16*4][0][1], 4, 2,
-                &s->huffman_table[i+16*4][0][0], 4, 2, 0);
+                &s->huffman_table[i+16*4][0][0], 4, 2, 0) < 0)
+                goto vlc_fail;
         }
     }
 
@@ -1784,6 +1796,11 @@ static av_cold int vp3_decode_init(AVCodecContext *avctx)
     s->superblock_macroblocks = av_malloc(s->superblock_count * 4 * sizeof(int));
     s->macroblock_fragments = av_malloc(s->macroblock_count * 6 * sizeof(int));
     s->macroblock_coding = av_malloc(s->macroblock_count + 1);
+    if (!s->superblock_fragments || !s->superblock_macroblocks ||
+        !s->macroblock_fragments || !s->macroblock_coding) {
+        vp3_decode_end(avctx);
+        return -1;
+    }
     init_block_mapping(s);
 
     for (i = 0; i < 3; i++) {
@@ -1793,6 +1810,10 @@ static av_cold int vp3_decode_init(AVCodecContext *avctx)
     }
 
     return 0;
+
+vlc_fail:
+    av_log(avctx, AV_LOG_FATAL, "Invalid huffman table\n");
+    return -1;
 }
 
 /*
@@ -2231,7 +2252,7 @@ static av_cold int theora_decode_init(AVCodecContext *avctx)
     }
 
   for(i=0;i<3;i++) {
-    init_get_bits(&gb, header_start[i], header_len[i]);
+    init_get_bits(&gb, header_start[i], header_len[i] * 8);
 
     ptype = get_bits(&gb, 8);
 

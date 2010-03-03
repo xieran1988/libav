@@ -103,6 +103,7 @@ show_help(){
   echo "  --disable-golomb         disable Golomb code"
   echo "  --disable-mdct           disable MDCT code"
   echo "  --disable-rdft           disable RDFT code"
+  echo "  --enable-runtime-cpudetect detect cpu capabilities at runtime (bigger binary)"
   echo "  --enable-hardcoded-tables use hardcoded tables instead of runtime generation"
   echo "  --enable-memalign-hack   emulate memalign, interferes with memory debuggers"
   echo "  --enable-beos-netserver  enable BeOS netserver"
@@ -566,11 +567,16 @@ int x;
 EOF
 }
 
-check_ldflags(){
-    log check_ldflags "$@"
-    check_ld "$@" <<EOF && add_ldflags "$@"
+test_ldflags(){
+    log test_ldflags "$@"
+    check_ld "$@" <<EOF
 int main(void){ return 0; }
 EOF
+}
+
+check_ldflags(){
+    log check_ldflags "$@"
+    test_ldflags "$@" && add_ldflags "$@"
 }
 
 check_header(){
@@ -800,6 +806,7 @@ CONFIG_LIST="
     postproc
     powerpc_perf
     rdft
+    runtime_cpudetect
     shared
     small
     static
@@ -1196,7 +1203,7 @@ vhook="default"
 # build settings
 add_cflags -D_ISOC99_SOURCE -D_POSIX_C_SOURCE=200112
 SHFLAGS='-shared -Wl,-soname,$$(@F)'
-VHOOKSHFLAGS='$(SHFLAGS)'
+VHOOKSHFLAGS='-shared -Wl,-soname,$$(@F)'
 FFSERVERLDFLAGS=-Wl,-E
 LIBPREF="lib"
 LIBSUF=".a"
@@ -1356,6 +1363,7 @@ TMPE="${TMPDIR}/ffmpeg-conf-${RANDOM}-$$-${RANDOM}${EXESUF}"
 TMPH="${TMPDIR}/ffmpeg-conf-${RANDOM}-$$-${RANDOM}.h"
 TMPO="${TMPDIR}/ffmpeg-conf-${RANDOM}-$$-${RANDOM}.o"
 TMPS="${TMPDIR}/ffmpeg-conf-${RANDOM}-$$-${RANDOM}.S"
+TMPV="${TMPDIR}/ffmpeg-conf-${RANDOM}-$$-${RANDOM}.ver"
 TMPSH="${TMPDIR}/ffmpeg-conf-${RANDOM}-$$-${RANDOM}.sh"
 
 # make sure we can execute files in $TMPDIR
@@ -1648,6 +1656,8 @@ case $target_os in
         ;;
     interix)
         disable vhook
+        ;;
+    gnu/kfreebsd)
         ;;
 
     *)
@@ -2007,7 +2017,7 @@ enabled libschroedinger && add_cflags $(pkg-config --cflags schroedinger-1.0) &&
 enabled libspeex   && require  libspeex speex/speex.h speex_decoder_init -lspeex
 enabled libtheora  && require  libtheora theora/theora.h theora_info_init -ltheora -logg
 enabled libvorbis  && require  libvorbis vorbis/vorbisenc.h vorbis_info_init -lvorbisenc -lvorbis -logg
-enabled libx264    && require  libx264 x264.h x264_encoder_open -lx264 -lm &&
+enabled libx264    && require  libx264 x264.h x264_encoder_encode -lx264 -lm &&
                       { check_cpp_condition x264.h "X264_BUILD >= 65" ||
                         die "ERROR: libx264 version must be >= 0.65."; }
 enabled libxvid    && require  libxvid xvid.h xvid_global -lxvidcore
@@ -2160,6 +2170,10 @@ check_ldflags -Wl,--as-needed
 check_ldflags '-Wl,-rpath-link,\$(BUILD_ROOT)/libpostproc -Wl,-rpath-link,\$(BUILD_ROOT)/libswscale -Wl,-rpath-link,\$(BUILD_ROOT)/libavfilter -Wl,-rpath-link,\$(BUILD_ROOT)/libavdevice -Wl,-rpath-link,\$(BUILD_ROOT)/libavformat -Wl,-rpath-link,\$(BUILD_ROOT)/libavcodec -Wl,-rpath-link,\$(BUILD_ROOT)/libavutil'
 check_ldflags -Wl,-Bsymbolic
 
+echo "X{};" > $TMPV
+test_ldflags -Wl,--version-script,$TMPV &&
+    append SHFLAGS '-Wl,--version-script,\$(SUBDIR)lib\$(NAME).ver'
+
 if enabled small; then
     check_cflags -Os            # not all compilers support -Os
     optimizations="small"
@@ -2205,7 +2219,7 @@ if enabled shared; then
     # LIBOBJFLAGS may have already been set in the OS configuration
     if test -z "$LIBOBJFLAGS" ; then
         case "${subarch-$arch}" in
-            x86_64|ia64|alpha|sparc*|power*|parisc*|mips*) LIBOBJFLAGS='$(PIC)' ;;
+            x86_64|ia64|alpha|sparc*|ppc|power*|parisc*|mips*) LIBOBJFLAGS='$(PIC)' ;;
         esac
     fi
 fi
@@ -2258,6 +2272,7 @@ if test "$extra_version" != ""; then
     echo "version string suffix     $extra_version"
 fi
 echo "big-endian                ${bigendian-no}"
+echo "runtime cpu detection     ${runtime_cpudetect-no}"
 if enabled x86; then
     echo "yasm                      ${yasm-no}"
     echo "MMX enabled               ${mmx-no}"

@@ -27,9 +27,9 @@ install-libs: install-lib$(NAME)-shared
 $(SUBDIR)$(SLIBNAME): $(SUBDIR)$(SLIBNAME_WITH_MAJOR)
 	cd ./$(SUBDIR) && $(LN_S) $(SLIBNAME_WITH_MAJOR) $(SLIBNAME)
 
-$(SUBDIR)$(SLIBNAME_WITH_MAJOR): $(OBJS)
+$(SUBDIR)$(SLIBNAME_WITH_MAJOR): $(OBJS) $(SUBDIR)lib$(NAME).ver
 	$(SLIB_CREATE_DEF_CMD)
-	$(CC) $(SHFLAGS) $(FFLDFLAGS) -o $$@ $$(filter-out $(DEP_LIBS),$$^) $(FFEXTRALIBS) $(EXTRAOBJS)
+	$(CC) $(SHFLAGS) $(FFLDFLAGS) -o $$@ $$(filter-out $(SUBDIR)lib$(NAME).ver $(DEP_LIBS),$$^) $(FFEXTRALIBS) $(EXTRAOBJS)
 	$(SLIB_EXTRA_CMD)
 
 ifdef SUBDIR
