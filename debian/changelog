@@ -1,8 +1,15 @@
 ffmpeg (4:0.5.1-1) unstable; urgency=low
 
-  * start new upload
+  * new upstream release:
+    - clarifies documentation on metadata, Closes: #570050, LP: #501729
+    - further security backports, Closes: #570713
+  * adapt to new versioning scheme
+  * use '<<' instead of '<' relationship for internal shlib file
+  * merge changes from ubuntu packaging
+  * drop wmapro backport again as discussed with upstream. The unrelated
+    changes seem too risky for a stable release.
 
- -- Reinhard Tartler <siretart@tauware.de>  Mon, 01 Feb 2010 13:33:31 +0100
+ -- Reinhard Tartler <siretart@tauware.de>  Wed, 03 Mar 2010 22:28:24 +0100
 
 ffmpeg (4:0.5+svn20090706-6) unstable; urgency=low
 
