@@ -37,6 +37,7 @@
 #define V_NB_BITS 8
 #define V_NB_BITS2 11
 #define V_MAX_VLCS (1<<16)
+#define V_MAX_PARTITIONS (1<<20)
 
 #ifndef V_DEBUG
 #define AV_DEBUG(...)
@@ -249,8 +250,8 @@ static int vorbis_parse_setup_hdr_codebooks(vorbis_context *vc) {
         }
 
         codebook_setup->dimensions=get_bits(gb, 16);
-        if (codebook_setup->dimensions>16) {
-            av_log(vc->avccontext, AV_LOG_ERROR, " %"PRIdFAST16". Codebook's dimension is too large (%d). \n", cb, codebook_setup->dimensions);
+        if (codebook_setup->dimensions>16||codebook_setup->dimensions==0) {
+            av_log(vc->avccontext, AV_LOG_ERROR, " %"PRIdFAST16". Codebook's dimension is invalid (%d). \n", cb, codebook_setup->dimensions);
             goto error;
         }
         entries=get_bits(gb, 24);
@@ -492,13 +493,23 @@ static int vorbis_parse_setup_hdr_floors(vorbis_context *vc) {
                 AV_DEBUG(" %d floor %d class dim: %d subclasses %d \n", i, j, floor_setup->data.t1.class_dimensions[j], floor_setup->data.t1.class_subclasses[j]);
 
                 if (floor_setup->data.t1.class_subclasses[j]) {
-                    floor_setup->data.t1.class_masterbook[j]=get_bits(gb, 8);
+                    int bits=get_bits(gb, 8);
+                    if (bits>=vc->codebook_count) {
+                        av_log(vc->avccontext, AV_LOG_ERROR, "Masterbook index %d is out of range.\n", bits);
+                        return 1;
+                    }
+                    floor_setup->data.t1.class_masterbook[j]=bits;
 
                     AV_DEBUG("   masterbook: %d \n", floor_setup->data.t1.class_masterbook[j]);
                 }
 
                 for(k=0;k<(1<<floor_setup->data.t1.class_subclasses[j]);++k) {
-                    floor_setup->data.t1.subclass_books[j][k]=(int16_t)get_bits(gb, 8)-1;
+                    int16_t bits=get_bits(gb, 8)-1;
+                    if (bits!=-1 && bits>=vc->codebook_count) {
+                        av_log(vc->avccontext, AV_LOG_ERROR, "Subclass book index %d is out of range.\n", bits);
+                        return 1;
+                    }
+                    floor_setup->data.t1.subclass_books[j][k]=bits;
 
                     AV_DEBUG("    book %d. : %d \n", k, floor_setup->data.t1.subclass_books[j][k]);
                 }
@@ -558,12 +569,11 @@ static int vorbis_parse_setup_hdr_floors(vorbis_context *vc) {
                 uint_fast8_t book_idx;
                 for (idx=0;idx<floor_setup->data.t0.num_books;++idx) {
                     book_idx=get_bits(gb, 8);
+                    if (book_idx>=vc->codebook_count)
+                        return 1;
                     floor_setup->data.t0.book_list[idx]=book_idx;
                     if (vc->codebooks[book_idx].dimensions > max_codebook_dim)
                         max_codebook_dim=vc->codebooks[book_idx].dimensions;
-
-                    if (floor_setup->data.t0.book_list[idx]>vc->codebook_count)
-                        return 1;
                 }
             }
 
@@ -634,8 +644,20 @@ static int vorbis_parse_setup_hdr_residues(vorbis_context *vc){
         res_setup->begin=get_bits(gb, 24);
         res_setup->end=get_bits(gb, 24);
         res_setup->partition_size=get_bits(gb, 24)+1;
+        /* Validations to prevent a buffer overflow later. */
+        if (res_setup->begin>res_setup->end
+        || res_setup->end>vc->blocksize[1]/(res_setup->type==2?1:2)
+        || (res_setup->end-res_setup->begin)/res_setup->partition_size>V_MAX_PARTITIONS) {
+            av_log(vc->avccontext, AV_LOG_ERROR, "partition out of bounds: type, begin, end, size, blocksize: %d, %d, %d, %d, %d\n", res_setup->type, res_setup->begin, res_setup->end, res_setup->partition_size, vc->blocksize[1]/2);
+            return 1;
+        }
+
         res_setup->classifications=get_bits(gb, 6)+1;
         res_setup->classbook=get_bits(gb, 8);
+        if (res_setup->classbook>=vc->codebook_count) {
+            av_log(vc->avccontext, AV_LOG_ERROR, "classbook value %d out of range. \n", res_setup->classbook);
+            return 1;
+        }
 
         AV_DEBUG("    begin %d end %d part.size %d classif.s %d classbook %d \n", res_setup->begin, res_setup->end, res_setup->partition_size,
           res_setup->classifications, res_setup->classbook);
@@ -655,7 +677,12 @@ static int vorbis_parse_setup_hdr_residues(vorbis_context *vc){
         for(j=0;j<res_setup->classifications;++j) {
             for(k=0;k<8;++k) {
                 if (cascade[j]&(1<<k)) {
-                        res_setup->books[j][k]=get_bits(gb, 8);
+                    int bits=get_bits(gb, 8);
+                    if (bits>=vc->codebook_count) {
+                        av_log(vc->avccontext, AV_LOG_ERROR, "book value %d out of range. \n", bits);
+                        return 1;
+                    }
+                    res_setup->books[j][k]=bits;
 
                     AV_DEBUG("     %d class casscade depth %d book: %d \n", j, k, res_setup->books[j][k]);
 
@@ -702,7 +729,14 @@ static int vorbis_parse_setup_hdr_mappings(vorbis_context *vc) {
             for(j=0;j<mapping_setup->coupling_steps;++j) {
                 mapping_setup->magnitude[j]=get_bits(gb, ilog(vc->audio_channels-1));
                 mapping_setup->angle[j]=get_bits(gb, ilog(vc->audio_channels-1));
-                // FIXME: sanity checks
+                if (mapping_setup->magnitude[j]>=vc->audio_channels) {
+                    av_log(vc->avccontext, AV_LOG_ERROR, "magnitude channel %d out of range. \n", mapping_setup->magnitude[j]);
+                    return 1;
+                }
+                if (mapping_setup->angle[j]>=vc->audio_channels) {
+                    av_log(vc->avccontext, AV_LOG_ERROR, "angle channel %d out of range. \n", mapping_setup->angle[j]);
+                    return 1;
+                }
             }
         } else {
             mapping_setup->coupling_steps=0;
@@ -723,9 +757,20 @@ static int vorbis_parse_setup_hdr_mappings(vorbis_context *vc) {
         }
 
         for(j=0;j<mapping_setup->submaps;++j) {
+            int bits;
             skip_bits(gb, 8); // FIXME check?
-            mapping_setup->submap_floor[j]=get_bits(gb, 8);
-            mapping_setup->submap_residue[j]=get_bits(gb, 8);
+            bits=get_bits(gb, 8);
+            if (bits>=vc->floor_count) {
+                av_log(vc->avccontext, AV_LOG_ERROR, "submap floor value %d out of range. \n", bits);
+                return -1;
+            }
+            mapping_setup->submap_floor[j]=bits;
+            bits=get_bits(gb, 8);
+            if (bits>=vc->residue_count) {
+                av_log(vc->avccontext, AV_LOG_ERROR, "submap residue value %d out of range. \n", bits);
+                return -1;
+            }
+            mapping_setup->submap_residue[j]=bits;
 
             AV_DEBUG("   %d mapping %d submap : floor %d, residue %d \n", i, j, mapping_setup->submap_floor[j], mapping_setup->submap_residue[j]);
         }
@@ -788,7 +833,11 @@ static int vorbis_parse_setup_hdr_modes(vorbis_context *vc) {
         mode_setup->blockflag=get_bits1(gb);
         mode_setup->windowtype=get_bits(gb, 16); //FIXME check
         mode_setup->transformtype=get_bits(gb, 16); //FIXME check
-        mode_setup->mapping=get_bits(gb, 8); //FIXME check
+        mode_setup->mapping=get_bits(gb, 8);
+        if (mode_setup->mapping>=vc->mapping_count) {
+            av_log(vc->avccontext, AV_LOG_ERROR, "mode mapping value %d out of range. \n", mode_setup->mapping);
+            return 1;
+        }
 
         AV_DEBUG(" %d mode: blockflag %d, windowtype %d, transformtype %d, mapping %d \n", i, mode_setup->blockflag, mode_setup->windowtype, mode_setup->transformtype, mode_setup->mapping);
     }
@@ -1448,6 +1497,10 @@ static int vorbis_parse_audio_packet(vorbis_context *vc) {
     } else {
         mode_number=get_bits(gb, ilog(vc->mode_count-1));
     }
+    if (mode_number>=vc->mode_count) {
+        av_log(vc->avccontext, AV_LOG_ERROR, "mode number %d out of range.\n", mode_number);
+        return -1;
+    }
     vc->mode_number=mode_number;
     mapping=&vc->mappings[vc->modes[mode_number].mapping];
 
@@ -1492,7 +1545,7 @@ static int vorbis_parse_audio_packet(vorbis_context *vc) {
         uint_fast8_t ch=0;
 
         for(j=0;j<vc->audio_channels;++j) {
-            if ((mapping->submaps==1) || (i=mapping->mux[j])) {
+            if ((mapping->submaps==1) || (i==mapping->mux[j])) {
                 res_chan[j]=res_num;
                 if (no_residue[j]) {
                     do_not_decode[ch]=1;
