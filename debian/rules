@@ -123,7 +123,7 @@ binary-arch: build install formats.txt
 # strict internal dependencies
 	for pkg in $(LIB_PKGS); do \
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-extra-\1/'); \
-	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(DEB_VERSION)) | $$upkg (>= $(DEB_VERSION)), $$pkg (< $(EPOCH)$(UPSTREAM_VERSION)-99) | $$upkg (< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(DEB_VERSION)) | $$upkg (>= $(DEB_VERSION)), $$pkg (<< $(EPOCH)$(UPSTREAM_VERSION)-99) | $$upkg (<< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
 	done
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib" \
 	dh_shlibdeps
