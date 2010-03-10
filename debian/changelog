@@ -1,6 +1,7 @@
 ffmpeg (4:0.5.1-2) unstable; urgency=low
 
-  * prepare new upload
+  * reintroduce gnu/hurd patch
+  * Fix compilation on powerpc with --disable-altivec
 
  -- Reinhard Tartler <siretart@tauware.de>  Wed, 10 Mar 2010 21:19:40 +0100
 
