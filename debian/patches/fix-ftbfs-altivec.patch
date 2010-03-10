@@ -1,0 +1,37 @@
+From: Reinhard Tartler <siretart@tauware.de>
+Subject: Fix compilation on powerpc with --disable-altivec
+
+backported from 0.5 branch:
+
+===================================================================
+r22436 | siretart | 2010-03-10 21:55:07 +0100 (Wed, 10 Mar 2010) | 7 lines
+
+Fix compilation on powerpc with --disable-altivec
+
+in case altivec is disabled, even compilation of code using altivec
+keywords or asm must be avoided.
+
+backport r30869 from mplayer repo by siretart
+
+Index: swscale.c
+===================================================================
+--- a/libswscale/swscale.c	(revision 21611)
++++ b/libswscale/swscale.c	(revision 22436)
+@@ -960,7 +960,7 @@
+ #endif
+ 
+ #if ARCH_PPC
+-#if HAVE_ALTIVEC || CONFIG_RUNTIME_CPUDETECT
++#if HAVE_ALTIVEC
+ #define COMPILE_ALTIVEC
+ #endif
+ #endif //ARCH_PPC
+@@ -1649,7 +1649,7 @@
+         return swScale_C;
+ 
+ #else
+-#if ARCH_PPC
++#if ARCH_PPC && COMPILE_ALTIVEC
+     if (flags & SWS_CPU_CAPS_ALTIVEC)
+         return swScale_altivec;
+     else
