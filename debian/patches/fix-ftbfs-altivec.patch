@@ -31,7 +31,7 @@ Index: swscale.c
  
  #else
 -#if ARCH_PPC
-+#if ARCH_PPC && COMPILE_ALTIVEC
++#if ARCH_PPC && defined COMPILE_ALTIVEC
      if (flags & SWS_CPU_CAPS_ALTIVEC)
          return swScale_altivec;
      else
