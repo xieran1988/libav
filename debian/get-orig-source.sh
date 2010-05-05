@@ -74,6 +74,8 @@ trap 'rm -rf ${TMPDIR}'  EXIT
 
 baseurl="svn://svn.ffmpeg.org/ffmpeg/branches/0.6"
 
+echo "fetching source from ${baseurl}"
+
 svn export -r{${SVNDATE}} \
 	--ignore-externals \
 	${baseurl}  \
@@ -86,3 +88,4 @@ svn info -r{${SVNDATE}} \
 
 tar czf ${TARBALL} -C ${TMPDIR} ${PACKAGENAME}
 
+echo "Created tarball for version ${SVNDATE} in ${TARBALL}"
