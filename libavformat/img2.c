@@ -232,17 +232,17 @@ static int img_read_header(AVFormatContext *s1, AVFormatParameters *ap)
         st->duration = last_index - first_index + 1;
     }
 
-    if(ap->video_codec_id){
-        st->codec->codec_type = CODEC_TYPE_VIDEO;
-        st->codec->codec_id = ap->video_codec_id;
-    }else if(ap->audio_codec_id){
-        st->codec->codec_type = CODEC_TYPE_AUDIO;
-        st->codec->codec_id = ap->audio_codec_id;
+    if(s1->video_codec_id){
+        st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
+        st->codec->codec_id = s1->video_codec_id;
+    }else if(s1->audio_codec_id){
+        st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
+        st->codec->codec_id = s1->audio_codec_id;
     }else{
-        st->codec->codec_type = CODEC_TYPE_VIDEO;
+        st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
         st->codec->codec_id = av_str2id(img_tags, s->path);
     }
-    if(st->codec->codec_type == CODEC_TYPE_VIDEO && ap->pix_fmt != PIX_FMT_NONE)
+    if(st->codec->codec_type == AVMEDIA_TYPE_VIDEO && ap->pix_fmt != PIX_FMT_NONE)
         st->codec->pix_fmt = ap->pix_fmt;
 
     return 0;
@@ -269,6 +269,8 @@ static int img_read_packet(AVFormatContext *s1, AVPacket *pkt)
             return AVERROR(EIO);
         for(i=0; i<3; i++){
             if (url_fopen(&f[i], filename, URL_RDONLY) < 0) {
+                if(i==1)
+                    break;
                 av_log(s1, AV_LOG_ERROR, "Could not open file : %s\n",filename);
                 return AVERROR(EIO);
             }
@@ -290,7 +292,7 @@ static int img_read_packet(AVFormatContext *s1, AVPacket *pkt)
 
     av_new_packet(pkt, size[0] + size[1] + size[2]);
     pkt->stream_index = 0;
-    pkt->flags |= PKT_FLAG_KEY;
+    pkt->flags |= AV_PKT_FLAG_KEY;
 
     pkt->size= 0;
     for(i=0; i<3; i++){
@@ -446,7 +448,7 @@ AVOutputFormat image2_muxer = {
     img_write_header,
     img_write_packet,
     NULL,
-    .flags= AVFMT_NOTIMESTAMPS | AVFMT_NOFILE
+    .flags= AVFMT_NOTIMESTAMPS | AVFMT_NODIMENSIONS | AVFMT_NOFILE
 };
 #endif
 #if CONFIG_IMAGE2PIPE_MUXER
@@ -460,6 +462,6 @@ AVOutputFormat image2pipe_muxer = {
     CODEC_ID_MJPEG,
     img_write_header,
     img_write_packet,
-    .flags= AVFMT_NOTIMESTAMPS
+    .flags= AVFMT_NOTIMESTAMPS | AVFMT_NODIMENSIONS
 };
 #endif

@@ -127,7 +127,7 @@ static void read_ttag(AVFormatContext *s, int taglen, const char *key)
         break;
 
     case 3:  /* UTF-8 */
-        len = FFMIN(taglen, dstlen - 1);
+        len = FFMIN(taglen, dstlen);
         get_buffer(s->pb, dst, len);
         dst[len] = 0;
         break;
@@ -150,7 +150,7 @@ static void read_ttag(AVFormatContext *s, int taglen, const char *key)
         val = dst;
 
     if (val)
-        av_metadata_set(&s->metadata, key, val);
+        av_metadata_set2(&s->metadata, key, val, 0);
 }
 
 void ff_id3v2_parse(AVFormatContext *s, int len, uint8_t version, uint8_t flags)
@@ -240,20 +240,26 @@ const AVMetadataConv ff_id3v2_metadata_conv[] = {
     { "TCO",  "genre"},
     { "TCOP", "copyright"},
     { "TDRL", "date"},
-    { "TENC", "encoder"},
-    { "TEN",  "encoder"},
+    { "TDRC", "date"},
+    { "TENC", "encoded_by"},
+    { "TEN",  "encoded_by"},
     { "TIT2", "title"},
     { "TT2",  "title"},
     { "TLAN", "language"},
     { "TPE1", "artist"},
     { "TP1",  "artist"},
+    { "TPE2", "album_artist"},
+    { "TP2",  "album_artist"},
+    { "TPE3", "performer"},
+    { "TP3",  "performer"},
     { "TPOS", "disc"},
     { "TPUB", "publisher"},
     { "TRCK", "track"},
     { "TRK",  "track"},
-    { "TSOA", "albumsort"},
-    { "TSOP", "authorsort"},
-    { "TSOT", "titlesort"},
+    { "TSOA", "album-sort"},
+    { "TSOP", "artist-sort"},
+    { "TSOT", "title-sort"},
+    { "TSSE", "encoder"},
     { 0 }
 };
 

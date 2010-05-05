@@ -79,6 +79,7 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_MPEG4,        MKTAG('S', 'N', '4', '0') },
     { CODEC_ID_MPEG4,        MKTAG('V', 'S', 'P', 'X') },
     { CODEC_ID_MPEG4,        MKTAG('U', 'L', 'D', 'X') },
+    { CODEC_ID_MPEG4,        MKTAG('G', 'E', 'O', 'V') },
     { CODEC_ID_MSMPEG4V3,    MKTAG('D', 'I', 'V', '3') }, /* default signature when using MSMPEG4 */
     { CODEC_ID_MSMPEG4V3,    MKTAG('M', 'P', '4', '3') },
     { CODEC_ID_MSMPEG4V3,    MKTAG('M', 'P', 'G', '3') },
@@ -179,6 +180,8 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_VP6,          MKTAG('V', 'P', '6', '0') },
     { CODEC_ID_VP6,          MKTAG('V', 'P', '6', '1') },
     { CODEC_ID_VP6,          MKTAG('V', 'P', '6', '2') },
+    { CODEC_ID_VP6F,         MKTAG('V', 'P', '6', 'F') },
+    { CODEC_ID_VP6F,         MKTAG('F', 'L', 'V', '4') },
     { CODEC_ID_ASV1,         MKTAG('A', 'S', 'V', '1') },
     { CODEC_ID_ASV2,         MKTAG('A', 'S', 'V', '2') },
     { CODEC_ID_VCR1,         MKTAG('V', 'C', 'R', '1') },
@@ -203,7 +206,6 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_4XM,          MKTAG('4', 'X', 'M', 'V') },
     { CODEC_ID_FLV1,         MKTAG('F', 'L', 'V', '1') },
     { CODEC_ID_FLASHSV,      MKTAG('F', 'S', 'V', '1') },
-    { CODEC_ID_VP6F,         MKTAG('V', 'P', '6', 'F') },
     { CODEC_ID_SVQ1,         MKTAG('s', 'v', 'q', '1') },
     { CODEC_ID_TSCC,         MKTAG('t', 's', 'c', 'c') },
     { CODEC_ID_ULTI,         MKTAG('U', 'L', 'T', 'I') },
@@ -239,6 +241,7 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_AURA,         MKTAG('A', 'U', 'R', 'A') },
     { CODEC_ID_AURA2,        MKTAG('A', 'U', 'R', '2') },
     { CODEC_ID_DPX,          MKTAG('d', 'p', 'x', ' ') },
+    { CODEC_ID_KGV1,         MKTAG('K', 'G', 'V', '1') },
     { CODEC_ID_NONE,         0 }
 };
 
@@ -276,6 +279,8 @@ const AVCodecTag ff_codec_wav_tags[] = {
     { CODEC_ID_ADPCM_CT,        0x0200 },
     { CODEC_ID_ATRAC3,          0x0270 },
     { CODEC_ID_IMC,             0x0401 },
+    { CODEC_ID_GSM_MS,          0x1500 },
+    { CODEC_ID_TRUESPEECH,      0x1501 },
     { CODEC_ID_AC3,             0x2000 },
     { CODEC_ID_DTS,             0x2001 },
     { CODEC_ID_SONIC,           0x2048 },
@@ -439,7 +444,7 @@ void ff_put_bmp_header(ByteIOContext *pb, AVCodecContext *enc, const AVCodecTag 
 
     put_buffer(pb, enc->extradata, enc->extradata_size);
 
-    if (enc->extradata_size & 1)
+    if (!for_asf && enc->extradata_size & 1)
         put_byte(pb, 0);
 }
 #endif //CONFIG_MUXERS
@@ -457,7 +462,7 @@ void ff_get_wav_header(ByteIOContext *pb, AVCodecContext *codec, int size)
     int id;
 
     id = get_le16(pb);
-    codec->codec_type = CODEC_TYPE_AUDIO;
+    codec->codec_type = AVMEDIA_TYPE_AUDIO;
     codec->codec_tag = id;
     codec->channels = get_le16(pb);
     codec->sample_rate = get_le32(pb);
@@ -523,8 +528,8 @@ void ff_parse_specific_params(AVCodecContext *stream, int *au_rate, int *au_ssiz
     if(stream->frame_size && stream->sample_rate){
         *au_scale=stream->frame_size;
         *au_rate= stream->sample_rate;
-    }else if(stream->codec_type == CODEC_TYPE_VIDEO ||
-             stream->codec_type == CODEC_TYPE_SUBTITLE){
+    }else if(stream->codec_type == AVMEDIA_TYPE_VIDEO ||
+             stream->codec_type == AVMEDIA_TYPE_SUBTITLE){
         *au_scale= stream->time_base.num;
         *au_rate = stream->time_base.den;
     }else{

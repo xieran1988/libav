@@ -20,7 +20,7 @@
  */
 
 /**
- * @file libavcodec/h264data.h
+ * @file
  * @brief
  *     H264 / AVC / MPEG4 part10 codec data table
  * @author Michael Niedermayer <michaelni@gmx.at>
@@ -197,7 +197,7 @@ static const PMbInfo p_sub_mb_type_info[4]={
 };
 
 static const PMbInfo b_mb_type_info[23]={
-{MB_TYPE_DIRECT2                                                   , 1, },
+{MB_TYPE_DIRECT2|MB_TYPE_L0L1                                      , 1, },
 {MB_TYPE_16x16|MB_TYPE_P0L0                                       , 1, },
 {MB_TYPE_16x16             |MB_TYPE_P0L1                          , 1, },
 {MB_TYPE_16x16|MB_TYPE_P0L0|MB_TYPE_P0L1                          , 1, },
