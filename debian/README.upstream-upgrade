@@ -8,8 +8,8 @@ Needed packages:
 Stage in a tmp directory:
 
   mkdir /tmp/f ; cd /tmp/f
-  git clone git://git.debian.org/git/pkg-multimedia/ffmpeg-debian.git
-  cd ffmpeg-debian
+  git clone git://git.debian.org/git/pkg-multimedia/ffmpeg.git
+  cd ffmpeg
   branches="master.unstripped pristine-tar upstream upstream.unstripped"
   for b in $branches; do git checkout -b $b origin/$b ; done
 
@@ -21,7 +21,7 @@ Prepare the environment:
 Fetch and commit the new upstream version:
 
   debian/rules get-orig-source SVN_VERSION=${SVNDATE}
-  git-import-orig ../ffmpeg_0.6~~svn${SVNDATE}.orig.tar.gz
+  git-import-orig ../ffmpeg_0.6~svn${SVNDATE}.orig.tar.gz
 
 Check and note the svn revision numbers from
 ffmpeg/{libswscale,}.svnrevision in debian/changelog
