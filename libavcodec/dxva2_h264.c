@@ -182,9 +182,9 @@ static void fill_slice_short(DXVA_Slice_H264_Short *slice,
 static void fill_slice_long(AVCodecContext *avctx, DXVA_Slice_H264_Long *slice,
                             unsigned position, unsigned size)
 {
-    H264Context *h = avctx->priv_data; /* FIXME Can't use const because of get_bits_count */
+    const H264Context *h = avctx->priv_data;
     struct dxva_context *ctx = avctx->hwaccel_context;
-    MpegEncContext *s = &h->s;
+    const MpegEncContext *s = &h->s;
     unsigned list;
 
     memset(slice, 0, sizeof(*slice));
@@ -220,11 +220,11 @@ static void fill_slice_long(AVCodecContext *avctx, DXVA_Slice_H264_Long *slice,
                 for (plane = 0; plane < 3; plane++) {
                     int w, o;
                     if (plane == 0 && h->luma_weight_flag[list]) {
-                        w = h->luma_weight[list][i];
-                        o = h->luma_offset[list][i];
+                        w = h->luma_weight[i][list][0];
+                        o = h->luma_weight[i][list][1];
                     } else if (plane >= 1 && h->chroma_weight_flag[list]) {
-                        w = h->chroma_weight[list][i][plane-1];
-                        o = h->chroma_offset[list][i][plane-1];
+                        w = h->chroma_weight[i][list][plane-1][0];
+                        o = h->chroma_weight[i][list][plane-1][1];
                     } else {
                         w = 1 << (plane == 0 ? h->luma_log2_weight_denom :
                                                h->chroma_log2_weight_denom);
@@ -260,8 +260,8 @@ static int commit_bitstream_and_slice_buffer(AVCodecContext *avctx,
                                              DXVA2_DecodeBufferDesc *bs,
                                              DXVA2_DecodeBufferDesc *sc)
 {
-    H264Context *h = avctx->priv_data;
-    MpegEncContext *s = &h->s;
+    const H264Context *h = avctx->priv_data;
+    const MpegEncContext *s = &h->s;
     const unsigned mb_count = s->mb_width * s->mb_height;
     struct dxva_context *ctx = avctx->hwaccel_context;
     const Picture *current_picture = h->s.current_picture_ptr;
@@ -381,7 +381,7 @@ static int start_frame(AVCodecContext *avctx,
 static int decode_slice(AVCodecContext *avctx,
                         const uint8_t *buffer, uint32_t size)
 {
-    H264Context *h = avctx->priv_data; /* FIXME Can't use const because of get_bits_count */
+    const H264Context *h = avctx->priv_data;
     struct dxva_context *ctx = avctx->hwaccel_context;
     const Picture *current_picture = h->s.current_picture_ptr;
     struct dxva2_picture_context *ctx_pic = current_picture->hwaccel_picture_private;
@@ -425,7 +425,7 @@ static int end_frame(AVCodecContext *avctx)
 
 AVHWAccel h264_dxva2_hwaccel = {
     .name           = "h264_dxva2",
-    .type           = CODEC_TYPE_VIDEO,
+    .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_H264,
     .pix_fmt        = PIX_FMT_DXVA2_VLD,
     .capabilities   = 0,

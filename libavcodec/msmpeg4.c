@@ -23,7 +23,7 @@
  */
 
 /**
- * @file libavcodec/msmpeg4.c
+ * @file
  * MSMPEG4 backend for ffmpeg encoder and decoder.
  */
 
@@ -1732,9 +1732,7 @@ int ff_msmpeg4_decode_block(MpegEncContext * s, DCTELEM * block,
                             if(s->qscale<8){
                                 ll= SHOW_UBITS(re, &s->gb, 3); SKIP_BITS(re, &s->gb, 3);
                                 if(ll==0){
-                                    if(SHOW_UBITS(re, &s->gb, 1)) av_log(s->avctx, AV_LOG_ERROR, "cool a new vlc code ,contact the ffmpeg developers and upload the file\n");
-                                    SKIP_BITS(re, &s->gb, 1);
-                                    ll=8;
+                                    ll= 8+SHOW_UBITS(re, &s->gb, 1); SKIP_BITS(re, &s->gb, 1);
                                 }
                             }else{
                                 ll=2;
@@ -1923,7 +1921,7 @@ int ff_msmpeg4_decode_motion(MpegEncContext * s,
 
 AVCodec msmpeg4v1_decoder = {
     "msmpeg4v1",
-    CODEC_TYPE_VIDEO,
+    AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MSMPEG4V1,
     sizeof(MpegEncContext),
     ff_msmpeg4_decode_init,
@@ -1937,7 +1935,7 @@ AVCodec msmpeg4v1_decoder = {
 
 AVCodec msmpeg4v2_decoder = {
     "msmpeg4v2",
-    CODEC_TYPE_VIDEO,
+    AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MSMPEG4V2,
     sizeof(MpegEncContext),
     ff_msmpeg4_decode_init,
@@ -1951,7 +1949,7 @@ AVCodec msmpeg4v2_decoder = {
 
 AVCodec msmpeg4v3_decoder = {
     "msmpeg4",
-    CODEC_TYPE_VIDEO,
+    AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MSMPEG4V3,
     sizeof(MpegEncContext),
     ff_msmpeg4_decode_init,
@@ -1965,7 +1963,7 @@ AVCodec msmpeg4v3_decoder = {
 
 AVCodec wmv1_decoder = {
     "wmv1",
-    CODEC_TYPE_VIDEO,
+    AVMEDIA_TYPE_VIDEO,
     CODEC_ID_WMV1,
     sizeof(MpegEncContext),
     ff_msmpeg4_decode_init,

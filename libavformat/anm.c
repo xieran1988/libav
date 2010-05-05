@@ -20,7 +20,7 @@
  */
 
 /**
- * @file libavformat/anm.c
+ * @file
  * Deluxe Paint Animation demuxer
  */
 
@@ -39,7 +39,7 @@ typedef struct {
     int page_table_offset;
 #define MAX_PAGES  256        /** Deluxe Paint hardcoded value */
     Page pt[MAX_PAGES];       /** page table */
-    int page;                 /** current page */
+    int page;                 /** current page (or AVERROR_xxx code) */
     int record;               /** current record (with in page) */
 } AnmDemuxContext;
 
@@ -100,7 +100,7 @@ static int read_header(AVFormatContext *s,
     st = av_new_stream(s, 0);
     if (!st)
         return AVERROR(ENOMEM);
-    st->codec->codec_type = CODEC_TYPE_VIDEO;
+    st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     st->codec->codec_id   = CODEC_ID_ANM;
     st->codec->codec_tag  = 0; /* no fourcc */
     st->codec->width      = get_le16(pb);
@@ -185,7 +185,7 @@ static int read_packet(AVFormatContext *s,
         return AVERROR(EIO);
 
     if (anm->page < 0)
-        return 0;
+        return anm->page;
 
 repeat:
     p = &anm->pt[anm->page];
@@ -219,7 +219,7 @@ repeat:
     if (pkt->size < 0)
         return pkt->size;
     if (p->base_record + anm->record == 0)
-        pkt->flags |= PKT_FLAG_KEY;
+        pkt->flags |= AV_PKT_FLAG_KEY;
 
     anm->record++;
     return 0;

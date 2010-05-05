@@ -15,8 +15,10 @@ rm -f "$logfile"
 rm -f "$benchfile"
 
 # generate reference for quality check
-if [ -n "$do_ref" ]; then
+if [ -n "$do_vref" ]; then
 do_ffmpeg_nocheck $raw_ref -f image2 -vcodec pgmyuv -i $raw_src -an -f rawvideo $target_path/$raw_ref
+fi
+if [ -n "$do_aref" ]; then
 do_ffmpeg_nocheck $pcm_ref -ab 128k -ac 2 -ar 44100 -f s16le -i $pcm_src -f wav $target_path/$pcm_ref
 fi
 
@@ -148,7 +150,7 @@ do_video_decoding
 fi
 
 if [ -n "$do_mjpeg" ] ; then
-do_video_encoding mjpeg.avi "-qscale 10" "-an -vcodec mjpeg -pix_fmt yuvj420p"
+do_video_encoding mjpeg.avi "-qscale 9" "-an -vcodec mjpeg -pix_fmt yuvj420p"
 do_video_decoding "" "-pix_fmt yuv420p"
 fi
 

@@ -44,7 +44,7 @@ static int read_header(AVFormatContext *s, AVFormatParameters *ap)
     if (!st)
         return AVERROR(ENOMEM);
 
-    st->codec->codec_type = CODEC_TYPE_VIDEO;
+    st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     st->codec->codec_id = CODEC_ID_MPEG4;
     st->need_parsing = AVSTREAM_PARSE_FULL;
     av_set_pts_info(st, 64, 1, 90000);
@@ -55,9 +55,9 @@ static int read_header(AVFormatContext *s, AVFormatParameters *ap)
 
 static int read_packet(AVFormatContext *s, AVPacket *pkt)
 {
-    int ret, size, pts;
-
-    get_be16(s->pb); // 257
+    int ret, size, pts, type;
+retry:
+    type= get_be16(s->pb); // 257 or 258
     size= get_be16(s->pb);
 
     get_be16(s->pb); //some flags, 0x80 indicates end of frame
@@ -69,9 +69,14 @@ static int read_packet(AVFormatContext *s, AVPacket *pkt)
     if(size<1)
         return -1;
 
+    if(type==258){
+        url_fskip(s->pb, size);
+        goto retry;
+    }
+
     ret= av_get_packet(s->pb, pkt, size);
 
-    pkt->pts= pkt->dts= pts;
+    pkt->pts= pts;
     pkt->pos-=16;
 
     pkt->stream_index = 0;

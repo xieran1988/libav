@@ -34,8 +34,8 @@ extern const AVCodecTag codec_movvideo_tags[];
 extern const AVCodecTag codec_movaudio_tags[];
 extern const AVCodecTag ff_codec_movsubtitle_tags[];
 
-int ff_mov_iso639_to_lang(const char *lang, int mp4);
-int ff_mov_lang_to_iso639(unsigned code, char *to);
+int ff_mov_iso639_to_lang(const char lang[4], int mp4);
+int ff_mov_lang_to_iso639(unsigned code, char to[4]);
 
 /* the QuickTime file format is quite convoluted...
  * it has lots of index tables, each indexing something in another one...
@@ -138,6 +138,7 @@ typedef struct MOVContext {
     MOVTrackExt *trex_data;
     unsigned trex_count;
     int itunes_metadata;  ///< metadata are itunes style
+    int chapter_track;
 } MOVContext;
 
 int ff_mp4_read_descr_len(ByteIOContext *pb);

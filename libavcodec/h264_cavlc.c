@@ -20,7 +20,7 @@
  */
 
 /**
- * @file libavcodec/h264_cavlc.c
+ * @file
  * H.264 / AVC / MPEG4 part10 cavlc bitstream decoding.
  * @author Michael Niedermayer <michaelni@gmx.at>
  */
@@ -408,7 +408,7 @@ static int decode_residual(H264Context *h, GetBitContext *gb, DCTELEM *block, in
 
     if(trailing_ones<total_coeff) {
         int mask, prefix;
-        int suffix_length = total_coeff > 10 && trailing_ones < 3;
+        int suffix_length = total_coeff > 10 & trailing_ones < 3;
         int bitsi= show_bits(gb, LEVEL_TAB_BITS);
         int level_code= cavlc_level_tab[suffix_length][bitsi][0];
 
@@ -431,8 +431,13 @@ static int decode_residual(H264Context *h, GetBitContext *gb, DCTELEM *block, in
                     level_code= prefix + get_bits(gb, 4); //part
             }else{
                 level_code= 30 + get_bits(gb, prefix-3); //part
-                if(prefix>=16)
+                if(prefix>=16){
+                    if(prefix > 25+3){
+                        av_log(h->s.avctx, AV_LOG_ERROR, "Invalid level prefix\n");
+                        return -1;
+                    }
                     level_code += (1<<(prefix-3))-4096;
+                }
             }
 
             if(trailing_ones < 3) level_code += 2;
@@ -441,11 +446,9 @@ static int decode_residual(H264Context *h, GetBitContext *gb, DCTELEM *block, in
             mask= -(level_code&1);
             level[trailing_ones]= (((2+level_code)>>1) ^ mask) - mask;
         }else{
-            if(trailing_ones < 3) level_code += (level_code>>31)|1;
+            level_code += ((level_code>>31)|1) & -(trailing_ones < 3);
 
-            suffix_length = 1;
-            if(level_code + 3U > 6U)
-                suffix_length++;
+            suffix_length = 1 + (level_code + 3U > 6U);
             level[trailing_ones]= level_code;
         }
 
@@ -472,9 +475,7 @@ static int decode_residual(H264Context *h, GetBitContext *gb, DCTELEM *block, in
                 level_code= (((2+level_code)>>1) ^ mask) - mask;
             }
             level[i]= level_code;
-
-            if(suffix_limit[suffix_length] + level_code > 2U*suffix_limit[suffix_length])
-                suffix_length++;
+            suffix_length+= suffix_limit[suffix_length] + level_code > 2U*suffix_limit[suffix_length];
         }
     }
 
@@ -482,9 +483,9 @@ static int decode_residual(H264Context *h, GetBitContext *gb, DCTELEM *block, in
         zeros_left=0;
     else{
         if(n == CHROMA_DC_BLOCK_INDEX)
-            zeros_left= get_vlc2(gb, chroma_dc_total_zeros_vlc[ total_coeff-1 ].table, CHROMA_DC_TOTAL_ZEROS_VLC_BITS, 1);
+            zeros_left= get_vlc2(gb, (chroma_dc_total_zeros_vlc-1)[ total_coeff ].table, CHROMA_DC_TOTAL_ZEROS_VLC_BITS, 1);
         else
-            zeros_left= get_vlc2(gb, total_zeros_vlc[ total_coeff-1 ].table, TOTAL_ZEROS_VLC_BITS, 1);
+            zeros_left= get_vlc2(gb, (total_zeros_vlc-1)[ total_coeff ].table, TOTAL_ZEROS_VLC_BITS, 1);
     }
 
     coeff_num = zeros_left + total_coeff - 1;
@@ -495,7 +496,7 @@ static int decode_residual(H264Context *h, GetBitContext *gb, DCTELEM *block, in
             if(zeros_left <= 0)
                 run_before = 0;
             else if(zeros_left < 7){
-                run_before= get_vlc2(gb, run_vlc[zeros_left-1].table, RUN_VLC_BITS, 1);
+                run_before= get_vlc2(gb, (run_vlc-1)[zeros_left].table, RUN_VLC_BITS, 1);
             }else{
                 run_before= get_vlc2(gb, run7_vlc.table, RUN7_VLC_BITS, 2);
             }
@@ -511,7 +512,7 @@ static int decode_residual(H264Context *h, GetBitContext *gb, DCTELEM *block, in
             if(zeros_left <= 0)
                 run_before = 0;
             else if(zeros_left < 7){
-                run_before= get_vlc2(gb, run_vlc[zeros_left-1].table, RUN_VLC_BITS, 1);
+                run_before= get_vlc2(gb, (run_vlc-1)[zeros_left].table, RUN_VLC_BITS, 1);
             }else{
                 run_before= get_vlc2(gb, run7_vlc.table, RUN7_VLC_BITS, 2);
             }
@@ -551,8 +552,6 @@ int ff_h264_decode_mb_cavlc(H264Context *h){
             if(FRAME_MBAFF && (s->mb_y&1) == 0){
                 if(s->mb_skip_run==0)
                     h->mb_mbaff = h->mb_field_decoding_flag = get_bits1(&s->gb);
-                else
-                    predict_field_decoding_flag(h);
             }
             decode_mb_skip(h);
             return 0;
@@ -627,6 +626,7 @@ decode_intra_mb:
         h->ref_count[1] <<= 1;
     }
 
+    fill_decode_neighbors(h, mb_type);
     fill_decode_caches(h, mb_type);
 
     //mb_pred
@@ -794,22 +794,18 @@ decode_intra_mb:
                                 return -1;
                             }
                         }
-                    }else
-                        val= LIST_NOT_USED&0xFF;
                     fill_rectangle(&h->ref_cache[list][ scan8[0] ], 4, 4, 8, val, 1);
+                    }
             }
             for(list=0; list<h->list_count; list++){
-                unsigned int val;
                 if(IS_DIR(mb_type, 0, list)){
                     pred_motion(h, 0, 4, list, h->ref_cache[list][ scan8[0] ], &mx, &my);
                     mx += get_se_golomb(&s->gb);
                     my += get_se_golomb(&s->gb);
                     tprintf(s->avctx, "final mv:%d %d\n", mx, my);
 
-                    val= pack16to32(mx,my);
-                }else
-                    val=0;
-                fill_rectangle(h->mv_cache[list][ scan8[0] ], 4, 4, 8, val, 4);
+                    fill_rectangle(h->mv_cache[list][ scan8[0] ], 4, 4, 8, pack16to32(mx,my), 4);
+                }
             }
         }
         else if(IS_16X8(mb_type)){
@@ -908,9 +904,7 @@ decode_intra_mb:
     }
 
     if(dct8x8_allowed && (cbp&15) && !IS_INTRA(mb_type)){
-        if(get_bits1(&s->gb)){
-            mb_type |= MB_TYPE_8x8DCT;
-        }
+        mb_type |= MB_TYPE_8x8DCT*get_bits1(&s->gb);
     }
     h->cbp=
     h->cbp_table[mb_xy]= cbp;
@@ -921,8 +915,6 @@ decode_intra_mb:
         int dquant;
         GetBitContext *gb= IS_INTRA(mb_type) ? h->intra_gb_ptr : h->inter_gb_ptr;
         const uint8_t *scan, *scan8x8, *dc_scan;
-
-//        fill_non_zero_count_cache(h);
 
         if(IS_INTERLACED(mb_type)){
             scan8x8= s->qscale ? h->field_scan8x8_cavlc : h->field_scan8x8_cavlc_q0;

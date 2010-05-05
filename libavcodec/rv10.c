@@ -21,13 +21,14 @@
  */
 
 /**
- * @file libavcodec/rv10.c
+ * @file
  * RV10/RV20 decoder
  */
 
 #include "avcodec.h"
 #include "dsputil.h"
 #include "mpegvideo.h"
+#include "mpeg4video.h"
 #include "h263.h"
 
 //#define DEBUG
@@ -707,7 +708,7 @@ static int rv10_decode_frame(AVCodecContext *avctx,
 
 AVCodec rv10_decoder = {
     "rv10",
-    CODEC_TYPE_VIDEO,
+    AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RV10,
     sizeof(MpegEncContext),
     rv10_decode_init,
@@ -721,7 +722,7 @@ AVCodec rv10_decoder = {
 
 AVCodec rv20_decoder = {
     "rv20",
-    CODEC_TYPE_VIDEO,
+    AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RV20,
     sizeof(MpegEncContext),
     rv10_decode_init,

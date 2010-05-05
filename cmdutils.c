@@ -35,6 +35,7 @@
 #include "libswscale/swscale.h"
 #include "libpostproc/postprocess.h"
 #include "libavutil/avstring.h"
+#include "libavutil/pixdesc.h"
 #include "libavcodec/opt.h"
 #include "cmdutils.h"
 #include "version.h"
@@ -45,11 +46,9 @@
 #include <sys/resource.h>
 #endif
 
-#undef exit
-
 const char **opt_names;
 static int opt_name_count;
-AVCodecContext *avcodec_opts[CODEC_TYPE_NB];
+AVCodecContext *avcodec_opts[AVMEDIA_TYPE_NB];
 AVFormatContext *avformat_opts;
 struct SwsContext *sws_opts;
 
@@ -170,8 +169,10 @@ unknown_opt:
             } else if (po->flags & OPT_FLOAT) {
                 *po->u.float_arg = parse_number_or_die(opt, arg, OPT_FLOAT, -1.0/0.0, 1.0/0.0);
             } else if (po->flags & OPT_FUNC2) {
-                if(po->u.func2_arg(opt, arg)<0)
-                    goto unknown_opt;
+                if (po->u.func2_arg(opt, arg) < 0) {
+                    fprintf(stderr, "%s: failed to set value '%s' for option '%s'\n", argv[0], arg, opt);
+                    exit(1);
+                }
             } else {
                 po->u.func_arg(arg);
             }
@@ -190,29 +191,31 @@ int opt_default(const char *opt, const char *arg){
     const AVOption *o= NULL;
     int opt_types[]={AV_OPT_FLAG_VIDEO_PARAM, AV_OPT_FLAG_AUDIO_PARAM, 0, AV_OPT_FLAG_SUBTITLE_PARAM, 0};
 
-    for(type=0; type<CODEC_TYPE_NB && ret>= 0; type++){
+    for(type=0; type<AVMEDIA_TYPE_NB && ret>= 0; type++){
         const AVOption *o2 = av_find_opt(avcodec_opts[0], opt, NULL, opt_types[type], opt_types[type]);
         if(o2)
             ret = av_set_string3(avcodec_opts[type], opt, arg, 1, &o);
     }
     if(!o)
         ret = av_set_string3(avformat_opts, opt, arg, 1, &o);
-    if(!o)
+    if(!o && sws_opts)
         ret = av_set_string3(sws_opts, opt, arg, 1, &o);
     if(!o){
         if(opt[0] == 'a')
-            ret = av_set_string3(avcodec_opts[CODEC_TYPE_AUDIO], opt+1, arg, 1, &o);
+            ret = av_set_string3(avcodec_opts[AVMEDIA_TYPE_AUDIO], opt+1, arg, 1, &o);
         else if(opt[0] == 'v')
-            ret = av_set_string3(avcodec_opts[CODEC_TYPE_VIDEO], opt+1, arg, 1, &o);
+            ret = av_set_string3(avcodec_opts[AVMEDIA_TYPE_VIDEO], opt+1, arg, 1, &o);
         else if(opt[0] == 's')
-            ret = av_set_string3(avcodec_opts[CODEC_TYPE_SUBTITLE], opt+1, arg, 1, &o);
+            ret = av_set_string3(avcodec_opts[AVMEDIA_TYPE_SUBTITLE], opt+1, arg, 1, &o);
     }
     if (o && ret < 0) {
         fprintf(stderr, "Invalid value '%s' for option '%s'\n", arg, opt);
         exit(1);
     }
-    if(!o)
-        return -1;
+    if (!o) {
+        fprintf(stderr, "Unrecognized option '%s'\n", opt);
+        exit(1);
+    }
 
 //    av_log(NULL, AV_LOG_ERROR, "%s:%s: %f 0x%0X\n", opt, arg, av_get_double(avcodec_opts, opt, NULL), (int)av_get_int(avcodec_opts, opt, NULL));
 
@@ -262,7 +265,7 @@ int opt_loglevel(const char *opt, const char *arg)
 
 int opt_timelimit(const char *opt, const char *arg)
 {
-#if HAVE_SYS_RESOURCE_H
+#if HAVE_SETRLIMIT
     int lim = parse_number_or_die(opt, arg, OPT_INT64, 0, INT_MAX);
     struct rlimit rl = { lim, lim + 1 };
     if (setrlimit(RLIMIT_CPU, &rl))
@@ -288,71 +291,74 @@ void set_context_opts(void *ctx, void *opts_ctx, int flags)
 
 void print_error(const char *filename, int err)
 {
+    char errbuf[128];
+
     switch(err) {
-    case AVERROR_NUMEXPECTED:
-        fprintf(stderr, "%s: Incorrect image filename syntax.\n"
-                "Use '%%d' to specify the image number:\n"
-                "  for img1.jpg, img2.jpg, ..., use 'img%%d.jpg';\n"
-                "  for img001.jpg, img002.jpg, ..., use 'img%%03d.jpg'.\n",
-                filename);
-        break;
-    case AVERROR_INVALIDDATA:
-        fprintf(stderr, "%s: Error while parsing header\n", filename);
-        break;
-    case AVERROR_NOFMT:
-        fprintf(stderr, "%s: Unknown format\n", filename);
-        break;
-    case AVERROR(EIO):
-        fprintf(stderr, "%s: I/O error occurred\n"
-                "Usually that means that input file is truncated and/or corrupted.\n",
-                filename);
-        break;
-    case AVERROR(ENOMEM):
-        fprintf(stderr, "%s: memory allocation error occurred\n", filename);
-        break;
-    case AVERROR(ENOENT):
-        fprintf(stderr, "%s: no such file or directory\n", filename);
-        break;
 #if CONFIG_NETWORK
-    case AVERROR(FF_NETERROR(EPROTONOSUPPORT)):
+    case FF_NETERROR(EPROTONOSUPPORT):
         fprintf(stderr, "%s: Unsupported network protocol\n", filename);
         break;
 #endif
     default:
-        fprintf(stderr, "%s: Error while opening file\n", filename);
-        break;
+        av_strerror(err, errbuf, sizeof(errbuf));
+        fprintf(stderr, "%s: %s\n", filename, errbuf);
     }
 }
 
-#define PRINT_LIB_VERSION(outstream,libname,LIBNAME,indent) \
-    version= libname##_version(); \
-    fprintf(outstream, "%slib%-10s %2d.%2d.%2d / %2d.%2d.%2d\n", indent? "  " : "", #libname, \
-            LIB##LIBNAME##_VERSION_MAJOR, LIB##LIBNAME##_VERSION_MINOR, LIB##LIBNAME##_VERSION_MICRO, \
-            version >> 16, version >> 8 & 0xff, version & 0xff);
+#define PRINT_LIB_VERSION(outstream,libname,LIBNAME,indent)             \
+    if (CONFIG_##LIBNAME) {                                             \
+        unsigned int version = libname##_version();                     \
+        fprintf(outstream, "%slib%-10s %2d.%2d.%2d / %2d.%2d.%2d\n",    \
+                indent? "  " : "", #libname,                            \
+                LIB##LIBNAME##_VERSION_MAJOR,                           \
+                LIB##LIBNAME##_VERSION_MINOR,                           \
+                LIB##LIBNAME##_VERSION_MICRO,                           \
+                version >> 16, version >> 8 & 0xff, version & 0xff);    \
+    }
 
 static void print_all_lib_versions(FILE* outstream, int indent)
 {
-    unsigned int version;
     PRINT_LIB_VERSION(outstream, avutil,   AVUTIL,   indent);
     PRINT_LIB_VERSION(outstream, avcodec,  AVCODEC,  indent);
     PRINT_LIB_VERSION(outstream, avformat, AVFORMAT, indent);
     PRINT_LIB_VERSION(outstream, avdevice, AVDEVICE, indent);
-#if CONFIG_AVFILTER
     PRINT_LIB_VERSION(outstream, avfilter, AVFILTER, indent);
-#endif
     PRINT_LIB_VERSION(outstream, swscale,  SWSCALE,  indent);
-#if CONFIG_POSTPROC
     PRINT_LIB_VERSION(outstream, postproc, POSTPROC, indent);
-#endif
 }
+
+static void maybe_print_config(const char *lib, const char *cfg)
+{
+    static int warned_cfg;
+
+    if (strcmp(FFMPEG_CONFIGURATION, cfg)) {
+        if (!warned_cfg) {
+            fprintf(stderr, "  WARNING: library configuration mismatch\n");
+            warned_cfg = 1;
+        }
+        fprintf(stderr, "  %-11s configuration: %s\n", lib, cfg);
+    }
+}
+
+#define PRINT_LIB_CONFIG(lib, tag, cfg) do {    \
+        if (CONFIG_##lib)                       \
+            maybe_print_config(tag, cfg);       \
+    } while (0)
 
 void show_banner(void)
 {
-    fprintf(stderr, "%s version " FFMPEG_VERSION ", Copyright (c) %d-%d Fabrice Bellard, et al.\n",
+    fprintf(stderr, "%s version " FFMPEG_VERSION ", Copyright (c) %d-%d the FFmpeg developers\n",
             program_name, program_birth_year, this_year);
     fprintf(stderr, "  built on %s %s with %s %s\n",
             __DATE__, __TIME__, CC_TYPE, CC_VERSION);
     fprintf(stderr, "  configuration: " FFMPEG_CONFIGURATION "\n");
+    PRINT_LIB_CONFIG(AVUTIL,   "libavutil",   avutil_configuration());
+    PRINT_LIB_CONFIG(AVCODEC,  "libavcodec",  avcodec_configuration());
+    PRINT_LIB_CONFIG(AVFORMAT, "libavformat", avformat_configuration());
+    PRINT_LIB_CONFIG(AVDEVICE, "libavdevice", avdevice_configuration());
+    PRINT_LIB_CONFIG(AVFILTER, "libavfilter", avfilter_configuration());
+    PRINT_LIB_CONFIG(SWSCALE,  "libswscale",  swscale_configuration());
+    PRINT_LIB_CONFIG(POSTPROC, "libpostproc", postproc_configuration());
     print_all_lib_versions(stderr, 1);
 }
 
@@ -529,13 +535,13 @@ void show_codecs(void)
         last_name= p2->name;
 
         switch(p2->type) {
-        case CODEC_TYPE_VIDEO:
+        case AVMEDIA_TYPE_VIDEO:
             type_str = "V";
             break;
-        case CODEC_TYPE_AUDIO:
+        case AVMEDIA_TYPE_AUDIO:
             type_str = "A";
             break;
-        case CODEC_TYPE_SUBTITLE:
+        case AVMEDIA_TYPE_SUBTITLE:
             type_str = "S";
             break;
         default:
@@ -582,9 +588,6 @@ void show_protocols(void)
     printf("Supported file protocols:\n");
     while((up = av_protocol_next(up)))
         printf("%s\n", up->name);
-    printf("\n");
-
-    printf("Frame size, frame rate abbreviations:\n ntsc pal qntsc qpal sntsc spal film ntsc-film sqcif qcif cif 4cif\n");
 }
 
 void show_filters(void)
@@ -600,7 +603,30 @@ void show_filters(void)
 
 void show_pix_fmts(void)
 {
-    list_fmts(avcodec_pix_fmt_string, PIX_FMT_NB);
+    enum PixelFormat pix_fmt;
+
+    printf(
+        "Pixel formats:\n"
+        "I.... = Supported Input  format for conversion\n"
+        ".O... = Supported Output format for conversion\n"
+        "..H.. = Hardware accelerated format\n"
+        "...P. = Paletted format\n"
+        "....B = Bitstream format\n"
+        "FLAGS NAME            NB_COMPONENTS BITS_PER_PIXEL\n"
+        "-----\n");
+
+    for (pix_fmt = 0; pix_fmt < PIX_FMT_NB; pix_fmt++) {
+        const AVPixFmtDescriptor *pix_desc = &av_pix_fmt_descriptors[pix_fmt];
+        printf("%c%c%c%c%c %-16s       %d            %2d\n",
+               sws_isSupportedInput (pix_fmt)      ? 'I' : '.',
+               sws_isSupportedOutput(pix_fmt)      ? 'O' : '.',
+               pix_desc->flags & PIX_FMT_HWACCEL   ? 'H' : '.',
+               pix_desc->flags & PIX_FMT_PAL       ? 'P' : '.',
+               pix_desc->flags & PIX_FMT_BITSTREAM ? 'B' : '.',
+               pix_desc->name,
+               pix_desc->nb_components,
+               av_get_bits_per_pixel(pix_desc));
+    }
 }
 
 int read_yesno(void)
@@ -612,4 +638,28 @@ int read_yesno(void)
         c = getchar();
 
     return yesno;
+}
+
+int read_file(const char *filename, char **bufptr, size_t *size)
+{
+    FILE *f = fopen(filename, "r");
+
+    if (!f) {
+        fprintf(stderr, "Cannot read file '%s': %s\n", filename, strerror(errno));
+        return AVERROR(errno);
+    }
+    fseek(f, 0, SEEK_END);
+    *size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    *bufptr = av_malloc(*size + 1);
+    if (!*bufptr) {
+        fprintf(stderr, "Could not allocate file buffer\n");
+        fclose(f);
+        return AVERROR(ENOMEM);
+    }
+    fread(*bufptr, 1, *size, f);
+    (*bufptr)[*size++] = '\0';
+
+    fclose(f);
+    return 0;
 }

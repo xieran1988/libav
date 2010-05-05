@@ -24,7 +24,7 @@
 #include "bytestream.h"
 
 /**
- * @file libavcodec/adpcm.c
+ * @file
  * ADPCM codecs.
  * First version by Francois Revol (revol@free.fr)
  * Fringe ADPCM codecs (e.g., DK3, DK4, Westwood)
@@ -1638,7 +1638,7 @@ static int adpcm_decode_frame(AVCodecContext *avctx,
 #define ADPCM_ENCODER(id,name,long_name_)       \
 AVCodec name ## _encoder = {                    \
     #name,                                      \
-    CODEC_TYPE_AUDIO,                           \
+    AVMEDIA_TYPE_AUDIO,                         \
     id,                                         \
     sizeof(ADPCMContext),                       \
     adpcm_encode_init,                          \
@@ -1656,7 +1656,7 @@ AVCodec name ## _encoder = {                    \
 #define ADPCM_DECODER(id,name,long_name_)       \
 AVCodec name ## _decoder = {                    \
     #name,                                      \
-    CODEC_TYPE_AUDIO,                           \
+    AVMEDIA_TYPE_AUDIO,                         \
     id,                                         \
     sizeof(ADPCMContext),                       \
     adpcm_decode_init,                          \
@@ -1664,7 +1664,6 @@ AVCodec name ## _decoder = {                    \
     NULL,                                       \
     adpcm_decode_frame,                         \
     .long_name = NULL_IF_CONFIG_SMALL(long_name_), \
-    .capabilities = CODEC_CAP_SUBFRAMES,        \
 };
 #else
 #define ADPCM_DECODER(id,name,long_name_)

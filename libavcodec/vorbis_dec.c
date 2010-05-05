@@ -1,5 +1,5 @@
 /**
- * @file libavcodec/vorbis_dec.c
+ * @file
  * Vorbis I decoder
  * @author Denes Balatoni  ( dbalatoni programozo hu )
  *
@@ -30,6 +30,7 @@
 #include "avcodec.h"
 #include "get_bits.h"
 #include "dsputil.h"
+#include "fft.h"
 
 #include "vorbis.h"
 #include "xiph.h"
@@ -984,7 +985,7 @@ static av_cold int vorbis_decode_init(AVCodecContext *avccontext)
         return -1;
     }
 
-    if (vc->audio_channels > 6)
+    if (vc->audio_channels > 8)
         avccontext->channel_layout = 0;
     else
         avccontext->channel_layout = ff_vorbis_channel_layouts[vc->audio_channels - 1];
@@ -1616,7 +1617,7 @@ static int vorbis_decode_frame(AVCodecContext *avccontext,
 
     AV_DEBUG("parsed %d bytes %d bits, returned %d samples (*ch*bits) \n", get_bits_count(gb)/8, get_bits_count(gb)%8, len);
 
-    if (vc->audio_channels > 6) {
+    if (vc->audio_channels > 8) {
         for (i = 0; i < vc->audio_channels; i++)
             channel_ptrs[i] = vc->channel_floors + i * len;
     } else {
@@ -1644,7 +1645,7 @@ static av_cold int vorbis_decode_close(AVCodecContext *avccontext)
 
 AVCodec vorbis_decoder = {
     "vorbis",
-    CODEC_TYPE_AUDIO,
+    AVMEDIA_TYPE_AUDIO,
     CODEC_ID_VORBIS,
     sizeof(vorbis_context),
     vorbis_decode_init,
