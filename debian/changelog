@@ -1,8 +1,12 @@
 ffmpeg (4:0.5.1-4) UNRELEASED; urgency=low
 
+  [ Andres Mejia ]
   * Fix dependency problem for ffmpeg so it can use extra ffmpeg libs.
 
- -- Andres Mejia <mcitadel@gmail.com>  Sat, 08 May 2010 03:19:37 -0400
+  [ Reinhard Tartler ]
+  * move presets back to 'ffmpeg' package. Closes: #581748
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 25 May 2010 23:01:08 +0200
 
 ffmpeg (4:0.5.1-3) unstable; urgency=low
 
