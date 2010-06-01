@@ -36,6 +36,7 @@ Build-Depends: debhelper (>= 7),
                quilt,
                texi2html,
                yasm [i386 amd64],
+               libva-dev,
                zlib1g-dev
 
 Package: ffmpeg
