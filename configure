@@ -82,7 +82,7 @@ show_help(){
   echo "  --disable-ffplay         disable ffplay build"
   echo "  --disable-ffserver       disable ffserver build"
   echo "  --enable-postproc        enable GPLed postprocessing support [no]"
-  echo "  --enable-swscale         enable GPLed software scaler support [no]"
+  echo "  --enable-swscale         enable software scaler support [no]"
   echo "  --enable-avfilter        video filter support (replaces vhook) [no]"
   echo "  --enable-avfilter-lavf   video filters dependent on avformat [no]"
   echo "  --disable-vhook          disable video hooking support"
@@ -1658,6 +1658,9 @@ case $target_os in
         disable vhook
         ;;
     gnu/kfreebsd)
+        ;;
+    gnu)
+        disable dv1394
         ;;
 
     *)
