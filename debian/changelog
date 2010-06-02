@@ -1,10 +1,15 @@
-ffmpeg (4:0.5.1-4) UNRELEASED; urgency=low
+ffmpeg (4:0.5.2-1) UNRELEASED; urgency=low
 
   [ Andres Mejia ]
   * Fix dependency problem for ffmpeg so it can use extra ffmpeg libs.
 
   [ Reinhard Tartler ]
   * move presets back to 'ffmpeg' package. Closes: #581748
+
+  [ Fabian Greffrath ]
+  * Imported Upstream version 0.5.2
+  * Remove ffmpeg-debian_hurd.patch, applied upstream.
+  * Remove fix-ftbfs-altivec.patch, applied upstream.
 
  -- Reinhard Tartler <siretart@tauware.de>  Tue, 25 May 2010 23:01:08 +0200
 
