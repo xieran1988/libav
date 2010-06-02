@@ -1,4 +1,3 @@
-ffmpeg-debian_hurd.patch
 fix-ftbfs-altivec.patch
 fix-qtrle-encoding-when-previous-frame-linesize.patch
 fix-dv-seeking.patch
