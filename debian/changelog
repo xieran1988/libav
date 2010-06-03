@@ -1,4 +1,4 @@
-ffmpeg (4:0.5.2-1) UNRELEASED; urgency=low
+ffmpeg (4:0.5.2-1) unstable; urgency=low
 
   [ Andres Mejia ]
   * Fix dependency problem for ffmpeg so it can use extra ffmpeg libs.
