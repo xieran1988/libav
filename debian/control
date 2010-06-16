@@ -44,6 +44,7 @@ Section: video
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
+Conflicts: ffprobe
 Description: multimedia player, server and encoder
  This package contains the ffplay multimedia player, the ffserver streaming
  server and the ffmpeg audio and video encoder. They support most existing
