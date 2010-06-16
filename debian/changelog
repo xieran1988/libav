@@ -1,6 +1,9 @@
 ffmpeg (4:0.6-1) experimental; urgency=low
 
   * new upstream release
+    - adds VP8 support via libvpx, Closes: #582274
+  * depend on libavfilter-extra-1 instead of -0, Closes: #583728
+  * add conflicts to the ffprobe package, it has been merged upstream now
 
  -- Reinhard Tartler <siretart@tauware.de>  Wed, 16 Jun 2010 09:25:28 +0200
 
