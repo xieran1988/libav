@@ -217,7 +217,7 @@ Description: development files for libavformat
 Package: libavfilter-dev
 Section: libdevel
 Architecture: any
-Depends: libavfilter1 (>= ${binary:Version}) | libavfilter-extra-0 (>= ${source:Upstream-Version}),
+Depends: libavfilter1 (>= ${binary:Version}) | libavfilter-extra-1 (>= ${source:Upstream-Version}),
          libavfilter1 (<= ${source:Upstream-Version}-99) | libavfilter-extra-1 (<= ${source:Upstream-Version}-99),
          libavcodec-dev (= ${binary:Version}),
          ${misc:Depends}
@@ -243,8 +243,8 @@ Description: development files for libpostproc
 Package: libswscale-dev
 Section: libdevel
 Architecture: any
-Depends: libswscale0 (>= ${binary:Version}) | libswscale-extra-0 (>= ${source:Upstream-Version}),
-         libswscale0 (<= ${source:Upstream-Version}-99) | libswscale-extra-0 (<= ${source:Upstream-Version}-99),
+Depends: libswscale0 (>= ${binary:Version}) | libswscale-extra-1 (>= ${source:Upstream-Version}),
+         libswscale0 (<= ${source:Upstream-Version}-99) | libswscale-extra-1 (<= ${source:Upstream-Version}-99),
          libavutil-dev (= ${binary:Version}),
          ${misc:Depends}
 Description: development files for libswscale
