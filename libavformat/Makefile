@@ -114,7 +114,7 @@ OBJS-$(CONFIG_MM_DEMUXER)                += mm.o
 OBJS-$(CONFIG_MMF_DEMUXER)               += mmf.o raw.o
 OBJS-$(CONFIG_MMF_MUXER)                 += mmf.o riff.o
 OBJS-$(CONFIG_MOV_DEMUXER)               += mov.o riff.o isom.o
-OBJS-$(CONFIG_MOV_MUXER)                 += movenc.o riff.o isom.o avc.o
+OBJS-$(CONFIG_MOV_MUXER)                 += movenc.o riff.o isom.o avc.o movenchint.o
 OBJS-$(CONFIG_MP2_MUXER)                 += mp3.o id3v1.o
 OBJS-$(CONFIG_MP3_DEMUXER)               += mp3.o id3v1.o id3v2.o
 OBJS-$(CONFIG_MP3_MUXER)                 += mp3.o id3v1.o id3v2.o
@@ -255,6 +255,9 @@ OBJS-$(CONFIG_W64_DEMUXER)               += wav.o riff.o raw.o
 OBJS-$(CONFIG_WAV_DEMUXER)               += wav.o riff.o raw.o
 OBJS-$(CONFIG_WAV_MUXER)                 += wav.o riff.o
 OBJS-$(CONFIG_WC3_DEMUXER)               += wc3movie.o
+OBJS-$(CONFIG_WEBM_MUXER)                += matroskaenc.o matroska.o \
+                                            riff.o isom.o avc.o \
+                                            flacenc_header.o
 OBJS-$(CONFIG_WSAUD_DEMUXER)             += westwood.o
 OBJS-$(CONFIG_WSVQA_DEMUXER)             += westwood.o
 OBJS-$(CONFIG_WV_DEMUXER)                += wv.o apetag.o id3v1.o
