@@ -282,8 +282,38 @@ AVInputFormat *av_find_input_format(const char *short_name)
     return NULL;
 }
 
-/* memory handling */
+#if LIBAVFORMAT_VERSION_MAJOR < 53 && CONFIG_SHARED && HAVE_SYMVER
+FF_SYMVER(void, av_destruct_packet_nofree, (AVPacket *pkt), "LIBAVFORMAT_52")
+{
+    av_destruct_packet_nofree(pkt);
+}
 
+FF_SYMVER(void, av_destruct_packet, (AVPacket *pkt), "LIBAVFORMAT_52")
+{
+    av_destruct_packet(pkt);
+}
+
+FF_SYMVER(int, av_new_packet, (AVPacket *pkt, int size), "LIBAVFORMAT_52")
+{
+    return av_new_packet(pkt, size);
+}
+
+FF_SYMVER(int, av_dup_packet, (AVPacket *pkt), "LIBAVFORMAT_52")
+{
+    return av_dup_packet(pkt);
+}
+
+FF_SYMVER(void, av_free_packet, (AVPacket *pkt), "LIBAVFORMAT_52")
+{
+    av_free_packet(pkt);
+}
+
+FF_SYMVER(void, av_init_packet, (AVPacket *pkt), "LIBAVFORMAT_52")
+{
+    av_log(NULL, AV_LOG_WARNING, "Diverting av_*_packet function calls to libavcodec. Recompile to improve performance\n");
+    av_init_packet(pkt);
+}
+#endif
 
 int av_get_packet(ByteIOContext *s, AVPacket *pkt, int size)
 {
@@ -2201,7 +2231,7 @@ int av_find_stream_info(AVFormatContext *ic)
         /* we did not get all the codec info, but we read too much data */
         if (read_size >= ic->probesize) {
             ret = count;
-            av_log(ic, AV_LOG_WARNING, "MAX_READ_SIZE:%d reached\n", ic->probesize);
+            av_log(ic, AV_LOG_DEBUG, "Probe buffer size limit %d reached\n", ic->probesize);
             break;
         }
 

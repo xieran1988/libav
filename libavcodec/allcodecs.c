@@ -253,7 +253,7 @@ void avcodec_register_all(void)
     REGISTER_DECODER (TTA, tta);
     REGISTER_DECODER (TWINVQ, twinvq);
     REGISTER_DECODER (VMDAUDIO, vmdaudio);
-    REGISTER_ENCDEC  (VORBIS, vorbis);
+    REGISTER_DECODER  (VORBIS, vorbis);
     REGISTER_DECODER (WAVPACK, wavpack);
     REGISTER_DECODER (WMAPRO, wmapro);
     REGISTER_ENCDEC  (WMAV1, wmav1);
@@ -344,6 +344,7 @@ void avcodec_register_all(void)
     REGISTER_DECODER (LIBSPEEX, libspeex);
     REGISTER_ENCODER (LIBTHEORA, libtheora);
     REGISTER_ENCODER (LIBVORBIS, libvorbis);
+    REGISTER_ENCDEC  (LIBVPX, libvpx);
     REGISTER_ENCODER (LIBX264, libx264);
     REGISTER_ENCODER (LIBXVID, libxvid);
 
