@@ -96,6 +96,7 @@ confflags += --enable-libschroedinger
 confflags += --enable-libspeex
 confflags += --enable-libtheora
 confflags += --enable-libvorbis
+confflags += --enable-librtmp
 confflags += --enable-vaapi
 confflags += --enable-pthreads
 confflags += --enable-zlib
