@@ -71,6 +71,7 @@ gpl_confflags += --enable-x11grab
 gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 
 # "forbidden" encoders, see README.Debian for details
+disable_encoders += --disable-encoder=aac
 disable_encoders += --disable-encoder=h263
 disable_encoders += --disable-encoder=h263p
 disable_encoders += --disable-encoder=mpeg2video
