@@ -62,15 +62,13 @@ define cond_enable_nf
 	$(shell test -r $(1) && echo --enable-$(2) --enable-nonfree )
 endef
 
-# another variant that also requires (L)GPL version 3
-define cond_enable_version3
-	$(shell test -r $(1) && echo --enable-$(2) --enable-version3 )
-endef
-
 # Configuration flags causing the libs to be GPL tainted
 gpl_confflags += --enable-gpl
 gpl_confflags += --enable-postproc
 gpl_confflags += --enable-x11grab
+
+# there is no libfaad in ubuntu/main, on in ubuntu/multiverse
+gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 
 # "forbidden" encoders, see README.Debian for details
 disable_encoders += --disable-encoder=aac
@@ -113,14 +111,13 @@ endif
 confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
-gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
-gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
 confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
+gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
 
-# libopencore-amr[nw]b require (L)GPL version 3
-confflags += $(call cond_enable,/usr/include/opencore-amrnb/interf_dec.h,libopencore-amrnb)
-confflags += $(call cond_enable,/usr/include/opencore-amrwb/dec_if.h,libopencore-amrwb)
+confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
+confflags += $(call cond_enable_nf,/usr/include/amrnb/sp_dec.h,libamr-nb)
+confflags += $(call cond_enable_nf,/usr/include/amrwb/dec.h,libamr-wb)
 
 # AAC is considered non-free upstream
 confflags += $(call cond_enable_nf,/usr/include/faac.h,libfaac)
