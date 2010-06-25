@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #  Script to create a 'pristine' tarball for the debian ffmpeg source package
-#  Copyright (C) 2008, Reinhard Tartler
+#  Copyright (C) 2008, 2009, 2010 Reinhard Tartler
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ usage() {
 	cat >&2 <<EOF
 usage: $0 [-dh]
   -h : display help
-  -r : svn revision
+  -d : date of svn snapshot
   -o : output tarball name
   -c : path to cleanup script
 EOF
