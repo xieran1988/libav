@@ -44,6 +44,8 @@ Build-Depends: debhelper (>= 7),
 Package: ffmpeg
 Section: video
 Architecture: any
+Replaces: libavcodec52 (<< ${source:Version}),
+          libavcodec-extra-52 (<< 4:0.6~)
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Conflicts: ffprobe
