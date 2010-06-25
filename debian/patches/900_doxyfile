@@ -1,4 +1,6 @@
-Exclude some directories we use for packaging.
+From: Reinhard Tartler <siretart@tauware.de>
+Subject: Exclude some directories we use for packaging.
+
 ==========================================================================
 --- a/Doxyfile
 +++ b/Doxyfile
