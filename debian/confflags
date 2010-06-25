@@ -57,6 +57,11 @@ define cond_enable
 	$(shell test -r $(1) && echo --enable-$(2) )
 endef
 
+# variant that also require --enable-version3
+define cond_enable_v3
+	$(shell test -r $(1) && echo --enable-$(2) --enable-version3 )
+endef
+
 # variant that also require --enable-nonfree
 define cond_enable_nf
 	$(shell test -r $(1) && echo --enable-$(2) --enable-nonfree )
@@ -116,11 +121,16 @@ gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
 gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
 confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 
+# Opencore-amr requires GPL v3
+v3_confflags += $(call cond_enable_v3,/usr/include/opencore-amrnb/interf_dec.h,libopencore-amrnb)
+v3_confflags += $(call cond_enable_v3,/usr/include/opencore-amrwb/dec_if.h,libopencore-amrwb)
+
 # AAC is considered non-free upstream
 confflags += $(call cond_enable_nf,/usr/include/faac.h,libfaac)
 
 # comment out following line for LGPL versions of the libraries
 confflags += $(gpl_confflags)
+confflags += $(v3_confflags)
 
 # Enable IEEE 1394 (FireWire) support on Linux only
 ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
