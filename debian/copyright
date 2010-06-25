@@ -1,5 +1,5 @@
 SVN snapshots are downloaded with subversion from the ffmpeg SVN at:
-    <svn://svn.mplayerhq.hu/ffmpeg/trunk>
+    <svn://svn.ffmpeg.org/ffmpeg/>
 
 Upstream Authors: Fabrice Bellard
                   Alex Beregszaszi
