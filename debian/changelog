@@ -1,3 +1,28 @@
+ffmpeg (4:0.6-2) experimental; urgency=low
+
+  [ Fabian Greffrath ]
+  * Enable RTMP[E] support via librtmp.
+  * Disable aac encoder, see README.Debian.
+  * Fix obsolete-relation-form for the internal dependencies.
+  * Merge debian/README.Source into debian/README.source and add section
+    headers.
+  * Remove obsoleted support for the non-free libamr-nb/wb.
+
+  [ Reinhard Tartler ]
+  * enable runtime-cpudetect
+  * conditionally build against opencore-amr if installed in the build
+    environment
+  * update upstream url in debian/copyright
+  * fix usage documentation in debian/get-orig-source.sh
+  * update dep3 headers for debian/patches/900_doxyfile
+  * add proper replaces for moving presets back to ffmpeg
+  * make debian/patches gbp-pq friendly
+  * Add VP80 fourcc to libavformat/riff.c
+  * Backport-AAC-HE-v2
+  * bump Standards-Version, no changes needed
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 29 Jun 2010 09:07:56 +0200
+
 ffmpeg (4:0.6-1) experimental; urgency=low
 
   * new upstream release
