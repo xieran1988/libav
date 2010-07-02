@@ -90,7 +90,7 @@ unusable.
 
 Currently the following video encoders are disabled in the ffmpeg
 package: H263, H264, MPEG2 video, MPEG4 and MS-MPEG4. No *decoders* are
-disabled in any the ffmpeg package!
+disabled in any of the ffmpeg packages!
 
 The plan is to provide a source package called 'ffmpeg-extra', which builds
 drop-in replacement binary package with the mpeg encoders enabled. Ideally, we
