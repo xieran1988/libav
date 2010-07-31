@@ -1,3 +1,9 @@
+ffmpeg (4:0.6-3) experimental; urgency=low
+
+  * prepare new upload
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 31 Jul 2010 16:06:29 -0400
+
 ffmpeg (4:0.6-2) experimental; urgency=low
 
   [ Fabian Greffrath ]
