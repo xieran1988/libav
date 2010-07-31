@@ -72,9 +72,6 @@ gpl_confflags += --enable-gpl
 gpl_confflags += --enable-postproc
 gpl_confflags += --enable-x11grab
 
-# there is no libfaad in ubuntu/main, on in ubuntu/multiverse
-gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
-
 # "forbidden" encoders, see README.Debian for details
 disable_encoders += --disable-encoder=aac
 disable_encoders += --disable-encoder=h263
@@ -102,7 +99,6 @@ confflags += --enable-libschroedinger
 confflags += --enable-libspeex
 confflags += --enable-libtheora
 confflags += --enable-libvorbis
-confflags += --enable-librtmp
 confflags += --enable-vaapi
 confflags += --enable-pthreads
 confflags += --enable-zlib
@@ -117,9 +113,11 @@ endif
 confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
+gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
 gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
-confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
+gpl_confflags += $(call cond_enable,/usr/include/librtmp/http.h,librtmp)
+gpl_confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 
 # Opencore-amr requires GPL v3
 v3_confflags += $(call cond_enable_v3,/usr/include/opencore-amrnb/interf_dec.h,libopencore-amrnb)
