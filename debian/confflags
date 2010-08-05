@@ -76,18 +76,6 @@ gpl_confflags += --enable-x11grab
 # there is no libfaad in ubuntu/main, on in ubuntu/multiverse
 gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 
-# "forbidden" encoders, see README.Debian for details
-disable_encoders += --disable-encoder=h263
-disable_encoders += --disable-encoder=h263p
-disable_encoders += --disable-encoder=mpeg2video
-disable_encoders += --disable-encoder=mpeg4
-disable_encoders += --disable-encoder=msmpeg4v1
-disable_encoders += --disable-encoder=msmpeg4v2
-disable_encoders += --disable-encoder=msmpeg4v3
-
-# Comment out the following line to *not* disable the above encoders
-confflags += $(disable_encoders)
-
 # Common configuration flags
 confflags += --extra-version='$(DEB_VERSION)'
 confflags += --prefix=/usr
