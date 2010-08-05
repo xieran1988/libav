@@ -3,6 +3,7 @@ ffmpeg (4:0.5.2-2) unstable; urgency=low
   * Enable some encoders:
     - h263, h263p, mpeg2video, mpeg4, msmpeg4v1, msmpeg4v2, msmpeg4v3
     Closes: #418231, #433287, #440216, #587898, #525349
+  * Bump Standards Version, no changes needed
 
  -- Reinhard Tartler <siretart@tauware.de>  Thu, 05 Aug 2010 11:59:26 -0400
 
