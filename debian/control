@@ -92,6 +92,7 @@ Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Replaces: ffmpeg (<< 4:0.5.1-1)
+Breaks: libavcodec51 (<< 3:0.svn20090303-1)
 Description: ffmpeg codec library
  This is the codec library from the ffmpeg project. It supports most existing
  encoding formats (MPEG, DivX, MPEG4, AC3, DV...).
@@ -113,7 +114,6 @@ Package: libavformat52
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
-Breaks: libavcodec51 (<< 3:0.svn20090303-1)
 Description: ffmpeg file format library
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
