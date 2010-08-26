@@ -33,11 +33,14 @@ ifeq ($(DEB_HOST_ARCH),armel)
     has_vfp := $(call check_asm, $(vfp_asm))
     neon_asm := vadd.i16 q0, q0, q0
     has_neon := $(call check_asm, $(neon_asm))
+    v7_asm := dmb
+    has_v7 := $(call check_asm, $(v7_asm))
 
-    # only build 
+    # only build a VFP flavour if the toolchain doesn't enable VFP by default
     ifneq ($(has_vfp),1)
     FLAVORS += vfp
     endif
+    # only build a NEON flavour if the toolchain doesn't enable NEON by default
     ifneq ($(has_neon),1)
     FLAVORS += neon
     endif
@@ -164,6 +167,12 @@ vfp_build_confflags += --disable-ffplay
 # NB: NEON always implies v7+ and ffmpeg's NEON implementation requires VFP
 neon_build_confflags += $(confflags)
 neon_build_confflags += --shlibdir=/usr/lib/neon/vfp
+# the NEON pass now requires ubfx which was introduced in armv6t2; we need to
+# enable at least armv6t2 for the NEON pass to build, but NEON implies armv7-a
+# so pass armv7-a if it's not already enabled
+ifneq ($(has_v7),1)
+neon_build_confflags += --extra-cflags="-march=armv7-a"
+endif
 neon_build_confflags += --extra-cflags="-mfpu=neon -mfloat-abi=softfp -fPIC -DPIC"
 neon_build_confflags += --enable-shared
 neon_build_confflags += --disable-static
