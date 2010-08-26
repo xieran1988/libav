@@ -5,8 +5,8 @@ ffmpeg (4:0.5.2-4) UNRELEASED; urgency=low
     apt solver, Closes: #591881
 
   [ Loïc Minier ]
-    debian/confflags: detect whether the toolchain supports armv6t2 ("ubfx")
-    by default as that's now needed for the NEON pass; if it's not enabled by
+    debian/confflags: detect whether the toolchain supports ARMv7 ("dmb")
+    by default as the NEON pass needs at least ARMv6t2; if it's not enabled by
     default, pass -marmv7-a in extra-cflags for the NEON pass since NEON
     implies ARMv7; closes: #594417.
 
