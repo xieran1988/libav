@@ -1,3 +1,17 @@
+ffmpeg (4:0.5.2-4) UNRELEASED; urgency=low
+
+  [ Reinhard Tartler ]
+  * Move breaks declaration from libavformat to libavcodec to help the
+    apt solver, Closes: #591881
+
+  [ Loïc Minier ]
+    debian/confflags: detect whether the toolchain supports armv6t2 ("ubfx")
+    by default as that's now needed for the NEON pass; if it's not enabled by
+    default, pass -marmv7-a in extra-cflags for the NEON pass since NEON
+    implies ARMv7; closes: #594417.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 27 Aug 2010 01:24:10 +0200
+
 ffmpeg (4:0.5.2-3) unstable; urgency=low
 
   * prepare new upload
