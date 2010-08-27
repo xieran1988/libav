@@ -1,4 +1,4 @@
-ffmpeg (4:0.5.2-4) UNRELEASED; urgency=low
+ffmpeg (4:0.5.2-3) unstable; urgency=low
 
   [ Reinhard Tartler ]
   * Move breaks declaration from libavformat to libavcodec to help the
@@ -11,12 +11,6 @@ ffmpeg (4:0.5.2-4) UNRELEASED; urgency=low
     implies ARMv7; closes: #594417.
 
  -- Reinhard Tartler <siretart@tauware.de>  Fri, 27 Aug 2010 01:24:10 +0200
-
-ffmpeg (4:0.5.2-3) unstable; urgency=low
-
-  * prepare new upload
-
- -- Reinhard Tartler <siretart@tauware.de>  Sat, 07 Aug 2010 09:48:16 -0400
 
 ffmpeg (4:0.5.2-2) unstable; urgency=low
 
