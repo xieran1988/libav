@@ -1,3 +1,10 @@
+ffmpeg (4:0.5.2-4) unstable; urgency=low
+
+  [ Loïc Minier ]
+  * Fix typo: use -march=armv7-a instead of -marmv7-a
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 31 Aug 2010 15:31:05 +0200
+
 ffmpeg (4:0.5.2-3) unstable; urgency=low
 
   [ Reinhard Tartler ]
