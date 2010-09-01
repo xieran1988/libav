@@ -1,3 +1,9 @@
+ffmpeg (4:0.5.2-5) unstable; urgency=low
+
+  * start new upload
+
+ -- Reinhard Tartler <siretart@tauware.de>  Wed, 01 Sep 2010 21:00:25 +0200
+
 ffmpeg (4:0.5.2-4) unstable; urgency=low
 
   [ Loïc Minier ]
