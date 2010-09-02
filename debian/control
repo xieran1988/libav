@@ -117,6 +117,7 @@ Package: libavformat52
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
+Breaks: mplayer (<< 2:1.0~rc4)
 Description: ffmpeg file format library
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
