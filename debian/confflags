@@ -7,10 +7,10 @@ FLAVORS := static
 # shared is generic, i.e. without arch specific opcodes
 FLAVORS += shared
 
-export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-export DEB_HOST_GNU_CPU   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
 export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 export DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+export DEB_HOST_ARCH_CPU  ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU)
+export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 
 SVNREVISION=$(shell cat .svnrevision 2>/dev/null || echo "UNKNOWN")
 
@@ -28,7 +28,7 @@ check_asm = $(shell echo 'void foo(void) { __asm__ volatile("$(1)"); }' | $(CC) 
 
 # the other flavors always build dynamic versions
 # Also, disable architecture-specific optimizations for default shared build
-ifeq ($(DEB_HOST_GNU_CPU),arm)
+ifeq ($(DEB_HOST_ARCH_CPU),arm)
     # whether the toolchain *default* configuration includes vfp and neon
     vfp_asm := fadds s0, s0, s0
     has_vfp := $(call check_asm, $(vfp_asm))
@@ -103,7 +103,7 @@ ifeq      ($(DEB_HOST_ARCH),ia64)
 confflags += --disable-decoder=aac --disable-encoder=aac
 endif
 
-ifeq      ($(DEB_HOST_GNU_CPU),arm)
+ifeq      ($(DEB_HOST_ARCH_CPU),arm)
 # this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
 # plenty of incompatible assembly; not sure how to detect that properly
 confflags += --extra-cflags="-marm -fPIC -DPIC"
