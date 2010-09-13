@@ -1,8 +1,13 @@
 ffmpeg (4:0.5.2-5) unstable; urgency=low
 
-  * start new upload
+  [ Dominic Evans ]
+  * add libxfixes-dev to build-depends to unbreak x11grab input,
+    Closes: #596342, LP: #631103
+  
+  [ Reinhard Tartler ]
+  * fix x11grab example in e.g. the manpage so that they actually work
 
- -- Reinhard Tartler <siretart@tauware.de>  Wed, 01 Sep 2010 21:00:25 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 13 Sep 2010 15:29:49 +0200
 
 ffmpeg (4:0.5.2-4) unstable; urgency=low
 
