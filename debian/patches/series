@@ -3,6 +3,7 @@ fix-dv-seeking.patch
 fix-constant-quant-encoding.patch
 increase-VOFW-on-x86.patch
 use-normal-check_func-test-for-math-functions.patch
+fix-x11grab-example.patch
 900_doxyfile
 901-fix-misc-typos.patch
 # fpic-ftbfs-fix.patch
