@@ -1,3 +1,10 @@
+ffmpeg (4:0.5.2-6) unstable; urgency=low
+
+  * Fix several security issues in flicvideo.c.
+    Fixes: CVE-2010-3429, Closes: #598590
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 03 Oct 2010 16:59:39 +0200
+
 ffmpeg (4:0.5.2-5) unstable; urgency=low
 
   [ Dominic Evans ]
