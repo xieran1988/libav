@@ -117,11 +117,6 @@ ifeq      ($(DEB_HOST_ARCH),ia64)
 confflags += --disable-decoder=aac --disable-encoder=aac
 endif
 
-ifeq      ($(DEB_HOST_ARCH_CPU),arm)
-# this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
-# plenty of incompatible assembly; not sure how to detect that properly
-confflags += --extra-cflags="-marm"
-endif
 confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
