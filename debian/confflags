@@ -120,7 +120,7 @@ endif
 ifeq      ($(DEB_HOST_ARCH_CPU),arm)
 # this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
 # plenty of incompatible assembly; not sure how to detect that properly
-confflags += --extra-cflags="-marm -fPIC -DPIC"
+confflags += --extra-cflags="-marm"
 endif
 confflags += $(extra_common_confflags)
 
