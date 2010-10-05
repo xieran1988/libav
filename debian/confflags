@@ -181,7 +181,7 @@ neon_build_confflags += --shlibdir=/usr/lib/neon/vfp
 # enable at least armv6t2 for the NEON pass to build, but NEON implies armv7-a
 # so pass armv7-a if it's not already enabled
 ifneq ($(has_v7),1)
-neon_build_confflags += --extra-cflags="-march=armv7-a"
+neon_build_confflags += --cpu='armv7-a'
 endif
 neon_build_confflags += --extra-cflags="-mfpu=neon $(float_abi) -fPIC -DPIC"
 neon_build_confflags += --enable-shared
