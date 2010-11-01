@@ -3,10 +3,10 @@ Section: libs
 Priority: optional
 Maintainer: Debian multimedia packages maintainers <pkg-multimedia-maintainers@lists.alioth.debian.org>
 Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
-           Loic Minier <lool@dooz.org>,
-           Reinhard Tartler <siretart@tauware.de>,
-           Fabian Greffrath <fabian+debian@greffrath.com>,
-           Andres Mejia <mcitadel@gmail.com>
+ Loic Minier <lool@dooz.org>,
+ Reinhard Tartler <siretart@tauware.de>,
+ Fabian Greffrath <fabian+debian@greffrath.com>,
+ Andres Mejia <mcitadel@gmail.com>
 DM-Upload-Allowed: yes
 Standards-Version: 3.9.0
 Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg.git
@@ -14,40 +14,40 @@ Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/ffmpeg.git;a=summary
 Homepage: http://ffmpeg.org/
 Build-Depends-Indep: doxygen
 Build-Depends: debhelper (>= 7),
-               libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
-               libbz2-dev,
-               libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
-               libdirac-dev,
-               libfaad-dev | libfaad2-dev,
-               libfreetype6-dev,
-               libgsm1-dev,
-               libimlib2-dev,
-               libopenjpeg-dev,
-               libraw1394-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
-               librtmp-dev (>= 2.2e-4),
-               libschroedinger-dev,
-               libsdl1.2-dev,
-               libspeex-dev,
-               libtheora-dev (>> 0.0.0.alpha4),
-               libvorbis-dev,
-               libx11-dev,
-               libxext-dev,
-               libvdpau-dev,
-               libvpx-dev,
-               libxvmc-dev,
-               quilt,
-               texi2html,
-               yasm [i386 amd64],
-               libva-dev,
-               zlib1g-dev
+ libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+ libbz2-dev,
+ libdc1394-22-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+ libdirac-dev,
+ libfaad-dev | libfaad2-dev,
+ libfreetype6-dev,
+ libgsm1-dev,
+ libimlib2-dev,
+ libopenjpeg-dev,
+ libraw1394-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+ librtmp-dev (>= 2.2e-4),
+ libschroedinger-dev,
+ libsdl1.2-dev,
+ libspeex-dev,
+ libtheora-dev (>> 0.0.0.alpha4),
+ libvorbis-dev,
+ libx11-dev,
+ libxext-dev,
+ libvdpau-dev,
+ libvpx-dev,
+ libxvmc-dev,
+ quilt,
+ texi2html,
+ yasm [i386 amd64],
+ libva-dev,
+ zlib1g-dev
 
 Package: ffmpeg
 Section: video
 Architecture: any
 Replaces: libavcodec52 (<< ${source:Version}),
-          libavcodec-extra-52 (<< 4:0.6~)
+ libavcodec-extra-52 (<< 4:0.6~)
 Depends: ${shlibs:Depends},
-         ${misc:Depends}
+ ${misc:Depends}
 Conflicts: ffprobe
 Description: multimedia player, server and encoder
  This package contains the ffplay multimedia player, the ffserver streaming
@@ -60,13 +60,13 @@ Section: debug
 Priority: extra
 Architecture: any
 Depends: libavutil50 (= ${binary:Version}),
-         libavcodec52 (= ${binary:Version}),
-         libavdevice52 (= ${binary:Version}),
-         libpostproc51 (= ${binary:Version}),
-         libavformat52 (= ${binary:Version}),
-         libswscale0 (= ${binary:Version}),
-         ffmpeg (= ${binary:Version}),
-         ${misc:Depends}
+ libavcodec52 (= ${binary:Version}),
+ libavdevice52 (= ${binary:Version}),
+ libpostproc51 (= ${binary:Version}),
+ libavformat52 (= ${binary:Version}),
+ libswscale0 (= ${binary:Version}),
+ ffmpeg (= ${binary:Version}),
+ ${misc:Depends}
 Description: Debug symbols for ffmpeg related packages
  This package contains debug data of the ffmpeg related shared libraries.
  .
@@ -83,7 +83,7 @@ Description: documentation of the ffmpeg API
 Package: libavutil50
 Architecture: any
 Depends: ${shlibs:Depends},
-         ${misc:Depends}
+ ${misc:Depends}
 Description: ffmpeg utility library
  This is the common utility library from the ffmpeg project. It is required
  by all other ffmpeg libraries.
@@ -94,7 +94,7 @@ Description: ffmpeg utility library
 Package: libavcodec52
 Architecture: any
 Depends: ${shlibs:Depends},
-         ${misc:Depends}
+ ${misc:Depends}
 Breaks: libavcodec51 (<< 3:0.svn20090303-1)
 Description: ffmpeg codec library
  This is the codec library from the ffmpeg project. It supports most existing
@@ -106,7 +106,7 @@ Description: ffmpeg codec library
 Package: libavdevice52
 Architecture: any
 Depends: ${shlibs:Depends},
-         ${misc:Depends}
+ ${misc:Depends}
 Description: ffmpeg device handling library
  This is the device handling library from the ffmpeg project.
  .
@@ -116,7 +116,7 @@ Description: ffmpeg device handling library
 Package: libavformat52
 Architecture: any
 Depends: ${shlibs:Depends},
-         ${misc:Depends}
+ ${misc:Depends}
 Breaks: mplayer (<< 2:1.0~rc4~)
 Description: ffmpeg file format library
  This is the demuxer library from the ffmpeg project. It supports most
@@ -128,7 +128,7 @@ Description: ffmpeg file format library
 Package: libavfilter1
 Architecture: any
 Depends: ${shlibs:Depends},
-         ${misc:Depends}
+ ${misc:Depends}
 Description: ffmpeg video filtering library
  This is the video filtering library from the ffmpeg project.
  .
@@ -138,7 +138,7 @@ Description: ffmpeg video filtering library
 Package: libpostproc51
 Architecture: any
 Depends: ${shlibs:Depends},
-         ${misc:Depends}
+ ${misc:Depends}
 Description: ffmpeg video postprocessing library
  This is the video postprocessing library from the ffmpeg project.
  .
@@ -148,7 +148,7 @@ Description: ffmpeg video postprocessing library
 Package: libswscale0
 Architecture: any
 Depends: ${shlibs:Depends},
-         ${misc:Depends}
+ ${misc:Depends}
 Description: ffmpeg video scaling library
  This is the video scaling library from the ffmpeg project.
  .
@@ -159,8 +159,8 @@ Package: libavutil-dev
 Section: libdevel
 Architecture: any
 Depends: libavutil50 (>= ${binary:Version}) | libavutil-extra-50 (>= ${source:Upstream-Version}),
-         libavutil50 (<= ${source:Upstream-Version}-99) | libavutil-extra-50 (<= ${source:Upstream-Version}-99),
-         ${misc:Depends}
+ libavutil50 (<= ${source:Upstream-Version}-99) | libavutil-extra-50 (<= ${source:Upstream-Version}-99),
+ ${misc:Depends}
 Description: development files for libavutil
  This is the common utility library from the ffmpeg project. It is required
  by all other ffmpeg libraries.
@@ -172,20 +172,20 @@ Package: libavcodec-dev
 Section: libdevel
 Architecture: any
 Depends: libavcodec52 (>= ${binary:Version}) | libavcodec-extra-52 (>= ${source:Upstream-Version}),
-         libavcodec52 (<= ${source:Upstream-Version}-99) | libavcodec-extra-52 (<= ${source:Upstream-Version}-99),
-         libavutil-dev (= ${binary:Version}),
-         ${misc:Depends}
+ libavcodec52 (<= ${source:Upstream-Version}-99) | libavcodec-extra-52 (<= ${source:Upstream-Version}-99),
+ libavutil-dev (= ${binary:Version}),
+ ${misc:Depends}
 Suggests: libfaad-dev,
-          libgsm1-dev,
-          libogg-dev,
-          libschroedinger-dev,
-          libspeex-dev,
-          libtheora-dev (>> 0.0.0.alpha4),
-          libvorbis-dev,
-          libx11-dev,
-          libxext-dev,
-          zlib1g-dev,
-          ${lib1394-dev}
+ libgsm1-dev,
+ libogg-dev,
+ libschroedinger-dev,
+ libspeex-dev,
+ libtheora-dev (>> 0.0.0.alpha4),
+ libvorbis-dev,
+ libx11-dev,
+ libxext-dev,
+ zlib1g-dev,
+ ${lib1394-dev}
 Description: development files for libavcodec
  This is the codec library from the ffmpeg project. It supports most existing
  encoding formats (MPEG, DivX, MPEG4, AC3, DV...).
@@ -197,9 +197,9 @@ Package: libavdevice-dev
 Section: libdevel
 Architecture: any
 Depends: libavdevice52 (>= ${binary:Version}) | libavdevice-extra-52 (>= ${source:Upstream-Version}),
-         libavdevice52 (<= ${source:Upstream-Version}-99) | libavdevice-extra-52 (<= ${source:Upstream-Version}-99),
-         libavformat-dev (= ${binary:Version}),
-         ${misc:Depends}
+ libavdevice52 (<= ${source:Upstream-Version}-99) | libavdevice-extra-52 (<= ${source:Upstream-Version}-99),
+ libavformat-dev (= ${binary:Version}),
+ ${misc:Depends}
 Description: development files for libavdevice
  This is the device handling library from the ffmpeg project.
  .
@@ -210,9 +210,9 @@ Package: libavformat-dev
 Section: libdevel
 Architecture: any
 Depends: libavformat52 (>= ${binary:Version}) | libavformat-extra-52 (>= ${source:Upstream-Version}),
-         libavformat52 (<= ${source:Upstream-Version}-99) | libavformat-extra-52 (<= ${source:Upstream-Version}-99),
-         libavcodec-dev (= ${binary:Version}),
-         ${misc:Depends}
+ libavformat52 (<= ${source:Upstream-Version}-99) | libavformat-extra-52 (<= ${source:Upstream-Version}-99),
+ libavcodec-dev (= ${binary:Version}),
+ ${misc:Depends}
 Description: development files for libavformat
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
@@ -224,9 +224,9 @@ Package: libavfilter-dev
 Section: libdevel
 Architecture: any
 Depends: libavfilter1 (>= ${binary:Version}) | libavfilter-extra-1 (>= ${source:Upstream-Version}),
-         libavfilter1 (<= ${source:Upstream-Version}-99) | libavfilter-extra-1 (<= ${source:Upstream-Version}-99),
-         libavcodec-dev (= ${binary:Version}),
-         ${misc:Depends}
+ libavfilter1 (<= ${source:Upstream-Version}-99) | libavfilter-extra-1 (<= ${source:Upstream-Version}-99),
+ libavcodec-dev (= ${binary:Version}),
+ ${misc:Depends}
 Description: development files for libavfilter
  This is the video filtering library from the ffmpeg project.
  .
@@ -237,9 +237,9 @@ Package: libpostproc-dev
 Section: libdevel
 Architecture: any
 Depends: libpostproc51 (>= ${binary:Version}) | libpostproc-extra-51 (>= ${source:Upstream-Version}),
-         libpostproc51 (<= ${source:Upstream-Version}-99) | libpostproc-extra-51 (<= ${source:Upstream-Version}-99),
-         libavutil-dev (= ${binary:Version}),
-         ${misc:Depends}
+ libpostproc51 (<= ${source:Upstream-Version}-99) | libpostproc-extra-51 (<= ${source:Upstream-Version}-99),
+ libavutil-dev (= ${binary:Version}),
+ ${misc:Depends}
 Description: development files for libpostproc
  This is the video postprocessing library from the ffmpeg project.
  .
@@ -250,9 +250,9 @@ Package: libswscale-dev
 Section: libdevel
 Architecture: any
 Depends: libswscale0 (>= ${binary:Version}) | libswscale-extra-0 (>= ${source:Upstream-Version}),
-         libswscale0 (<= ${source:Upstream-Version}-99) | libswscale-extra-0 (<= ${source:Upstream-Version}-99),
-         libavutil-dev (= ${binary:Version}),
-         ${misc:Depends}
+ libswscale0 (<= ${source:Upstream-Version}-99) | libswscale-extra-0 (<= ${source:Upstream-Version}-99),
+ libavutil-dev (= ${binary:Version}),
+ ${misc:Depends}
 Description: development files for libswscale
  This is the video scaling library from the ffmpeg project.
  .
