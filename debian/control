@@ -6,7 +6,8 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
  Loic Minier <lool@dooz.org>,
  Reinhard Tartler <siretart@tauware.de>,
  Fabian Greffrath <fabian+debian@greffrath.com>,
- Andres Mejia <mcitadel@gmail.com>
+ Andres Mejia <mcitadel@gmail.com>,
+ Jonas Smedegaard <dr@jones.dk>
 DM-Upload-Allowed: yes
 Standards-Version: 3.9.1
 Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg.git
