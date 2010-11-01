@@ -1,8 +1,11 @@
-ffmpeg (4:0.6-3) experimental; urgency=low
+ffmpeg (4:0.6.1-1) experimental; urgency=low
 
+  * Imported Upstream version 0.6.1
   * prepare new upload
+  * remove patches merged upstream
+  * add gitignore file
 
- -- Reinhard Tartler <siretart@tauware.de>  Sat, 31 Jul 2010 16:06:29 -0400
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 01 Nov 2010 09:18:08 +0100
 
 ffmpeg (4:0.6-2) experimental; urgency=low
 
