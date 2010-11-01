@@ -1,15 +1,17 @@
-ffmpeg (4:0.6.1-1) UNRELEASED; urgency=low
+ffmpeg (4:0.6.1-2) UNRELEASED; urgency=low
 
-  * New upstream release.
-
-  [ Reinhard Tartler ]
-  * remove patches merged upstream
-  * add gitignore file
-
-  [ Jonas Smedegaard ]
   * Relax mplayer Breaks to permit backports and other early releases.
 
  -- Jonas Smedegaard <dr@jones.dk>  Mon, 01 Nov 2010 13:57:35 +0100
+
+ffmpeg (4:0.6.1-1) experimental; urgency=low
+
+  * Imported Upstream version 0.6.1
+  * prepare new upload
+  * remove patches merged upstream
+  * add gitignore file
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 01 Nov 2010 09:18:08 +0100
 
 ffmpeg (4:0.6-2) experimental; urgency=low
 
