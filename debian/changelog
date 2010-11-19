@@ -1,8 +1,15 @@
-ffmpeg (4:0.6.1-2) UNRELEASED; urgency=low
+ffmpeg (4:0.6.1-2) experimental; urgency=low
 
+  [ Jonas Smedegaard ]
   * Relax mplayer Breaks to permit backports and other early releases.
 
- -- Jonas Smedegaard <dr@jones.dk>  Mon, 01 Nov 2010 13:57:35 +0100
+  [ Reinhard Tartler ]
+  * Bump Standards-Version, no changes needed.
+
+  [ Matthias Klose ]
+  * Configure with --enable-pic on powerpc. LP: #654666.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 19 Nov 2010 10:50:51 +0100
 
 ffmpeg (4:0.6.1-1) experimental; urgency=low
 
