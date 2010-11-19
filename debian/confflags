@@ -117,6 +117,10 @@ ifeq      ($(DEB_HOST_ARCH),ia64)
 confflags += --disable-decoder=aac --disable-encoder=aac
 endif
 
+ifeq      ($(DEB_HOST_ARCH),powerpc)
+confflags += --enable-pic
+endif
+
 confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
