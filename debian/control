@@ -9,7 +9,7 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
  Andres Mejia <mcitadel@gmail.com>,
  Jonas Smedegaard <dr@jones.dk>
 DM-Upload-Allowed: yes
-Standards-Version: 3.9.0
+Standards-Version: 3.9.1
 Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg.git
 Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/ffmpeg.git;a=summary
 Homepage: http://ffmpeg.org/
