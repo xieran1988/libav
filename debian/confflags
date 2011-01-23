@@ -97,7 +97,6 @@ confflags += --enable-avfilter
 confflags += --enable-avfilter-lavf
 confflags += --enable-vdpau
 confflags += --enable-bzlib
-confflags += --enable-libdirac
 confflags += --enable-libgsm
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
@@ -123,6 +122,7 @@ endif
 confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
+gpl_confflags += $(call cond_enable,/usr/include/dirac/libdirac_decoder/dirac_parser.h)
 gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 gpl_confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 gpl_confflags += $(call cond_enable,/usr/include/librtmp/http.h,librtmp)
