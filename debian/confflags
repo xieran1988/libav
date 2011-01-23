@@ -125,10 +125,10 @@ confflags += $(extra_common_confflags)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
 gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
-gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
-gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
-gpl_confflags += $(call cond_enable,/usr/include/librtmp/http.h,librtmp)
 gpl_confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
+gpl_confflags += $(call cond_enable,/usr/include/librtmp/http.h,librtmp)
+gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
+gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
 
 # Opencore-amr requires GPL v3
 v3_confflags += $(call cond_enable_v3,/usr/include/opencore-amrnb/interf_dec.h,libopencore-amrnb)
