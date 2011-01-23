@@ -89,9 +89,6 @@ Depends: ${shlibs:Depends},
 Description: ffmpeg utility library
  This is the common utility library from the ffmpeg project. It is required
  by all other ffmpeg libraries.
- .
- This package contains a Debian-specific version of the libavutil shared
- object that should only be used by Debian packages.
 
 Package: libavcodec52
 Architecture: any
@@ -101,9 +98,6 @@ Breaks: libavcodec51 (<< 3:0.svn20090303-1)
 Description: ffmpeg codec library
  This is the codec library from the ffmpeg project. It supports most existing
  encoding formats (MPEG, DivX, MPEG4, AC3, DV...).
- .
- This package contains a Debian-specific version of the libavcodec shared
- object that should only be used by Debian packages.
 
 Package: libavdevice52
 Architecture: any
@@ -111,9 +105,6 @@ Depends: ${shlibs:Depends},
  ${misc:Depends}
 Description: ffmpeg device handling library
  This is the device handling library from the ffmpeg project.
- .
- This package contains a Debian-specific version of the libavdevice shared
- object that should only be used by Debian packages.
 
 Package: libavformat52
 Architecture: any
@@ -123,9 +114,6 @@ Breaks: mplayer (<< 2:1.0~rc4~)
 Description: ffmpeg file format library
  This is the demuxer library from the ffmpeg project. It supports most
  existing file formats (AVI, MPEG, OGG, Matroska, ASF...).
- .
- This package contains a Debian-specific version of the libavformat shared
- object that should only be used by Debian packages.
 
 Package: libavfilter1
 Architecture: any
@@ -133,9 +121,6 @@ Depends: ${shlibs:Depends},
  ${misc:Depends}
 Description: ffmpeg video filtering library
  This is the video filtering library from the ffmpeg project.
- .
- This package contains a Debian-specific version of the libavfilter shared
- object that should only be used by Debian packages.
 
 Package: libpostproc51
 Architecture: any
@@ -143,9 +128,6 @@ Depends: ${shlibs:Depends},
  ${misc:Depends}
 Description: ffmpeg video postprocessing library
  This is the video postprocessing library from the ffmpeg project.
- .
- This package contains a Debian-specific version of the libpostproc shared
- object that should only be used by Debian packages.
 
 Package: libswscale0
 Architecture: any
@@ -153,9 +135,6 @@ Depends: ${shlibs:Depends},
  ${misc:Depends}
 Description: ffmpeg video scaling library
  This is the video scaling library from the ffmpeg project.
- .
- This package contains a Debian-specific version of the libswscale shared
- object that should only be used by Debian packages.
 
 Package: libavutil-dev
 Section: libdevel
