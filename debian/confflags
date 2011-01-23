@@ -99,7 +99,6 @@ confflags += --enable-vdpau
 confflags += --enable-bzlib
 confflags += --enable-libdirac
 confflags += --enable-libgsm
-confflags += --enable-libopenjpeg
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
 confflags += --enable-libtheora
@@ -129,6 +128,8 @@ gpl_confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 gpl_confflags += $(call cond_enable,/usr/include/librtmp/http.h,librtmp)
 gpl_confflags += $(call cond_enable,/usr/include/x264.h,libx264)
 gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
+
+confflags += $(call cond_enable,/usr/include/openjpeg.h,libopenjpeg)
 
 # Opencore-amr requires GPL v3
 v3_confflags += $(call cond_enable_v3,/usr/include/opencore-amrnb/interf_dec.h,libopencore-amrnb)
