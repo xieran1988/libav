@@ -1,8 +1,15 @@
-ffmpeg (4:0.6.1-3) UNRELEASED; urgency=low
+ffmpeg (4:0.6.1-3) unstable; urgency=low
 
-  * start new upload
+  * add libxfixes-dev to build depends
+  * minor packaging cleanups
+  * revised package description
+  * detect libopenjpeg and dirac at build-time
+  * remove note about packages being "Debian-specific"
+  * simplify lintian-overrides
+  * Sanitize LDFLAGS variable; it seems that dpkg-buildflags injects
+    -Wl,-Bsymbolic-functions to LDFLAGS, which breaks the build on amd64
 
- -- Reinhard Tartler <siretart@tauware.de>  Fri, 19 Nov 2010 12:11:47 +0100
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 30 Jan 2011 09:22:11 +0100
 
 ffmpeg (4:0.6.1-2) experimental; urgency=low
 
