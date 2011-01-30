@@ -148,8 +148,9 @@ ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
   lib1394-dev += libraw1394-dev, libdc1394-22-dev
 endif
 
-# XXX this probably needs fixing
+# Sanitize injected compiler in linker flags
 CFLAGS :=
+LDFLAGS :=
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 # Various parts of ffmpeg (and swscale) FTBFS when compiling with -fPIC

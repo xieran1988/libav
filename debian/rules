@@ -27,6 +27,7 @@ include debian/confflags
 $(info FLAVORS = $(FLAVORS))
 $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
 $(info CFLAGS = $(CFLAGS))
+$(info LDFLAGS = $(LDFLAGS))
 
 snapshot_version:
 	[ ! -r .svnrevision ] || \
@@ -37,7 +38,7 @@ configure-%: configure-stamp-%
 configure-stamp-%: $(QUILT_STAMPFN) snapshot_version
 	dh_testdir
 	mkdir -p debian-$*
-	cd debian-$* && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
+	cd debian-$* && CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" $(CURDIR)/configure \
 		$($*_build_confflags) $(extra_$*_build_confflags)
 	touch $@
 
