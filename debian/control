@@ -113,7 +113,7 @@ Package: libavformat52
 Architecture: any
 Depends: ${shlibs:Depends},
  ${misc:Depends}
-Breaks: mplayer (<< 2:1.0~rc4~)
+Breaks: mplayer (<< 2:1.0~rc4~), mplayer-gui (<< 2:1.0~rc4~)
 Description: FFmpeg file format library
  This is the library for handling file formats from FFmpeg.
  .
