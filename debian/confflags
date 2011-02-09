@@ -102,7 +102,6 @@ confflags += --enable-libschroedinger
 confflags += --enable-libspeex
 confflags += --enable-libtheora
 confflags += --enable-libvorbis
-confflags += --enable-vaapi
 confflags += --enable-pthreads
 confflags += --enable-zlib
 confflags += --enable-libvpx
@@ -120,6 +119,9 @@ confflags += --enable-pic
 endif
 
 confflags += $(extra_common_confflags)
+
+# vaapi is not available on s390 and on the hurd
+confflags += $(call cond_enable,/usr/include/va/va.h,vaapi)
 
 # this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
 gpl_confflags += $(call cond_enable,/usr/include/dirac/libdirac_decoder/dirac_parser.h,libdirac)
