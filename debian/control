@@ -138,6 +138,7 @@ Package: libswscale0
 Architecture: any
 Depends: ${shlibs:Depends},
  ${misc:Depends}
+Breaks: mplayer (<< 2:1.0~rc4~), mplayer-gui (<< 2:1.0~rc4~)
 Description: FFmpeg video scaling library
  This is the video software scaling library from FFmpeg.
 
