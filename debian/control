@@ -138,8 +138,8 @@ Package: libswscale0
 Architecture: any
 Depends: ${shlibs:Depends},
  ${misc:Depends}
-Description: Ffmpeg video scaling library
- This is the video scaling library from FFmpeg.
+Description: FFmpeg video scaling library
+ This is the video software scaling library from FFmpeg.
 
 Package: libavutil-dev
 Section: libdevel
