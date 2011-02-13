@@ -1,8 +1,11 @@
 ffmpeg (4:0.6.1-5) unstable; urgency=low
 
-  * start new upload
+  * don't enable vaapi support on the hurd, Closes: #613034
+  * minor updates to libswscale0's package description
+  * Force upgrade of mplayer pre-rc4 for upgrades of libswscale,
+    Closes: #612292
 
- -- Reinhard Tartler <siretart@tauware.de>  Wed, 09 Feb 2011 06:58:15 +0100
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 13 Feb 2011 09:25:42 +0100
 
 ffmpeg (4:0.6.1-4) unstable; urgency=low
 
