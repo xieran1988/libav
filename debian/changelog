@@ -99,6 +99,113 @@ ffmpeg (4:0.6~svn20100505-1) experimental; urgency=low
 
  -- Reinhard Tartler <siretart@tauware.de>  Sun, 24 Jan 2010 21:24:56 +0100
 
+ffmpeg (4:0.5.2-6) unstable; urgency=high
+
+  * Fix several security issues in flicvideo.c.
+    Fixes: CVE-2010-3429, Closes: #598590
+  * Raising severity to high because of security issue.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 03 Oct 2010 16:59:39 +0200
+
+ffmpeg (4:0.5.2-5) unstable; urgency=low
+
+  [ Dominic Evans ]
+  * add libxfixes-dev to build-depends to unbreak x11grab input,
+    Closes: #596342, LP: #631103
+  
+  [ Reinhard Tartler ]
+  * fix x11grab example in e.g. the manpage so that they actually work
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 13 Sep 2010 15:29:49 +0200
+
+ffmpeg (4:0.5.2-4) unstable; urgency=low
+
+  [ Loïc Minier ]
+  * Fix typo: use -march=armv7-a instead of -marmv7-a
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 31 Aug 2010 15:31:05 +0200
+
+ffmpeg (4:0.5.2-3) unstable; urgency=low
+
+  [ Reinhard Tartler ]
+  * Move breaks declaration from libavformat to libavcodec to help the
+    apt solver, Closes: #591881
+
+  [ Loïc Minier ]
+    debian/confflags: detect whether the toolchain supports ARMv7 ("dmb")
+    by default as the NEON pass needs at least ARMv6t2; if it's not enabled by
+    default, pass -marmv7-a in extra-cflags for the NEON pass since NEON
+    implies ARMv7; closes: #594417.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 27 Aug 2010 01:24:10 +0200
+
+ffmpeg (4:0.5.2-2) unstable; urgency=low
+
+  * Enable some encoders:
+    - h263, h263p, mpeg2video, mpeg4, msmpeg4v1, msmpeg4v2, msmpeg4v3
+    Closes: #418231, #433287, #440216, #587898, #525349
+  * Bump Standards Version, no changes needed
+
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 05 Aug 2010 11:59:26 -0400
+
+ffmpeg (4:0.5.2-1) unstable; urgency=low
+
+  [ Andres Mejia ]
+  * Fix dependency problem for ffmpeg so it can use extra ffmpeg libs.
+
+  [ Reinhard Tartler ]
+  * move presets back to 'ffmpeg' package. Closes: #581748
+
+  [ Fabian Greffrath ]
+  * Imported Upstream version 0.5.2
+  * Remove ffmpeg-debian_hurd.patch, applied upstream.
+  * Remove fix-ftbfs-altivec.patch, applied upstream.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 25 May 2010 23:01:08 +0200
+
+ffmpeg (4:0.5.1-3) unstable; urgency=low
+
+  * fix ftbfs on powerpc
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 12 Mar 2010 21:43:55 +0100
+
+ffmpeg (4:0.5.1-2) unstable; urgency=low
+
+  * reintroduce gnu/hurd patch
+  * Fix compilation on powerpc with --disable-altivec
+
+ -- Reinhard Tartler <siretart@tauware.de>  Wed, 10 Mar 2010 21:19:40 +0100
+
+ffmpeg (4:0.5.1-1) unstable; urgency=low
+
+  * new upstream release:
+    - clarifies documentation on metadata, Closes: #570050, LP: #501729
+    - further security backports, Closes: #570713
+  * adapt to new versioning scheme
+  * use '<<' instead of '<' relationship for internal shlib file
+  * merge changes from ubuntu packaging
+  * drop wmapro backport again as discussed with upstream. The unrelated
+    changes seem too risky for a stable release.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Wed, 03 Mar 2010 22:28:24 +0100
+
+ffmpeg (4:0.5+svn20090706-6) unstable; urgency=low
+
+  [ Fabian Greffrath ]
+  * debian/patches/901-fix-misc-typos.patch: New patch taken from
+    upstream GIT (slightly modified) to fix some spelling errors.
+  * Document our calling of debhelper programs in an odd order in
+    debian/rules.
+
+  [ Reinhard Tartler ]
+  * document some unattributed patches
+  * enable cpu autodetection in libswscale, Closes: #567725, LP: #386397
+
+  [ Christopher Martin ]
+  * backport wmapro codec from ffmpeg trunk
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 31 Jan 2010 16:53:47 +0100
+
 ffmpeg (4:0.5+svn20090706-5) unstable; urgency=medium
 
   * Upload to unstable
