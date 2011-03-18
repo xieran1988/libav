@@ -89,9 +89,9 @@ install: build
 	dh_installdirs -ptmp usr/share/doc/ffmpeg/html etc
 	dh_installdirs -ptmp usr/share/doc/ffmpeg-doc/html
 	$(foreach flavor,$(FLAVORS),$(call install_flavor,$(flavor)))
-	install -m 644 -D debian-shared/doc/*.html debian/tmp/usr/share/doc/ffmpeg/html/
 	# don't fail on binary-indep only builds.
-	[ ! -d doxy ] || cp doxy/html/* debian/tmp/usr/share/doc/ffmpeg-doc/html
+	[ ! -d doxy ] || cp -af doxy/html debian/tmp/usr/share/doc/ffmpeg-doc
+	install -m 644 -D debian-shared/doc/*.html debian/tmp/usr/share/doc/ffmpeg/html/
 	install -m 644 -D doc/ffserver.conf debian/tmp/etc/
 	install -m 644 -D debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
 	dh_install -Xusr/share/doc/ffmpeg-doc -Xusr/share/doc/ffmpeg \
