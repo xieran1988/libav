@@ -5,5 +5,5 @@ Abstract: This is the main documentation for the ffmpeg API.
 Section: Programming
 
 Format: HTML
-Index: /usr/share/doc/ffmpeg-doc/html/index.html
-Files: /usr/share/doc/ffmpeg-doc/html/*.html
+Index: /usr/share/doc/libav-doc/html/index.html
+Files: /usr/share/doc/libav-doc/html/*.html
