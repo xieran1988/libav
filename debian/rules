@@ -45,11 +45,11 @@ configure-stamp-%: $(QUILT_STAMPFN) snapshot_version
 build-%: build-stamp-%
 build-stamp-%: configure-stamp-%
 	dh_testdir
-	$(MAKE) -C debian-$* $(NUMJOBS)
+	$(MAKE) -C debian-$* $(NUMJOBS) V=1
 	touch $@
 
 debian-shared/tools/qt-faststart: build-stamp-shared
-	$(MAKE) -C debian-shared tools/qt-faststart
+	$(MAKE) -C debian-shared tools/qt-faststart V=1
 
 build-doxy: build-doxy-stamp
 build-doxy-stamp: $(QUILT_STAMPFN)
