@@ -1,6 +1,18 @@
-libav (4:0.6.2-1) unstable; urgency=low
+libav (4:0.6.2-1) unstable; urgency=medium
 
+  [ Reinhard Tartler ]
+  * Imported Upstream version 0.6.2
+    - include security fixes (Closes: #611495)
   * rename source package to libav
+  * Switch to libav packages
+  * copy in changelog entries from the 0.5 packaging branch (Closes: #616190)
+  * update version numbering
+  * make buildlogs verbose
+  * Introduce 'libav-source', which contains the patched sources of libav
+  * rename source package to libav
+
+  [ Fabian Greffrath ]
+  * Fix cp of doxy documentation fails with "Argument list too long" (Closes: #618679)
 
  -- Reinhard Tartler <siretart@tauware.de>  Sat, 19 Mar 2011 08:13:46 +0100
 
