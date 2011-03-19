@@ -1,4 +1,4 @@
-libav (4:0.6.1-6) unstable; urgency=low
+libav (4:0.6.2-1) unstable; urgency=low
 
   * rename source package to libav
 
