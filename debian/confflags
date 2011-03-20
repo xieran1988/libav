@@ -111,7 +111,11 @@ confflags += --enable-zlib
 confflags += --enable-libvpx
 confflags += --disable-stripping
 confflags += --enable-runtime-cpudetect
-
+ifeq      ($(DEB_HOST_ARCH),armel)
+# this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
+# plenty of incompatible assembly; not sure how to detect that properly
+confflags += --extra-cflags="-marm -fPIC -DPIC"
+endif
 
 ifeq      ($(DEB_HOST_ARCH),powerpc)
 confflags += --enable-pic
