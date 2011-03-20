@@ -1,3 +1,9 @@
+libav (4:0.6.2-2) unstable; urgency=low
+
+  * prepare new upload
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 20 Mar 2011 17:19:55 +0100
+
 libav (4:0.6.2-1) unstable; urgency=medium
 
   [ Reinhard Tartler ]
