@@ -112,11 +112,6 @@ confflags += --enable-libvpx
 confflags += --disable-stripping
 confflags += --enable-runtime-cpudetect
 
-# for mysterical reasons, the aac decoder seem to cause the bss segment
-# to grow to big on ia64, disable it until the toolchain gets fixed
-ifeq      ($(DEB_HOST_ARCH),ia64)
-confflags += --disable-decoder=aac --disable-encoder=aac
-endif
 
 ifeq      ($(DEB_HOST_ARCH),powerpc)
 confflags += --enable-pic
