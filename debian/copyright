@@ -1,5 +1,4 @@
-SVN snapshots are downloaded with subversion from the ffmpeg SVN at:
-    <svn://svn.ffmpeg.org/ffmpeg/>
+This package was downloaded from http://libav.org
 
 Upstream Authors: Fabrice Bellard
                   Alex Beregszaszi

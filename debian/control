@@ -10,9 +10,9 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
  Jonas Smedegaard <dr@jones.dk>
 DM-Upload-Allowed: yes
 Standards-Version: 3.9.1
-Vcs-Git: git://git.debian.org/git/pkg-multimedia/ffmpeg.git
-Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/ffmpeg.git;a=summary
-Homepage: http://ffmpeg.org/
+Vcs-Git: git://git.debian.org/git/pkg-multimedia/libav.git
+Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/libav.git;a=summary
+Homepage: http://libav.org/
 Build-Depends-Indep: doxygen
 Build-Depends: debhelper (>= 7),
  libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
