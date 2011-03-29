@@ -1,0 +1,24 @@
+From: Reinhard Tartler <siretart@tauware.de>
+Bugs-Debian: http://bugs.debian.org/619530
+Forwarded: not-needed
+Description: Disable warning about library configuration mismatch
+ Since Debian ships differently configured libraries in the same package,
+ this warning happens in many typical configurations all the time. See
+ the Debian bugtrail for an example. 
+
+--- a/cmdutils.c
++++ b/cmdutils.c
+@@ -323,13 +323,7 @@ static void print_all_lib_versions(FILE*
+ 
+ static void maybe_print_config(const char *lib, const char *cfg)
+ {
+-    static int warned_cfg;
+-
+     if (strcmp(FFMPEG_CONFIGURATION, cfg)) {
+-        if (!warned_cfg) {
+-            fprintf(stderr, "  WARNING: library configuration mismatch\n");
+-            warned_cfg = 1;
+-        }
+         fprintf(stderr, "  %-11s configuration: %s\n", lib, cfg);
+     }
+ }
