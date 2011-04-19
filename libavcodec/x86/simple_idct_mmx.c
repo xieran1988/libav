@@ -3,20 +3,20 @@
  *
  * Copyright (c) 2001, 2002 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include "libavcodec/dsputil.h"
@@ -789,7 +789,7 @@ IDCT(  16(%1), 80(%1), 48(%1), 112(%1),  8(%0), 20)
 IDCT(  24(%1), 88(%1), 56(%1), 120(%1), 12(%0), 20)
         "jmp 9f                         \n\t"
 
-        "#" ASMALIGN(4)                      \
+        "# .p2align 4                   \n\t"\
         "4:                             \n\t"
 Z_COND_IDCT(  64(%0), 72(%0), 80(%0), 88(%0), 64(%1),paddd (%2), 11, 6f)
 Z_COND_IDCT(  96(%0),104(%0),112(%0),120(%0), 96(%1),paddd (%2), 11, 5f)
@@ -864,7 +864,7 @@ IDCT(  16(%1), 80(%1), 48(%1), 112(%1),  8(%0), 20)
 IDCT(  24(%1), 88(%1), 56(%1), 120(%1), 12(%0), 20)
         "jmp 9f                         \n\t"
 
-        "#" ASMALIGN(4)                      \
+        "# .p2align 4                   \n\t"\
         "6:                             \n\t"
 Z_COND_IDCT(  96(%0),104(%0),112(%0),120(%0), 96(%1),paddd (%2), 11, 7f)
 
@@ -930,7 +930,7 @@ IDCT(  16(%1), 80(%1), 48(%1), 112(%1),  8(%0), 20)
 IDCT(  24(%1), 88(%1), 56(%1), 120(%1), 12(%0), 20)
         "jmp 9f                         \n\t"
 
-        "#" ASMALIGN(4)                      \
+        "# .p2align 4                   \n\t"\
         "2:                             \n\t"
 Z_COND_IDCT(  96(%0),104(%0),112(%0),120(%0), 96(%1),paddd (%2), 11, 3f)
 
@@ -1007,7 +1007,7 @@ IDCT(  16(%1), 80(%1), 48(%1), 112(%1),  8(%0), 20)
 IDCT(  24(%1), 88(%1), 56(%1), 120(%1), 12(%0), 20)
         "jmp 9f                         \n\t"
 
-        "#" ASMALIGN(4)                      \
+        "# .p2align 4                   \n\t"\
         "3:                             \n\t"
 #undef IDCT
 #define IDCT(src0, src4, src1, src5, dst, shift) \
@@ -1071,7 +1071,7 @@ IDCT(  16(%1), 80(%1), 48(%1), 112(%1),  8(%0), 20)
 IDCT(  24(%1), 88(%1), 56(%1), 120(%1), 12(%0), 20)
         "jmp 9f                         \n\t"
 
-        "#" ASMALIGN(4)                      \
+        "# .p2align 4                   \n\t"\
         "5:                             \n\t"
 #undef IDCT
 #define IDCT(src0, src4, src1, src5, dst, shift) \
@@ -1136,7 +1136,7 @@ IDCT(  16(%1), 80(%1), 48(%1), 112(%1),  8(%0), 20)
         "jmp 9f                         \n\t"
 
 
-        "#" ASMALIGN(4)                      \
+        "# .p2align 4                   \n\t"\
         "1:                             \n\t"
 #undef IDCT
 #define IDCT(src0, src4, src1, src5, dst, shift) \
@@ -1210,7 +1210,7 @@ IDCT(  24(%1), 88(%1), 56(%1), 120(%1), 12(%0), 20)
         "jmp 9f                         \n\t"
 
 
-        "#" ASMALIGN(4)
+        "# .p2align 4                   \n\t"
         "7:                             \n\t"
 #undef IDCT
 #define IDCT(src0, src4, src1, src5, dst, shift) \
@@ -1287,10 +1287,10 @@ void ff_simple_idct_mmx(int16_t *block)
 void ff_simple_idct_put_mmx(uint8_t *dest, int line_size, DCTELEM *block)
 {
     idct(block);
-    put_pixels_clamped_mmx(block, dest, line_size);
+    ff_put_pixels_clamped_mmx(block, dest, line_size);
 }
 void ff_simple_idct_add_mmx(uint8_t *dest, int line_size, DCTELEM *block)
 {
     idct(block);
-    add_pixels_clamped_mmx(block, dest, line_size);
+    ff_add_pixels_clamped_mmx(block, dest, line_size);
 }

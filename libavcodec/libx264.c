@@ -2,20 +2,20 @@
  * H.264 encoding using the x264 library
  * Copyright (C) 2005  Mans Rullgard <mans@mansr.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -89,6 +89,7 @@ static int X264_frame(AVCodecContext *ctx, uint8_t *buf,
     int nnal, i;
     x264_picture_t pic_out;
 
+    x264_picture_init( &x4->pic );
     x4->pic.img.i_csp   = X264_CSP_I420;
     x4->pic.img.i_plane = 3;
 
@@ -99,15 +100,25 @@ static int X264_frame(AVCodecContext *ctx, uint8_t *buf,
         }
 
         x4->pic.i_pts  = frame->pts;
-        x4->pic.i_type = X264_TYPE_AUTO;
+        x4->pic.i_type =
+            frame->pict_type == FF_I_TYPE ? X264_TYPE_KEYFRAME :
+            frame->pict_type == FF_P_TYPE ? X264_TYPE_P :
+            frame->pict_type == FF_B_TYPE ? X264_TYPE_B :
+                                            X264_TYPE_AUTO;
+        if (x4->params.b_tff != frame->top_field_first) {
+            x4->params.b_tff = frame->top_field_first;
+            x264_encoder_reconfig(x4->enc, &x4->params);
+        }
     }
 
+    do {
     if (x264_encoder_encode(x4->enc, &nal, &nnal, frame? &x4->pic: NULL, &pic_out) < 0)
         return -1;
 
     bufsize = encode_nals(ctx, buf, bufsize, nal, nnal, 0);
     if (bufsize < 0)
         return -1;
+    } while (!bufsize && !frame && x264_encoder_delayed_frames(x4->enc));
 
     /* FIXME: libx264 now provides DTS, but AVFrame doesn't have a field for it. */
     x4->out_pic.pts = pic_out.i_pts;
@@ -156,6 +167,7 @@ static av_cold int X264_init(AVCodecContext *avctx)
     x4->params.p_log_private        = avctx;
 
     x4->params.i_keyint_max         = avctx->gop_size;
+    x4->params.b_intra_refresh      = avctx->flags2 & CODEC_FLAG2_INTRA_REFRESH;
     x4->params.rc.i_bitrate         = avctx->bit_rate       / 1000;
     x4->params.rc.i_vbv_buffer_size = avctx->rc_buffer_size / 1000;
     x4->params.rc.i_vbv_max_bitrate = avctx->rc_max_rate    / 1000;
@@ -166,6 +178,7 @@ static av_cold int X264_init(AVCodecContext *avctx)
         if (avctx->crf) {
             x4->params.rc.i_rc_method   = X264_RC_CRF;
             x4->params.rc.f_rf_constant = avctx->crf;
+            x4->params.rc.f_rf_constant_max = avctx->crf_max;
         } else if (avctx->cqp > -1) {
             x4->params.rc.i_rc_method   = X264_RC_CQP;
             x4->params.rc.i_qp_constant = avctx->cqp;
@@ -264,15 +277,11 @@ static av_cold int X264_init(AVCodecContext *avctx)
     if (avctx->level > 0)
         x4->params.i_level_idc = avctx->level;
 
-    x4->params.rc.f_rate_tolerance =
-        (float)avctx->bit_rate_tolerance/avctx->bit_rate;
-
-    if ((avctx->rc_buffer_size != 0) &&
+    if (avctx->rc_buffer_size && avctx->rc_initial_buffer_occupancy &&
         (avctx->rc_initial_buffer_occupancy <= avctx->rc_buffer_size)) {
         x4->params.rc.f_vbv_buffer_init =
             (float)avctx->rc_initial_buffer_occupancy / avctx->rc_buffer_size;
-    } else
-        x4->params.rc.f_vbv_buffer_init = 0.9;
+    }
 
     x4->params.rc.b_mb_tree               = !!(avctx->flags2 & CODEC_FLAG2_MBTREE);
     x4->params.rc.f_ip_factor             = 1 / fabs(avctx->i_quant_factor);
@@ -288,6 +297,10 @@ static av_cold int X264_init(AVCodecContext *avctx)
     x4->params.i_threads      = avctx->thread_count;
 
     x4->params.b_interlaced   = avctx->flags & CODEC_FLAG_INTERLACED_DCT;
+
+    x4->params.i_slice_count  = avctx->slices;
+
+    x4->params.vui.b_fullrange = avctx->pix_fmt == PIX_FMT_YUVJ420P;
 
     if (avctx->flags & CODEC_FLAG_GLOBAL_HEADER)
         x4->params.b_repeat_headers = 0;
@@ -315,7 +328,7 @@ static av_cold int X264_init(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec libx264_encoder = {
+AVCodec ff_libx264_encoder = {
     .name           = "libx264",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_H264,
@@ -324,6 +337,6 @@ AVCodec libx264_encoder = {
     .encode         = X264_frame,
     .close          = X264_close,
     .capabilities   = CODEC_CAP_DELAY,
-    .pix_fmts       = (const enum PixelFormat[]) { PIX_FMT_YUV420P, PIX_FMT_NONE },
+    .pix_fmts       = (const enum PixelFormat[]) { PIX_FMT_YUV420P, PIX_FMT_YUVJ420P, PIX_FMT_NONE },
     .long_name      = NULL_IF_CONFIG_SMALL("libx264 H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10"),
 };

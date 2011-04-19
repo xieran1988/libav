@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2009 David Conrad
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -377,12 +377,10 @@ endfunc
 
 function ff_vp3_idct_dc_add_neon, export=1
     ldrsh           r2,  [r2]
-    movw            r3,  #46341
-    mul             r2,  r3,  r2
-    smulwt          r2,  r3,  r2
     mov             r3,  r0
+    add             r2,  r2,  #15
     vdup.16         q15, r2
-    vrshr.s16       q15, q15, #4
+    vshr.s16        q15, q15, #5
 
     vld1.8          {d0}, [r0,:64], r1
     vld1.8          {d1}, [r0,:64], r1

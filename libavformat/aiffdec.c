@@ -2,26 +2,26 @@
  * AIFF/AIFF-C demuxer
  * Copyright (c) 2006  Patrick Guimond
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "libavutil/intfloat_readwrite.h"
 #include "avformat.h"
-#include "raw.h"
+#include "pcm.h"
 #include "aiff.h"
 
 #define AIFF                    0
@@ -47,15 +47,15 @@ static enum CodecID aiff_codec_get_id(int bps)
 }
 
 /* returns the size of the found tag */
-static int get_tag(ByteIOContext *pb, uint32_t * tag)
+static int get_tag(AVIOContext *pb, uint32_t * tag)
 {
     int size;
 
-    if (url_feof(pb))
+    if (pb->eof_reached)
         return AVERROR(EIO);
 
-    *tag = get_le32(pb);
-    size = get_be32(pb);
+    *tag = avio_rl32(pb);
+    size = avio_rb32(pb);
 
     if (size < 0)
         size = 0x7fffffff;
@@ -70,11 +70,11 @@ static void get_meta(AVFormatContext *s, const char *key, int size)
     int res;
 
     if (!str) {
-        url_fskip(s->pb, size);
+        avio_skip(s->pb, size);
         return;
     }
 
-    res = get_buffer(s->pb, str, size);
+    res = avio_read(s->pb, str, size);
     if (res < 0)
         return;
 
@@ -83,7 +83,7 @@ static void get_meta(AVFormatContext *s, const char *key, int size)
 }
 
 /* Returns the number of sound data frames or negative on error */
-static unsigned int get_aiff_header(ByteIOContext *pb, AVCodecContext *codec,
+static unsigned int get_aiff_header(AVIOContext *pb, AVCodecContext *codec,
                              int size, unsigned version)
 {
     AVExtFloat ext;
@@ -93,18 +93,18 @@ static unsigned int get_aiff_header(ByteIOContext *pb, AVCodecContext *codec,
     if (size & 1)
         size++;
     codec->codec_type = AVMEDIA_TYPE_AUDIO;
-    codec->channels = get_be16(pb);
-    num_frames = get_be32(pb);
-    codec->bits_per_coded_sample = get_be16(pb);
+    codec->channels = avio_rb16(pb);
+    num_frames = avio_rb32(pb);
+    codec->bits_per_coded_sample = avio_rb16(pb);
 
-    get_buffer(pb, (uint8_t*)&ext, sizeof(ext));/* Sample rate is in */
+    avio_read(pb, (uint8_t*)&ext, sizeof(ext));/* Sample rate is in */
     sample_rate = av_ext2dbl(ext);          /* 80 bits BE IEEE extended float */
     codec->sample_rate = sample_rate;
     size -= 18;
 
     /* Got an AIFF-C? */
     if (version == AIFF_C_VERSION1) {
-        codec->codec_tag = get_le32(pb);
+        codec->codec_tag = avio_rl32(pb);
         codec->codec_id  = ff_codec_get_id(ff_codec_aiff_tags, codec->codec_tag);
 
         switch (codec->codec_id) {
@@ -152,7 +152,7 @@ static unsigned int get_aiff_header(ByteIOContext *pb, AVCodecContext *codec,
 
     /* Chunk is over */
     if (size)
-        url_fseek(pb, size, SEEK_CUR);
+        avio_skip(pb, size);
 
     return num_frames;
 }
@@ -177,7 +177,7 @@ static int aiff_read_header(AVFormatContext *s,
     int64_t offset = 0;
     uint32_t tag;
     unsigned version = AIFF_C_VERSION1;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AVStream * st;
     AIFFInputContext *aiff = s->priv_data;
 
@@ -187,7 +187,7 @@ static int aiff_read_header(AVFormatContext *s,
         return AVERROR_INVALIDDATA;
 
     /* AIFF data type */
-    tag = get_le32(pb);
+    tag = avio_rl32(pb);
     if (tag == MKTAG('A', 'I', 'F', 'F'))       /* Got an AIFF file */
         version = AIFF;
     else if (tag != MKTAG('A', 'I', 'F', 'C'))  /* An AIFF-C file then */
@@ -217,7 +217,7 @@ static int aiff_read_header(AVFormatContext *s,
                 goto got_sound;
             break;
         case MKTAG('F', 'V', 'E', 'R'):     /* Version chunk */
-            version = get_be32(pb);
+            version = avio_rb32(pb);
             break;
         case MKTAG('N', 'A', 'M', 'E'):     /* Sample name chunk */
             get_meta(s, "title"    , size);
@@ -232,17 +232,17 @@ static int aiff_read_header(AVFormatContext *s,
             get_meta(s, "comment"  , size);
             break;
         case MKTAG('S', 'S', 'N', 'D'):     /* Sampled sound chunk */
-            aiff->data_end = url_ftell(pb) + size;
-            offset = get_be32(pb);      /* Offset of sound data */
-            get_be32(pb);               /* BlockSize... don't care */
-            offset += url_ftell(pb);    /* Compute absolute data offset */
+            aiff->data_end = avio_tell(pb) + size;
+            offset = avio_rb32(pb);      /* Offset of sound data */
+            avio_rb32(pb);               /* BlockSize... don't care */
+            offset += avio_tell(pb);    /* Compute absolute data offset */
             if (st->codec->block_align)    /* Assume COMM already parsed */
                 goto got_sound;
-            if (url_is_streamed(pb)) {
+            if (!pb->seekable) {
                 av_log(s, AV_LOG_ERROR, "file is not seekable\n");
                 return -1;
             }
-            url_fskip(pb, size - 8);
+            avio_skip(pb, size - 8);
             break;
         case MKTAG('w', 'a', 'v', 'e'):
             if ((uint64_t)size > (1<<30))
@@ -251,12 +251,12 @@ static int aiff_read_header(AVFormatContext *s,
             if (!st->codec->extradata)
                 return AVERROR(ENOMEM);
             st->codec->extradata_size = size;
-            get_buffer(pb, st->codec->extradata, size);
+            avio_read(pb, st->codec->extradata, size);
             break;
         default: /* Jump */
             if (size & 1)   /* Always even aligned */
                 size++;
-            url_fskip (pb, size);
+            avio_skip(pb, size);
         }
     }
 
@@ -276,7 +276,7 @@ got_sound:
         st->nb_frames * st->codec->frame_size : st->nb_frames;
 
     /* Position the stream at the first block */
-    url_fseek(pb, offset, SEEK_SET);
+    avio_seek(pb, offset, SEEK_SET);
 
     return 0;
 }
@@ -292,7 +292,7 @@ static int aiff_read_packet(AVFormatContext *s,
     int res, size;
 
     /* calculate size of remaining data */
-    max_size = aiff->data_end - url_ftell(s->pb);
+    max_size = aiff->data_end - avio_tell(s->pb);
     if (max_size <= 0)
         return AVERROR_EOF;
 
@@ -311,7 +311,7 @@ static int aiff_read_packet(AVFormatContext *s,
     return 0;
 }
 
-AVInputFormat aiff_demuxer = {
+AVInputFormat ff_aiff_demuxer = {
     "aiff",
     NULL_IF_CONFIG_SMALL("Audio IFF"),
     sizeof(AIFFInputContext),

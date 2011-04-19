@@ -3,24 +3,25 @@
  *
  * Copyright (C) 2008-2009 Splitted-Desktop Systems
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "vaapi_internal.h"
+#include "h263.h"
 
 /** Reconstruct bitstream intra_dc_vlc_thr */
 static int mpeg4_get_intra_dc_vlc_thr(MpegEncContext *s)
@@ -46,7 +47,7 @@ static int vaapi_mpeg4_start_frame(AVCodecContext *avctx, av_unused const uint8_
     VAIQMatrixBufferMPEG4 *iq_matrix;
     int i;
 
-    dprintf(avctx, "vaapi_mpeg4_start_frame()\n");
+    av_dlog(avctx, "vaapi_mpeg4_start_frame()\n");
 
     vactx->slice_param_size = sizeof(VASliceParameterBufferMPEG4);
 
@@ -124,11 +125,11 @@ static int vaapi_mpeg4_decode_slice(AVCodecContext *avctx, const uint8_t *buffer
     MpegEncContext * const s = avctx->priv_data;
     VASliceParameterBufferMPEG4 *slice_param;
 
-    dprintf(avctx, "vaapi_mpeg4_decode_slice(): buffer %p, size %d\n", buffer, size);
+    av_dlog(avctx, "vaapi_mpeg4_decode_slice(): buffer %p, size %d\n", buffer, size);
 
     /* video_plane_with_short_video_header() contains all GOBs
      * in-order, and this is what VA API (Intel backend) expects: only
-     * a single slice param. So fake macroblock_number for FFmpeg so
+     * a single slice param. So fake macroblock_number for Libav so
      * that we don't call vaapi_mpeg4_decode_slice() again
      */
     if (avctx->codec->id == CODEC_ID_H263)
@@ -149,7 +150,7 @@ static int vaapi_mpeg4_decode_slice(AVCodecContext *avctx, const uint8_t *buffer
 }
 
 #if CONFIG_MPEG4_VAAPI_HWACCEL
-AVHWAccel mpeg4_vaapi_hwaccel = {
+AVHWAccel ff_mpeg4_vaapi_hwaccel = {
     .name           = "mpeg4_vaapi",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_MPEG4,
@@ -163,7 +164,7 @@ AVHWAccel mpeg4_vaapi_hwaccel = {
 #endif
 
 #if CONFIG_H263_VAAPI_HWACCEL
-AVHWAccel h263_vaapi_hwaccel = {
+AVHWAccel ff_h263_vaapi_hwaccel = {
     .name           = "h263_vaapi",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_H263,

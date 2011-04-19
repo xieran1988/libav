@@ -5,23 +5,24 @@
  *
  * This file is based on flashsvenc.c.
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 #include "bytestream.h"
 
@@ -62,7 +63,7 @@ static av_cold int qtrle_encode_init(AVCodecContext *avctx)
 {
     QtrleEncContext *s = avctx->priv_data;
 
-    if (avcodec_check_dimensions(avctx, avctx->width, avctx->height) < 0) {
+    if (av_image_check_size(avctx->width, avctx->height, 0, avctx) < 0) {
         return -1;
     }
     s->avctx=avctx;
@@ -104,7 +105,7 @@ static av_cold int qtrle_encode_init(AVCodecContext *avctx)
 }
 
 /**
- * Computes the best RLE sequence for a line
+ * Compute the best RLE sequence for a line
  */
 static void qtrle_encode_line(QtrleEncContext *s, AVFrame *p, int line, uint8_t **buf)
 {
@@ -235,7 +236,7 @@ static void qtrle_encode_line(QtrleEncContext *s, AVFrame *p, int line, uint8_t 
     bytestream_put_byte(buf, -1); // end RLE line
 }
 
-/** Encodes frame including header */
+/** Encode frame including header */
 static int encode_frame(QtrleEncContext *s, AVFrame *p, uint8_t *buf)
 {
     int i;
@@ -320,7 +321,7 @@ static av_cold int qtrle_encode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec qtrle_encoder = {
+AVCodec ff_qtrle_encoder = {
     "qtrle",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_QTRLE,

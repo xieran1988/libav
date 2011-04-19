@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2004 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -920,7 +920,7 @@ static void decode_blocks(SnowContext *s){
     }
 }
 
-static void mc_block(Plane *p, uint8_t *dst, const uint8_t *src, uint8_t *tmp, int stride, int b_w, int b_h, int dx, int dy){
+static void mc_block(Plane *p, uint8_t *dst, const uint8_t *src, int stride, int b_w, int b_h, int dx, int dy){
     static const uint8_t weight[64]={
     8,7,6,5,4,3,2,1,
     7,7,0,0,0,0,0,1,
@@ -1106,9 +1106,8 @@ static void mc_block(Plane *p, uint8_t *dst, const uint8_t *src, uint8_t *tmp, i
 
 #define mca(dx,dy,b_w)\
 static void mc_block_hpel ## dx ## dy ## b_w(uint8_t *dst, const uint8_t *src, int stride, int h){\
-    uint8_t tmp[stride*(b_w+HTAPS_MAX-1)];\
     assert(h==b_w);\
-    mc_block(NULL, dst, src-(HTAPS_MAX/2-1)-(HTAPS_MAX/2-1)*stride, tmp, stride, b_w, b_w, dx, dy);\
+    mc_block(NULL, dst, src-(HTAPS_MAX/2-1)-(HTAPS_MAX/2-1)*stride, stride, b_w, b_w, dx, dy);\
 }
 
 mca( 0, 0,16)
@@ -1172,7 +1171,7 @@ static void pred_block(SnowContext *s, uint8_t *dst, uint8_t *tmp, int stride, i
         src += sx + sy*stride;
         if(   (unsigned)sx >= w - b_w - (HTAPS_MAX-2)
            || (unsigned)sy >= h - b_h - (HTAPS_MAX-2)){
-            ff_emulated_edge_mc(tmp + MB_SIZE, src, stride, b_w+HTAPS_MAX-1, b_h+HTAPS_MAX-1, sx, sy, w, h);
+            s->dsp.emulated_edge_mc(tmp + MB_SIZE, src, stride, b_w+HTAPS_MAX-1, b_h+HTAPS_MAX-1, sx, sy, w, h);
             src= tmp + MB_SIZE;
         }
 //        assert(b_w == b_h || 2*b_w == b_h || b_w == 2*b_h);
@@ -1180,7 +1179,7 @@ static void pred_block(SnowContext *s, uint8_t *dst, uint8_t *tmp, int stride, i
         assert(b_w>1 && b_h>1);
         assert((tab_index>=0 && tab_index<4) || b_w==32);
         if((dx&3) || (dy&3) || !(b_w == b_h || 2*b_w == b_h || b_w == 2*b_h) || (b_w&(b_w-1)) || !s->plane[plane_index].fast_mc )
-            mc_block(&s->plane[plane_index], dst, src, tmp, stride, b_w, b_h, dx, dy);
+            mc_block(&s->plane[plane_index], dst, src, stride, b_w, b_h, dx, dy);
         else if(b_w==32){
             int y;
             for(y=0; y<b_h; y+=16){
@@ -1977,9 +1976,15 @@ static int frame_start(SnowContext *s){
    int h= s->avctx->height;
 
     if(s->current_picture.data[0]){
-        s->dsp.draw_edges(s->current_picture.data[0], s->current_picture.linesize[0], w   , h   , EDGE_WIDTH  );
-        s->dsp.draw_edges(s->current_picture.data[1], s->current_picture.linesize[1], w>>1, h>>1, EDGE_WIDTH/2);
-        s->dsp.draw_edges(s->current_picture.data[2], s->current_picture.linesize[2], w>>1, h>>1, EDGE_WIDTH/2);
+        s->dsp.draw_edges(s->current_picture.data[0],
+                          s->current_picture.linesize[0], w   , h   ,
+                          EDGE_WIDTH  , EDGE_TOP | EDGE_BOTTOM);
+        s->dsp.draw_edges(s->current_picture.data[1],
+                          s->current_picture.linesize[1], w>>1, h>>1,
+                          EDGE_WIDTH/2, EDGE_TOP | EDGE_BOTTOM);
+        s->dsp.draw_edges(s->current_picture.data[2],
+                          s->current_picture.linesize[2], w>>1, h>>1,
+                          EDGE_WIDTH/2, EDGE_TOP | EDGE_BOTTOM);
     }
 
     release_buffer(s->avctx);
@@ -2235,7 +2240,7 @@ static av_cold int decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec snow_decoder = {
+AVCodec ff_snow_decoder = {
     "snow",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_SNOW,
@@ -3986,7 +3991,7 @@ static av_cold int encode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec snow_encoder = {
+AVCodec ff_snow_encoder = {
     "snow",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_SNOW,

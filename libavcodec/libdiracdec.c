@@ -3,20 +3,20 @@
  * Copyright (c) 2005 BBC, Andrew Kennedy <dirac at rd dot bbc dot co dot uk>
  * Copyright (c) 2006-2008 BBC, Anuradha Suraparaju <asuraparaju at gmail dot com >
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -28,6 +28,7 @@
 * (http://dirac.sourceforge.net/specification.html).
 */
 
+#include "libavutil/imgutils.h"
 #include "libdirac.h"
 
 #undef NDEBUG
@@ -46,7 +47,7 @@ typedef struct FfmpegDiracDecoderParams {
 
 
 /**
-* returns FFmpeg chroma format
+* returns Libav chroma format
 */
 static enum PixelFormat GetFfmpegChromaFormat(dirac_chroma_t dirac_pix_fmt)
 {
@@ -102,11 +103,11 @@ static int libdirac_decode_frame(AVCodecContext *avccontext,
 
         case STATE_SEQUENCE:
         {
-            /* tell FFmpeg about sequence details */
+            /* tell Libav about sequence details */
             dirac_sourceparams_t *src_params = &p_dirac_params->p_decoder->src_params;
 
-            if (avcodec_check_dimensions(avccontext, src_params->width,
-                                         src_params->height) < 0) {
+            if (av_image_check_size(src_params->width, src_params->height,
+                                    0, avccontext) < 0) {
                 av_log(avccontext, AV_LOG_ERROR, "Invalid dimensions (%dx%d)\n",
                        src_params->width, src_params->height);
                 avccontext->height = avccontext->width = 0;
@@ -193,7 +194,7 @@ static void libdirac_flush(AVCodecContext *avccontext)
 
 
 
-AVCodec libdirac_decoder = {
+AVCodec ff_libdirac_decoder = {
     "libdirac",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_DIRAC,

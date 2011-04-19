@@ -2,20 +2,20 @@
  * RV40 decoder
  * Copyright (c) 2007 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -23,6 +23,8 @@
  * @file
  * RV40 decoder
  */
+
+#include "libavutil/imgutils.h"
 
 #include "avcodec.h"
 #include "dsputil.h"
@@ -142,7 +144,7 @@ static int rv40_parse_slice_header(RV34DecContext *r, GetBitContext *gb, SliceIn
     si->pts = get_bits(gb, 13);
     if(!si->type || !get_bits1(gb))
         rv40_parse_picture_size(gb, &w, &h);
-    if(avcodec_check_dimensions(r->s.avctx, w, h) < 0)
+    if(av_image_check_size(w, h, 0, r->s.avctx) < 0)
         return -1;
     si->width  = w;
     si->height = h;
@@ -307,7 +309,7 @@ static inline void rv40_weak_loop_filter(uint8_t *src, const int step,
     }
 }
 
-static inline void rv40_adaptive_loop_filter(uint8_t *src, const int step,
+static av_always_inline void rv40_adaptive_loop_filter(uint8_t *src, const int step,
                                              const int stride, const int dmode,
                                              const int lim_q1, const int lim_p1,
                                              const int alpha,
@@ -666,7 +668,7 @@ static av_cold int rv40_decode_init(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec rv40_decoder = {
+AVCodec ff_rv40_decoder = {
     "rv40",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RV40,

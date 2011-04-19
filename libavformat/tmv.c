@@ -2,20 +2,20 @@
  * 8088flex TMV file demuxer
  * Copyright (c) 2009 Daniel Verkamp <daniel at drv.nu>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -65,12 +65,12 @@ static int tmv_probe(AVProbeData *p)
 static int tmv_read_header(AVFormatContext *s, AVFormatParameters *ap)
 {
     TMVContext *tmv   = s->priv_data;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AVStream *vst, *ast;
     AVRational fps;
     unsigned comp_method, char_cols, char_rows, features;
 
-    if (get_le32(pb) != TMV_TAG)
+    if (avio_rl32(pb) != TMV_TAG)
         return -1;
 
     if (!(vst = av_new_stream(s, 0)))
@@ -79,30 +79,30 @@ static int tmv_read_header(AVFormatContext *s, AVFormatParameters *ap)
     if (!(ast = av_new_stream(s, 0)))
         return AVERROR(ENOMEM);
 
-    ast->codec->sample_rate = get_le16(pb);
+    ast->codec->sample_rate = avio_rl16(pb);
     if (!ast->codec->sample_rate) {
         av_log(s, AV_LOG_ERROR, "invalid sample rate\n");
         return -1;
     }
 
-    tmv->audio_chunk_size   = get_le16(pb);
+    tmv->audio_chunk_size   = avio_rl16(pb);
     if (!tmv->audio_chunk_size) {
         av_log(s, AV_LOG_ERROR, "invalid audio chunk size\n");
         return -1;
     }
 
-    comp_method             = get_byte(pb);
+    comp_method             = avio_r8(pb);
     if (comp_method) {
         av_log(s, AV_LOG_ERROR, "unsupported compression method %d\n",
                comp_method);
         return -1;
     }
 
-    char_cols = get_byte(pb);
-    char_rows = get_byte(pb);
+    char_cols = avio_r8(pb);
+    char_rows = avio_r8(pb);
     tmv->video_chunk_size = char_cols * char_rows * 2;
 
-    features  = get_byte(pb);
+    features  = avio_r8(pb);
     if (features & ~(TMV_PADDING | TMV_STEREO)) {
         av_log(s, AV_LOG_ERROR, "unsupported features 0x%02x\n",
                features & ~(TMV_PADDING | TMV_STEREO));
@@ -142,17 +142,17 @@ static int tmv_read_header(AVFormatContext *s, AVFormatParameters *ap)
 static int tmv_read_packet(AVFormatContext *s, AVPacket *pkt)
 {
     TMVContext *tmv   = s->priv_data;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     int ret, pkt_size = tmv->stream_index ?
                         tmv->audio_chunk_size : tmv->video_chunk_size;
 
-    if (url_feof(pb))
+    if (pb->eof_reached)
         return AVERROR_EOF;
 
     ret = av_get_packet(pb, pkt, pkt_size);
 
     if (tmv->stream_index)
-        url_fskip(pb, tmv->padding);
+        avio_skip(pb, tmv->padding);
 
     pkt->stream_index  = tmv->stream_index;
     tmv->stream_index ^= 1;
@@ -173,12 +173,12 @@ static int tmv_read_seek(AVFormatContext *s, int stream_index,
     pos = timestamp *
           (tmv->audio_chunk_size + tmv->video_chunk_size + tmv->padding);
 
-    url_fseek(s->pb, pos + TMV_HEADER_SIZE, SEEK_SET);
+    avio_seek(s->pb, pos + TMV_HEADER_SIZE, SEEK_SET);
     tmv->stream_index = 0;
     return 0;
 }
 
-AVInputFormat tmv_demuxer = {
+AVInputFormat ff_tmv_demuxer = {
     "tmv",
     NULL_IF_CONFIG_SMALL("8088flex TMV"),
     sizeof(TMVContext),

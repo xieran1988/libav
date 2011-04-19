@@ -4,20 +4,20 @@
  * Copyright (c) 2010 Alex Converse <alex.converse@gmail.com>
  * Copyright (c) 2010 Vitor Sessak
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -29,7 +29,10 @@
 
 #include <math.h>
 #include "libavutil/mathematics.h"
-#include "fft.h"
+#include "dct.h"
+
+#define DCT32_FLOAT
+#include "dct32.c"
 
 /* sin((M_PI * x / (2*n)) */
 #define SIN(s,n,x) (s->costab[(n) - (x)])
@@ -55,7 +58,7 @@ static void ff_dst_calc_I_c(DCTContext *ctx, FFTSample *data)
     }
 
     data[n/2] *= 2;
-    ff_rdft_calc(&ctx->rdft, data);
+    ctx->rdft.rdft_calc(&ctx->rdft, data);
 
     data[0] *= 0.5f;
 
@@ -89,7 +92,7 @@ static void ff_dct_calc_I_c(DCTContext *ctx, FFTSample *data)
         data[n - i] = tmp1 + s;
     }
 
-    ff_rdft_calc(&ctx->rdft, data);
+    ctx->rdft.rdft_calc(&ctx->rdft, data);
     data[n] = data[1];
     data[1] = next;
 
@@ -117,7 +120,7 @@ static void ff_dct_calc_III_c(DCTContext *ctx, FFTSample *data)
 
     data[1] = 2 * next;
 
-    ff_rdft_calc(&ctx->rdft, data);
+    ctx->rdft.rdft_calc(&ctx->rdft, data);
 
     for (i = 0; i < n / 2; i++) {
         float tmp1 = data[i        ] * inv_n;
@@ -148,7 +151,7 @@ static void ff_dct_calc_II_c(DCTContext *ctx, FFTSample *data)
         data[n-i-1] = tmp1 - s;
     }
 
-    ff_rdft_calc(&ctx->rdft, data);
+    ctx->rdft.rdft_calc(&ctx->rdft, data);
 
     next = data[1] * 0.5;
     data[1] *= -1;
@@ -167,9 +170,9 @@ static void ff_dct_calc_II_c(DCTContext *ctx, FFTSample *data)
     }
 }
 
-void ff_dct_calc(DCTContext *s, FFTSample *data)
+static void dct32_func(DCTContext *ctx, FFTSample *data)
 {
-    s->dct_calc(s, data);
+    ctx->dct32(data, data);
 }
 
 av_cold int ff_dct_init(DCTContext *s, int nbits, enum DCTTransformType inverse)
@@ -200,6 +203,13 @@ av_cold int ff_dct_init(DCTContext *s, int nbits, enum DCTTransformType inverse)
     case DCT_III: s->dct_calc = ff_dct_calc_III_c; break;
     case DST_I  : s->dct_calc = ff_dst_calc_I_c; break;
     }
+
+    if (inverse == DCT_II && nbits == 5)
+        s->dct_calc = dct32_func;
+
+    s->dct32 = dct32;
+    if (HAVE_MMX)     ff_dct_init_mmx(s);
+
     return 0;
 }
 

@@ -3,20 +3,20 @@
  * Copyright (c) 2000,2001 Fabrice Bellard
  * Copyright (c) 2002-2004 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -119,7 +119,7 @@ static int find_frame_rate_index(MpegEncContext *s){
     for(i=1;i<14;i++) {
         int64_t n0= 1001LL/ff_frame_rate_tab[i].den*ff_frame_rate_tab[i].num*s->avctx->time_base.num;
         int64_t n1= 1001LL*s->avctx->time_base.den;
-        if(s->avctx->strict_std_compliance > FF_COMPLIANCE_INOFFICIAL && i>=9) break;
+        if(s->avctx->strict_std_compliance > FF_COMPLIANCE_UNOFFICIAL && i>=9) break;
 
         d = FFABS(n0 - n1);
         if(d < dmin){
@@ -890,7 +890,7 @@ static void mpeg1_encode_block(MpegEncContext *s,
     next_coef:
 #if 0
         if (level != 0)
-            dprintf(s->avctx, "level[%d]=%d\n", i, level);
+            av_dlog(s->avctx, "level[%d]=%d\n", i, level);
 #endif
         /* encode using VLC */
         if (level != 0) {
@@ -930,7 +930,7 @@ static void mpeg1_encode_block(MpegEncContext *s,
     put_bits(&s->pb, table_vlc[112][1], table_vlc[112][0]);
 }
 
-AVCodec mpeg1video_encoder = {
+AVCodec ff_mpeg1video_encoder = {
     "mpeg1video",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MPEG1VIDEO,
@@ -944,7 +944,7 @@ AVCodec mpeg1video_encoder = {
     .long_name= NULL_IF_CONFIG_SMALL("MPEG-1 video"),
 };
 
-AVCodec mpeg2video_encoder = {
+AVCodec ff_mpeg2video_encoder = {
     "mpeg2video",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MPEG2VIDEO,

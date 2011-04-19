@@ -5,20 +5,20 @@
  * Copyright (c) 2005 Alex Beregszaszi
  * Copyright (c) 2005 Roberto Togni
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -385,7 +385,7 @@ static uint16_t qdm2_packet_checksum (const uint8_t *data, int length, int value
 
 
 /**
- * Fills a QDM2SubPacket structure with packet type, size, and data pointer.
+ * Fill a QDM2SubPacket structure with packet type, size, and data pointer.
  *
  * @param gb            bitreader context
  * @param sub_packet    packet under analysis
@@ -436,7 +436,7 @@ static QDM2SubPNode* qdm2_search_subpacket_type_in_list (QDM2SubPNode *list, int
 
 
 /**
- * Replaces 8 elements with their average value.
+ * Replace 8 elements with their average value.
  * Called by qdm2_decode_superblock before starting subblock decoding.
  *
  * @param q       context
@@ -942,7 +942,6 @@ static void synthfilt_build_sb_samples (QDM2Context *q, GetBitContext *gb, int l
  * This is similar to process_subpacket_9, but for a single channel and for element [0]
  * same VLC tables as process_subpacket_9 are used.
  *
- * @param q         context
  * @param quantized_coeffs    pointer to quantized_coeffs[ch][0]
  * @param gb        bitreader context
  * @param length    packet length in bits
@@ -1210,7 +1209,8 @@ static void qdm2_decode_super_block (QDM2Context *q)
     init_get_bits(&gb, header.data, header.size*8);
 
     if (header.type == 2 || header.type == 4 || header.type == 5) {
-        int csum = 257 * get_bits(&gb, 8) + 2 * get_bits(&gb, 8);
+        int csum  = 257 * get_bits(&gb, 8);
+            csum +=   2 * get_bits(&gb, 8);
 
         csum = qdm2_packet_checksum(q->compressed_data, q->checksum_size, csum);
 
@@ -1588,7 +1588,7 @@ static void qdm2_calculate_fft (QDM2Context *q, int channel, int sub_packet)
     int i;
     q->fft.complex[channel][0].re *= 2.0f;
     q->fft.complex[channel][0].im = 0.0f;
-    ff_rdft_calc(&q->rdft_ctx, (FFTSample *)q->fft.complex[channel]);
+    q->rdft_ctx.rdft_calc(&q->rdft_ctx, (FFTSample *)q->fft.complex[channel]);
     /* add samples to output buffer */
     for (i = 0; i < ((q->fft_frame_size + 15) & ~15); i++)
         q->output_buffer[q->channels * i + channel] += ((float *) q->fft.complex[channel])[i] * gain;
@@ -1866,7 +1866,7 @@ static av_cold int qdm2_decode_init(AVCodecContext *avctx)
 
     qdm2_init(s);
 
-    avctx->sample_fmt = SAMPLE_FMT_S16;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
 
 //    dump_context(s);
     return 0;
@@ -1883,7 +1883,7 @@ static av_cold int qdm2_decode_close(AVCodecContext *avctx)
 }
 
 
-static void qdm2_decode (QDM2Context *q, const uint8_t *in, int16_t *out)
+static int qdm2_decode (QDM2Context *q, const uint8_t *in, int16_t *out)
 {
     int ch, i;
     const int frame_size = (q->frame_size * q->channels);
@@ -1919,7 +1919,7 @@ static void qdm2_decode (QDM2Context *q, const uint8_t *in, int16_t *out)
 
         if (!q->has_errors && q->sub_packet_list_C[0].packet != NULL) {
             SAMPLES_NEEDED_2("has errors, and C list is not empty")
-            return;
+            return -1;
         }
     }
 
@@ -1940,6 +1940,8 @@ static void qdm2_decode (QDM2Context *q, const uint8_t *in, int16_t *out)
 
         out[i] = value;
     }
+
+    return 0;
 }
 
 
@@ -1950,28 +1952,29 @@ static int qdm2_decode_frame(AVCodecContext *avctx,
     const uint8_t *buf = avpkt->data;
     int buf_size = avpkt->size;
     QDM2Context *s = avctx->priv_data;
+    int16_t *out = data;
+    int i;
 
     if(!buf)
         return 0;
     if(buf_size < s->checksum_size)
         return -1;
 
-    *data_size = s->channels * s->frame_size * sizeof(int16_t);
-
     av_log(avctx, AV_LOG_DEBUG, "decode(%d): %p[%d] -> %p[%d]\n",
        buf_size, buf, s->checksum_size, data, *data_size);
 
-    qdm2_decode(s, buf, data);
-
-    // reading only when next superblock found
-    if (s->sub_packet == 0) {
-        return s->checksum_size;
+    for (i = 0; i < 16; i++) {
+        if (qdm2_decode(s, buf, out) < 0)
+            return -1;
+        out += s->channels * s->frame_size;
     }
 
-    return 0;
+    *data_size = (uint8_t*)out - (uint8_t*)data;
+
+    return s->checksum_size;
 }
 
-AVCodec qdm2_decoder =
+AVCodec ff_qdm2_decoder =
 {
     .name = "qdm2",
     .type = AVMEDIA_TYPE_AUDIO,

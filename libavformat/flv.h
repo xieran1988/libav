@@ -2,22 +2,22 @@
  * @file
  * FLV common header
  *
- * Copyright (c) 2006 The FFmpeg Project
+ * Copyright (c) 2006 The Libav Project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -75,6 +75,7 @@ enum {
     FLV_CODECID_ADPCM                = 1 << FLV_AUDIO_CODECID_OFFSET,
     FLV_CODECID_MP3                  = 2 << FLV_AUDIO_CODECID_OFFSET,
     FLV_CODECID_PCM_LE               = 3 << FLV_AUDIO_CODECID_OFFSET,
+    FLV_CODECID_NELLYMOSER_16KHZ_MONO = 4 << FLV_AUDIO_CODECID_OFFSET,
     FLV_CODECID_NELLYMOSER_8KHZ_MONO = 5 << FLV_AUDIO_CODECID_OFFSET,
     FLV_CODECID_NELLYMOSER           = 6 << FLV_AUDIO_CODECID_OFFSET,
     FLV_CODECID_AAC                  = 10<< FLV_AUDIO_CODECID_OFFSET,

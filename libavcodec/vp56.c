@@ -4,20 +4,20 @@
  *
  * Copyright (C) 2006  Aurelien Jacobs <aurel@gnuage.org>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -28,7 +28,7 @@
 #include "vp56data.h"
 
 
-void vp56_init_dequant(VP56Context *s, int quantizer)
+void ff_vp56_init_dequant(VP56Context *s, int quantizer)
 {
     s->quantizer = quantizer;
     s->dequant_dc = vp56_dc_dequant[quantizer] << 2;
@@ -337,7 +337,7 @@ static void vp56_mc(VP56Context *s, int b, int plane, uint8_t *src,
 
     if (x<0 || x+12>=s->plane_width[plane] ||
         y<0 || y+12>=s->plane_height[plane]) {
-        ff_emulated_edge_mc(s->edge_emu_buffer,
+        s->dsp.emulated_edge_mc(s->edge_emu_buffer,
                             src + s->block_offset[b] + (dy-2)*stride + (dx-2),
                             stride, 12, 12, x, y,
                             s->plane_width[plane],
@@ -481,8 +481,8 @@ static int vp56_size_changed(AVCodecContext *avctx)
     return 0;
 }
 
-int vp56_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
-                      AVPacket *avpkt)
+int ff_vp56_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
+                         AVPacket *avpkt)
 {
     const uint8_t *buf = avpkt->data;
     VP56Context *s = avctx->priv_data;
@@ -639,7 +639,7 @@ int vp56_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     return avpkt->size;
 }
 
-av_cold void vp56_init(AVCodecContext *avctx, int flip, int has_alpha)
+av_cold void ff_vp56_init(AVCodecContext *avctx, int flip, int has_alpha)
 {
     VP56Context *s = avctx->priv_data;
     int i;
@@ -678,7 +678,7 @@ av_cold void vp56_init(AVCodecContext *avctx, int flip, int has_alpha)
     }
 }
 
-av_cold int vp56_free(AVCodecContext *avctx)
+av_cold int ff_vp56_free(AVCodecContext *avctx)
 {
     VP56Context *s = avctx->priv_data;
 

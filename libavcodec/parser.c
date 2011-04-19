@@ -3,20 +3,20 @@
  * Copyright (c) 2003 Fabrice Bellard
  * Copyright (c) 2003 Michael Niedermayer
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -74,7 +74,7 @@ AVCodecParserContext *av_parser_init(int codec_id)
     s->fetch_timestamp=1;
     s->pict_type = FF_I_TYPE;
     s->key_frame = -1;
-    s->convergence_duration = AV_NOPTS_VALUE;
+    s->convergence_duration = 0;
     s->dts_sync_point       = INT_MIN;
     s->dts_ref_dts_delta    = INT_MIN;
     s->pts_dts_delta        = INT_MIN;
@@ -105,6 +105,7 @@ void ff_fetch_timestamp(AVCodecParserContext *s, int off, int remove){
     }
 }
 
+#if LIBAVCODEC_VERSION_MAJOR < 53
 /**
  *
  * @param buf           input
@@ -139,6 +140,7 @@ int av_parser_parse(AVCodecParserContext *s,
 {
     return av_parser_parse2(s, avctx, poutbuf, poutbuf_size, buf, buf_size, pts, dts, AV_NOPTS_VALUE);
 }
+#endif
 
 int av_parser_parse2(AVCodecParserContext *s,
                      AVCodecContext *avctx,
@@ -149,6 +151,12 @@ int av_parser_parse2(AVCodecParserContext *s,
 {
     int index, i;
     uint8_t dummy_buf[FF_INPUT_BUFFER_PADDING_SIZE];
+
+    if(!(s->flags & PARSER_FLAG_FETCHED_OFFSET)) {
+        s->next_frame_offset =
+        s->cur_offset        = pos;
+        s->flags |= PARSER_FLAG_FETCHED_OFFSET;
+    }
 
     if (buf_size == 0) {
         /* padding is always necessary even if EOF, so we add it here */

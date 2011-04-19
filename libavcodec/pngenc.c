@@ -2,20 +2,20 @@
  * PNG image format
  * Copyright (c) 2003 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include "avcodec.h"
@@ -199,7 +199,7 @@ static void png_write_chunk(uint8_t **f, uint32_t tag,
     crc = crc32(0, Z_NULL, 0);
     AV_WL32(tagbuf, tag);
     crc = crc32(crc, tagbuf, 4);
-    bytestream_put_be32(f, bswap_32(tag));
+    bytestream_put_be32(f, av_bswap32(tag));
     if (length > 0) {
         crc = crc32(crc, buf, length);
         memcpy(*f, buf, length);
@@ -436,7 +436,7 @@ static av_cold int png_enc_init(AVCodecContext *avctx){
     return 0;
 }
 
-AVCodec png_encoder = {
+AVCodec ff_png_encoder = {
     "png",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_PNG,

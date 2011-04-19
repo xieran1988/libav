@@ -5,20 +5,20 @@
  *
  * based on libavformat/http.c, Copyright (c) 2000, 2001 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -26,15 +26,16 @@
 #include "avformat.h"
 #include "internal.h"
 #include "network.h"
+#include "url.h"
 
 typedef struct {
     URLContext *hd;
 } GopherContext;
 
-static int gopher_write(URLContext *h, uint8_t *buf, int size)
+static int gopher_write(URLContext *h, const uint8_t *buf, int size)
 {
     GopherContext *s = h->priv_data;
-    return url_write(s->hd, buf, size);
+    return ffurl_write(s->hd, buf, size);
 }
 
 static int gopher_connect(URLContext *h, const char *path)
@@ -68,7 +69,7 @@ static int gopher_close(URLContext *h)
 {
     GopherContext *s = h->priv_data;
     if (s->hd) {
-        url_close(s->hd);
+        ffurl_close(s->hd);
         s->hd = NULL;
     }
     av_freep(&h->priv_data);
@@ -90,7 +91,7 @@ static int gopher_open(URLContext *h, const char *uri, int flags)
     h->priv_data = s;
 
     /* needed in any case to build the host string */
-    ff_url_split(NULL, 0, auth, sizeof(auth), hostname, sizeof(hostname), &port,
+    av_url_split(NULL, 0, auth, sizeof(auth), hostname, sizeof(hostname), &port,
                  path, sizeof(path), uri);
 
     if (port < 0)
@@ -99,7 +100,7 @@ static int gopher_open(URLContext *h, const char *uri, int flags)
     ff_url_join(buf, sizeof(buf), "tcp", NULL, hostname, port, NULL);
 
     s->hd = NULL;
-    err = url_open(&s->hd, buf, URL_RDWR);
+    err = ffurl_open(&s->hd, buf, AVIO_RDWR);
     if (err < 0)
         goto fail;
 
@@ -114,16 +115,15 @@ static int gopher_open(URLContext *h, const char *uri, int flags)
 static int gopher_read(URLContext *h, uint8_t *buf, int size)
 {
     GopherContext *s = h->priv_data;
-    int len = url_read(s->hd, buf, size);
+    int len = ffurl_read(s->hd, buf, size);
     return len;
 }
 
 
-URLProtocol gopher_protocol = {
-    "gopher",
-    gopher_open,
-    gopher_read,
-    gopher_write,
-    NULL, /*seek*/
-    gopher_close,
+URLProtocol ff_gopher_protocol = {
+    .name      = "gopher",
+    .url_open  = gopher_open,
+    .url_read  = gopher_read,
+    .url_write = gopher_write,
+    .url_close = gopher_close,
 };

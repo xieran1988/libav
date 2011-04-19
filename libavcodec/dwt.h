@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2004-2010 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -146,8 +146,6 @@ void ff_spatial_dwt(int *buffer, int width, int height, int stride, int type, in
 
 void ff_spatial_idwt_buffered_init(DWTCompose *cs, slice_buffer * sb, int width, int height, int stride_line, int type, int decomposition_count);
 void ff_spatial_idwt_buffered_slice(DWTContext *dsp, DWTCompose *cs, slice_buffer * slice_buf, int width, int height, int stride_line, int type, int decomposition_count, int y);
-void ff_spatial_idwt_init(DWTCompose *cs, IDWTELEM *buffer, int width, int height, int stride, int type, int decomposition_count);
-void ff_spatial_idwt_slice(DWTCompose *cs, IDWTELEM *buffer, int width, int height, int stride, int type, int decomposition_count, int y);
 void ff_spatial_idwt(IDWTELEM *buffer, int width, int height, int stride, int type, int decomposition_count);
 
 void ff_dwt_init(DWTContext *c);

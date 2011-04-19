@@ -2,20 +2,20 @@
  * FFM (ffserver live feed) common header
  * Copyright (c) 2001 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -28,6 +28,7 @@
 
 /* The FFM file is made of blocks of fixed size */
 #define FFM_HEADER_SIZE 14
+#define FFM_PACKET_SIZE 4096
 #define PACKET_ID       0x666d
 
 /* each packet contains frames (which can span several packets */
@@ -54,5 +55,9 @@ typedef struct FFMContext {
     uint8_t *packet_ptr, *packet_end;
     uint8_t packet[FFM_PACKET_SIZE];
 } FFMContext;
+
+int64_t ffm_read_write_index(int fd);
+int ffm_write_write_index(int fd, int64_t pos);
+void ffm_set_write_index(AVFormatContext *s, int64_t pos, int64_t file_size);
 
 #endif /* AVFORMAT_FFM_H */

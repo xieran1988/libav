@@ -3,20 +3,20 @@
  * Copyright (c) 2006-2007 Konstantin Shishkov
  * Partly based on vc9.c (c) 2005 Anonymous, Alex Beregszaszi, Michael Niedermayer
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -280,6 +280,28 @@ static int vop_dquant_decoding(VC1Context *v)
 
 static int decode_sequence_header_adv(VC1Context *v, GetBitContext *gb);
 
+static void simple_idct_put_rangered(uint8_t *dest, int line_size, DCTELEM *block)
+{
+    int i;
+    ff_simple_idct(block);
+    for (i = 0; i < 64; i++) block[i] = (block[i] - 64) << 1;
+    ff_put_pixels_clamped_c(block, dest, line_size);
+}
+
+static void simple_idct_put_signed(uint8_t *dest, int line_size, DCTELEM *block)
+{
+    ff_simple_idct(block);
+    ff_put_signed_pixels_clamped_c(block, dest, line_size);
+}
+
+static void simple_idct_put_signed_rangered(uint8_t *dest, int line_size, DCTELEM *block)
+{
+    int i;
+    ff_simple_idct(block);
+    for (i = 0; i < 64; i++) block[i] <<= 1;
+    ff_put_signed_pixels_clamped_c(block, dest, line_size);
+}
+
 /**
  * Decode Simple/Main Profiles sequence header
  * @see Figure 7-8, p16-17
@@ -293,7 +315,7 @@ int vc1_decode_sequence_header(AVCodecContext *avctx, VC1Context *v, GetBitConte
     v->profile = get_bits(gb, 2);
     if (v->profile == PROFILE_COMPLEX)
     {
-        av_log(avctx, AV_LOG_ERROR, "WMV3 Complex Profile is not fully supported\n");
+        av_log(avctx, AV_LOG_WARNING, "WMV3 Complex Profile is not fully supported\n");
     }
 
     if (v->profile == PROFILE_ADVANCED)
@@ -306,12 +328,16 @@ int vc1_decode_sequence_header(AVCodecContext *avctx, VC1Context *v, GetBitConte
     {
         v->zz_8x4 = wmv2_scantableA;
         v->zz_4x8 = wmv2_scantableB;
-        v->res_sm = get_bits(gb, 2); //reserved
-        if (v->res_sm)
+        v->res_y411   = get_bits1(gb);
+        v->res_sprite = get_bits1(gb);
+        if (v->res_y411)
         {
             av_log(avctx, AV_LOG_ERROR,
-                   "Reserved RES_SM=%i is forbidden\n", v->res_sm);
+                   "Old interlaced mode is not supported\n");
             return -1;
+        }
+        if (v->res_sprite) {
+            av_log(avctx, AV_LOG_ERROR, "WMVP is not fully supported\n");
         }
     }
 
@@ -333,14 +359,18 @@ int vc1_decode_sequence_header(AVCodecContext *avctx, VC1Context *v, GetBitConte
     v->res_fasttx = get_bits1(gb);
     if (!v->res_fasttx)
     {
-        v->s.dsp.vc1_inv_trans_8x8 = ff_simple_idct;
-        v->s.dsp.vc1_inv_trans_8x4 = ff_simple_idct84_add;
-        v->s.dsp.vc1_inv_trans_4x8 = ff_simple_idct48_add;
-        v->s.dsp.vc1_inv_trans_4x4 = ff_simple_idct44_add;
-        v->s.dsp.vc1_inv_trans_8x8_dc = ff_simple_idct_add;
-        v->s.dsp.vc1_inv_trans_8x4_dc = ff_simple_idct84_add;
-        v->s.dsp.vc1_inv_trans_4x8_dc = ff_simple_idct48_add;
-        v->s.dsp.vc1_inv_trans_4x4_dc = ff_simple_idct44_add;
+        v->vc1dsp.vc1_inv_trans_8x8_add = ff_simple_idct_add;
+        v->vc1dsp.vc1_inv_trans_8x8_put[0] = ff_simple_idct_put;
+        v->vc1dsp.vc1_inv_trans_8x8_put[1] = simple_idct_put_rangered;
+        v->vc1dsp.vc1_inv_trans_8x8_put_signed[0] = simple_idct_put_signed;
+        v->vc1dsp.vc1_inv_trans_8x8_put_signed[1] = simple_idct_put_signed_rangered;
+        v->vc1dsp.vc1_inv_trans_8x4 = ff_simple_idct84_add;
+        v->vc1dsp.vc1_inv_trans_4x8 = ff_simple_idct48_add;
+        v->vc1dsp.vc1_inv_trans_4x4 = ff_simple_idct44_add;
+        v->vc1dsp.vc1_inv_trans_8x8_dc = ff_simple_idct_add;
+        v->vc1dsp.vc1_inv_trans_8x4_dc = ff_simple_idct84_add;
+        v->vc1dsp.vc1_inv_trans_4x8_dc = ff_simple_idct48_add;
+        v->vc1dsp.vc1_inv_trans_4x4_dc = ff_simple_idct44_add;
     }
 
     v->fastuvmc =  get_bits1(gb); //common
@@ -382,13 +412,27 @@ int vc1_decode_sequence_header(AVCodecContext *avctx, VC1Context *v, GetBitConte
     v->quantizer_mode = get_bits(gb, 2); //common
 
     v->finterpflag = get_bits1(gb); //common
-    v->res_rtm_flag = get_bits1(gb); //reserved
+
+    if (v->res_sprite) {
+        v->s.avctx->width  = v->s.avctx->coded_width  = get_bits(gb, 11);
+        v->s.avctx->height = v->s.avctx->coded_height = get_bits(gb, 11);
+        skip_bits(gb, 5); //frame rate
+        v->res_x8 = get_bits1(gb);
+        if (get_bits1(gb)) { // something to do with DC VLC selection
+            av_log(avctx, AV_LOG_ERROR, "Unsupported sprite feature\n");
+            return -1;
+        }
+        skip_bits(gb, 3); //slice code
+        v->res_rtm_flag = 0;
+    } else {
+        v->res_rtm_flag = get_bits1(gb); //reserved
+    }
     if (!v->res_rtm_flag)
     {
 //            av_log(avctx, AV_LOG_ERROR,
 //                   "0 for reserved RES_RTM_FLAG is forbidden\n");
         av_log(avctx, AV_LOG_ERROR,
-               "Old WMV3 version detected, only I-frames will be decoded\n");
+               "Old WMV3 version detected, some frames may be decoded incorrectly\n");
         //return -1;
     }
     //TODO: figure out what they mean (always 0x402F)
@@ -816,6 +860,7 @@ int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
         }
     }
     if(v->panscanflag) {
+        av_log_missing_feature(v->s.avctx, "Pan-scan", 0);
         //...
     }
     v->rnd = get_bits1(gb);

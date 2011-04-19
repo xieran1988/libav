@@ -1,20 +1,20 @@
 /*
  * H263 internal header
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #ifndef AVCODEC_H263_H
@@ -93,7 +93,7 @@ void h263_pred_acdc(MpegEncContext * s, DCTELEM *block, int n);
 
 
 /**
- * Prints picture info if FF_DEBUG_PICT_INFO is set.
+ * Print picture info if FF_DEBUG_PICT_INFO is set.
  */
 void ff_h263_show_pict_info(MpegEncContext *s);
 
@@ -102,8 +102,8 @@ int ff_h263_decode_mb(MpegEncContext *s,
                       DCTELEM block[6][64]);
 
 /**
- * Returns the value of the 3bit "source format" syntax element.
- * that represents some standard picture dimensions or indicates that
+ * Return the value of the 3bit "source format" syntax element.
+ * This represents some standard picture dimensions or indicates that
  * width&height are explicitly stored later.
  */
 int av_const h263_get_picture_format(int width, int height);

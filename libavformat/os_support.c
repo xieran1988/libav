@@ -3,20 +3,20 @@
  * Copyright (c) 2000, 2001, 2002 Fabrice Bellard
  * copyright (c) 2002 Francois Revol
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -26,13 +26,13 @@
 
 #include "config.h"
 #include "avformat.h"
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/time.h>
 #include "os_support.h"
 
 #if CONFIG_NETWORK
+#include <fcntl.h>
+#include <unistd.h>
 #if !HAVE_POLL_H
+#include <sys/time.h>
 #if HAVE_WINSOCK2_H
 #include <winsock2.h>
 #elif HAVE_SYS_SELECT_H
@@ -234,9 +234,7 @@ int ff_socket_nonblock(int socket, int enable)
       return fcntl(socket, F_SETFL, fcntl(socket, F_GETFL) & ~O_NONBLOCK);
 #endif
 }
-#endif /* CONFIG_NETWORK */
 
-#if CONFIG_FFSERVER
 #if !HAVE_POLL_H
 int poll(struct pollfd *fds, nfds_t numfds, int timeout)
 {
@@ -294,7 +292,7 @@ int poll(struct pollfd *fds, nfds_t numfds, int timeout)
     if (rc < 0)
         return rc;
 
-    for(i = 0; i < (nfds_t) n; i++) {
+    for(i = 0; i < numfds; i++) {
         fds[i].revents = 0;
 
         if (FD_ISSET(fds[i].fd, &read_set))      fds[i].revents |= POLLIN;
@@ -305,5 +303,4 @@ int poll(struct pollfd *fds, nfds_t numfds, int timeout)
     return rc;
 }
 #endif /* HAVE_POLL_H */
-#endif /* CONFIG_FFSERVER */
-
+#endif /* CONFIG_NETWORK */

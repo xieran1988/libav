@@ -2,22 +2,23 @@
  * XSUB subtitle decoder
  * Copyright (c) 2007 Reimar Döffinger
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 #include "get_bits.h"
 #include "bytestream.h"
@@ -76,7 +77,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     // read header
     w = bytestream_get_le16(&buf);
     h = bytestream_get_le16(&buf);
-    if (avcodec_check_dimensions(avctx, w, h) < 0)
+    if (av_image_check_size(w, h, 0, avctx) < 0)
         return -1;
     x = bytestream_get_le16(&buf);
     y = bytestream_get_le16(&buf);
@@ -130,7 +131,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     return buf_size;
 }
 
-AVCodec xsub_decoder = {
+AVCodec ff_xsub_decoder = {
     "xsub",
     AVMEDIA_TYPE_SUBTITLE,
     CODEC_ID_XSUB,

@@ -2,20 +2,20 @@
  * 8088flex TMV video decoder
  * Copyright (c) 2009 Daniel Verkamp <daniel at drv.nu>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -39,10 +39,10 @@ static int tmv_decode_frame(AVCodecContext *avctx, void *data,
 {
     TMVContext *tmv    = avctx->priv_data;
     const uint8_t *src = avpkt->data;
-    uint8_t *dst, *dst_char;
+    uint8_t *dst;
     unsigned char_cols = avctx->width >> 3;
     unsigned char_rows = avctx->height >> 3;
-    unsigned x, y, mask, char_y, fg, bg, c;
+    unsigned x, y, fg, bg, c;
 
     if (tmv->pic.data[0])
         avctx->release_buffer(avctx, &tmv->pic);
@@ -68,17 +68,11 @@ static int tmv_decode_frame(AVCodecContext *avctx, void *data,
 
     for (y = 0; y < char_rows; y++) {
         for (x = 0; x < char_cols; x++) {
-            c  = *src++ * 8;
+            c  = *src++;
             bg = *src  >> 4;
             fg = *src++ & 0xF;
-
-            dst_char = dst + x * 8;
-            for (char_y = 0; char_y < 8; char_y++) {
-                for (mask = 0x80; mask; mask >>= 1) {
-                    *dst_char++ = ff_cga_font[c + char_y] & mask ? fg : bg;
-                }
-                dst_char += tmv->pic.linesize[0] - 8;
-            }
+            ff_draw_pc_font(dst + x * 8, tmv->pic.linesize[0],
+                            ff_cga_font, 8, c, fg, bg);
         }
         dst += tmv->pic.linesize[0] * 8;
     }
@@ -98,7 +92,7 @@ static av_cold int tmv_decode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec tmv_decoder = {
+AVCodec ff_tmv_decoder = {
     .name           = "tmv",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_TMV,

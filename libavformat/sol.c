@@ -2,20 +2,20 @@
  * Sierra SOL demuxer
  * Copyright Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -25,7 +25,7 @@
 
 #include "libavutil/bswap.h"
 #include "avformat.h"
-#include "raw.h"
+#include "pcm.h"
 
 /* if we don't know the size in advance */
 #define AU_UNKNOWN_SIZE ((uint32_t)(~0))
@@ -34,7 +34,7 @@ static int sol_probe(AVProbeData *p)
 {
     /* check file header */
     uint16_t magic;
-    magic=le2me_16(*((uint16_t*)p->buf));
+    magic=av_le2ne16(*((uint16_t*)p->buf));
     if ((magic == 0x0B8D || magic == 0x0C0D || magic == 0x0C8D) &&
         p->buf[2] == 'S' && p->buf[3] == 'O' &&
         p->buf[4] == 'L' && p->buf[5] == 0)
@@ -87,21 +87,21 @@ static int sol_read_header(AVFormatContext *s,
 {
     int size;
     unsigned int magic,tag;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     unsigned int id, channels, rate, type;
     enum CodecID codec;
     AVStream *st;
 
     /* check ".snd" header */
-    magic = get_le16(pb);
-    tag = get_le32(pb);
+    magic = avio_rl16(pb);
+    tag = avio_rl32(pb);
     if (tag != MKTAG('S', 'O', 'L', 0))
         return -1;
-    rate = get_le16(pb);
-    type = get_byte(pb);
-    size = get_le32(pb);
+    rate = avio_rl16(pb);
+    type = avio_r8(pb);
+    size = avio_rl32(pb);
     if (magic != 0x0B8D)
-        get_byte(pb); /* newer SOLs contain padding byte */
+        avio_r8(pb); /* newer SOLs contain padding byte */
 
     codec = sol_codec_id(magic, type);
     channels = sol_channels(magic, type);
@@ -130,7 +130,7 @@ static int sol_read_packet(AVFormatContext *s,
 {
     int ret;
 
-    if (url_feof(s->pb))
+    if (s->pb->eof_reached)
         return AVERROR(EIO);
     ret= av_get_packet(s->pb, pkt, MAX_SIZE);
     pkt->stream_index = 0;
@@ -141,7 +141,7 @@ static int sol_read_packet(AVFormatContext *s,
     return 0;
 }
 
-AVInputFormat sol_demuxer = {
+AVInputFormat ff_sol_demuxer = {
     "sol",
     NULL_IF_CONFIG_SMALL("Sierra SOL format"),
     0,

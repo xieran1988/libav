@@ -3,20 +3,20 @@
  * H263+ support
  * copyright (c) 2002-2004 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -115,7 +115,7 @@ RLTable ff_mpeg4_rl_intra = {
 };
 
 /* Note this is identical to the intra rvlc except that it is reordered. */
-const uint16_t inter_rvlc[170][2]={
+static const uint16_t inter_rvlc[170][2]={
 {0x0006,  3},{0x0001,  4},{0x0004,  5},{0x001C,  7},
 {0x003C,  8},{0x003D,  8},{0x007C,  9},{0x00FC, 10},
 {0x00FD, 10},{0x01FC, 11},{0x01FD, 11},{0x03FC, 12},
@@ -219,7 +219,7 @@ RLTable rvlc_rl_inter = {
     inter_rvlc_level,
 };
 
-const uint16_t intra_rvlc[170][2]={
+static const uint16_t intra_rvlc[170][2]={
 {0x0006,  3},{0x0007,  3},{0x000A,  4},{0x0009,  5},
 {0x0014,  6},{0x0015,  6},{0x0034,  7},{0x0074,  8},
 {0x0075,  8},{0x00DD,  9},{0x00EC,  9},{0x01EC, 10},

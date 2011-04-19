@@ -8,20 +8,20 @@
  *
  * SVQ1 Encoder (c) 2004 Mike Melanson <melanson@pcisys.net>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -650,6 +650,7 @@ static int svq1_decode_frame(AVCodecContext *avctx,
   uint8_t        *current, *previous;
   int             result, i, x, y, width, height;
   AVFrame *pict = data;
+  svq1_pmv *pmv;
 
   /* initialize bit buffer */
   init_get_bits(&s->gb,buf,buf_size*8);
@@ -683,13 +684,19 @@ static int svq1_decode_frame(AVCodecContext *avctx,
   //this should be removed after libavcodec can handle more flexible picture types & ordering
   if(s->pict_type==FF_B_TYPE && s->last_picture_ptr==NULL) return buf_size;
 
+#if FF_API_HURRY_UP
   if(avctx->hurry_up && s->pict_type==FF_B_TYPE) return buf_size;
+#endif
   if(  (avctx->skip_frame >= AVDISCARD_NONREF && s->pict_type==FF_B_TYPE)
      ||(avctx->skip_frame >= AVDISCARD_NONKEY && s->pict_type!=FF_I_TYPE)
      || avctx->skip_frame >= AVDISCARD_ALL)
       return buf_size;
 
   if(MPV_frame_start(s, avctx) < 0)
+      return -1;
+
+  pmv = av_malloc((FFALIGN(s->width, 16)/8 + 3) * sizeof(*pmv));
+  if (!pmv)
       return -1;
 
   /* decode y, u and v components */
@@ -724,13 +731,12 @@ static int svq1_decode_frame(AVCodecContext *avctx,
 //#ifdef DEBUG_SVQ1
             av_log(s->avctx, AV_LOG_INFO, "Error in svq1_decode_block %i (keyframe)\n",result);
 //#endif
-            return result;
+            goto err;
           }
         }
         current += 16*linesize;
       }
     } else {
-      svq1_pmv pmv[width/8+3];
       /* delta frame */
       memset (pmv, 0, ((width / 8) + 3) * sizeof(svq1_pmv));
 
@@ -743,7 +749,7 @@ static int svq1_decode_frame(AVCodecContext *avctx,
 #ifdef DEBUG_SVQ1
     av_log(s->avctx, AV_LOG_INFO, "Error in svq1_decode_delta_block %i\n",result);
 #endif
-            return result;
+            goto err;
           }
         }
 
@@ -761,7 +767,10 @@ static int svq1_decode_frame(AVCodecContext *avctx,
   MPV_frame_end(s);
 
   *data_size=sizeof(AVFrame);
-  return buf_size;
+  result = buf_size;
+err:
+  av_free(pmv);
+  return result;
 }
 
 static av_cold int svq1_decode_init(AVCodecContext *avctx)
@@ -826,7 +835,7 @@ static av_cold int svq1_decode_end(AVCodecContext *avctx)
 }
 
 
-AVCodec svq1_decoder = {
+AVCodec ff_svq1_decoder = {
     "svq1",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_SVQ1,

@@ -7,20 +7,20 @@
  * 1,4,8bpp support and context / deglobalize stuff
  * by Michael Niedermayer (michaelni@gmx.at)
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -41,6 +41,9 @@
 DECLARE_ASM_CONST(8, uint64_t, mmx_00ffw)   = 0x00ff00ff00ff00ffULL;
 DECLARE_ASM_CONST(8, uint64_t, mmx_redmask) = 0xf8f8f8f8f8f8f8f8ULL;
 DECLARE_ASM_CONST(8, uint64_t, mmx_grnmask) = 0xfcfcfcfcfcfcfcfcULL;
+DECLARE_ASM_CONST(8, uint64_t, pb_e0) = 0xe0e0e0e0e0e0e0e0ULL;
+DECLARE_ASM_CONST(8, uint64_t, pb_03) = 0x0303030303030303ULL;
+DECLARE_ASM_CONST(8, uint64_t, pb_07) = 0x0707070707070707ULL;
 
 //MMX versions
 #undef RENAME
@@ -49,22 +52,14 @@ DECLARE_ASM_CONST(8, uint64_t, mmx_grnmask) = 0xfcfcfcfcfcfcfcfcULL;
 #define HAVE_MMX2 0
 #define HAVE_AMD3DNOW 0
 #define RENAME(a) a ## _MMX
-#if CONFIG_GPL
 #include "yuv2rgb_template.c"
-#else
-#include "yuv2rgb_template2.c"
-#endif
 
 //MMX2 versions
 #undef RENAME
 #undef HAVE_MMX2
 #define HAVE_MMX2 1
 #define RENAME(a) a ## _MMX2
-#if CONFIG_GPL
 #include "yuv2rgb_template.c"
-#else
-#include "yuv2rgb_template2.c"
-#endif
 
 SwsFunc ff_yuv2rgb_init_mmx(SwsContext *c)
 {

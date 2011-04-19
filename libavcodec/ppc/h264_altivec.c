@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2004 Romain Dolbeau <romain@dolbeau.org>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/cpu.h"
 #include "libavcodec/dsputil.h"
 #include "libavcodec/h264data.h"
 #include "libavcodec/h264dsp.h"
 
-#include "dsputil_ppc.h"
 #include "dsputil_altivec.h"
 #include "util_altivec.h"
 #include "types_altivec.h"
@@ -32,7 +32,6 @@
 
 #define OP_U8_ALTIVEC                          PUT_OP_U8_ALTIVEC
 #define PREFIX_h264_chroma_mc8_altivec         put_h264_chroma_mc8_altivec
-#define PREFIX_no_rnd_vc1_chroma_mc8_altivec   put_no_rnd_vc1_chroma_mc8_altivec
 #define PREFIX_h264_chroma_mc8_num             altivec_put_h264_chroma_mc8_num
 #define PREFIX_h264_qpel16_h_lowpass_altivec   put_h264_qpel16_h_lowpass_altivec
 #define PREFIX_h264_qpel16_h_lowpass_num       altivec_put_h264_qpel16_h_lowpass_num
@@ -43,7 +42,6 @@
 #include "h264_template_altivec.c"
 #undef OP_U8_ALTIVEC
 #undef PREFIX_h264_chroma_mc8_altivec
-#undef PREFIX_no_rnd_vc1_chroma_mc8_altivec
 #undef PREFIX_h264_chroma_mc8_num
 #undef PREFIX_h264_qpel16_h_lowpass_altivec
 #undef PREFIX_h264_qpel16_h_lowpass_num
@@ -54,7 +52,6 @@
 
 #define OP_U8_ALTIVEC                          AVG_OP_U8_ALTIVEC
 #define PREFIX_h264_chroma_mc8_altivec         avg_h264_chroma_mc8_altivec
-#define PREFIX_no_rnd_vc1_chroma_mc8_altivec   avg_no_rnd_vc1_chroma_mc8_altivec
 #define PREFIX_h264_chroma_mc8_num             altivec_avg_h264_chroma_mc8_num
 #define PREFIX_h264_qpel16_h_lowpass_altivec   avg_h264_qpel16_h_lowpass_altivec
 #define PREFIX_h264_qpel16_h_lowpass_num       altivec_avg_h264_qpel16_h_lowpass_num
@@ -65,7 +62,6 @@
 #include "h264_template_altivec.c"
 #undef OP_U8_ALTIVEC
 #undef PREFIX_h264_chroma_mc8_altivec
-#undef PREFIX_no_rnd_vc1_chroma_mc8_altivec
 #undef PREFIX_h264_chroma_mc8_num
 #undef PREFIX_h264_qpel16_h_lowpass_altivec
 #undef PREFIX_h264_qpel16_h_lowpass_num
@@ -970,11 +966,9 @@ H264_WEIGHT( 8, 4)
 
 void dsputil_h264_init_ppc(DSPContext* c, AVCodecContext *avctx) {
 
-    if (has_altivec()) {
+    if (av_get_cpu_flags() & AV_CPU_FLAG_ALTIVEC) {
         c->put_h264_chroma_pixels_tab[0] = put_h264_chroma_mc8_altivec;
         c->avg_h264_chroma_pixels_tab[0] = avg_h264_chroma_mc8_altivec;
-        c->put_no_rnd_vc1_chroma_pixels_tab[0] = put_no_rnd_vc1_chroma_mc8_altivec;
-        c->avg_no_rnd_vc1_chroma_pixels_tab[0] = avg_no_rnd_vc1_chroma_mc8_altivec;
 
 #define dspfunc(PFX, IDX, NUM) \
         c->PFX ## _pixels_tab[IDX][ 0] = PFX ## NUM ## _mc00_altivec; \
@@ -1002,7 +996,7 @@ void dsputil_h264_init_ppc(DSPContext* c, AVCodecContext *avctx) {
 
 void ff_h264dsp_init_ppc(H264DSPContext *c)
 {
-    if (has_altivec()) {
+    if (av_get_cpu_flags() & AV_CPU_FLAG_ALTIVEC) {
         c->h264_idct_add = ff_h264_idct_add_altivec;
         c->h264_idct_add8 = ff_h264_idct_add8_altivec;
         c->h264_idct_add16 = ff_h264_idct_add16_altivec;

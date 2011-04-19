@@ -2,20 +2,20 @@
  * RTP muxer definitions
  * Copyright (c) 2002 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #ifndef AVFORMAT_RTPENC_H
@@ -50,6 +50,12 @@ struct RTPMuxContext {
     uint8_t *buf_ptr;
 
     int max_frames_per_packet;
+
+    /**
+     * Number of bytes used for H.264 NAL length, if the MP4 syntax is used
+     * (1, 2 or 4)
+     */
+    int nal_length_size;
 };
 
 typedef struct RTPMuxContext RTPMuxContext;
@@ -61,5 +67,7 @@ void ff_rtp_send_h263(AVFormatContext *s1, const uint8_t *buf1, int size);
 void ff_rtp_send_aac(AVFormatContext *s1, const uint8_t *buff, int size);
 void ff_rtp_send_amr(AVFormatContext *s1, const uint8_t *buff, int size);
 void ff_rtp_send_mpegvideo(AVFormatContext *s1, const uint8_t *buf1, int size);
+void ff_rtp_send_xiph(AVFormatContext *s1, const uint8_t *buff, int size);
+void ff_rtp_send_vp8(AVFormatContext *s1, const uint8_t *buff, int size);
 
 #endif /* AVFORMAT_RTPENC_H */

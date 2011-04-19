@@ -4,20 +4,20 @@
  * Copyright (c) 2005 Eric Lasota
  *    Based on RoQ specs (c)2001 Tim Ferguson
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -49,7 +49,7 @@ static av_cold int roq_dpcm_encode_init(AVCodecContext *avctx)
         av_log(avctx, AV_LOG_ERROR, "Audio must be 22050 Hz\n");
         return -1;
     }
-    if (avctx->sample_fmt != SAMPLE_FMT_S16) {
+    if (avctx->sample_fmt != AV_SAMPLE_FMT_S16) {
         av_log(avctx, AV_LOG_ERROR, "Audio must be signed 16-bit\n");
         return -1;
     }
@@ -108,7 +108,7 @@ static int roq_dpcm_encode_frame(AVCodecContext *avctx,
                 unsigned char *frame, int buf_size, void *data)
 {
     int i, samples, stereo, ch;
-    short *in;
+    const short *in;
     unsigned char *out;
 
     ROQDPCMContext *context = avctx->priv_data;
@@ -153,7 +153,7 @@ static av_cold int roq_dpcm_encode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec roq_dpcm_encoder = {
+AVCodec ff_roq_dpcm_encoder = {
     "roq_dpcm",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_ROQ_DPCM,
@@ -162,6 +162,6 @@ AVCodec roq_dpcm_encoder = {
     roq_dpcm_encode_frame,
     roq_dpcm_encode_close,
     NULL,
-    .sample_fmts = (const enum SampleFormat[]){SAMPLE_FMT_S16,SAMPLE_FMT_NONE},
+    .sample_fmts = (const enum AVSampleFormat[]){AV_SAMPLE_FMT_S16,AV_SAMPLE_FMT_NONE},
     .long_name = NULL_IF_CONFIG_SMALL("id RoQ DPCM"),
 };

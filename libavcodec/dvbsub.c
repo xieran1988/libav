@@ -2,25 +2,25 @@
  * DVB subtitle encoding for ffmpeg
  * Copyright (c) 2005 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include "avcodec.h"
 #include "bytestream.h"
-#include "colorspace.h"
+#include "libavutil/colorspace.h"
 
 typedef struct DVBSubtitleContext {
     int hide_state;
@@ -223,7 +223,7 @@ static int encode_dvb_subtitles(DVBSubtitleContext *s,
     else
         page_state = 2; /* mode change */
     /* page_version = 0 + page_state */
-    *q++ = s->object_version | (page_state << 2) | 3;
+    *q++ = (s->object_version << 4) | (page_state << 2) | 3;
 
     for (region_id = 0; region_id < h->num_rects; region_id++) {
         *q++ = region_id;
@@ -402,7 +402,7 @@ static int dvbsub_encode(AVCodecContext *avctx,
     return ret;
 }
 
-AVCodec dvbsub_encoder = {
+AVCodec ff_dvbsub_encoder = {
     "dvbsub",
     AVMEDIA_TYPE_SUBTITLE,
     CODEC_ID_DVB_SUBTITLE,

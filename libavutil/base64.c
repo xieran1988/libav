@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2006 Ryan Martell. (rdm4@martellventures.com)
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -79,7 +79,7 @@ char *av_base64_encode(char *out, int out_size, const uint8_t *in, int in_size)
     int bytes_remaining = in_size;
 
     if (in_size >= UINT_MAX / 4 ||
-        out_size < (in_size+2) / 3 * 4 + 1)
+        out_size < AV_BASE64_SIZE(in_size))
         return NULL;
     ret = dst = out;
     while (bytes_remaining) {

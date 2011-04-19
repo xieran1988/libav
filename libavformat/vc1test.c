@@ -2,20 +2,20 @@
  * VC1 Test Bitstreams Format Demuxer
  * Copyright (c) 2006, 2008 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -44,13 +44,13 @@ static int vc1t_probe(AVProbeData *p)
 static int vc1t_read_header(AVFormatContext *s,
                            AVFormatParameters *ap)
 {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AVStream *st;
     int frames;
     uint32_t fps;
 
-    frames = get_le24(pb);
-    if(get_byte(pb) != 0xC5 || get_le32(pb) != 4)
+    frames = avio_rl24(pb);
+    if(avio_r8(pb) != 0xC5 || avio_rl32(pb) != 4)
         return -1;
 
     /* init video codec */
@@ -63,13 +63,13 @@ static int vc1t_read_header(AVFormatContext *s,
 
     st->codec->extradata = av_malloc(VC1_EXTRADATA_SIZE);
     st->codec->extradata_size = VC1_EXTRADATA_SIZE;
-    get_buffer(pb, st->codec->extradata, VC1_EXTRADATA_SIZE);
-    st->codec->height = get_le32(pb);
-    st->codec->width = get_le32(pb);
-    if(get_le32(pb) != 0xC)
+    avio_read(pb, st->codec->extradata, VC1_EXTRADATA_SIZE);
+    st->codec->height = avio_rl32(pb);
+    st->codec->width = avio_rl32(pb);
+    if(avio_rl32(pb) != 0xC)
         return -1;
-    url_fskip(pb, 8);
-    fps = get_le32(pb);
+    avio_skip(pb, 8);
+    fps = avio_rl32(pb);
     if(fps == 0xFFFFFFFF)
         av_set_pts_info(st, 32, 1, 1000);
     else{
@@ -87,18 +87,18 @@ static int vc1t_read_header(AVFormatContext *s,
 static int vc1t_read_packet(AVFormatContext *s,
                            AVPacket *pkt)
 {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     int frame_size;
     int keyframe = 0;
     uint32_t pts;
 
-    if(url_feof(pb))
+    if(pb->eof_reached)
         return AVERROR(EIO);
 
-    frame_size = get_le24(pb);
-    if(get_byte(pb) & 0x80)
+    frame_size = avio_rl24(pb);
+    if(avio_r8(pb) & 0x80)
         keyframe = 1;
-    pts = get_le32(pb);
+    pts = avio_rl32(pb);
     if(av_get_packet(pb, pkt, frame_size) < 0)
         return AVERROR(EIO);
     if(s->streams[0]->time_base.den == 1000)
@@ -109,7 +109,7 @@ static int vc1t_read_packet(AVFormatContext *s,
     return pkt->size;
 }
 
-AVInputFormat vc1t_demuxer = {
+AVInputFormat ff_vc1t_demuxer = {
     "vc1test",
     NULL_IF_CONFIG_SMALL("VC-1 test bitstream format"),
     0,

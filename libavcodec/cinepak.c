@@ -2,20 +2,20 @@
  * Cinepak Video Decoder
  * Copyright (C) 2003 the ffmpeg project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -67,6 +67,7 @@ typedef struct CinepakContext {
 
     int sega_film_skip_bytes;
 
+    uint32_t pal[256];
 } CinepakContext;
 
 static void cinepak_decode_codebook (cvid_codebook *codebook,
@@ -395,7 +396,7 @@ static av_cold int cinepak_decode_init(AVCodecContext *avctx)
     s->sega_film_skip_bytes = -1;  /* uninitialized state */
 
     // check for paletted data
-    if ((avctx->palctrl == NULL) || (avctx->bits_per_coded_sample == 40)) {
+    if (avctx->bits_per_coded_sample != 8) {
         s->palette_video = 0;
         avctx->pix_fmt = PIX_FMT_YUV420P;
     } else {
@@ -427,16 +428,18 @@ static int cinepak_decode_frame(AVCodecContext *avctx,
         return -1;
     }
 
+    if (s->palette_video) {
+        const uint8_t *pal = av_packet_get_side_data(avpkt, AV_PKT_DATA_PALETTE, NULL);
+        if (pal) {
+            s->frame.palette_has_changed = 1;
+            memcpy(s->pal, pal, AVPALETTE_SIZE);
+        }
+    }
+
     cinepak_decode(s);
 
-    if (s->palette_video) {
-        memcpy (s->frame.data[1], avctx->palctrl->palette, AVPALETTE_SIZE);
-        if (avctx->palctrl->palette_changed) {
-            s->frame.palette_has_changed = 1;
-            avctx->palctrl->palette_changed = 0;
-        } else
-            s->frame.palette_has_changed = 0;
-    }
+    if (s->palette_video)
+        memcpy (s->frame.data[1], s->pal, AVPALETTE_SIZE);
 
     *data_size = sizeof(AVFrame);
     *(AVFrame*)data = s->frame;
@@ -455,7 +458,7 @@ static av_cold int cinepak_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec cinepak_decoder = {
+AVCodec ff_cinepak_decoder = {
     "cinepak",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_CINEPAK,

@@ -2,20 +2,20 @@
  * RealAudio 2.0 (28.8K)
  * Copyright (c) 2003 the ffmpeg project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -26,6 +26,10 @@
 #include "lpc.h"
 #include "celp_math.h"
 #include "celp_filters.h"
+
+#define MAX_BACKWARD_FILTER_ORDER  36
+#define MAX_BACKWARD_FILTER_LEN    40
+#define MAX_BACKWARD_FILTER_NONREC 35
 
 typedef struct {
     float sp_lpc[36];      ///< LPC coefficients for speech data (spec: A)
@@ -50,7 +54,7 @@ typedef struct {
 
 static av_cold int ra288_decode_init(AVCodecContext *avctx)
 {
-    avctx->sample_fmt = SAMPLE_FMT_FLT;
+    avctx->sample_fmt = AV_SAMPLE_FMT_FLT;
     return 0;
 }
 
@@ -120,9 +124,9 @@ static void do_hybrid_window(int order, int n, int non_rec, float *out,
                              float *hist, float *out2, const float *window)
 {
     int i;
-    float buffer1[order + 1];
-    float buffer2[order + 1];
-    float work[order + n + non_rec];
+    float buffer1[MAX_BACKWARD_FILTER_ORDER + 1];
+    float buffer2[MAX_BACKWARD_FILTER_ORDER + 1];
+    float work[MAX_BACKWARD_FILTER_ORDER + MAX_BACKWARD_FILTER_LEN + MAX_BACKWARD_FILTER_NONREC];
 
     apply_window(work, window, hist, order + n + non_rec);
 
@@ -145,7 +149,7 @@ static void backward_filter(float *hist, float *rec, const float *window,
                             float *lpc, const float *tab,
                             int order, int n, int non_rec, int move_size)
 {
-    float temp[order+1];
+    float temp[MAX_BACKWARD_FILTER_ORDER+1];
 
     do_hybrid_window(order, n, non_rec, temp, hist, rec, window);
 
@@ -199,7 +203,7 @@ static int ra288_decode_frame(AVCodecContext * avctx, void *data,
     return avctx->block_align;
 }
 
-AVCodec ra_288_decoder =
+AVCodec ff_ra_288_decoder =
 {
     "real_288",
     AVMEDIA_TYPE_AUDIO,

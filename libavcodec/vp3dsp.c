@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2004 the ffmpeg project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -224,20 +224,18 @@ void ff_vp3_idct_add_c(uint8_t *dest/*align 8*/, int line_size, DCTELEM *block/*
 }
 
 void ff_vp3_idct_dc_add_c(uint8_t *dest/*align 8*/, int line_size, const DCTELEM *block/*align 16*/){
-    const uint8_t *cm = ff_cropTbl + MAX_NEG_CROP;
-    int i, dc = block[0];
-    dc = (46341*dc)>>16;
-    dc = (46341*dc + (8<<16))>>20;
+    int i, dc = (block[0] + 15) >> 5;
+    const uint8_t *cm = ff_cropTbl + MAX_NEG_CROP + dc;
 
     for(i = 0; i < 8; i++){
-        dest[0] = cm[dest[0]+dc];
-        dest[1] = cm[dest[1]+dc];
-        dest[2] = cm[dest[2]+dc];
-        dest[3] = cm[dest[3]+dc];
-        dest[4] = cm[dest[4]+dc];
-        dest[5] = cm[dest[5]+dc];
-        dest[6] = cm[dest[6]+dc];
-        dest[7] = cm[dest[7]+dc];
+        dest[0] = cm[dest[0]];
+        dest[1] = cm[dest[1]];
+        dest[2] = cm[dest[2]];
+        dest[3] = cm[dest[3]];
+        dest[4] = cm[dest[4]];
+        dest[5] = cm[dest[5]];
+        dest[6] = cm[dest[6]];
+        dest[7] = cm[dest[7]];
         dest += line_size;
     }
 }

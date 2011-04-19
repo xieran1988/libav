@@ -3,20 +3,20 @@
  *
  * Copyright (C) 2008-2009 Splitted-Desktop Systems
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -24,7 +24,7 @@
 #include "vc1.h"
 #include "vc1data.h"
 
-/** Translates FFmpeg MV modes to VA API */
+/** Translate Libav MV modes to VA API */
 static int get_VAMvModeVC1(enum MVModes mv_mode)
 {
     switch (mv_mode) {
@@ -37,7 +37,7 @@ static int get_VAMvModeVC1(enum MVModes mv_mode)
     return 0;
 }
 
-/** Checks whether the MVTYPEMB bitplane is present */
+/** Check whether the MVTYPEMB bitplane is present */
 static inline int vc1_has_MVTYPEMB_bitplane(VC1Context *v)
 {
     if (v->mv_type_is_raw)
@@ -48,7 +48,7 @@ static inline int vc1_has_MVTYPEMB_bitplane(VC1Context *v)
               v->mv_mode2 == MV_PMODE_MIXED_MV)));
 }
 
-/** Checks whether the SKIPMB bitplane is present */
+/** Check whether the SKIPMB bitplane is present */
 static inline int vc1_has_SKIPMB_bitplane(VC1Context *v)
 {
     if (v->skip_is_raw)
@@ -57,7 +57,7 @@ static inline int vc1_has_SKIPMB_bitplane(VC1Context *v)
             (v->s.pict_type == FF_B_TYPE && !v->bi_type));
 }
 
-/** Checks whether the DIRECTMB bitplane is present */
+/** Check whether the DIRECTMB bitplane is present */
 static inline int vc1_has_DIRECTMB_bitplane(VC1Context *v)
 {
     if (v->dmb_is_raw)
@@ -65,7 +65,7 @@ static inline int vc1_has_DIRECTMB_bitplane(VC1Context *v)
     return v->s.pict_type == FF_B_TYPE && !v->bi_type;
 }
 
-/** Checks whether the ACPRED bitplane is present */
+/** Check whether the ACPRED bitplane is present */
 static inline int vc1_has_ACPRED_bitplane(VC1Context *v)
 {
     if (v->acpred_is_raw)
@@ -116,7 +116,7 @@ static inline VAMvModeVC1 vc1_get_MVMODE2(VC1Context *v)
     return 0;
 }
 
-/** Pack FFmpeg bitplanes into a VABitPlaneBuffer element */
+/** Pack Libav bitplanes into a VABitPlaneBuffer element */
 static inline void vc1_pack_bitplanes(uint8_t *bitplane, int n, const uint8_t *ff_bp[3], int x, int y, int stride)
 {
     const int bitplane_index = n / 2;
@@ -138,7 +138,7 @@ static int vaapi_vc1_start_frame(AVCodecContext *avctx, av_unused const uint8_t 
     struct vaapi_context * const vactx = avctx->hwaccel_context;
     VAPictureParameterBufferVC1 *pic_param;
 
-    dprintf(avctx, "vaapi_vc1_start_frame()\n");
+    av_dlog(avctx, "vaapi_vc1_start_frame()\n");
 
     vactx->slice_param_size = sizeof(VASliceParameterBufferVC1);
 
@@ -160,6 +160,9 @@ static int vaapi_vc1_start_frame(AVCodecContext *avctx, av_unused const uint8_t 
     pic_param->sequence_fields.bits.syncmarker                      = s->resync_marker;
     pic_param->sequence_fields.bits.rangered                        = v->rangered;
     pic_param->sequence_fields.bits.max_b_frames                    = s->avctx->max_b_frames;
+#if VA_CHECK_VERSION(0,32,0)
+    pic_param->sequence_fields.bits.profile                         = v->profile;
+#endif
     pic_param->coded_width                                          = s->avctx->coded_width;
     pic_param->coded_height                                         = s->avctx->coded_height;
     pic_param->entrypoint_fields.value                              = 0; /* reset all bits */
@@ -308,7 +311,7 @@ static int vaapi_vc1_decode_slice(AVCodecContext *avctx, const uint8_t *buffer, 
     MpegEncContext * const s = &v->s;
     VASliceParameterBufferVC1 *slice_param;
 
-    dprintf(avctx, "vaapi_vc1_decode_slice(): buffer %p, size %d\n", buffer, size);
+    av_dlog(avctx, "vaapi_vc1_decode_slice(): buffer %p, size %d\n", buffer, size);
 
     /* Current bit buffer is beyond any marker for VC-1, so skip it */
     if (avctx->codec_id == CODEC_ID_VC1 && IS_MARKER(AV_RB32(buffer))) {
@@ -326,7 +329,7 @@ static int vaapi_vc1_decode_slice(AVCodecContext *avctx, const uint8_t *buffer, 
 }
 
 #if CONFIG_WMV3_VAAPI_HWACCEL
-AVHWAccel wmv3_vaapi_hwaccel = {
+AVHWAccel ff_wmv3_vaapi_hwaccel = {
     .name           = "wmv3_vaapi",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_WMV3,
@@ -339,7 +342,7 @@ AVHWAccel wmv3_vaapi_hwaccel = {
 };
 #endif
 
-AVHWAccel vc1_vaapi_hwaccel = {
+AVHWAccel ff_vc1_vaapi_hwaccel = {
     .name           = "vc1_vaapi",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_VC1,

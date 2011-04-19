@@ -2,20 +2,20 @@
  * Westwood Studios VQA Video Decoder
  * Copyright (C) 2003 the ffmpeg project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -68,6 +68,7 @@
 #include <string.h>
 
 #include "libavutil/intreadwrite.h"
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 
 #define PALETTE_COUNT 256
@@ -147,7 +148,7 @@ static av_cold int vqa_decode_init(AVCodecContext *avctx)
     s->vqa_version = vqa_header[0];
     s->width = AV_RL16(&vqa_header[6]);
     s->height = AV_RL16(&vqa_header[8]);
-    if(avcodec_check_dimensions(avctx, s->width, s->height)){
+    if(av_image_check_size(s->width, s->height, 0, avctx)){
         s->width= s->height= 0;
         return -1;
     }
@@ -608,7 +609,7 @@ static av_cold int vqa_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec vqa_decoder = {
+AVCodec ff_vqa_decoder = {
     "vqavideo",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_WS_VQA,

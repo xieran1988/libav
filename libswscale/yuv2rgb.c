@@ -6,20 +6,20 @@
  * 1,4,8bpp support and context / deglobalize stuff
  * by Michael Niedermayer (michaelni@gmx.at)
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -595,10 +595,11 @@ SwsFunc ff_yuv2rgb_get_func_ptr(SwsContext *c)
     return NULL;
 }
 
-static void fill_table(uint8_t* table[256], const int elemsize, const int inc, uint8_t *y_table)
+static void fill_table(uint8_t* table[256], const int elemsize, const int inc, void *y_tab)
 {
     int i;
     int64_t cb = 0;
+    uint8_t *y_table = y_tab;
 
     y_table -= elemsize * (inc >> 9);
 
@@ -618,6 +619,14 @@ static void fill_gv_table(int table[256], const int elemsize, const int inc)
         table[i] = elemsize * (off + (cb >> 16));
         cb += inc;
     }
+}
+
+static uint16_t roundToInt16(int64_t f)
+{
+    int r= (f + (1<<15))>>16;
+         if (r<-0x7FFF) return 0x8000;
+    else if (r> 0x7FFF) return 0x7FFF;
+    else                return r;
 }
 
 av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4], int fullRange,
@@ -674,6 +683,22 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4], int 
     cgu = (cgu*contrast * saturation) >> 32;
     cgv = (cgv*contrast * saturation) >> 32;
     oy -= 256*brightness;
+
+    c->uOffset=   0x0400040004000400LL;
+    c->vOffset=   0x0400040004000400LL;
+    c->yCoeff=    roundToInt16(cy *8192) * 0x0001000100010001ULL;
+    c->vrCoeff=   roundToInt16(crv*8192) * 0x0001000100010001ULL;
+    c->ubCoeff=   roundToInt16(cbu*8192) * 0x0001000100010001ULL;
+    c->vgCoeff=   roundToInt16(cgv*8192) * 0x0001000100010001ULL;
+    c->ugCoeff=   roundToInt16(cgu*8192) * 0x0001000100010001ULL;
+    c->yOffset=   roundToInt16(oy *   8) * 0x0001000100010001ULL;
+
+    c->yuv2rgb_y_coeff  = (int16_t)roundToInt16(cy <<13);
+    c->yuv2rgb_y_offset = (int16_t)roundToInt16(oy << 9);
+    c->yuv2rgb_v2r_coeff= (int16_t)roundToInt16(crv<<13);
+    c->yuv2rgb_v2g_coeff= (int16_t)roundToInt16(cgv<<13);
+    c->yuv2rgb_u2g_coeff= (int16_t)roundToInt16(cgu<<13);
+    c->yuv2rgb_u2b_coeff= (int16_t)roundToInt16(cbu<<13);
 
     //scale coefficients by cy
     crv = ((crv << 16) + 0x8000) / cy;
@@ -750,7 +775,7 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4], int 
         }
         if (isNotNe)
             for (i = 0; i < 1024*3; i++)
-                y_table16[i] = bswap_16(y_table16[i]);
+                y_table16[i] = av_bswap16(y_table16[i]);
         fill_table(c->table_rV, 2, crv, y_table16 + yoffs);
         fill_table(c->table_gU, 2, cgu, y_table16 + yoffs + 1024);
         fill_table(c->table_bU, 2, cbu, y_table16 + yoffs + 2048);
@@ -773,7 +798,7 @@ av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4], int 
         }
         if(isNotNe)
             for (i = 0; i < 1024*3; i++)
-                y_table16[i] = bswap_16(y_table16[i]);
+                y_table16[i] = av_bswap16(y_table16[i]);
         fill_table(c->table_rV, 2, crv, y_table16 + yoffs);
         fill_table(c->table_gU, 2, cgu, y_table16 + yoffs + 1024);
         fill_table(c->table_bU, 2, cbu, y_table16 + yoffs + 2048);

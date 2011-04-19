@@ -2,20 +2,20 @@
  * Zip Motion Blocks Video (ZMBV) decoder
  * Copyright (c) 2006 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -397,7 +397,6 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
     const uint8_t *buf = avpkt->data;
     int buf_size = avpkt->size;
     ZmbvContext * const c = avctx->priv_data;
-    uint8_t *outptr;
     int zret = Z_OK; // Zlib return code
     int len = buf_size;
     int hi_ver, lo_ver;
@@ -411,8 +410,6 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
         av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
         return -1;
     }
-
-    outptr = c->pic.data[0]; // Output image pointer
 
     /* parse header */
     c->flags = buf[0];
@@ -653,7 +650,7 @@ static av_cold int decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec zmbv_decoder = {
+AVCodec ff_zmbv_decoder = {
     "zmbv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ZMBV,

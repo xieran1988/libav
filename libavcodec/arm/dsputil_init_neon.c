@@ -2,20 +2,20 @@
  * ARM NEON optimised DSP functions
  * Copyright (c) 2008 Mans Rullgard <mans@mansr.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -33,6 +33,9 @@ void ff_vp3_idct_neon(DCTELEM *data);
 void ff_vp3_idct_put_neon(uint8_t *dest, int line_size, DCTELEM *data);
 void ff_vp3_idct_add_neon(uint8_t *dest, int line_size, DCTELEM *data);
 void ff_vp3_idct_dc_add_neon(uint8_t *dest, int line_size, const DCTELEM *data);
+
+void ff_clear_block_neon(DCTELEM *block);
+void ff_clear_blocks_neon(DCTELEM *blocks);
 
 void ff_put_pixels16_neon(uint8_t *, const uint8_t *, int, int);
 void ff_put_pixels16_x2_neon(uint8_t *, const uint8_t *, int, int);
@@ -135,10 +138,9 @@ void ff_avg_h264_chroma_mc2_neon(uint8_t *, uint8_t *, int, int, int, int);
 void ff_vp3_v_loop_filter_neon(uint8_t *, int, int *);
 void ff_vp3_h_loop_filter_neon(uint8_t *, int, int *);
 
-void ff_vector_fmul_neon(float *dst, const float *src, int len);
+void ff_vector_fmul_neon(float *dst, const float *src0, const float *src1, int len);
 void ff_vector_fmul_window_neon(float *dst, const float *src0,
-                                const float *src1, const float *win,
-                                float add_bias, int len);
+                                const float *src1, const float *win, int len);
 void ff_vector_fmul_scalar_neon(float *dst, const float *src, float mul,
                                 int len);
 void ff_vector_fmul_sv_scalar_2_neon(float *dst, const float *src,
@@ -151,8 +153,6 @@ void ff_sv_fmul_scalar_4_neon(float *dst, const float **vp, float mul,
                               int len);
 void ff_butterflies_float_neon(float *v1, float *v2, int len);
 float ff_scalarproduct_float_neon(const float *v1, const float *v2, int len);
-void ff_int32_to_float_fmul_scalar_neon(float *dst, const int *src,
-                                        float mul, int len);
 void ff_vector_fmul_reverse_neon(float *dst, const float *src0,
                                  const float *src1, int len);
 void ff_vector_fmul_add_neon(float *dst, const float *src0, const float *src1,
@@ -160,15 +160,16 @@ void ff_vector_fmul_add_neon(float *dst, const float *src0, const float *src1,
 
 void ff_vector_clipf_neon(float *dst, const float *src, float min, float max,
                           int len);
-void ff_float_to_int16_neon(int16_t *, const float *, long);
-void ff_float_to_int16_interleave_neon(int16_t *, const float **, long, int);
 
 void ff_vorbis_inverse_coupling_neon(float *mag, float *ang, int blocksize);
 
-int32_t ff_scalarproduct_int16_neon(int16_t *v1, int16_t *v2, int len,
+int32_t ff_scalarproduct_int16_neon(const int16_t *v1, const int16_t *v2, int len,
                                     int shift);
-int32_t ff_scalarproduct_and_madd_int16_neon(int16_t *v1, int16_t *v2,
-                                             int16_t *v3, int len, int mul);
+int32_t ff_scalarproduct_and_madd_int16_neon(int16_t *v1, const int16_t *v2,
+                                             const int16_t *v3, int len, int mul);
+
+void ff_apply_window_int16_neon(int16_t *dst, const int16_t *src,
+                                const int16_t *window, unsigned n);
 
 void ff_dsputil_init_neon(DSPContext *c, AVCodecContext *avctx)
 {
@@ -188,6 +189,9 @@ void ff_dsputil_init_neon(DSPContext *c, AVCodecContext *avctx)
             c->idct_permutation_type = FF_TRANSPOSE_IDCT_PERM;
         }
     }
+
+    c->clear_block  = ff_clear_block_neon;
+    c->clear_blocks = ff_clear_blocks_neon;
 
     c->put_pixels_tab[0][0] = ff_put_pixels16_neon;
     c->put_pixels_tab[0][1] = ff_put_pixels16_x2_neon;
@@ -303,7 +307,6 @@ void ff_dsputil_init_neon(DSPContext *c, AVCodecContext *avctx)
     c->vector_fmul_scalar         = ff_vector_fmul_scalar_neon;
     c->butterflies_float          = ff_butterflies_float_neon;
     c->scalarproduct_float        = ff_scalarproduct_float_neon;
-    c->int32_to_float_fmul_scalar = ff_int32_to_float_fmul_scalar_neon;
     c->vector_fmul_reverse        = ff_vector_fmul_reverse_neon;
     c->vector_fmul_add            = ff_vector_fmul_add_neon;
     c->vector_clipf               = ff_vector_clipf_neon;
@@ -314,14 +317,11 @@ void ff_dsputil_init_neon(DSPContext *c, AVCodecContext *avctx)
     c->sv_fmul_scalar[0] = ff_sv_fmul_scalar_2_neon;
     c->sv_fmul_scalar[1] = ff_sv_fmul_scalar_4_neon;
 
-    if (!(avctx->flags & CODEC_FLAG_BITEXACT)) {
-        c->float_to_int16            = ff_float_to_int16_neon;
-        c->float_to_int16_interleave = ff_float_to_int16_interleave_neon;
-    }
-
     if (CONFIG_VORBIS_DECODER)
         c->vorbis_inverse_coupling = ff_vorbis_inverse_coupling_neon;
 
     c->scalarproduct_int16 = ff_scalarproduct_int16_neon;
     c->scalarproduct_and_madd_int16 = ff_scalarproduct_and_madd_int16_neon;
+
+    c->apply_window_int16 = ff_apply_window_int16_neon;
 }

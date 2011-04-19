@@ -4,20 +4,20 @@
  * Copyright (c) 2008 Vladimir Voroshilov
  * Copyright (c) 2009 Vitor Sessak
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -184,7 +184,7 @@ static void pitch_sharpening(int pitch_lag_int, float beta,
 }
 
 /**
- * Extracts decoding parameters from the input bitstream.
+ * Extract decoding parameters from the input bitstream.
  * @param parms          parameters structure
  * @param pgb            pointer to initialized GetBitContext structure
  */
@@ -209,32 +209,6 @@ static void decode_parameters(SiprParameters* parms, GetBitContext *pgb,
     }
 }
 
-static void lsp2lpc_sipr(const double *lsp, float *Az)
-{
-    int lp_half_order = LP_FILTER_ORDER >> 1;
-    double buf[(LP_FILTER_ORDER >> 1) + 1];
-    double pa[(LP_FILTER_ORDER >> 1) + 1];
-    double *qa = buf + 1;
-    int i,j;
-
-    qa[-1] = 0.0;
-
-    ff_lsp2polyf(lsp    , pa, lp_half_order    );
-    ff_lsp2polyf(lsp + 1, qa, lp_half_order - 1);
-
-    for (i = 1, j = LP_FILTER_ORDER - 1; i < lp_half_order; i++, j--) {
-        double paf =  pa[i]            * (1 + lsp[LP_FILTER_ORDER - 1]);
-        double qaf = (qa[i] - qa[i-2]) * (1 - lsp[LP_FILTER_ORDER - 1]);
-        Az[i-1]  = (paf + qaf) * 0.5;
-        Az[j-1]  = (paf - qaf) * 0.5;
-    }
-
-    Az[lp_half_order - 1] = (1.0 + lsp[LP_FILTER_ORDER - 1]) *
-        pa[lp_half_order] * 0.5;
-
-    Az[LP_FILTER_ORDER - 1] = lsp[LP_FILTER_ORDER - 1];
-}
-
 static void sipr_decode_lp(float *lsfnew, const float *lsfold, float *Az,
                            int num_subfr)
 {
@@ -247,14 +221,14 @@ static void sipr_decode_lp(float *lsfnew, const float *lsfold, float *Az,
         for (j = 0; j < LP_FILTER_ORDER; j++)
             lsfint[j] = lsfold[j] * (1 - t) + t * lsfnew[j];
 
-        lsp2lpc_sipr(lsfint, Az);
+        ff_amrwb_lsp2lpc(lsfint, Az, LP_FILTER_ORDER);
         Az += LP_FILTER_ORDER;
         t += t0;
     }
 }
 
 /**
- * Evaluates the adaptive impulse response.
+ * Evaluate the adaptive impulse response.
  */
 static void eval_ir(const float *Az, int pitch_lag, float *freq,
                     float pitch_sharp_factor)
@@ -276,7 +250,7 @@ static void eval_ir(const float *Az, int pitch_lag, float *freq,
 }
 
 /**
- * Evaluates the convolution of a vector with a sparse vector.
+ * Evaluate the convolution of a vector with a sparse vector.
  */
 static void convolute_with_sparse(float *out, const AMRFixed *pulses,
                                   const float *shape, int length)
@@ -519,7 +493,7 @@ static av_cold int sipr_decoder_init(AVCodecContext * avctx)
     for (i = 0; i < 4; i++)
         ctx->energy_history[i] = -14;
 
-    avctx->sample_fmt = SAMPLE_FMT_FLT;
+    avctx->sample_fmt = AV_SAMPLE_FMT_FLT;
 
     dsputil_init(&ctx->dsp, avctx);
 
@@ -573,9 +547,9 @@ static int sipr_decode_frame(AVCodecContext *avctx, void *datap,
         mode_par->subframe_count * sizeof(float);
 
     return mode_par->bits_per_frame >> 3;
-};
+}
 
-AVCodec sipr_decoder = {
+AVCodec ff_sipr_decoder = {
     "sipr",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_SIPR,

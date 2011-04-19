@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2009 Mans Rullgard <mans@mansr.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -131,8 +131,8 @@ function ff_pred16x16_plane_neon, export=1
         vadd.i16        d5,  d6,  d7
         vpadd.i16       d4,  d4,  d5
         vpadd.i16       d4,  d4,  d4
-        vshl.i16        d5,  d4,  #2
-        vaddl.s16       q2,  d4,  d5
+        vshll.s16       q3,  d4,  #2
+        vaddw.s16       q2,  q3,  d4
         vrshrn.s32      d4,  q2,  #6
         mov             r3,  #0
         vtrn.16         d4,  d5

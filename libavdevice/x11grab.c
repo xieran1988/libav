@@ -1,9 +1,9 @@
 /*
  * X11 video grab interface
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg integration:
+ * Libav integration:
  * Copyright (C) 2006 Clemens Fruhwirth <clemens@endorphin.org>
  *                    Edouard Gomez <ed.gomez@free.fr>
  *
@@ -14,18 +14,18 @@
  * Copyright (C) 1997-1998 Rasca, Berlin
  *               2003-2004 Karl H. Beckers, Frankfurt
  *
- * FFmpeg is free software; you can redistribute it and/or modify
+ * Libav is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with FFmpeg; if not, write to the Free Software
+ * along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -71,7 +71,7 @@ struct x11_grab
 };
 
 /**
- * Initializes the x11 grab device demuxer (public device demuxer API).
+ * Initialize the x11 grab device demuxer (public device demuxer API).
  *
  * @param s1 Context from avformat core
  * @param ap Parameters from avformat core
@@ -238,13 +238,11 @@ x11grab_read_header(AVFormatContext *s1, AVFormatParameters *ap)
 }
 
 /**
- * Paints a mouse pointer in an X11 image.
+ * Paint a mouse pointer in an X11 image.
  *
  * @param image image to paint the mouse pointer to
  * @param s context used to retrieve original grabbing rectangle
  *          coordinates
- * @param x Mouse pointer coordinate
- * @param y Mouse pointer coordinate
  */
 static void
 paint_mouse_pointer(XImage *image, struct x11_grab *s)
@@ -258,9 +256,18 @@ paint_mouse_pointer(XImage *image, struct x11_grab *s)
     int x, y;
     int line, column;
     int to_line, to_column;
-    int image_addr, xcim_addr;
+    int pixstride = image->bits_per_pixel >> 3;
+    /* Warning: in its insanity, xlib provides unsigned image data through a
+     * char* pointer, so we have to make it uint8_t to make things not break.
+     * Anyone who performs further investigation of the xlib API likely risks
+     * permanent brain damage. */
+    uint8_t *pix = image->data;
 
-    xcim = XFixesGetCursorImage(dpy);;
+    /* Code doesn't currently support 16-bit or PAL8 */
+    if (image->bits_per_pixel != 24 && image->bits_per_pixel != 32)
+        return;
+
+    xcim = XFixesGetCursorImage(dpy);
 
     x = xcim->x - xcim->xhot;
     y = xcim->y - xcim->yhot;
@@ -270,14 +277,22 @@ paint_mouse_pointer(XImage *image, struct x11_grab *s)
 
     for (line = FFMAX(y, y_off); line < to_line; line++) {
         for (column = FFMAX(x, x_off); column < to_column; column++) {
-            xcim_addr = (line - y) * xcim->width + column - x;
+            int  xcim_addr = (line - y) * xcim->width + column - x;
+            int image_addr = ((line - y_off) * width + column - x_off) * pixstride;
+            int r = (uint8_t)(xcim->pixels[xcim_addr] >>  0);
+            int g = (uint8_t)(xcim->pixels[xcim_addr] >>  8);
+            int b = (uint8_t)(xcim->pixels[xcim_addr] >> 16);
+            int a = (uint8_t)(xcim->pixels[xcim_addr] >> 24);
 
-            if ((unsigned char)(xcim->pixels[xcim_addr] >> 24) != 0) { // skip fully transparent pixel
-                image_addr = ((line - y_off) * width + column - x_off) * 4;
-
-                image->data[image_addr] = (unsigned char)(xcim->pixels[xcim_addr] >> 0);
-                image->data[image_addr+1] = (unsigned char)(xcim->pixels[xcim_addr] >> 8);
-                image->data[image_addr+2] = (unsigned char)(xcim->pixels[xcim_addr] >> 16);
+            if (a == 255) {
+                pix[image_addr+0] = r;
+                pix[image_addr+1] = g;
+                pix[image_addr+2] = b;
+            } else if (a) {
+                /* pixel values from XFixesGetCursorImage come premultiplied by alpha */
+                pix[image_addr+0] = r + (pix[image_addr+0]*(255-a) + 255/2) / 255;
+                pix[image_addr+1] = g + (pix[image_addr+1]*(255-a) + 255/2) / 255;
+                pix[image_addr+2] = b + (pix[image_addr+2]*(255-a) + 255/2) / 255;
             }
         }
     }
@@ -288,7 +303,7 @@ paint_mouse_pointer(XImage *image, struct x11_grab *s)
 
 
 /**
- * Reads new data in the image structure.
+ * Read new data in the image structure.
  *
  * @param dpy X11 display to grab from
  * @param d
@@ -335,7 +350,7 @@ xget_zpixmap(Display *dpy, Drawable d, XImage *image, int x, int y)
 }
 
 /**
- * Grabs a frame from x11 (public device demuxer API).
+ * Grab a frame from x11 (public device demuxer API).
  *
  * @param s1 Context from avformat core
  * @param pkt Packet holding the brabbed frame
@@ -398,7 +413,7 @@ x11grab_read_packet(AVFormatContext *s1, AVPacket *pkt)
 }
 
 /**
- * Closes x11 frame grabber (public device demuxer API).
+ * Close x11 frame grabber (public device demuxer API).
  *
  * @param s1 Context from avformat core
  * @return 0 success, !0 failure
@@ -427,7 +442,7 @@ x11grab_read_close(AVFormatContext *s1)
 }
 
 /** x11 grabber device demuxer declaration */
-AVInputFormat x11_grab_device_demuxer =
+AVInputFormat ff_x11_grab_device_demuxer =
 {
     "x11grab",
     NULL_IF_CONFIG_SMALL("X11grab"),

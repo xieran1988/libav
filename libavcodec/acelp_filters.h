@@ -3,20 +3,20 @@
  *
  * Copyright (c) 2008 Vladimir Voroshilov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -38,7 +38,7 @@ extern const int16_t ff_acelp_interp_filter[61];
 
 /**
  * Generic FIR interpolation routine.
- * @param out [out] buffer for interpolated data
+ * @param[out] out buffer for interpolated data
  * @param in input data
  * @param filter_coeffs interpolation filter coefficients (0.15)
  * @param precision sub sample factor, that is the precision of the position
@@ -65,8 +65,8 @@ void ff_acelp_interpolatef(float *out, const float *in,
 
 /**
  * high-pass filtering and upscaling (4.2.5 of G.729).
- * @param out [out] output buffer for filtered speech data
- * @param hpf_f [in/out] past filtered data from previous (2 items long)
+ * @param[out]     out   output buffer for filtered speech data
+ * @param[in,out]  hpf_f past filtered data from previous (2 items long)
  *                       frames (-0x20000000 <= (14.13) < 0x20000000)
  * @param in speech data to process
  * @param length input data size

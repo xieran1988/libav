@@ -2,20 +2,20 @@
  * VFW capture interface
  * Copyright (c) 2006-2008 Ramiro Polla
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -248,6 +248,22 @@ static int vfw_read_header(AVFormatContext *s, AVFormatParameters *ap)
     int height;
     int ret;
 
+    if (!strcmp(s->filename, "list")) {
+        for (devnum = 0; devnum <= 9; devnum++) {
+            char driver_name[256];
+            char driver_ver[256];
+            ret = capGetDriverDescription(devnum,
+                                          driver_name, sizeof(driver_name),
+                                          driver_ver, sizeof(driver_ver));
+            if (ret) {
+                av_log(s, AV_LOG_INFO, "Driver %d\n", devnum);
+                av_log(s, AV_LOG_INFO, " %s\n", driver_name);
+                av_log(s, AV_LOG_INFO, " %s\n", driver_ver);
+            }
+        }
+        return AVERROR(EIO);
+    }
+
     if(!ap->time_base.den) {
         av_log(s, AV_LOG_ERROR, "A time base must be specified.\n");
         return AVERROR(EIO);
@@ -436,7 +452,7 @@ static int vfw_read_packet(AVFormatContext *s, AVPacket *pkt)
     return pkt->size;
 }
 
-AVInputFormat vfwcap_demuxer = {
+AVInputFormat ff_vfwcap_demuxer = {
     "vfwcap",
     NULL_IF_CONFIG_SMALL("VFW video capture"),
     sizeof(struct vfw_ctx),

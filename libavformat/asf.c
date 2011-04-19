@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2000, 2001 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -53,6 +53,10 @@ const ff_asf_guid ff_asf_audio_conceal_spread = {
 
 const ff_asf_guid ff_asf_video_stream = {
     0xC0, 0xEF, 0x19, 0xBC, 0x4D, 0x5B, 0xCF, 0x11, 0xA8, 0xFD, 0x00, 0x80, 0x5F, 0x5C, 0x44, 0x2B
+};
+
+const ff_asf_guid ff_asf_jfif_media = {
+    0x00, 0xE1, 0x1B, 0xB6, 0x4E, 0x5B, 0xCF, 0x11, 0xA8, 0xFD, 0x00, 0x80, 0x5F, 0x5C, 0x44, 0x2B
 };
 
 const ff_asf_guid ff_asf_video_conceal_none = {
@@ -149,23 +153,8 @@ const AVMetadataConv ff_asf_metadata_conv[] = {
     { "WM/Tool"            , "encoder"     },
     { "WM/TrackNumber"     , "track"       },
     { "WM/Track"           , "track"       },
+    { "WM/MediaStationCallSign", "service_provider" },
+    { "WM/MediaStationName", "service_name" },
 //  { "Year"               , "date"        }, TODO: conversion year<->date
     { 0 }
 };
-
-int ff_put_str16_nolen(ByteIOContext *s, const char *tag)
-{
-    const uint8_t *q = tag;
-    int ret = 0;
-
-    while (*q) {
-        uint32_t ch;
-        uint16_t tmp;
-
-        GET_UTF8(ch, *q++, break;)
-        PUT_UTF16(ch, tmp, put_le16(s, tmp);ret += 2;)
-    }
-    put_le16(s, 0);
-    ret += 2;
-    return ret;
-}

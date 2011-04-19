@@ -2,20 +2,20 @@
  * Bink IDCT algorithm
  * Copyright (c) 2009 Kostya Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -62,7 +62,7 @@
 #define MUNGE_ROW(x) (((x) + 0x7F)>>8)
 #define IDCT_ROW(dest,src) IDCT_TRANSFORM(dest,0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7,MUNGE_ROW,src)
 
-static inline void bink_idct_col(DCTELEM *dest, const DCTELEM *src)
+static inline void bink_idct_col(int *dest, const DCTELEM *src)
 {
     if ((src[8]|src[16]|src[24]|src[32]|src[40]|src[48]|src[56])==0) {
         dest[0]  =
@@ -81,7 +81,7 @@ static inline void bink_idct_col(DCTELEM *dest, const DCTELEM *src)
 void ff_bink_idct_c(DCTELEM *block)
 {
     int i;
-    DCTELEM temp[64];
+    int temp[64];
 
     for (i = 0; i < 8; i++)
         bink_idct_col(&temp[i], &block[i]);
@@ -103,7 +103,7 @@ void ff_bink_idct_add_c(uint8_t *dest, int linesize, DCTELEM *block)
 void ff_bink_idct_put_c(uint8_t *dest, int linesize, DCTELEM *block)
 {
     int i;
-    DCTELEM temp[64];
+    int temp[64];
     for (i = 0; i < 8; i++)
         bink_idct_col(&temp[i], &block[i]);
     for (i = 0; i < 8; i++) {

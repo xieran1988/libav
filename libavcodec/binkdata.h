@@ -2,20 +2,20 @@
  * Bink video decoder
  * Copyright (C) 2009 Kostya Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -609,6 +609,47 @@ static const uint32_t bink_inter_quant[16][64] = {
  0x420000, 0x33DB1A, 0x382D5C, 0x2C235D, 0x23B80D, 0x12F7D4, 0x1E6723, 0x0F7FCF,
  0x282F0E, 0x1F927D, 0x16C2FF, 0x127AD9, 0x168D83, 0x0B7F50, 0x0CBAAA, 0x06E86E,
 },
+};
+
+static const uint8_t binkb_runbits[64] = {
+    6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6,
+    5, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5,
+    4, 4, 4, 4, 4, 4, 4, 4,
+    3, 3, 3, 3, 2, 2, 1, 0,
+};
+
+static const uint8_t binkb_intra_seed[64] = {
+    16, 16, 16, 19, 16, 19, 22, 22,
+    22, 22, 26, 24, 26, 22, 22, 27,
+    27, 27, 26, 26, 26, 29, 29, 29,
+    27, 27, 27, 26, 34, 34, 34, 29,
+    29, 29, 27, 27, 37, 34, 34, 32,
+    32, 29, 29, 38, 37, 35, 35, 34,
+    35, 40, 40, 40, 38, 38, 48, 48,
+    46, 46, 58, 56, 56, 69, 69, 83,
+};
+
+static const uint8_t binkb_inter_seed[64] = {
+    16, 17, 17, 18, 18, 18, 19, 19,
+    19, 19, 20, 20, 20, 20, 20, 21,
+    21, 21, 21, 21, 21, 22, 22, 22,
+    22, 22, 22, 22, 23, 23, 23, 23,
+    23, 23, 23, 23, 24, 24, 24, 25,
+    24, 24, 24, 25, 26, 26, 26, 26,
+    25, 27, 27, 27, 27, 27, 28, 28,
+    28, 28, 30, 30, 30, 31, 31, 33,
+};
+
+static const uint8_t binkb_num[16] = {
+    1, 4, 5, 2, 7, 8, 3, 7, 4, 9, 5, 6, 7, 8, 9, 10
+};
+
+static const uint8_t binkb_den[16] = {
+    1, 3, 3, 1, 3, 3, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1
 };
 
 #endif /* AVCODEC_BINKDATA_H */

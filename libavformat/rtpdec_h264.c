@@ -2,20 +2,20 @@
  * RTP H264 Protocol (RFC3984)
  * Copyright (c) 2006 Ryan Martell
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -47,7 +47,7 @@
 #include <assert.h>
 
 #include "rtpdec.h"
-#include "rtpdec_h264.h"
+#include "rtpdec_formats.h"
 
 /**
     RTP/H264 specific private data.
@@ -69,9 +69,9 @@ struct PayloadContext {
 #define DEAD_COOKIE (0xdeaddead)        ///< Cookie for the extradata; once it is freed.
 
 /* ---------------- private code */
-static void sdp_parse_fmtp_config_h264(AVStream * stream,
-                                       PayloadContext * h264_data,
-                                       char *attr, char *value)
+static int sdp_parse_fmtp_config_h264(AVStream * stream,
+                                      PayloadContext * h264_data,
+                                      char *attr, char *value)
 {
     AVCodecContext *codec = stream->codec;
     assert(codec->codec_id == CODEC_ID_H264);
@@ -120,7 +120,7 @@ static void sdp_parse_fmtp_config_h264(AVStream * stream,
         while (*value) {
             char base64packet[1024];
             uint8_t decoded_packet[1024];
-            uint32_t packet_size;
+            int packet_size;
             char *dst = base64packet;
 
             while (*value && *value != ','
@@ -133,7 +133,7 @@ static void sdp_parse_fmtp_config_h264(AVStream * stream,
                 value++;
 
             packet_size= av_base64_decode(decoded_packet, base64packet, sizeof(decoded_packet));
-            if (packet_size) {
+            if (packet_size > 0) {
                 uint8_t *dest = av_malloc(packet_size + sizeof(start_sequence) +
                                          codec->extradata_size +
                                          FF_INPUT_BUFFER_PADDING_SIZE);
@@ -155,11 +155,13 @@ static void sdp_parse_fmtp_config_h264(AVStream * stream,
                     codec->extradata_size+= sizeof(start_sequence)+packet_size;
                 } else {
                     av_log(codec, AV_LOG_ERROR, "Unable to allocate memory for extradata!");
+                    return AVERROR(ENOMEM);
                 }
             }
         }
         av_log(codec, AV_LOG_DEBUG, "Extradata set to %p (size: %d)!", codec->extradata, codec->extradata_size);
     }
+    return 0;
 }
 
 // return 0 on packet, no more left, 1 on packet, 1 on partial packet...
@@ -185,10 +187,7 @@ static int h264_handle_packet(AVFormatContext *ctx,
     if (type >= 1 && type <= 23)
         type = 1;              // simplify the case. (these are all the nal types used internally by the h264 codec)
     switch (type) {
-    case 0:                    // undefined;
-        result= -1;
-        break;
-
+    case 0:                    // undefined, but pass them through
     case 1:
         av_new_packet(pkt, len+sizeof(start_sequence));
         memcpy(pkt->data, start_sequence, sizeof(start_sequence));
@@ -383,25 +382,10 @@ static int parse_h264_sdp_line(AVFormatContext *s, int st_index,
         codec->height = atoi(p + 1); // skip the -
         codec->pix_fmt = PIX_FMT_YUV420P;
     } else if (av_strstart(p, "fmtp:", &p)) {
-        char attr[256];
-        char value[4096];
-
-        // remove the protocol identifier..
-        while (*p && *p == ' ') p++; // strip spaces.
-        while (*p && *p != ' ') p++; // eat protocol identifier
-        while (*p && *p == ' ') p++; // strip trailing spaces.
-
-        /* loop on each attribute */
-        while (ff_rtsp_next_attr_and_value
-               (&p, attr, sizeof(attr), value, sizeof(value))) {
-            /* grab the codec extra_data from the config parameter of the fmtp line */
-            sdp_parse_fmtp_config_h264(stream, h264_data, attr, value);
-        }
+        return ff_parse_fmtp(stream, h264_data, p, sdp_parse_fmtp_config_h264);
     } else if (av_strstart(p, "cliprect:", &p)) {
         // could use this if we wanted.
     }
-
-    av_set_pts_info(stream, 33, 1, 90000);      // 33 should be right, because the pts is 64 bit? (done elsewhere; this is a one time thing)
 
     return 0;                   // keep processing it the normal way...
 }

@@ -2,20 +2,20 @@
  * RealVideo 3/4 decoder
  * Copyright (c) 2007 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -37,6 +37,7 @@
 #define FIRSTBLK_VLC_SIZE  864
 #define OTHERBLK_VLC_SIZE  108
 #define COEFF_VLC_SIZE      32
+#define MAX_VLC_SIZE      1296
 
 static const uint8_t rv34_table_intra_cbppat[NUM_INTRA_TABLES][2][CBPPAT_VLC_SIZE] = {
   {

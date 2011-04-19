@@ -5,20 +5,20 @@
  *
  * new motion estimation (X1/EPZS) by Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -1476,6 +1476,7 @@ static inline int bidir_refine(MpegEncContext * s, int mb_x, int mb_y)
     const int xmax= c->xmax<<shift;
     const int ymax= c->ymax<<shift;
 #define HASH(fx,fy,bx,by) ((fx)+17*(fy)+63*(bx)+117*(by))
+#define HASH8(fx,fy,bx,by) ((uint8_t)HASH(fx,fy,bx,by))
     int hashidx= HASH(motion_fx,motion_fy, motion_bx, motion_by);
     uint8_t map[256];
 
@@ -1510,21 +1511,21 @@ static inline int bidir_refine(MpegEncContext * s, int mb_x, int mb_y)
 { 1, 1,-1,-1}, {-1,-1, 1, 1}, { 1,-1,-1, 1}, {-1, 1, 1,-1}, { 1,-1, 1,-1}, {-1, 1,-1, 1},
         };
         static const uint8_t hash[]={
-HASH( 0, 0, 0, 1), HASH( 0, 0, 0,-1), HASH( 0, 0, 1, 0), HASH( 0, 0,-1, 0), HASH( 0, 1, 0, 0), HASH( 0,-1, 0, 0), HASH( 1, 0, 0, 0), HASH(-1, 0, 0, 0),
+HASH8( 0, 0, 0, 1), HASH8( 0, 0, 0,-1), HASH8( 0, 0, 1, 0), HASH8( 0, 0,-1, 0), HASH8( 0, 1, 0, 0), HASH8( 0,-1, 0, 0), HASH8( 1, 0, 0, 0), HASH8(-1, 0, 0, 0),
 
-HASH( 0, 0, 1, 1), HASH( 0, 0,-1,-1), HASH( 0, 1, 1, 0), HASH( 0,-1,-1, 0), HASH( 1, 1, 0, 0), HASH(-1,-1, 0, 0), HASH( 1, 0, 0, 1), HASH(-1, 0, 0,-1),
-HASH( 0, 1, 0, 1), HASH( 0,-1, 0,-1), HASH( 1, 0, 1, 0), HASH(-1, 0,-1, 0),
-HASH( 0, 0,-1, 1), HASH( 0, 0, 1,-1), HASH( 0,-1, 1, 0), HASH( 0, 1,-1, 0), HASH(-1, 1, 0, 0), HASH( 1,-1, 0, 0), HASH( 1, 0, 0,-1), HASH(-1, 0, 0, 1),
-HASH( 0,-1, 0, 1), HASH( 0, 1, 0,-1), HASH(-1, 0, 1, 0), HASH( 1, 0,-1, 0),
+HASH8( 0, 0, 1, 1), HASH8( 0, 0,-1,-1), HASH8( 0, 1, 1, 0), HASH8( 0,-1,-1, 0), HASH8( 1, 1, 0, 0), HASH8(-1,-1, 0, 0), HASH8( 1, 0, 0, 1), HASH8(-1, 0, 0,-1),
+HASH8( 0, 1, 0, 1), HASH8( 0,-1, 0,-1), HASH8( 1, 0, 1, 0), HASH8(-1, 0,-1, 0),
+HASH8( 0, 0,-1, 1), HASH8( 0, 0, 1,-1), HASH8( 0,-1, 1, 0), HASH8( 0, 1,-1, 0), HASH8(-1, 1, 0, 0), HASH8( 1,-1, 0, 0), HASH8( 1, 0, 0,-1), HASH8(-1, 0, 0, 1),
+HASH8( 0,-1, 0, 1), HASH8( 0, 1, 0,-1), HASH8(-1, 0, 1, 0), HASH8( 1, 0,-1, 0),
 
-HASH( 0, 1, 1, 1), HASH( 0,-1,-1,-1), HASH( 1, 1, 1, 0), HASH(-1,-1,-1, 0), HASH( 1, 1, 0, 1), HASH(-1,-1, 0,-1), HASH( 1, 0, 1, 1), HASH(-1, 0,-1,-1),
-HASH( 0,-1, 1, 1), HASH( 0, 1,-1,-1), HASH(-1, 1, 1, 0), HASH( 1,-1,-1, 0), HASH( 1, 1, 0,-1), HASH(-1,-1, 0, 1), HASH( 1, 0,-1, 1), HASH(-1, 0, 1,-1),
-HASH( 0, 1,-1, 1), HASH( 0,-1, 1,-1), HASH( 1,-1, 1, 0), HASH(-1, 1,-1, 0), HASH(-1, 1, 0, 1), HASH( 1,-1, 0,-1), HASH( 1, 0, 1,-1), HASH(-1, 0,-1, 1),
-HASH( 0, 1, 1,-1), HASH( 0,-1,-1, 1), HASH( 1, 1,-1, 0), HASH(-1,-1, 1, 0), HASH( 1,-1, 0, 1), HASH(-1, 1, 0,-1), HASH(-1, 0, 1, 1), HASH( 1, 0,-1,-1),
+HASH8( 0, 1, 1, 1), HASH8( 0,-1,-1,-1), HASH8( 1, 1, 1, 0), HASH8(-1,-1,-1, 0), HASH8( 1, 1, 0, 1), HASH8(-1,-1, 0,-1), HASH8( 1, 0, 1, 1), HASH8(-1, 0,-1,-1),
+HASH8( 0,-1, 1, 1), HASH8( 0, 1,-1,-1), HASH8(-1, 1, 1, 0), HASH8( 1,-1,-1, 0), HASH8( 1, 1, 0,-1), HASH8(-1,-1, 0, 1), HASH8( 1, 0,-1, 1), HASH8(-1, 0, 1,-1),
+HASH8( 0, 1,-1, 1), HASH8( 0,-1, 1,-1), HASH8( 1,-1, 1, 0), HASH8(-1, 1,-1, 0), HASH8(-1, 1, 0, 1), HASH8( 1,-1, 0,-1), HASH8( 1, 0, 1,-1), HASH8(-1, 0,-1, 1),
+HASH8( 0, 1, 1,-1), HASH8( 0,-1,-1, 1), HASH8( 1, 1,-1, 0), HASH8(-1,-1, 1, 0), HASH8( 1,-1, 0, 1), HASH8(-1, 1, 0,-1), HASH8(-1, 0, 1, 1), HASH8( 1, 0,-1,-1),
 
-HASH( 1, 1, 1, 1), HASH(-1,-1,-1,-1),
-HASH( 1, 1, 1,-1), HASH(-1,-1,-1, 1), HASH( 1, 1,-1, 1), HASH(-1,-1, 1,-1), HASH( 1,-1, 1, 1), HASH(-1, 1,-1,-1), HASH(-1, 1, 1, 1), HASH( 1,-1,-1,-1),
-HASH( 1, 1,-1,-1), HASH(-1,-1, 1, 1), HASH( 1,-1,-1, 1), HASH(-1, 1, 1,-1), HASH( 1,-1, 1,-1), HASH(-1, 1,-1, 1),
+HASH8( 1, 1, 1, 1), HASH8(-1,-1,-1,-1),
+HASH8( 1, 1, 1,-1), HASH8(-1,-1,-1, 1), HASH8( 1, 1,-1, 1), HASH8(-1,-1, 1,-1), HASH8( 1,-1, 1, 1), HASH8(-1, 1,-1,-1), HASH8(-1, 1, 1, 1), HASH8( 1,-1,-1,-1),
+HASH8( 1, 1,-1,-1), HASH8(-1,-1, 1, 1), HASH8( 1,-1,-1, 1), HASH8(-1, 1, 1,-1), HASH8( 1,-1, 1,-1), HASH8(-1, 1,-1, 1),
 };
 
 #define CHECK_BIDIR(fx,fy,bx,by)\

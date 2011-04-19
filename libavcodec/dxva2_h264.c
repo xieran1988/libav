@@ -3,20 +3,20 @@
  *
  * copyright (c) 2009 Laurent Aimar
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -46,7 +46,7 @@ static void fill_picture_parameters(struct dxva_context *ctx, const H264Context 
 {
     const MpegEncContext *s = &h->s;
     const Picture *current_picture = s->current_picture_ptr;
-    int i;
+    int i, j;
 
     memset(pp, 0, sizeof(*pp));
     /* Configure current picture */
@@ -56,16 +56,16 @@ static void fill_picture_parameters(struct dxva_context *ctx, const H264Context 
     /* Configure the set of references */
     pp->UsedForReferenceFlags  = 0;
     pp->NonExistingFrameFlags  = 0;
-    for (i = 0; i < FF_ARRAY_ELEMS(pp->RefFrameList); i++) {
-        if (i < h->short_ref_count + h->long_ref_count) {
-            const Picture *r;
-            if (i < h->short_ref_count) {
-                r = h->short_ref[i];
-                assert(!r->long_ref);
-            } else {
-                r = h->long_ref[i - h->short_ref_count];
-                assert(r->long_ref);
-            }
+    for (i = 0, j = 0; i < FF_ARRAY_ELEMS(pp->RefFrameList); i++) {
+        const Picture *r;
+        if (j < h->short_ref_count) {
+            r = h->short_ref[j++];
+        } else {
+            r = NULL;
+            while (!r && j < h->short_ref_count + 16)
+                r = h->long_ref[j++ - h->short_ref_count];
+        }
+        if (r) {
             fill_picture_entry(&pp->RefFrameList[i],
                                ff_dxva2_get_surface_index(ctx, r),
                                r->long_ref != 0);
@@ -95,7 +95,7 @@ static void fill_picture_parameters(struct dxva_context *ctx, const H264Context 
     pp->wBitFields                    = ((s->picture_structure != PICT_FRAME) <<  0) |
                                         (h->sps.mb_aff                        <<  1) |
                                         (h->sps.residual_color_transform_flag <<  2) |
-                                        /* sp_for_switch_flag (not implemented by FFmpeg) */
+                                        /* sp_for_switch_flag (not implemented by Libav) */
                                         (0                                    <<  3) |
                                         (h->sps.chroma_format_idc             <<  4) |
                                         ((h->nal_ref_idc != 0)                <<  6) |
@@ -146,8 +146,8 @@ static void fill_picture_parameters(struct dxva_context *ctx, const H264Context 
     pp->deblocking_filter_control_present_flag = h->pps.deblocking_filter_parameters_present;
     pp->redundant_pic_cnt_present_flag= h->pps.redundant_pic_cnt_present;
     pp->Reserved8BitsB                = 0;
-    pp->slice_group_change_rate_minus1= 0;  /* XXX not implemented by FFmpeg */
-    //pp->SliceGroupMap[810];               /* XXX not implemented by FFmpeg */
+    pp->slice_group_change_rate_minus1= 0;  /* XXX not implemented by Libav */
+    //pp->SliceGroupMap[810];               /* XXX not implemented by Libav */
 }
 
 static void fill_scaling_lists(const H264Context *h, DXVA_Qmatrix_H264 *qm)
@@ -194,7 +194,7 @@ static void fill_slice_long(AVCodecContext *avctx, DXVA_Slice_H264_Long *slice,
 
     slice->first_mb_in_slice     = (s->mb_y >> FIELD_OR_MBAFF_PICTURE) * s->mb_width + s->mb_x;
     slice->NumMbsForSlice        = 0; /* XXX it is set once we have all slices */
-    slice->BitOffsetToSliceData  = get_bits_count(&s->gb) + 8;
+    slice->BitOffsetToSliceData  = get_bits_count(&s->gb);
     slice->slice_type            = ff_h264_get_slice_type(h);
     if (h->slice_type_fixed)
         slice->slice_type += 5;
@@ -243,7 +243,7 @@ static void fill_slice_long(AVCodecContext *avctx, DXVA_Slice_H264_Long *slice,
             }
         }
     }
-    slice->slice_qs_delta    = 0; /* XXX not implemented by FFmpeg */
+    slice->slice_qs_delta    = 0; /* XXX not implemented by Libav */
     slice->slice_qp_delta    = s->qscale - h->pps.init_qp;
     slice->redundant_pic_cnt = h->redundant_pic_count;
     if (h->slice_type == FF_B_TYPE)
@@ -423,7 +423,7 @@ static int end_frame(AVCodecContext *avctx)
                                      commit_bitstream_and_slice_buffer);
 }
 
-AVHWAccel h264_dxva2_hwaccel = {
+AVHWAccel ff_h264_dxva2_hwaccel = {
     .name           = "h264_dxva2",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_H264,

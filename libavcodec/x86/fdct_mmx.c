@@ -13,24 +13,25 @@
  * a page about fdct at http://www.geocities.com/ssavekar/dct.htm
  * Skal's fdct at http://skal.planet-d.net/coding/dct.html
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "libavutil/common.h"
+#include "libavutil/x86_cpu.h"
 #include "libavcodec/dsputil.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -430,7 +431,10 @@ static av_always_inline void fdct_row_sse2(const int16_t *in, int16_t *out)
         FDCT_ROW_SSE2_H2(80,192)
         FDCT_ROW_SSE2(80)
         :
-        : "r" (in), "r" (tab_frw_01234567_sse2.tab_frw_01234567_sse2), "r" (fdct_r_row_sse2.fdct_r_row_sse2), "i" (SHIFT_FRW_ROW), "r" (out)
+        : "r" (in), "r" (tab_frw_01234567_sse2.tab_frw_01234567_sse2),
+          "r" (fdct_r_row_sse2.fdct_r_row_sse2), "i" (SHIFT_FRW_ROW), "r" (out)
+          XMM_CLOBBERS_ONLY("%xmm0", "%xmm1", "%xmm2", "%xmm3",
+                            "%xmm4", "%xmm5", "%xmm6", "%xmm7")
     );
 }
 

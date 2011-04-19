@@ -1,31 +1,31 @@
 /*
  * Copyright (c) 2001 Michel Lespinasse
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /*
  * NOTE: This code is based on GPL code from the libmpeg2 project.  The
  * author, Michel Lespinasses, has given explicit permission to release
- * under LGPL as part of FFmpeg.
+ * under LGPL as part of Libav.
  */
 
 /*
- * FFmpeg integration by Dieter Shirley
+ * Libav integration by Dieter Shirley
  *
  * This file is a direct copy of the AltiVec IDCT module from the libmpeg2
  * project.  I've deleted all of the libmpeg2-specific code, renamed the
@@ -43,7 +43,6 @@
 #endif
 #include "libavcodec/dsputil.h"
 #include "types_altivec.h"
-#include "dsputil_ppc.h"
 #include "dsputil_altivec.h"
 
 #define IDCT_HALF                                       \
@@ -161,13 +160,9 @@ static const vec_s16 constants[5] = {
 
 void idct_put_altivec(uint8_t* dest, int stride, int16_t *blk)
 {
-POWERPC_PERF_DECLARE(altivec_idct_put_num, 1);
     vec_s16 *block = (vec_s16*)blk;
     vec_u8 tmp;
 
-#if CONFIG_POWERPC_PERF
-POWERPC_PERF_START_COUNT(altivec_idct_put_num, 1);
-#endif
     IDCT
 
 #define COPY(dest,src)                                          \
@@ -183,23 +178,16 @@ POWERPC_PERF_START_COUNT(altivec_idct_put_num, 1);
     COPY (dest, vx5)    dest += stride;
     COPY (dest, vx6)    dest += stride;
     COPY (dest, vx7)
-
-POWERPC_PERF_STOP_COUNT(altivec_idct_put_num, 1);
 }
 
 void idct_add_altivec(uint8_t* dest, int stride, int16_t *blk)
 {
-POWERPC_PERF_DECLARE(altivec_idct_add_num, 1);
     vec_s16 *block = (vec_s16*)blk;
     vec_u8 tmp;
     vec_s16 tmp2, tmp3;
     vec_u8 perm0;
     vec_u8 perm1;
     vec_u8 p0, p1, p;
-
-#if CONFIG_POWERPC_PERF
-POWERPC_PERF_START_COUNT(altivec_idct_add_num, 1);
-#endif
 
     IDCT
 
@@ -226,7 +214,5 @@ POWERPC_PERF_START_COUNT(altivec_idct_add_num, 1);
     ADD (dest, vx5, perm1)      dest += stride;
     ADD (dest, vx6, perm0)      dest += stride;
     ADD (dest, vx7, perm1)
-
-POWERPC_PERF_STOP_COUNT(altivec_idct_add_num, 1);
 }
 

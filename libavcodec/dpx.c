@@ -2,24 +2,25 @@
  * DPX (.dpx) image decoder
  * Copyright (c) 2009 Jimmy Christensen
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "libavutil/intreadwrite.h"
+#include "libavutil/imgutils.h"
 #include "bytestream.h"
 #include "avcodec.h"
 
@@ -54,6 +55,7 @@ static int decode_frame(AVCodecContext *avctx,
                         AVPacket *avpkt)
 {
     const uint8_t *buf = avpkt->data;
+    const uint8_t *buf_end = avpkt->data + avpkt->size;
     int buf_size       = avpkt->size;
     DPXContext *const s = avctx->priv_data;
     AVFrame *picture  = data;
@@ -139,7 +141,7 @@ static int decode_frame(AVCodecContext *avctx,
 
     if (s->picture.data[0])
         avctx->release_buffer(avctx, &s->picture);
-    if (avcodec_check_dimensions(avctx, w, h))
+    if (av_image_check_size(w, h, 0, avctx))
         return -1;
     if (w != avctx->width || h != avctx->height)
         avcodec_set_dimensions(avctx, w, h);
@@ -171,6 +173,10 @@ static int decode_frame(AVCodecContext *avctx,
         case 8:
         case 12: // Treat 12-bit as 16-bit
         case 16:
+            if (source_packet_size*avctx->width*avctx->height > buf_end - buf) {
+                av_log(avctx, AV_LOG_ERROR, "Overread buffer. Invalid header?\n");
+                return -1;
+            }
             if (source_packet_size == target_packet_size) {
                 for (x = 0; x < avctx->height; x++) {
                     memcpy(ptr, buf, target_packet_size*avctx->width);
@@ -214,7 +220,7 @@ static av_cold int decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec dpx_decoder = {
+AVCodec ff_dpx_decoder = {
     "dpx",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_DPX,

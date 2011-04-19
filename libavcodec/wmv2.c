@@ -1,20 +1,20 @@
 /*
- * Copyright (c) 2002 The FFmpeg Project
+ * Copyright (c) 2002 The Libav Project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -102,7 +102,7 @@ void ff_mspel_motion(MpegEncContext *s,
     if(s->flags&CODEC_FLAG_EMU_EDGE){
         if(src_x<1 || src_y<1 || src_x + 17  >= s->h_edge_pos
                               || src_y + h+1 >= v_edge_pos){
-            ff_emulated_edge_mc(s->edge_emu_buffer, ptr - 1 - s->linesize, s->linesize, 19, 19,
+            s->dsp.emulated_edge_mc(s->edge_emu_buffer, ptr - 1 - s->linesize, s->linesize, 19, 19,
                              src_x-1, src_y-1, s->h_edge_pos, s->v_edge_pos);
             ptr= s->edge_emu_buffer + 1 + s->linesize;
             emu=1;
@@ -143,7 +143,7 @@ void ff_mspel_motion(MpegEncContext *s,
     offset = (src_y * uvlinesize) + src_x;
     ptr = ref_picture[1] + offset;
     if(emu){
-        ff_emulated_edge_mc(s->edge_emu_buffer, ptr, s->uvlinesize, 9, 9,
+        s->dsp.emulated_edge_mc(s->edge_emu_buffer, ptr, s->uvlinesize, 9, 9,
                          src_x, src_y, s->h_edge_pos>>1, s->v_edge_pos>>1);
         ptr= s->edge_emu_buffer;
     }
@@ -151,7 +151,7 @@ void ff_mspel_motion(MpegEncContext *s,
 
     ptr = ref_picture[2] + offset;
     if(emu){
-        ff_emulated_edge_mc(s->edge_emu_buffer, ptr, s->uvlinesize, 9, 9,
+        s->dsp.emulated_edge_mc(s->edge_emu_buffer, ptr, s->uvlinesize, 9, 9,
                          src_x, src_y, s->h_edge_pos>>1, s->v_edge_pos>>1);
         ptr= s->edge_emu_buffer;
     }

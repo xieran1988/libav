@@ -3,20 +3,20 @@
  * Copyright (c) 2008-2009 Robert Swain ( rob opendot cl )
  * Copyright (c) 2009-2010 Alex Converse <alex.converse@gmail.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -1134,16 +1134,12 @@ static void sbr_dequant(SpectralBandReplication *sbr, int id_aac)
  * @param   W       array of complex-valued samples split into subbands
  */
 static void sbr_qmf_analysis(DSPContext *dsp, FFTContext *mdct, const float *in, float *x,
-                             float z[320], float W[2][32][32][2],
-                             float scale)
+                             float z[320], float W[2][32][32][2])
 {
     int i, k;
     memcpy(W[0], W[1], sizeof(W[0]));
     memcpy(x    , x+1024, (320-32)*sizeof(x[0]));
-    if (scale != 1.0f)
-        dsp->vector_fmul_scalar(x+288, in, scale, 1024);
-    else
-        memcpy(x+288, in, 1024*sizeof(*x));
+    memcpy(x+288, in,         1024*sizeof(x[0]));
     for (i = 0; i < 32; i++) { // numTimeSlots*RATE = 16*2 as 960 sample frames
                                // are not supported
         dsp->vector_fmul_reverse(z, sbr_qmf_window_ds, x, 320);
@@ -1159,7 +1155,7 @@ static void sbr_qmf_analysis(DSPContext *dsp, FFTContext *mdct, const float *in,
         }
         z[64+63] = z[32];
 
-        ff_imdct_half(mdct, z, z+64);
+        mdct->imdct_half(mdct, z, z+64);
         for (k = 0; k < 32; k++) {
             W[1][i][k][0] = -z[63-k];
             W[1][i][k][1] = z[k];
@@ -1175,12 +1171,10 @@ static void sbr_qmf_analysis(DSPContext *dsp, FFTContext *mdct, const float *in,
 static void sbr_qmf_synthesis(DSPContext *dsp, FFTContext *mdct,
                               float *out, float X[2][38][64],
                               float mdct_buf[2][64],
-                              float *v0, int *v_off, const unsigned int div,
-                              float bias, float scale)
+                              float *v0, int *v_off, const unsigned int div)
 {
     int i, n;
     const float *sbr_qmf_window = div ? sbr_qmf_window_ds : sbr_qmf_window_us;
-    int scale_and_bias = scale != 1.0f || bias != 0.0f;
     float *v;
     for (i = 0; i < 32; i++) {
         if (*v_off == 0) {
@@ -1196,7 +1190,7 @@ static void sbr_qmf_synthesis(DSPContext *dsp, FFTContext *mdct,
                 X[0][i][   n] = -X[0][i][n];
                 X[0][i][32+n] =  X[1][i][31-n];
             }
-            ff_imdct_half(mdct, mdct_buf[0], X[0][i]);
+            mdct->imdct_half(mdct, mdct_buf[0], X[0][i]);
             for (n = 0; n < 32; n++) {
                 v[     n] =  mdct_buf[0][63 - 2*n];
                 v[63 - n] = -mdct_buf[0][62 - 2*n];
@@ -1205,8 +1199,8 @@ static void sbr_qmf_synthesis(DSPContext *dsp, FFTContext *mdct,
             for (n = 1; n < 64; n+=2) {
                 X[1][i][n] = -X[1][i][n];
             }
-            ff_imdct_half(mdct, mdct_buf[0], X[0][i]);
-            ff_imdct_half(mdct, mdct_buf[1], X[1][i]);
+            mdct->imdct_half(mdct, mdct_buf[0], X[0][i]);
+            mdct->imdct_half(mdct, mdct_buf[1], X[1][i]);
             for (n = 0; n < 64; n++) {
                 v[      n] = -mdct_buf[0][63 -   n] + mdct_buf[1][  n    ];
                 v[127 - n] =  mdct_buf[0][63 -   n] + mdct_buf[1][  n    ];
@@ -1222,9 +1216,6 @@ static void sbr_qmf_synthesis(DSPContext *dsp, FFTContext *mdct,
         dsp->vector_fmul_add(out, v + ( 960 >> div), sbr_qmf_window + (448 >> div), out   , 64 >> div);
         dsp->vector_fmul_add(out, v + (1024 >> div), sbr_qmf_window + (512 >> div), out   , 64 >> div);
         dsp->vector_fmul_add(out, v + (1216 >> div), sbr_qmf_window + (576 >> div), out   , 64 >> div);
-        if (scale_and_bias)
-            for (n = 0; n < 64 >> div; n++)
-                out[n] = out[n] * scale + bias;
         out += 64 >> div;
     }
 }
@@ -1580,7 +1571,7 @@ static void sbr_gain_calc(AACContext *ac, SpectralBandReplication *sbr,
                 sum[1] += sbr->e_curr[e][m];
             }
             gain_max = limgain[sbr->bs_limiter_gains] * sqrtf((FLT_EPSILON + sum[0]) / (FLT_EPSILON + sum[1]));
-            gain_max = FFMIN(100000, gain_max);
+            gain_max = FFMIN(100000.f, gain_max);
             for (m = sbr->f_tablelim[k] - sbr->kx[1]; m < sbr->f_tablelim[k + 1] - sbr->kx[1]; m++) {
                 float q_m_max   = sbr->q_m[e][m] * gain_max / sbr->gain[e][m];
                 sbr->q_m[e][m]  = FFMIN(sbr->q_m[e][m], q_m_max);
@@ -1594,7 +1585,7 @@ static void sbr_gain_calc(AACContext *ac, SpectralBandReplication *sbr,
                           + (delta && !sbr->s_m[e][m]) * sbr->q_m[e][m] * sbr->q_m[e][m];
             }
             gain_boost = sqrtf((FLT_EPSILON + sum[0]) / (FLT_EPSILON + sum[1]));
-            gain_boost = FFMIN(1.584893192, gain_boost);
+            gain_boost = FFMIN(1.584893192f, gain_boost);
             for (m = sbr->f_tablelim[k] - sbr->kx[1]; m < sbr->f_tablelim[k + 1] - sbr->kx[1]; m++) {
                 sbr->gain[e][m] *= gain_boost;
                 sbr->q_m[e][m]  *= gain_boost;
@@ -1727,7 +1718,7 @@ void ff_sbr_apply(AACContext *ac, SpectralBandReplication *sbr, int id_aac,
         /* decode channel */
         sbr_qmf_analysis(&ac->dsp, &sbr->mdct_ana, ch ? R : L, sbr->data[ch].analysis_filterbank_samples,
                          (float*)sbr->qmf_filter_scratch,
-                         sbr->data[ch].W, 1/(-1024 * ac->sf_scale));
+                         sbr->data[ch].W);
         sbr_lf_gen(ac, sbr, sbr->X_low, sbr->data[ch].W);
         if (sbr->start) {
             sbr_hf_inverse_filter(sbr->alpha0, sbr->alpha1, sbr->X_low, sbr->k[0]);
@@ -1760,12 +1751,10 @@ void ff_sbr_apply(AACContext *ac, SpectralBandReplication *sbr, int id_aac,
     sbr_qmf_synthesis(&ac->dsp, &sbr->mdct, L, sbr->X[0], sbr->qmf_filter_scratch,
                       sbr->data[0].synthesis_filterbank_samples,
                       &sbr->data[0].synthesis_filterbank_samples_offset,
-                      downsampled,
-                      ac->add_bias, -1024 * ac->sf_scale);
+                      downsampled);
     if (nch == 2)
         sbr_qmf_synthesis(&ac->dsp, &sbr->mdct, R, sbr->X[1], sbr->qmf_filter_scratch,
                           sbr->data[1].synthesis_filterbank_samples,
                           &sbr->data[1].synthesis_filterbank_samples_offset,
-                          downsampled,
-                          ac->add_bias, -1024 * ac->sf_scale);
+                          downsampled);
 }

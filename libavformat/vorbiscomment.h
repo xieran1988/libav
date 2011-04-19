@@ -2,20 +2,20 @@
  * VorbisComment writer
  * Copyright (c) 2009 James Darnley
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -26,7 +26,7 @@
 #include "metadata.h"
 
 /**
- * Calculates the length in bytes of a VorbisComment. This is the minimum
+ * Calculate the length in bytes of a VorbisComment. This is the minimum
  * size required by ff_vorbiscomment_write().
  *
  * @param m The metadata structure to be parsed. For no metadata, set to NULL.
@@ -49,7 +49,7 @@ int ff_vorbiscomment_length(AVMetadata *m, const char *vendor_string,
  * @param vendor_string The vendor string to write.
  * @param count The number of tags in m because m->count is "not allowed"
  */
-int ff_vorbiscomment_write(uint8_t **p, AVMetadata *m,
+int ff_vorbiscomment_write(uint8_t **p, AVMetadata **m,
                            const char *vendor_string, const unsigned count);
 
 extern const AVMetadataConv ff_vorbiscomment_metadata_conv[];

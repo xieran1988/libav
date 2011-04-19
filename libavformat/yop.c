@@ -6,20 +6,20 @@
  * derived from the code by
  * Copyright (C) 2009 Thomas P. Higdon <thomas.p.higdon@gmail.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -50,7 +50,7 @@ static int yop_probe(AVProbeData *probe_packet)
 static int yop_read_header(AVFormatContext *s, AVFormatParameters *ap)
 {
     YopDecContext *yop = s->priv_data;
-    ByteIOContext *pb  = s->pb;
+    AVIOContext *pb  = s->pb;
 
     AVCodecContext *audio_dec, *video_dec;
     AVStream *audio_stream, *video_stream;
@@ -81,16 +81,16 @@ static int yop_read_header(AVFormatContext *s, AVFormatParameters *ap)
     video_dec->codec_type   = AVMEDIA_TYPE_VIDEO;
     video_dec->codec_id     = CODEC_ID_YOP;
 
-    url_fskip(pb, 6);
+    avio_skip(pb, 6);
 
-    frame_rate              = get_byte(pb);
-    yop->frame_size         = get_byte(pb) * 2048;
-    video_dec->width        = get_le16(pb);
-    video_dec->height       = get_le16(pb);
+    frame_rate              = avio_r8(pb);
+    yop->frame_size         = avio_r8(pb) * 2048;
+    video_dec->width        = avio_rl16(pb);
+    video_dec->height       = avio_rl16(pb);
 
     video_stream->sample_aspect_ratio = (AVRational){1, 2};
 
-    ret = get_buffer(pb, video_dec->extradata, 8);
+    ret = avio_read(pb, video_dec->extradata, 8);
     if (ret < 8)
         return ret < 0 ? ret : AVERROR_EOF;
 
@@ -104,7 +104,7 @@ static int yop_read_header(AVFormatContext *s, AVFormatParameters *ap)
         return AVERROR_INVALIDDATA;
     }
 
-    url_fseek(pb, 2048, SEEK_SET);
+    avio_seek(pb, 2048, SEEK_SET);
 
     av_set_pts_info(video_stream, 32, 1, frame_rate);
 
@@ -114,7 +114,7 @@ static int yop_read_header(AVFormatContext *s, AVFormatParameters *ap)
 static int yop_read_packet(AVFormatContext *s, AVPacket *pkt)
 {
     YopDecContext *yop = s->priv_data;
-    ByteIOContext *pb  = s->pb;
+    AVIOContext *pb  = s->pb;
 
     int ret;
     int actual_video_data_size = yop->frame_size -
@@ -136,9 +136,9 @@ static int yop_read_packet(AVFormatContext *s, AVPacket *pkt)
     if (ret < 0)
         return ret;
 
-    yop->video_packet.pos = url_ftell(pb);
+    yop->video_packet.pos = avio_tell(pb);
 
-    ret = get_buffer(pb, yop->video_packet.data, yop->palette_size);
+    ret = avio_read(pb, yop->video_packet.data, yop->palette_size);
     if (ret < 0) {
         goto err_out;
     }else if (ret < yop->palette_size) {
@@ -153,9 +153,9 @@ static int yop_read_packet(AVFormatContext *s, AVPacket *pkt)
     // Set position to the start of the frame
     pkt->pos = yop->video_packet.pos;
 
-    url_fskip(pb, yop->audio_block_length - ret);
+    avio_skip(pb, yop->audio_block_length - ret);
 
-    ret = get_buffer(pb, yop->video_packet.data + yop->palette_size,
+    ret = avio_read(pb, yop->video_packet.data + yop->palette_size,
                      actual_video_data_size);
     if (ret < 0)
         goto err_out;
@@ -190,7 +190,7 @@ static int yop_read_seek(AVFormatContext *s, int stream_index,
         return -1;
 
     pos_min        = s->data_offset;
-    pos_max        = url_fsize(s->pb) - yop->frame_size;
+    pos_max        = avio_size(s->pb) - yop->frame_size;
     frame_count    = (pos_max - pos_min) / yop->frame_size;
 
     timestamp      = FFMAX(0, FFMIN(frame_count, timestamp));
@@ -198,11 +198,11 @@ static int yop_read_seek(AVFormatContext *s, int stream_index,
     frame_pos      = timestamp * yop->frame_size + pos_min;
     yop->odd_frame = timestamp & 1;
 
-    url_fseek(s->pb, frame_pos, SEEK_SET);
+    avio_seek(s->pb, frame_pos, SEEK_SET);
     return 0;
 }
 
-AVInputFormat yop_demuxer = {
+AVInputFormat ff_yop_demuxer = {
     "yop",
     NULL_IF_CONFIG_SMALL("Psygnosis YOP Format"),
     sizeof(YopDecContext),

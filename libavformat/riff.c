@@ -2,25 +2,26 @@
  * RIFF codec tags
  * Copyright (c) 2000 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "libavcodec/avcodec.h"
 #include "avformat.h"
+#include "avio_internal.h"
 #include "riff.h"
 #include "libavcodec/bytestream.h"
 
@@ -59,6 +60,7 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_MPEG4,        MKTAG('S', 'E', 'D', 'G') },
     { CODEC_ID_MPEG4,        MKTAG('R', 'M', 'P', '4') },
     { CODEC_ID_MPEG4,        MKTAG('3', 'I', 'V', '2') },
+    { CODEC_ID_MPEG4,        MKTAG('W', 'A', 'W', 'V') }, /* WaWv MPEG-4 Video Codec */
     { CODEC_ID_MPEG4,        MKTAG('F', 'F', 'D', 'S') },
     { CODEC_ID_MPEG4,        MKTAG('F', 'V', 'F', 'W') },
     { CODEC_ID_MPEG4,        MKTAG('D', 'C', 'O', 'D') },
@@ -81,8 +83,8 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_MPEG4,        MKTAG('U', 'L', 'D', 'X') },
     { CODEC_ID_MPEG4,        MKTAG('G', 'E', 'O', 'V') },
     { CODEC_ID_MPEG4,        MKTAG('S', 'I', 'P', 'P') }, /* Samsung SHR-6040 */
-    { CODEC_ID_MSMPEG4V3,    MKTAG('D', 'I', 'V', '3') }, /* default signature when using MSMPEG4 */
     { CODEC_ID_MSMPEG4V3,    MKTAG('M', 'P', '4', '3') },
+    { CODEC_ID_MSMPEG4V3,    MKTAG('D', 'I', 'V', '3') },
     { CODEC_ID_MSMPEG4V3,    MKTAG('M', 'P', 'G', '3') },
     { CODEC_ID_MSMPEG4V3,    MKTAG('D', 'I', 'V', '5') },
     { CODEC_ID_MSMPEG4V3,    MKTAG('D', 'I', 'V', '6') },
@@ -123,6 +125,7 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_MPEG2VIDEO,   MKTAG('L', 'M', 'P', '2') }, /* Lead MPEG2 in avi */
     { CODEC_ID_MPEG2VIDEO,   MKTAG('s', 'l', 'i', 'f') },
     { CODEC_ID_MPEG2VIDEO,   MKTAG('E', 'M', '2', 'V') },
+    { CODEC_ID_MPEG2VIDEO,   MKTAG('M', '7', '0', '1') }, /* Matrox MPEG2 intra-only */
     { CODEC_ID_MJPEG,        MKTAG('M', 'J', 'P', 'G') },
     { CODEC_ID_MJPEG,        MKTAG('L', 'J', 'P', 'G') },
     { CODEC_ID_MJPEG,        MKTAG('d', 'm', 'b', '1') },
@@ -130,6 +133,7 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_LJPEG,        MKTAG('L', 'J', 'P', 'G') },
     { CODEC_ID_MJPEG,        MKTAG('J', 'P', 'G', 'L') }, /* Pegasus lossless JPEG */
     { CODEC_ID_JPEGLS,       MKTAG('M', 'J', 'L', 'S') }, /* JPEG-LS custom FOURCC for avi - encoder */
+    { CODEC_ID_JPEGLS,       MKTAG('M', 'J', 'P', 'G') },
     { CODEC_ID_MJPEG,        MKTAG('M', 'J', 'L', 'S') }, /* JPEG-LS custom FOURCC for avi - decoder */
     { CODEC_ID_MJPEG,        MKTAG('j', 'p', 'e', 'g') },
     { CODEC_ID_MJPEG,        MKTAG('I', 'J', 'P', 'G') },
@@ -159,6 +163,7 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_RAWVIDEO,     MKTAG('u', 'y', 'v', '1') },
     { CODEC_ID_RAWVIDEO,     MKTAG('2', 'V', 'u', '1') },
     { CODEC_ID_RAWVIDEO,     MKTAG('2', 'v', 'u', 'y') },
+    { CODEC_ID_RAWVIDEO,     MKTAG('y', 'u', 'v', 's') },
     { CODEC_ID_RAWVIDEO,     MKTAG('P', '4', '2', '2') },
     { CODEC_ID_RAWVIDEO,     MKTAG('Y', 'V', '1', '2') },
     { CODEC_ID_RAWVIDEO,     MKTAG('U', 'Y', 'V', 'Y') },
@@ -168,7 +173,15 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_RAWVIDEO,     MKTAG('H', 'D', 'Y', 'C') },
     { CODEC_ID_RAWVIDEO,     MKTAG('Y', 'V', 'U', '9') },
     { CODEC_ID_RAWVIDEO,     MKTAG('V', 'D', 'T', 'Z') }, /* SoftLab-NSK VideoTizer */
+    { CODEC_ID_RAWVIDEO,     MKTAG('Y', '4', '1', '1') },
+    { CODEC_ID_RAWVIDEO,     MKTAG('N', 'V', '1', '2') },
+    { CODEC_ID_RAWVIDEO,     MKTAG('N', 'V', '2', '1') },
+    { CODEC_ID_RAWVIDEO,     MKTAG('Y', '4', '1', 'B') },
+    { CODEC_ID_RAWVIDEO,     MKTAG('Y', '4', '2', 'B') },
+    { CODEC_ID_RAWVIDEO,     MKTAG('Y', 'U', 'V', '9') },
+    { CODEC_ID_RAWVIDEO,     MKTAG('Y', 'V', 'U', '9') },
     { CODEC_ID_FRWU,         MKTAG('F', 'R', 'W', 'U') },
+    { CODEC_ID_R10K,         MKTAG('R', '1', '0', 'k') },
     { CODEC_ID_R210,         MKTAG('r', '2', '1', '0') },
     { CODEC_ID_V210,         MKTAG('v', '2', '1', '0') },
     { CODEC_ID_INDEO3,       MKTAG('I', 'V', '3', '1') },
@@ -216,8 +229,10 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_QPEG,         MKTAG('Q', '1', '.', '0') },
     { CODEC_ID_QPEG,         MKTAG('Q', '1', '.', '1') },
     { CODEC_ID_WMV3,         MKTAG('W', 'M', 'V', '3') },
+    { CODEC_ID_WMV3,         MKTAG('W', 'M', 'V', 'P') },
     { CODEC_ID_VC1,          MKTAG('W', 'V', 'C', '1') },
     { CODEC_ID_VC1,          MKTAG('W', 'M', 'V', 'A') },
+    { CODEC_ID_VC1,          MKTAG('W', 'V', 'P', '2') },
     { CODEC_ID_LOCO,         MKTAG('L', 'O', 'C', 'O') },
     { CODEC_ID_WNV1,         MKTAG('W', 'N', 'V', '1') },
     { CODEC_ID_AASC,         MKTAG('A', 'A', 'S', 'C') },
@@ -244,6 +259,7 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { CODEC_ID_AURA2,        MKTAG('A', 'U', 'R', '2') },
     { CODEC_ID_DPX,          MKTAG('d', 'p', 'x', ' ') },
     { CODEC_ID_KGV1,         MKTAG('K', 'G', 'V', '1') },
+    { CODEC_ID_LAGARITH,     MKTAG('L', 'A', 'G', 'S') },
     { CODEC_ID_NONE,         0 }
 };
 
@@ -280,9 +296,12 @@ const AVCodecTag ff_codec_wav_tags[] = {
     { CODEC_ID_WMALOSSLESS,     0x0163 },
     { CODEC_ID_ADPCM_CT,        0x0200 },
     { CODEC_ID_ATRAC3,          0x0270 },
+    { CODEC_ID_ADPCM_G722,      0x028F },
     { CODEC_ID_IMC,             0x0401 },
     { CODEC_ID_GSM_MS,          0x1500 },
     { CODEC_ID_TRUESPEECH,      0x1501 },
+    { CODEC_ID_AAC,             0x1600 }, /* ADTS AAC */
+    { CODEC_ID_AAC_LATM,        0x1602 },
     { CODEC_ID_AC3,             0x2000 },
     { CODEC_ID_DTS,             0x2001 },
     { CODEC_ID_SONIC,           0x2048 },
@@ -303,26 +322,26 @@ const AVCodecTag ff_codec_wav_tags[] = {
 };
 
 #if CONFIG_MUXERS
-int64_t ff_start_tag(ByteIOContext *pb, const char *tag)
+int64_t ff_start_tag(AVIOContext *pb, const char *tag)
 {
-    put_tag(pb, tag);
-    put_le32(pb, 0);
-    return url_ftell(pb);
+    ffio_wfourcc(pb, tag);
+    avio_wl32(pb, 0);
+    return avio_tell(pb);
 }
 
-void ff_end_tag(ByteIOContext *pb, int64_t start)
+void ff_end_tag(AVIOContext *pb, int64_t start)
 {
     int64_t pos;
 
-    pos = url_ftell(pb);
-    url_fseek(pb, start - 4, SEEK_SET);
-    put_le32(pb, (uint32_t)(pos - start));
-    url_fseek(pb, pos, SEEK_SET);
+    pos = avio_tell(pb);
+    avio_seek(pb, start - 4, SEEK_SET);
+    avio_wl32(pb, (uint32_t)(pos - start));
+    avio_seek(pb, pos, SEEK_SET);
 }
 
 /* WAVEFORMATEX header */
 /* returns the size or -1 on error */
-int ff_put_wav_header(ByteIOContext *pb, AVCodecContext *enc)
+int ff_put_wav_header(AVIOContext *pb, AVCodecContext *enc)
 {
     int bps, blkalign, bytespersec;
     int hdrsize = 18;
@@ -338,12 +357,12 @@ int ff_put_wav_header(ByteIOContext *pb, AVCodecContext *enc)
                           || av_get_bits_per_sample(enc->codec_id) > 16;
 
     if (waveformatextensible) {
-        put_le16(pb, 0xfffe);
+        avio_wl16(pb, 0xfffe);
     } else {
-        put_le16(pb, enc->codec_tag);
+        avio_wl16(pb, enc->codec_tag);
     }
-    put_le16(pb, enc->channels);
-    put_le32(pb, enc->sample_rate);
+    avio_wl16(pb, enc->channels);
+    avio_wl32(pb, enc->sample_rate);
     if (enc->codec_id == CODEC_ID_MP2 || enc->codec_id == CODEC_ID_MP3 || enc->codec_id == CODEC_ID_GSM_MS) {
         bps = 0;
     } else if (enc->codec_id == CODEC_ID_ADPCM_G726) {
@@ -356,9 +375,11 @@ int ff_put_wav_header(ByteIOContext *pb, AVCodecContext *enc)
         av_log(enc, AV_LOG_WARNING, "requested bits_per_coded_sample (%d) and actually stored (%d) differ\n", enc->bits_per_coded_sample, bps);
     }
 
-    if (enc->codec_id == CODEC_ID_MP2 || enc->codec_id == CODEC_ID_MP3 || enc->codec_id == CODEC_ID_AC3) {
+    if (enc->codec_id == CODEC_ID_MP2 || enc->codec_id == CODEC_ID_MP3) {
         blkalign = enc->frame_size; //this is wrong, but it seems many demuxers do not work if this is set correctly
         //blkalign = 144 * enc->bit_rate/enc->sample_rate;
+    } else if (enc->codec_id == CODEC_ID_AC3) {
+            blkalign = 3840; //maximum bytes per frame
     } else if (enc->codec_id == CODEC_ID_ADPCM_G726) { //
         blkalign = 1;
     } else if (enc->block_align != 0) { /* specified by the codec */
@@ -375,9 +396,9 @@ int ff_put_wav_header(ByteIOContext *pb, AVCodecContext *enc)
     } else {
         bytespersec = enc->bit_rate / 8;
     }
-    put_le32(pb, bytespersec); /* bytes per second */
-    put_le16(pb, blkalign); /* block align */
-    put_le16(pb, bps); /* bits per sample */
+    avio_wl32(pb, bytespersec); /* bytes per second */
+    avio_wl16(pb, blkalign); /* block align */
+    avio_wl16(pb, bps); /* bits per sample */
     if (enc->codec_id == CODEC_ID_MP3) {
         hdrsize += 12;
         bytestream_put_le16(&riff_extradata, 1);    /* wID */
@@ -407,47 +428,47 @@ int ff_put_wav_header(ByteIOContext *pb, AVCodecContext *enc)
     }
     if(waveformatextensible) {                                    /* write WAVEFORMATEXTENSIBLE extensions */
         hdrsize += 22;
-        put_le16(pb, riff_extradata - riff_extradata_start + 22); /* 22 is WAVEFORMATEXTENSIBLE size */
-        put_le16(pb, enc->bits_per_coded_sample);                 /* ValidBitsPerSample || SamplesPerBlock || Reserved */
-        put_le32(pb, enc->channel_layout);                        /* dwChannelMask */
-        put_le32(pb, enc->codec_tag);                             /* GUID + next 3 */
-        put_le32(pb, 0x00100000);
-        put_le32(pb, 0xAA000080);
-        put_le32(pb, 0x719B3800);
+        avio_wl16(pb, riff_extradata - riff_extradata_start + 22); /* 22 is WAVEFORMATEXTENSIBLE size */
+        avio_wl16(pb, enc->bits_per_coded_sample);                 /* ValidBitsPerSample || SamplesPerBlock || Reserved */
+        avio_wl32(pb, enc->channel_layout);                        /* dwChannelMask */
+        avio_wl32(pb, enc->codec_tag);                             /* GUID + next 3 */
+        avio_wl32(pb, 0x00100000);
+        avio_wl32(pb, 0xAA000080);
+        avio_wl32(pb, 0x719B3800);
     } else if(riff_extradata - riff_extradata_start) {
-        put_le16(pb, riff_extradata - riff_extradata_start);
+        avio_wl16(pb, riff_extradata - riff_extradata_start);
     }
-    put_buffer(pb, riff_extradata_start, riff_extradata - riff_extradata_start);
+    avio_write(pb, riff_extradata_start, riff_extradata - riff_extradata_start);
     if(hdrsize&1){
         hdrsize++;
-        put_byte(pb, 0);
+        avio_w8(pb, 0);
     }
 
     return hdrsize;
 }
 
 /* BITMAPINFOHEADER header */
-void ff_put_bmp_header(ByteIOContext *pb, AVCodecContext *enc, const AVCodecTag *tags, int for_asf)
+void ff_put_bmp_header(AVIOContext *pb, AVCodecContext *enc, const AVCodecTag *tags, int for_asf)
 {
-    put_le32(pb, 40 + enc->extradata_size); /* size */
-    put_le32(pb, enc->width);
+    avio_wl32(pb, 40 + enc->extradata_size); /* size */
+    avio_wl32(pb, enc->width);
     //We always store RGB TopDown
-    put_le32(pb, enc->codec_tag ? enc->height : -enc->height);
-    put_le16(pb, 1); /* planes */
+    avio_wl32(pb, enc->codec_tag ? enc->height : -enc->height);
+    avio_wl16(pb, 1); /* planes */
 
-    put_le16(pb, enc->bits_per_coded_sample ? enc->bits_per_coded_sample : 24); /* depth */
+    avio_wl16(pb, enc->bits_per_coded_sample ? enc->bits_per_coded_sample : 24); /* depth */
     /* compression type */
-    put_le32(pb, enc->codec_tag);
-    put_le32(pb, enc->width * enc->height * 3);
-    put_le32(pb, 0);
-    put_le32(pb, 0);
-    put_le32(pb, 0);
-    put_le32(pb, 0);
+    avio_wl32(pb, enc->codec_tag);
+    avio_wl32(pb, enc->width * enc->height * 3);
+    avio_wl32(pb, 0);
+    avio_wl32(pb, 0);
+    avio_wl32(pb, 0);
+    avio_wl32(pb, 0);
 
-    put_buffer(pb, enc->extradata, enc->extradata_size);
+    avio_write(pb, enc->extradata, enc->extradata_size);
 
     if (!for_asf && enc->extradata_size & 1)
-        put_byte(pb, 0);
+        avio_w8(pb, 0);
 }
 #endif //CONFIG_MUXERS
 
@@ -459,45 +480,54 @@ void ff_put_bmp_header(ByteIOContext *pb, AVCodecContext *enc, const AVCodecTag 
  * WAVEFORMATEX adds 'WORD  cbSize' and basically makes itself
  * an openended structure.
  */
-void ff_get_wav_header(ByteIOContext *pb, AVCodecContext *codec, int size)
+int ff_get_wav_header(AVIOContext *pb, AVCodecContext *codec, int size)
 {
     int id;
 
-    id = get_le16(pb);
+    id = avio_rl16(pb);
     codec->codec_type = AVMEDIA_TYPE_AUDIO;
     codec->codec_tag = id;
-    codec->channels = get_le16(pb);
-    codec->sample_rate = get_le32(pb);
-    codec->bit_rate = get_le32(pb) * 8;
-    codec->block_align = get_le16(pb);
+    codec->channels = avio_rl16(pb);
+    codec->sample_rate = avio_rl32(pb);
+    codec->bit_rate = avio_rl32(pb) * 8;
+    codec->block_align = avio_rl16(pb);
     if (size == 14) {  /* We're dealing with plain vanilla WAVEFORMAT */
         codec->bits_per_coded_sample = 8;
     }else
-        codec->bits_per_coded_sample = get_le16(pb);
+        codec->bits_per_coded_sample = avio_rl16(pb);
     if (size >= 18) {  /* We're obviously dealing with WAVEFORMATEX */
-        int cbSize = get_le16(pb); /* cbSize */
+        int cbSize = avio_rl16(pb); /* cbSize */
         size -= 18;
         cbSize = FFMIN(size, cbSize);
         if (cbSize >= 22 && id == 0xfffe) { /* WAVEFORMATEXTENSIBLE */
-            codec->bits_per_coded_sample = get_le16(pb);
-            codec->channel_layout = get_le32(pb); /* dwChannelMask */
-            id = get_le32(pb); /* 4 first bytes of GUID */
-            url_fskip(pb, 12); /* skip end of GUID */
+            codec->bits_per_coded_sample = avio_rl16(pb);
+            codec->channel_layout = avio_rl32(pb); /* dwChannelMask */
+            id = avio_rl32(pb); /* 4 first bytes of GUID */
+            avio_skip(pb, 12); /* skip end of GUID */
             cbSize -= 22;
             size -= 22;
         }
         codec->extradata_size = cbSize;
         if (cbSize > 0) {
             codec->extradata = av_mallocz(codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
-            get_buffer(pb, codec->extradata, codec->extradata_size);
+            if (!codec->extradata)
+                return AVERROR(ENOMEM);
+            avio_read(pb, codec->extradata, codec->extradata_size);
             size -= cbSize;
         }
 
         /* It is possible for the chunk to contain garbage at the end */
         if (size > 0)
-            url_fskip(pb, size);
+            avio_skip(pb, size);
     }
     codec->codec_id = ff_wav_codec_get_id(id, codec->bits_per_coded_sample);
+    if (codec->codec_id == CODEC_ID_AAC_LATM) {
+        /* channels and sample_rate values are those prior to applying SBR and/or PS */
+        codec->channels    = 0;
+        codec->sample_rate = 0;
+    }
+
+    return 0;
 }
 
 
@@ -519,6 +549,23 @@ enum CodecID ff_wav_codec_get_id(unsigned int tag, int bps)
     if (id == CODEC_ID_ADPCM_IMA_WAV && bps == 8)
         id = CODEC_ID_PCM_ZORK;
     return id;
+}
+
+int ff_get_bmp_header(AVIOContext *pb, AVStream *st)
+{
+    int tag1;
+    avio_rl32(pb); /* size */
+    st->codec->width = avio_rl32(pb);
+    st->codec->height = (int32_t)avio_rl32(pb);
+    avio_rl16(pb); /* planes */
+    st->codec->bits_per_coded_sample= avio_rl16(pb); /* depth */
+    tag1 = avio_rl32(pb);
+    avio_rl32(pb); /* ImageSize */
+    avio_rl32(pb); /* XPelsPerMeter */
+    avio_rl32(pb); /* YPelsPerMeter */
+    avio_rl32(pb); /* ClrUsed */
+    avio_rl32(pb); /* ClrImportant */
+    return tag1;
 }
 #endif // CONFIG_DEMUXERS
 

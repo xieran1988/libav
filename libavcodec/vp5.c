@@ -4,20 +4,20 @@
  *
  * Copyright (C) 2006  Aurelien Jacobs <aurel@gnuage.org>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -39,10 +39,10 @@ static int vp5_parse_header(VP56Context *s, const uint8_t *buf, int buf_size,
     VP56RangeCoder *c = &s->c;
     int rows, cols;
 
-    vp56_init_range_decoder(&s->c, buf, buf_size);
+    ff_vp56_init_range_decoder(&s->c, buf, buf_size);
     s->framep[VP56_FRAME_CURRENT]->key_frame = !vp56_rac_get(c);
     vp56_rac_get(c);
-    vp56_init_dequant(s, vp56_rac_gets(c, 6));
+    ff_vp56_init_dequant(s, vp56_rac_gets(c, 6));
     if (s->framep[VP56_FRAME_CURRENT]->key_frame)
     {
         vp56_rac_gets(c, 8);
@@ -254,7 +254,7 @@ static av_cold int vp5_decode_init(AVCodecContext *avctx)
 {
     VP56Context *s = avctx->priv_data;
 
-    vp56_init(avctx, 1, 0);
+    ff_vp56_init(avctx, 1, 0);
     s->vp56_coord_div = vp5_coord_div;
     s->parse_vector_adjustment = vp5_parse_vector_adjustment;
     s->parse_coeff = vp5_parse_coeff;
@@ -266,15 +266,15 @@ static av_cold int vp5_decode_init(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec vp5_decoder = {
+AVCodec ff_vp5_decoder = {
     "vp5",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_VP5,
     sizeof(VP56Context),
     vp5_decode_init,
     NULL,
-    vp56_free,
-    vp56_decode_frame,
+    ff_vp56_free,
+    ff_vp56_decode_frame,
     CODEC_CAP_DR1,
     .long_name = NULL_IF_CONFIG_SMALL("On2 VP5"),
 };

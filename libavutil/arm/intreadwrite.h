@@ -1,18 +1,18 @@
 /*
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -25,9 +25,9 @@
 #if HAVE_FAST_UNALIGNED && HAVE_INLINE_ASM
 
 #define AV_RN16 AV_RN16
-static av_always_inline uint16_t AV_RN16(const void *p)
+static av_always_inline unsigned AV_RN16(const void *p)
 {
-    uint16_t v;
+    unsigned v;
     __asm__ ("ldrh %0, %1" : "=r"(v) : "m"(*(const uint16_t *)p));
     return v;
 }

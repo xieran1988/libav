@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2001-2003 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -30,6 +30,8 @@
 #include "libavutil/avutil.h"
 
 #define STR(s)         AV_TOSTRING(s) //AV_STRINGIFY is too long
+
+#define FAST_BGR2YV12 //use 7-bit instead of 15-bit coefficients
 
 #define MAX_FILTER_SIZE 256
 
@@ -331,8 +333,8 @@ SwsFunc ff_yuv2rgb_init_altivec(SwsContext *c);
 SwsFunc ff_yuv2rgb_get_func_ptr_bfin(SwsContext *c);
 void ff_bfin_get_unscaled_swscale(SwsContext *c);
 void ff_yuv2packedX_altivec(SwsContext *c,
-                            const int16_t *lumFilter, int16_t **lumSrc, int lumFilterSize,
-                            const int16_t *chrFilter, int16_t **chrSrc, int chrFilterSize,
+                            const int16_t *lumFilter, const int16_t **lumSrc, int lumFilterSize,
+                            const int16_t *chrFilter, const int16_t **chrSrc, int chrFilterSize,
                             uint8_t *dest, int dstW, int dstY);
 
 const char *sws_format_name(enum PixelFormat format);
@@ -343,12 +345,12 @@ const char *sws_format_name(enum PixelFormat format);
         || (x)==PIX_FMT_GRAY16LE    \
         || (x)==PIX_FMT_RGB48BE     \
         || (x)==PIX_FMT_RGB48LE     \
-        || (x)==PIX_FMT_YUV420P16LE   \
-        || (x)==PIX_FMT_YUV422P16LE   \
-        || (x)==PIX_FMT_YUV444P16LE   \
-        || (x)==PIX_FMT_YUV420P16BE   \
-        || (x)==PIX_FMT_YUV422P16BE   \
-        || (x)==PIX_FMT_YUV444P16BE   \
+        || (x)==PIX_FMT_YUV420P16LE \
+        || (x)==PIX_FMT_YUV422P16LE \
+        || (x)==PIX_FMT_YUV444P16LE \
+        || (x)==PIX_FMT_YUV420P16BE \
+        || (x)==PIX_FMT_YUV422P16BE \
+        || (x)==PIX_FMT_YUV444P16BE \
     )
 #define isBE(x) ((x)&1)
 #define isPlanar8YUV(x) (           \
@@ -364,12 +366,12 @@ const char *sws_format_name(enum PixelFormat format);
     )
 #define isPlanarYUV(x)  (           \
         isPlanar8YUV(x)             \
-        || (x)==PIX_FMT_YUV420P16LE   \
-        || (x)==PIX_FMT_YUV422P16LE   \
-        || (x)==PIX_FMT_YUV444P16LE   \
-        || (x)==PIX_FMT_YUV420P16BE   \
-        || (x)==PIX_FMT_YUV422P16BE   \
-        || (x)==PIX_FMT_YUV444P16BE   \
+        || (x)==PIX_FMT_YUV420P16LE \
+        || (x)==PIX_FMT_YUV422P16LE \
+        || (x)==PIX_FMT_YUV444P16LE \
+        || (x)==PIX_FMT_YUV420P16BE \
+        || (x)==PIX_FMT_YUV422P16BE \
+        || (x)==PIX_FMT_YUV444P16BE \
     )
 #define isYUV(x)        (           \
            (x)==PIX_FMT_UYVY422     \
@@ -378,6 +380,7 @@ const char *sws_format_name(enum PixelFormat format);
     )
 #define isGray(x)       (           \
            (x)==PIX_FMT_GRAY8       \
+        || (x)==PIX_FMT_Y400A      \
         || (x)==PIX_FMT_GRAY16BE    \
         || (x)==PIX_FMT_GRAY16LE    \
     )
@@ -440,9 +443,10 @@ const char *sws_format_name(enum PixelFormat format);
         || (x)==PIX_FMT_BGR32_1     \
         || (x)==PIX_FMT_RGB32       \
         || (x)==PIX_FMT_RGB32_1     \
+        || (x)==PIX_FMT_Y400A       \
         || (x)==PIX_FMT_YUVA420P    \
     )
-#define usePal(x) (av_pix_fmt_descriptors[x].flags & PIX_FMT_PAL)
+#define usePal(x) ((av_pix_fmt_descriptors[x].flags & PIX_FMT_PAL) || (x) == PIX_FMT_Y400A)
 
 extern const uint64_t ff_dither4[2];
 extern const uint64_t ff_dither8[2];

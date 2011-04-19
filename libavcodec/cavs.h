@@ -2,20 +2,20 @@
  * Chinese AVS video (AVS1-P2, JiZhun profile) decoder.
  * Copyright (c) 2006  Stefan Gehrer <stefan.gehrer@gmx.de>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -24,6 +24,7 @@
 
 #include "dsputil.h"
 #include "mpegvideo.h"
+#include "cavsdsp.h"
 
 #define SLICE_MAX_START_CODE    0x000001af
 #define EXT_START_CODE          0x000001b5
@@ -153,6 +154,7 @@ struct dec_2dvlc {
 
 typedef struct {
     MpegEncContext s;
+    CAVSDSPContext cdsp;
     Picture picture; ///< currently decoded frame
     Picture DPB[2];  ///< reference frames
     int dist[2];     ///< temporal distances from current frame to ref frames

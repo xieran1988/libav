@@ -13,20 +13,20 @@
  * If you use gcc, then version 4.1 or later and -fomit-frame-pointer is
  * strongly recommended.
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -95,7 +95,7 @@ static void body(uint32_t ABCD[4], uint32_t X[16]){
 
 #if HAVE_BIGENDIAN
     for(i=0; i<16; i++)
-        X[i]= bswap_32(X[i]);
+        X[i]= av_bswap32(X[i]);
 #endif
 
 #if CONFIG_SMALL
@@ -141,7 +141,7 @@ void av_md5_update(AVMD5 *ctx, const uint8_t *src, const int len){
 
 void av_md5_final(AVMD5 *ctx, uint8_t *dst){
     int i;
-    uint64_t finalcount= le2me_64(ctx->len<<3);
+    uint64_t finalcount= av_le2ne64(ctx->len<<3);
 
     av_md5_update(ctx, "\200", 1);
     while((ctx->len & 63)!=56)
@@ -150,7 +150,7 @@ void av_md5_final(AVMD5 *ctx, uint8_t *dst){
     av_md5_update(ctx, (uint8_t*)&finalcount, 8);
 
     for(i=0; i<4; i++)
-        ((uint32_t*)dst)[i]= le2me_32(ctx->ABCD[3-i]);
+        ((uint32_t*)dst)[i]= av_le2ne32(ctx->ABCD[3-i]);
 }
 
 void av_md5_sum(uint8_t *dst, const uint8_t *src, const int len){

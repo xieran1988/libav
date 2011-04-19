@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2008  David Conrad
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -42,7 +42,7 @@ static int dirac_header(AVFormatContext *s, int idx)
     st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     st->codec->codec_id = CODEC_ID_DIRAC;
     // dirac in ogg always stores timestamps as though the video were interlaced
-    st->time_base = (AVRational){st->codec->time_base.num, 2*st->codec->time_base.den};
+    av_set_pts_info(st, 64, st->codec->time_base.num, 2*st->codec->time_base.den);
     return 1;
 }
 
@@ -79,8 +79,7 @@ static int old_dirac_header(AVFormatContext *s, int idx)
 
     st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     st->codec->codec_id = CODEC_ID_DIRAC;
-    st->time_base.den = AV_RB32(buf+8);
-    st->time_base.num = AV_RB32(buf+12);
+    av_set_pts_info(st, 64, AV_RB32(buf+12), AV_RB32(buf+8));
     return 1;
 }
 

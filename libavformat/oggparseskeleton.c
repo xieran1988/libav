@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2010 David Conrad
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -60,8 +60,9 @@ static int skeleton_header(AVFormatContext *s, int idx)
         start_den = AV_RL64(buf+20);
 
         if (start_den) {
-            av_reduce(&start_time, &st->time_base.den, start_num, start_den, INT_MAX);
-            st->time_base.num = 1;
+            int base_den;
+            av_reduce(&start_time, &base_den, start_num, start_den, INT_MAX);
+            av_set_pts_info(st, 64, 1, base_den);
             os->lastpts =
             st->start_time = start_time;
         }

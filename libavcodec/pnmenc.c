@@ -2,20 +2,20 @@
  * PNM image format
  * Copyright (c) 2002, 2003 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -113,7 +113,7 @@ static int pnm_encode_frame(AVCodecContext *avctx, unsigned char *outbuf,
 
 
 #if CONFIG_PGM_ENCODER
-AVCodec pgm_encoder = {
+AVCodec ff_pgm_encoder = {
     "pgm",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_PGM,
@@ -126,7 +126,7 @@ AVCodec pgm_encoder = {
 #endif
 
 #if CONFIG_PGMYUV_ENCODER
-AVCodec pgmyuv_encoder = {
+AVCodec ff_pgmyuv_encoder = {
     "pgmyuv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_PGMYUV,
@@ -139,7 +139,7 @@ AVCodec pgmyuv_encoder = {
 #endif
 
 #if CONFIG_PPM_ENCODER
-AVCodec ppm_encoder = {
+AVCodec ff_ppm_encoder = {
     "ppm",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_PPM,
@@ -152,7 +152,7 @@ AVCodec ppm_encoder = {
 #endif
 
 #if CONFIG_PBM_ENCODER
-AVCodec pbm_encoder = {
+AVCodec ff_pbm_encoder = {
     "pbm",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_PBM,

@@ -3,20 +3,20 @@
  *
  * Copyright (C) 2008-2009 Splitted-Desktop Systems
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -44,7 +44,7 @@ static int vaapi_mpeg2_start_frame(AVCodecContext *avctx, av_unused const uint8_
     VAIQMatrixBufferMPEG2 *iq_matrix;
     int i;
 
-    dprintf(avctx, "vaapi_mpeg2_start_frame()\n");
+    av_dlog(avctx, "vaapi_mpeg2_start_frame()\n");
 
     vactx->slice_param_size = sizeof(VASliceParameterBufferMPEG2);
 
@@ -111,7 +111,7 @@ static int vaapi_mpeg2_decode_slice(AVCodecContext *avctx, const uint8_t *buffer
     GetBitContext gb;
     uint32_t start_code, quantiser_scale_code, intra_slice_flag, macroblock_offset;
 
-    dprintf(avctx, "vaapi_mpeg2_decode_slice(): buffer %p, size %d\n", buffer, size);
+    av_dlog(avctx, "vaapi_mpeg2_decode_slice(): buffer %p, size %d\n", buffer, size);
 
     /* Determine macroblock_offset */
     init_get_bits(&gb, buffer, 8 * size);
@@ -138,7 +138,7 @@ static int vaapi_mpeg2_decode_slice(AVCodecContext *avctx, const uint8_t *buffer
     return 0;
 }
 
-AVHWAccel mpeg2_vaapi_hwaccel = {
+AVHWAccel ff_mpeg2_vaapi_hwaccel = {
     .name           = "mpeg2_vaapi",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_MPEG2VIDEO,

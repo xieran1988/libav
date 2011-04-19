@@ -2,20 +2,20 @@
  * LCL (LossLess Codec Library) Codec
  * Copyright (c) 2002-2004 Roberto Togni
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -117,6 +117,7 @@ static unsigned int mszh_decomp(const unsigned char * srcptr, int srclen, unsign
 }
 
 
+#if CONFIG_ZLIB_DECODER
 /**
  * \brief decompress a zlib-compressed data block into decomp_buf
  * \param src compressed input buffer
@@ -124,7 +125,6 @@ static unsigned int mszh_decomp(const unsigned char * srcptr, int srclen, unsign
  * \param offset offset in decomp_buf
  * \param expected expected decompressed length
  */
-#if CONFIG_ZLIB_DECODER
 static int zlib_decomp(AVCodecContext *avctx, const uint8_t *src, int src_len, int offset, int expected)
 {
     LclDecContext *c = avctx->priv_data;
@@ -609,7 +609,7 @@ static av_cold int decode_end(AVCodecContext *avctx)
 }
 
 #if CONFIG_MSZH_DECODER
-AVCodec mszh_decoder = {
+AVCodec ff_mszh_decoder = {
     "mszh",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MSZH,
@@ -624,7 +624,7 @@ AVCodec mszh_decoder = {
 #endif
 
 #if CONFIG_ZLIB_DECODER
-AVCodec zlib_decoder = {
+AVCodec ff_zlib_decoder = {
     "zlib",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ZLIB,

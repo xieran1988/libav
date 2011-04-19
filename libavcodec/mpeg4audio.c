@@ -3,20 +3,20 @@
  * Copyright (c) 2008 Baptiste Coudurier <baptiste.coudurier@free.fr>
  * Copyright (c) 2009 Alex Converse <alex.converse@gmail.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -131,6 +131,14 @@ int ff_mpeg4audio_get_config(MPEG4AudioConfig *c, const uint8_t *buf, int buf_si
                 get_bits1(&gb); // skip 1 bit
         }
     }
+
+    //PS requires SBR
+    if (!c->sbr)
+        c->ps = 0;
+    //Limit implicit PS to the HE-AACv2 Profile
+    if ((c->ps == -1 && c->object_type != AOT_AAC_LC) || c->channels & ~0x01)
+        c->ps = 0;
+
     return specific_config_bitindex;
 }
 

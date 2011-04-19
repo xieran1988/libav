@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2010 Mans Rullgard <mans@mansr.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -29,7 +29,7 @@ function ff_dca_lfe_fir_neon, export=1
         cmp             r3,  #32
         moveq           r6,  #256/32
         movne           r6,  #256/64
-NOVFP   vldr            d0,  [sp, #16]          @ scale, bias
+NOVFP   vldr            s0,  [sp, #16]          @ scale
         mov             lr,  #-16
 1:
         vmov.f32        q2,  #0.0               @ v0
@@ -51,8 +51,7 @@ NOVFP   vldr            d0,  [sp, #16]          @ scale, bias
         vadd.f32        d4,  d4,  d5
         vadd.f32        d6,  d6,  d7
         vpadd.f32       d4,  d4,  d6
-        vdup.32         d5,  d0[1]
-        vmla.f32        d5,  d4,  d0[0]
+        vmul.f32        d5,  d4,  d0[0]
         vst1.32         {d5[0]},  [r0,:32]!
         vst1.32         {d5[1]},  [r4,:32]!
         bne             1b

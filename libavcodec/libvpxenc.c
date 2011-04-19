@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2010, Google, Inc.
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -36,13 +36,13 @@
  * One encoded frame returned from the library.
  */
 struct FrameListData {
-    void *buf;                       /**≤ compressed data buffer */
-    size_t sz;                       /**≤ length of compressed data */
-    int64_t pts;                     /**≤ time stamp to show frame
+    void *buf;                       /**< compressed data buffer */
+    size_t sz;                       /**< length of compressed data */
+    int64_t pts;                     /**< time stamp to show frame
                                           (in timebase units) */
-    unsigned long duration;          /**≤ duration to show frame
+    unsigned long duration;          /**< duration to show frame
                                           (in timebase units) */
-    uint32_t flags;                  /**≤ flags for this frame */
+    uint32_t flags;                  /**< flags for this frame */
     struct FrameListData *next;
 };
 
@@ -237,14 +237,28 @@ static av_cold int vp8_init(AVCodecContext *avctx)
     enccfg.rc_target_bitrate = av_rescale_rnd(avctx->bit_rate, 1, 1000,
                                               AV_ROUND_NEAR_INF);
 
-    //convert [1,51] -> [0,63]
-    enccfg.rc_min_quantizer = ((avctx->qmin * 5 + 1) >> 2) - 1;
-    enccfg.rc_max_quantizer = ((avctx->qmax * 5 + 1) >> 2) - 1;
+    enccfg.rc_min_quantizer = avctx->qmin;
+    enccfg.rc_max_quantizer = avctx->qmax;
+    enccfg.rc_dropframe_thresh = avctx->frame_skip_threshold;
 
+    //0-100 (0 => CBR, 100 => VBR)
+    enccfg.rc_2pass_vbr_bias_pct           = round(avctx->qcompress * 100);
+    enccfg.rc_2pass_vbr_minsection_pct     =
+        avctx->rc_min_rate * 100LL / avctx->bit_rate;
+    if (avctx->rc_max_rate)
+        enccfg.rc_2pass_vbr_maxsection_pct =
+            avctx->rc_max_rate * 100LL / avctx->bit_rate;
+
+    if (avctx->rc_buffer_size)
+        enccfg.rc_buf_sz         =
+            avctx->rc_buffer_size * 1000LL / avctx->bit_rate;
+    if (avctx->rc_initial_buffer_occupancy)
+        enccfg.rc_buf_initial_sz =
+            avctx->rc_initial_buffer_occupancy * 1000LL / avctx->bit_rate;
+    enccfg.rc_buf_optimal_sz     = enccfg.rc_buf_sz * 5 / 6;
+
+    //_enc_init() will balk if kf_min_dist differs from max w/VPX_KF_AUTO
     if (avctx->keyint_min == avctx->gop_size)
-        enccfg.kf_mode = VPX_KF_FIXED;
-    //_enc_init() will balk if kf_min_dist is set in this case
-    if (enccfg.kf_mode != VPX_KF_AUTO)
         enccfg.kf_min_dist = avctx->keyint_min;
     enccfg.kf_max_dist     = avctx->gop_size;
 
@@ -278,6 +292,11 @@ static av_cold int vp8_init(AVCodecContext *avctx)
     }
 
     ctx->deadline = VPX_DL_GOOD_QUALITY;
+    /* 0-3: For non-zero values the encoder increasingly optimizes for reduced
+       complexity playback on low powered devices at the expense of encode
+       quality. */
+   if (avctx->profile != FF_PROFILE_UNKNOWN)
+       enccfg.g_profile = avctx->profile;
 
     dump_enc_cfg(avctx, &enccfg);
     /* Construct Encoder Context */
@@ -291,6 +310,7 @@ static av_cold int vp8_init(AVCodecContext *avctx)
     av_log(avctx, AV_LOG_DEBUG, "vpx_codec_control\n");
     codecctl_int(avctx, VP8E_SET_CPUUSED,           cpuused);
     codecctl_int(avctx, VP8E_SET_NOISE_SENSITIVITY, avctx->noise_reduction);
+    codecctl_int(avctx, VP8E_SET_TOKEN_PARTITIONS,  av_log2(avctx->slices));
 
     //provide dummy value to initialize wrapper, values will be updated each _encode()
     vpx_img_wrap(&ctx->rawimg, VPX_IMG_FMT_I420, avctx->width, avctx->height, 1,
@@ -460,7 +480,7 @@ static int vp8_encode(AVCodecContext *avctx, uint8_t *buf, int buf_size,
     coded_size = queue_frames(avctx, buf, buf_size, avctx->coded_frame);
 
     if (!frame && avctx->flags & CODEC_FLAG_PASS1) {
-        unsigned int b64_size = ((ctx->twopass_stats.sz + 2) / 3) * 4 + 1;
+        unsigned int b64_size = AV_BASE64_SIZE(ctx->twopass_stats.sz);
 
         avctx->stats_out = av_malloc(b64_size);
         if (!avctx->stats_out) {
@@ -474,7 +494,7 @@ static int vp8_encode(AVCodecContext *avctx, uint8_t *buf, int buf_size,
     return coded_size;
 }
 
-AVCodec libvpx_encoder = {
+AVCodec ff_libvpx_encoder = {
     "libvpx",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_VP8,

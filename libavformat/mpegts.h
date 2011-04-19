@@ -2,20 +2,20 @@
  * MPEG2 transport stream defines
  * Copyright (c) 2003 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -48,6 +48,7 @@
 #define STREAM_TYPE_PRIVATE_SECTION 0x05
 #define STREAM_TYPE_PRIVATE_DATA    0x06
 #define STREAM_TYPE_AUDIO_AAC       0x0f
+#define STREAM_TYPE_AUDIO_AAC_LATM  0x11
 #define STREAM_TYPE_VIDEO_MPEG4     0x10
 #define STREAM_TYPE_VIDEO_H264      0x1b
 #define STREAM_TYPE_VIDEO_VC1       0xea
@@ -62,5 +63,23 @@ MpegTSContext *ff_mpegts_parse_open(AVFormatContext *s);
 int ff_mpegts_parse_packet(MpegTSContext *ts, AVPacket *pkt,
                            const uint8_t *buf, int len);
 void ff_mpegts_parse_close(MpegTSContext *ts);
+
+/**
+ * Parse an MPEG-2 descriptor
+ * @param[in] fc                    Format context (used for logging only)
+ * @param st                        Stream
+ * @param stream_type               STREAM_TYPE_xxx
+ * @param pp                        Descriptor buffer pointer
+ * @param desc_list_end             End of buffer
+ * @param mp4_dec_config_descr_len  Length of 'mp4_dec_config_descr', or zero if not present
+ * @param mp4_es_id
+ * @param pid
+ * @param mp4_dec_config_descr
+ * @return <0 to stop processing
+ */
+int ff_parse_mpeg2_descriptor(AVFormatContext *fc, AVStream *st, int stream_type,
+                              const uint8_t **pp, const uint8_t *desc_list_end,
+                              int mp4_dec_config_descr_len, int mp4_es_id, int pid,
+                              uint8_t *mp4_dec_config_descr);
 
 #endif /* AVFORMAT_MPEGTS_H */

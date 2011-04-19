@@ -2,20 +2,20 @@
  * Interface to libfaac for aac encoding
  * Copyright (c) 2002 Gildas Bazin <gbazin@netcourrier.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -124,10 +124,11 @@ static int Faac_encode_frame(AVCodecContext *avctx,
 {
     FaacAudioContext *s = avctx->priv_data;
     int bytes_written;
+    int num_samples = data ? avctx->frame_size : 0;
 
     bytes_written = faacEncEncode(s->faac_handle,
                                   data,
-                                  avctx->frame_size * avctx->channels,
+                                  num_samples * avctx->channels,
                                   frame,
                                   buf_size);
 
@@ -145,7 +146,15 @@ static av_cold int Faac_encode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec libfaac_encoder = {
+static const AVProfile profiles[] = {
+    { FF_PROFILE_AAC_MAIN, "Main" },
+    { FF_PROFILE_AAC_LOW,  "LC"   },
+    { FF_PROFILE_AAC_SSR,  "SSR"  },
+    { FF_PROFILE_AAC_LTP,  "LTP"  },
+    { FF_PROFILE_UNKNOWN },
+};
+
+AVCodec ff_libfaac_encoder = {
     "libfaac",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_AAC,
@@ -153,6 +162,8 @@ AVCodec libfaac_encoder = {
     Faac_encode_init,
     Faac_encode_frame,
     Faac_encode_close,
-    .sample_fmts = (const enum SampleFormat[]){SAMPLE_FMT_S16,SAMPLE_FMT_NONE},
+    .capabilities = CODEC_CAP_SMALL_LAST_FRAME | CODEC_CAP_DELAY,
+    .sample_fmts = (const enum AVSampleFormat[]){AV_SAMPLE_FMT_S16,AV_SAMPLE_FMT_NONE},
     .long_name = NULL_IF_CONFIG_SMALL("libfaac AAC (Advanced Audio Codec)"),
+    .profiles = NULL_IF_CONFIG_SMALL(profiles),
 };

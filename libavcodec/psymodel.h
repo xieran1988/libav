@@ -2,20 +2,20 @@
  * audio encoder psychoacoustic model
  * Copyright (C) 2008 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -26,6 +26,8 @@
 
 /** maximum possible number of bands */
 #define PSY_MAX_BANDS 128
+/** maximum number of channels */
+#define PSY_MAX_CHANS 20
 
 /**
  * single band psychoacoustic information
@@ -62,6 +64,13 @@ typedef struct FFPsyContext {
     int     *num_bands;               ///< number of scalefactor bands for possible frame sizes
     int num_lens;                     ///< number of scalefactor band sets
 
+    float pe[PSY_MAX_CHANS];          ///< total PE for each channel in the frame
+
+    struct {
+        int size;                     ///< size of the bitresevoir in bits
+        int bits;                     ///< number of bits used in the bitresevoir
+    } bitres;
+
     void* model_priv_data;            ///< psychoacoustic model implementation private data
 } FFPsyContext;
 
@@ -72,7 +81,7 @@ typedef struct FFPsyModel {
     const char *name;
     int  (*init)   (FFPsyContext *apc);
     FFPsyWindowInfo (*window)(FFPsyContext *ctx, const int16_t *audio, const int16_t *la, int channel, int prev_type);
-    void (*analyze)(FFPsyContext *ctx, int channel, const float *coeffs, FFPsyWindowInfo *wi);
+    void (*analyze)(FFPsyContext *ctx, int channel, const float *coeffs, const FFPsyWindowInfo *wi);
     void (*end)    (FFPsyContext *apc);
 } FFPsyModel;
 
@@ -116,7 +125,7 @@ FFPsyWindowInfo ff_psy_suggest_window(FFPsyContext *ctx,
  * @param wi      window information
  */
 void ff_psy_set_band_info(FFPsyContext *ctx, int channel, const float *coeffs,
-                          FFPsyWindowInfo *wi);
+                          const FFPsyWindowInfo *wi);
 
 /**
  * Cleanup model context at the end.

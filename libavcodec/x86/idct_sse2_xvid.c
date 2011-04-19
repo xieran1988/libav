@@ -9,7 +9,7 @@
  *
  * Originally from dct/x86_asm/fdct_sse2_skal.asm in Xvid.
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
  * Vertical pass is an implementation of the scheme:
  *  Loeffler C., Ligtenberg A., and Moschytz C.S.:
@@ -23,22 +23,23 @@
  *
  * More details at http://skal.planet-d.net/coding/dct.html
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with FFmpeg; if not, write to the Free Software Foundation,
+ * along with Libav; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "libavcodec/dsputil.h"
+#include "libavutil/x86_cpu.h"
 #include "idct_xvid.h"
 #include "dsputil_mmx.h"
 
@@ -355,7 +356,7 @@ inline void ff_idct_xvid_sse2(short *block)
     TEST_TWO_ROWS("5*16(%0)", "6*16(%0)", "%%eax", "%%edx", CLEAR_ODD(ROW5), CLEAR_EVEN(ROW6))
     TEST_ONE_ROW("7*16(%0)", "%%esi", CLEAR_ODD(ROW7))
     iLLM_HEAD
-    ASMALIGN(4)
+    ".p2align 4 \n\t"
     JNZ("%%ecx", "2f")
     JNZ("%%eax", "3f")
     JNZ("%%edx", "4f")
@@ -379,17 +380,24 @@ inline void ff_idct_xvid_sse2(short *block)
     "6:                                                          \n\t"
     : "+r"(block)
     :
-    : "%eax", "%ecx", "%edx", "%esi", "memory");
+    : XMM_CLOBBERS("%xmm0" , "%xmm1" , "%xmm2" , "%xmm3" ,
+                   "%xmm4" , "%xmm5" , "%xmm6" , "%xmm7" ,)
+#if ARCH_X86_64
+      XMM_CLOBBERS("%xmm8" , "%xmm9" , "%xmm10", "%xmm11",
+                   "%xmm12", "%xmm13", "%xmm14",)
+#endif
+      "%eax", "%ecx", "%edx", "%esi", "memory"
+    );
 }
 
 void ff_idct_xvid_sse2_put(uint8_t *dest, int line_size, short *block)
 {
     ff_idct_xvid_sse2(block);
-    put_pixels_clamped_mmx(block, dest, line_size);
+    ff_put_pixels_clamped_mmx(block, dest, line_size);
 }
 
 void ff_idct_xvid_sse2_add(uint8_t *dest, int line_size, short *block)
 {
     ff_idct_xvid_sse2(block);
-    add_pixels_clamped_mmx(block, dest, line_size);
+    ff_add_pixels_clamped_mmx(block, dest, line_size);
 }

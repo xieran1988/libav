@@ -3,23 +3,24 @@
  * Copyright (c) 2006, 2007 Michel Bardiaux
  * Copyright (c) 2009 Daniel Verkamp <daniel at drv.nu>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 #include "bytestream.h"
 #include "bmp.h"
@@ -33,6 +34,32 @@ static av_cold int bmp_encode_init(AVCodecContext *avctx){
     avcodec_get_frame_defaults((AVFrame*)&s->picture);
     avctx->coded_frame = (AVFrame*)&s->picture;
 
+    switch (avctx->pix_fmt) {
+    case PIX_FMT_BGR24:
+        avctx->bits_per_coded_sample = 24;
+        break;
+    case PIX_FMT_RGB555:
+        avctx->bits_per_coded_sample = 16;
+        break;
+    case PIX_FMT_RGB565:
+        avctx->bits_per_coded_sample = 16;
+        break;
+    case PIX_FMT_RGB8:
+    case PIX_FMT_BGR8:
+    case PIX_FMT_RGB4_BYTE:
+    case PIX_FMT_BGR4_BYTE:
+    case PIX_FMT_GRAY8:
+    case PIX_FMT_PAL8:
+        avctx->bits_per_coded_sample = 8;
+        break;
+    case PIX_FMT_MONOBLACK:
+        avctx->bits_per_coded_sample = 1;
+        break;
+    default:
+        av_log(avctx, AV_LOG_INFO, "unsupported pixel format\n");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -42,21 +69,15 @@ static int bmp_encode_frame(AVCodecContext *avctx, unsigned char *buf, int buf_s
     AVFrame * const p= (AVFrame*)&s->picture;
     int n_bytes_image, n_bytes_per_row, n_bytes, i, n, hsize;
     const uint32_t *pal = NULL;
-    int pad_bytes_per_row, bit_count, pal_entries = 0, compression = BMP_RGB;
+    int pad_bytes_per_row, pal_entries = 0, compression = BMP_RGB;
+    int bit_count = avctx->bits_per_coded_sample;
     uint8_t *ptr;
     unsigned char* buf0 = buf;
     *p = *pict;
     p->pict_type= FF_I_TYPE;
     p->key_frame= 1;
     switch (avctx->pix_fmt) {
-    case PIX_FMT_BGR24:
-        bit_count = 24;
-        break;
-    case PIX_FMT_RGB555:
-        bit_count = 16;
-        break;
     case PIX_FMT_RGB565:
-        bit_count = 16;
         compression = BMP_BITFIELDS;
         pal = rgb565_masks; // abuse pal to hold color masks
         pal_entries = 3;
@@ -66,16 +87,13 @@ static int bmp_encode_frame(AVCodecContext *avctx, unsigned char *buf, int buf_s
     case PIX_FMT_RGB4_BYTE:
     case PIX_FMT_BGR4_BYTE:
     case PIX_FMT_GRAY8:
+        ff_set_systematic_pal2((uint32_t*)p->data[1], avctx->pix_fmt);
     case PIX_FMT_PAL8:
-        bit_count = 8;
         pal = (uint32_t *)p->data[1];
         break;
     case PIX_FMT_MONOBLACK:
-        bit_count = 1;
         pal = monoblack_pal;
         break;
-    default:
-        return -1;
     }
     if (pal && !pal_entries) pal_entries = 1 << bit_count;
     n_bytes_per_row = ((int64_t)avctx->width * (int64_t)bit_count + 7LL) >> 3LL;
@@ -131,7 +149,7 @@ static int bmp_encode_frame(AVCodecContext *avctx, unsigned char *buf, int buf_s
     return n_bytes;
 }
 
-AVCodec bmp_encoder = {
+AVCodec ff_bmp_encoder = {
     "bmp",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_BMP,

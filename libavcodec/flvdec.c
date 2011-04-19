@@ -1,25 +1,26 @@
 /*
  * FLV decoding.
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "mpegvideo.h"
 #include "h263.h"
 #include "flv.h"
+#include "libavutil/imgutils.h"
 
 void ff_flv2_decode_ac_esc(GetBitContext *gb, int *level, int *run, int *last){
     int is11 = get_bits1(gb);
@@ -82,7 +83,7 @@ int ff_flv_decode_picture_header(MpegEncContext *s)
         width = height = 0;
         break;
     }
-    if(avcodec_check_dimensions(s->avctx, width, height))
+    if(av_image_check_size(width, height, 0, s->avctx))
         return -1;
     s->width = width;
     s->height = height;
@@ -117,7 +118,7 @@ int ff_flv_decode_picture_header(MpegEncContext *s)
     return 0;
 }
 
-AVCodec flv_decoder = {
+AVCodec ff_flv_decoder = {
     "flv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_FLV1,
@@ -127,6 +128,7 @@ AVCodec flv_decoder = {
     ff_h263_decode_end,
     ff_h263_decode_frame,
     CODEC_CAP_DRAW_HORIZ_BAND | CODEC_CAP_DR1,
+    .max_lowres= 3,
     .long_name= NULL_IF_CONFIG_SMALL("Flash Video (FLV) / Sorenson Spark / Sorenson H.263"),
     .pix_fmts= ff_pixfmt_list_420,
 };

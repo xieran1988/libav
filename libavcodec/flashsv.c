@@ -3,20 +3,20 @@
  * Copyright (C) 2004 Alex Beregszaszi
  * Copyright (C) 2006 Benjamin Larsson
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -133,8 +133,7 @@ static int flashsv_decode_frame(AVCodecContext *avctx,
     /* the block size could change between frames, make sure the buffer
      * is large enough, if not, get a larger one */
     if(s->block_size < s->block_width*s->block_height) {
-        if (s->tmpblock != NULL)
-            av_free(s->tmpblock);
+        av_free(s->tmpblock);
         if ((s->tmpblock = av_malloc(3*s->block_width*s->block_height)) == NULL) {
             av_log(avctx, AV_LOG_ERROR, "Can't allocate decompression buffer.\n");
             return -1;
@@ -243,14 +242,13 @@ static av_cold int flashsv_decode_end(AVCodecContext *avctx)
         avctx->release_buffer(avctx, &s->frame);
 
     /* free the tmpblock */
-    if (s->tmpblock != NULL)
-        av_free(s->tmpblock);
+    av_free(s->tmpblock);
 
     return 0;
 }
 
 
-AVCodec flashsv_decoder = {
+AVCodec ff_flashsv_decoder = {
     "flashsv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_FLASHSV,

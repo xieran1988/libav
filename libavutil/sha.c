@@ -4,20 +4,20 @@
  * based on public domain SHA-1 code by Steve Reid <steve@edmweb.com>
  * and on BSD-licensed SHA-2 code by Aaron D. Gifford
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -43,7 +43,7 @@ const int av_sha_size = sizeof(AVSHA);
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
 /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
-#define blk0(i) (block[i] = be2me_32(((const uint32_t*)buffer)[i]))
+#define blk0(i) (block[i] = av_be2ne32(((const uint32_t*)buffer)[i]))
 #define blk(i)  (block[i] = rol(block[i-3] ^ block[i-8] ^ block[i-14] ^ block[i-16], 1))
 
 #define R0(v,w,x,y,z,i) z += ((w&(x^y))^y)     + blk0(i) + 0x5A827999 + rol(v, 5); w = rol(w, 30);
@@ -68,7 +68,7 @@ static void sha1_transform(uint32_t state[5], const uint8_t buffer[64])
     for (i = 0; i < 80; i++) {
         int t;
         if (i < 16)
-            t = be2me_32(((uint32_t*)buffer)[i]);
+            t = av_be2ne32(((uint32_t*)buffer)[i]);
         else
             t = rol(block[i-3] ^ block[i-8] ^ block[i-14] ^ block[i-16], 1);
         block[i] = t;
@@ -314,7 +314,7 @@ void av_sha_update(AVSHA* ctx, const uint8_t* data, unsigned int len)
 void av_sha_final(AVSHA* ctx, uint8_t *digest)
 {
     int i;
-    uint64_t finalcount = be2me_64(ctx->count << 3);
+    uint64_t finalcount = av_be2ne64(ctx->count << 3);
 
     av_sha_update(ctx, "\200", 1);
     while ((ctx->count & 63) != 56)
