@@ -5,20 +5,20 @@
  *
  * mostly by Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -38,7 +38,7 @@ static inline void sad8_1_mmx(uint8_t *blk1, uint8_t *blk2, int stride, int h)
 {
     x86_reg len= -(stride*h);
     __asm__ volatile(
-        ASMALIGN(4)
+        ".p2align 4                     \n\t"
         "1:                             \n\t"
         "movq (%1, %%"REG_a"), %%mm0    \n\t"
         "movq (%2, %%"REG_a"), %%mm2    \n\t"
@@ -73,7 +73,7 @@ static inline void sad8_1_mmx(uint8_t *blk1, uint8_t *blk2, int stride, int h)
 static inline void sad8_1_mmx2(uint8_t *blk1, uint8_t *blk2, int stride, int h)
 {
     __asm__ volatile(
-        ASMALIGN(4)
+        ".p2align 4                     \n\t"
         "1:                             \n\t"
         "movq (%1), %%mm0               \n\t"
         "movq (%1, %3), %%mm1           \n\t"
@@ -94,27 +94,24 @@ static int sad16_sse2(void *v, uint8_t *blk2, uint8_t *blk1, int stride, int h)
 {
     int ret;
     __asm__ volatile(
-        "pxor %%xmm6, %%xmm6            \n\t"
-        ASMALIGN(4)
+        "pxor %%xmm2, %%xmm2            \n\t"
+        ".p2align 4                     \n\t"
         "1:                             \n\t"
         "movdqu (%1), %%xmm0            \n\t"
-        "movdqu (%1, %3), %%xmm1        \n\t"
+        "movdqu (%1, %4), %%xmm1        \n\t"
         "psadbw (%2), %%xmm0            \n\t"
-        "psadbw (%2, %3), %%xmm1        \n\t"
-        "paddw %%xmm0, %%xmm6           \n\t"
-        "paddw %%xmm1, %%xmm6           \n\t"
-        "lea (%1,%3,2), %1              \n\t"
-        "lea (%2,%3,2), %2              \n\t"
+        "psadbw (%2, %4), %%xmm1        \n\t"
+        "paddw %%xmm0, %%xmm2           \n\t"
+        "paddw %%xmm1, %%xmm2           \n\t"
+        "lea (%1,%4,2), %1              \n\t"
+        "lea (%2,%4,2), %2              \n\t"
         "sub $2, %0                     \n\t"
         " jg 1b                         \n\t"
-        : "+r" (h), "+r" (blk1), "+r" (blk2)
+        "movhlps %%xmm2, %%xmm0         \n\t"
+        "paddw   %%xmm0, %%xmm2         \n\t"
+        "movd    %%xmm2, %3             \n\t"
+        : "+r" (h), "+r" (blk1), "+r" (blk2), "=r"(ret)
         : "r" ((x86_reg)stride)
-    );
-    __asm__ volatile(
-        "movhlps %%xmm6, %%xmm0         \n\t"
-        "paddw   %%xmm0, %%xmm6         \n\t"
-        "movd    %%xmm6, %0             \n\t"
-        : "=r"(ret)
     );
     return ret;
 }
@@ -122,7 +119,7 @@ static int sad16_sse2(void *v, uint8_t *blk2, uint8_t *blk1, int stride, int h)
 static inline void sad8_x2a_mmx2(uint8_t *blk1, uint8_t *blk2, int stride, int h)
 {
     __asm__ volatile(
-        ASMALIGN(4)
+        ".p2align 4                     \n\t"
         "1:                             \n\t"
         "movq (%1), %%mm0               \n\t"
         "movq (%1, %3), %%mm1           \n\t"
@@ -146,7 +143,7 @@ static inline void sad8_y2a_mmx2(uint8_t *blk1, uint8_t *blk2, int stride, int h
     __asm__ volatile(
         "movq (%1), %%mm0               \n\t"
         "add %3, %1                     \n\t"
-        ASMALIGN(4)
+        ".p2align 4                     \n\t"
         "1:                             \n\t"
         "movq (%1), %%mm1               \n\t"
         "movq (%1, %3), %%mm2           \n\t"
@@ -173,7 +170,7 @@ static inline void sad8_4_mmx2(uint8_t *blk1, uint8_t *blk2, int stride, int h)
         "movq (%1), %%mm0               \n\t"
         "pavgb 1(%1), %%mm0             \n\t"
         "add %3, %1                     \n\t"
-        ASMALIGN(4)
+        ".p2align 4                     \n\t"
         "1:                             \n\t"
         "movq (%1), %%mm1               \n\t"
         "movq (%1,%3), %%mm2            \n\t"
@@ -200,7 +197,7 @@ static inline void sad8_2_mmx(uint8_t *blk1a, uint8_t *blk1b, uint8_t *blk2, int
 {
     x86_reg len= -(stride*h);
     __asm__ volatile(
-        ASMALIGN(4)
+        ".p2align 4                     \n\t"
         "1:                             \n\t"
         "movq (%1, %%"REG_a"), %%mm0    \n\t"
         "movq (%2, %%"REG_a"), %%mm1    \n\t"
@@ -248,7 +245,7 @@ static inline void sad8_4_mmx(uint8_t *blk1, uint8_t *blk2, int stride, int h)
         "punpckhbw %%mm7, %%mm3         \n\t"
         "paddw %%mm2, %%mm0             \n\t"
         "paddw %%mm3, %%mm1             \n\t"
-        ASMALIGN(4)
+        ".p2align 4                     \n\t"
         "1:                             \n\t"
         "movq (%2, %%"REG_a"), %%mm2    \n\t"
         "movq 1(%2, %%"REG_a"), %%mm4   \n\t"
@@ -427,7 +424,9 @@ PIX_SAD(mmx2)
 
 void dsputil_init_pix_mmx(DSPContext* c, AVCodecContext *avctx)
 {
-    if (mm_flags & FF_MM_MMX) {
+    int mm_flags = av_get_cpu_flags();
+
+    if (mm_flags & AV_CPU_FLAG_MMX) {
         c->pix_abs[0][0] = sad16_mmx;
         c->pix_abs[0][1] = sad16_x2_mmx;
         c->pix_abs[0][2] = sad16_y2_mmx;
@@ -440,7 +439,7 @@ void dsputil_init_pix_mmx(DSPContext* c, AVCodecContext *avctx)
         c->sad[0]= sad16_mmx;
         c->sad[1]= sad8_mmx;
     }
-    if (mm_flags & FF_MM_MMX2) {
+    if (mm_flags & AV_CPU_FLAG_MMX2) {
         c->pix_abs[0][0] = sad16_mmx2;
         c->pix_abs[1][0] = sad8_mmx2;
 
@@ -456,7 +455,7 @@ void dsputil_init_pix_mmx(DSPContext* c, AVCodecContext *avctx)
             c->pix_abs[1][3] = sad8_xy2_mmx2;
         }
     }
-    if ((mm_flags & FF_MM_SSE2) && !(mm_flags & FF_MM_3DNOW) && avctx->codec_id != CODEC_ID_SNOW) {
+    if ((mm_flags & AV_CPU_FLAG_SSE2) && !(mm_flags & AV_CPU_FLAG_3DNOW) && avctx->codec_id != CODEC_ID_SNOW) {
         c->sad[0]= sad16_sse2;
     }
 }

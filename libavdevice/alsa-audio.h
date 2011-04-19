@@ -3,20 +3,20 @@
  * Copyright (c) 2007 Luca Abeni ( lucabe72 email it )
  * Copyright (c) 2007 Benoit Fouet ( benoit fouet free fr )
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -37,11 +37,7 @@
 /* XXX: we make the assumption that the soundcard accepts this format */
 /* XXX: find better solution with "preinit" method, needed also in
         other formats */
-#if HAVE_BIGENDIAN
-#define DEFAULT_CODEC_ID CODEC_ID_PCM_S16BE
-#else
-#define DEFAULT_CODEC_ID CODEC_ID_PCM_S16LE
-#endif
+#define DEFAULT_CODEC_ID AV_NE(CODEC_ID_PCM_S16BE, CODEC_ID_PCM_S16LE)
 
 typedef struct {
     snd_pcm_t *h;
@@ -50,7 +46,7 @@ typedef struct {
 } AlsaData;
 
 /**
- * Opens an ALSA PCM.
+ * Open an ALSA PCM.
  *
  * @param s media file handle
  * @param mode either SND_PCM_STREAM_CAPTURE or SND_PCM_STREAM_PLAYBACK
@@ -68,7 +64,7 @@ int ff_alsa_open(AVFormatContext *s, snd_pcm_stream_t mode,
                  int channels, enum CodecID *codec_id);
 
 /**
- * Closes the ALSA PCM.
+ * Close the ALSA PCM.
  *
  * @param s1 media file handle
  *
@@ -77,7 +73,7 @@ int ff_alsa_open(AVFormatContext *s, snd_pcm_stream_t mode,
 int ff_alsa_close(AVFormatContext *s1);
 
 /**
- * Tries to recover from ALSA buffer underrun.
+ * Try to recover from ALSA buffer underrun.
  *
  * @param s1 media file handle
  * @param err error code reported by the previous ALSA call

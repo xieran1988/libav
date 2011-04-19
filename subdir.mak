@@ -10,10 +10,10 @@ THIS_LIB   := $(SUBDIR)$($(CONFIG_SHARED:yes=S)LIBNAME)
 all-$(CONFIG_STATIC): $(SUBDIR)$(LIBNAME)
 all-$(CONFIG_SHARED): $(SUBDIR)$(SLIBNAME)
 
-$(SUBDIR)%-test.o: $(SUBDIR)%.c
+$(SUBDIR)%-test.o: $(SUBDIR)%-test.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DTEST -c $(CC_O) $^
 
-$(SUBDIR)%-test.o: $(SUBDIR)%-test.c
+$(SUBDIR)%-test.o: $(SUBDIR)%.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DTEST -c $(CC_O) $^
 
 $(SUBDIR)x86/%.o: $(SUBDIR)x86/%.asm
@@ -60,7 +60,6 @@ distclean:: clean
 install-lib$(NAME)-shared: $(SUBDIR)$(SLIBNAME)
 	$(Q)mkdir -p "$(SHLIBDIR)"
 	$$(INSTALL) -m 755 $$< "$(SHLIBDIR)/$(SLIBNAME_WITH_VERSION)"
-	$$(STRIP) "$(SHLIBDIR)/$(SLIBNAME_WITH_VERSION)"
 	$(Q)cd "$(SHLIBDIR)" && \
 		$(LN_S) $(SLIBNAME_WITH_VERSION) $(SLIBNAME_WITH_MAJOR)
 	$(Q)cd "$(SHLIBDIR)" && \

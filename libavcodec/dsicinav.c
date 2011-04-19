@@ -2,20 +2,20 @@
  * Delphine Software International CIN Audio/Video Decoders
  * Copyright (c) 2006 Gregory Montoir (cyx@users.sourceforge.net)
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -307,7 +307,7 @@ static av_cold int cinaudio_decode_init(AVCodecContext *avctx)
     cin->avctx = avctx;
     cin->initial_decode_frame = 1;
     cin->delta = 0;
-    avctx->sample_fmt = SAMPLE_FMT_S16;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
 
     return 0;
 }
@@ -343,7 +343,7 @@ static int cinaudio_decode_frame(AVCodecContext *avctx,
 }
 
 
-AVCodec dsicinvideo_decoder = {
+AVCodec ff_dsicinvideo_decoder = {
     "dsicinvideo",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_DSICINVIDEO,
@@ -356,7 +356,7 @@ AVCodec dsicinvideo_decoder = {
     .long_name = NULL_IF_CONFIG_SMALL("Delphine Software International CIN video"),
 };
 
-AVCodec dsicinaudio_decoder = {
+AVCodec ff_dsicinaudio_decoder = {
     "dsicinaudio",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_DSICINAUDIO,

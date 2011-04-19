@@ -1,29 +1,29 @@
 /*
- * Ported to FFmpeg from MPlayer libmpcodecs/unsharp.c
- * Original copyright (C) 2002 Remi Guyomarch <rguyom@pobox.com>
- * Port copyright (C) 2010 Daniel G. Taylor <dan@programmer-art.org>
+ * Original copyright (c) 2002 Remi Guyomarch <rguyom@pobox.com>
+ * Port copyright (c) 2010 Daniel G. Taylor <dan@programmer-art.org>
  * Relicensed to the LGPL with permission from Remi Guyomarch.
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /**
  * @file
- * blur / sharpen filter
+ * blur / sharpen filter, ported to Libav from MPlayer
+ * libmpcodecs/unsharp.c.
  *
  * This code is based on:
  *
@@ -83,9 +83,9 @@ static void unsharpen(uint8_t *dst, uint8_t *src, int dst_stride, int src_stride
     for (y = 0; y < 2 * fp->steps_y; y++)
         memset(sc[y], 0, sizeof(sc[y][0]) * (width + 2 * fp->steps_x));
 
-    for (y =- fp->steps_y; y < height + fp->steps_y; y++) {
+    for (y = -fp->steps_y; y < height + fp->steps_y; y++) {
         memset(sr, 0, sizeof(sr[0]) * (2 * fp->steps_x - 1));
-        for (x =- fp->steps_x; x < width + fp->steps_x; x++) {
+        for (x = -fp->steps_x; x < width + fp->steps_x; x++) {
             tmp1 = x <= 0 ? src[0] : x >= width ? src[width-1] : src[x];
             for (z = 0; z < fp->steps_x * 2; z += 2) {
                 tmp2 = sr[z + 0] + tmp1; sr[z + 0] = tmp1;
@@ -132,6 +132,14 @@ static av_cold int init(AVFilterContext *ctx, const char *args, void *opaque)
     if (args)
         sscanf(args, "%d:%d:%lf:%d:%d:%lf", &lmsize_x, &lmsize_y, &lamount,
                                             &cmsize_x, &cmsize_y, &camount);
+
+    if ((lamount && (lmsize_x < 2 || lmsize_y < 2)) ||
+        (camount && (cmsize_x < 2 || cmsize_y < 2))) {
+        av_log(ctx, AV_LOG_ERROR,
+               "Invalid value <2 for lmsize_x:%d or lmsize_y:%d or cmsize_x:%d or cmsize_y:%d\n",
+               lmsize_x, lmsize_y, cmsize_x, cmsize_y);
+        return AVERROR(EINVAL);
+    }
 
     set_filter_param(&unsharp->luma,   lmsize_x, lmsize_y, lamount);
     set_filter_param(&unsharp->chroma, cmsize_x, cmsize_y, camount);
@@ -195,17 +203,17 @@ static av_cold void uninit(AVFilterContext *ctx)
 static void end_frame(AVFilterLink *link)
 {
     UnsharpContext *unsharp = link->dst->priv;
-    AVFilterPicRef *in  = link->cur_pic;
-    AVFilterPicRef *out = link->dst->outputs[0]->outpic;
+    AVFilterBufferRef *in  = link->cur_buf;
+    AVFilterBufferRef *out = link->dst->outputs[0]->out_buf;
 
     unsharpen(out->data[0], in->data[0], out->linesize[0], in->linesize[0], link->w,            link->h,             &unsharp->luma);
     unsharpen(out->data[1], in->data[1], out->linesize[1], in->linesize[1], CHROMA_WIDTH(link), CHROMA_HEIGHT(link), &unsharp->chroma);
     unsharpen(out->data[2], in->data[2], out->linesize[2], in->linesize[2], CHROMA_WIDTH(link), CHROMA_HEIGHT(link), &unsharp->chroma);
 
-    avfilter_unref_pic(in);
+    avfilter_unref_buffer(in);
     avfilter_draw_slice(link->dst->outputs[0], 0, link->h, 1);
     avfilter_end_frame(link->dst->outputs[0]);
-    avfilter_unref_pic(out);
+    avfilter_unref_buffer(out);
 }
 
 static void draw_slice(AVFilterLink *link, int y, int h, int slice_dir)

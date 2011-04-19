@@ -2,26 +2,27 @@
  * Linux video grab interface
  * Copyright (c) 2000,2001 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #undef __STRICT_ANSI__ //workaround due to broken kernel headers
 #include "config.h"
 #include "libavutil/rational.h"
+#include "libavutil/imgutils.h"
 #include "libavformat/avformat.h"
 #include "libavcodec/dsputil.h"
 #include <unistd.h>
@@ -116,7 +117,7 @@ static int grab_read_header(AVFormatContext *s1, AVFormatParameters *ap)
         }
     }
 
-    if(avcodec_check_dimensions(s1, s->video_win.width, s->video_win.height) < 0)
+    if(av_image_check_size(s->video_win.width, s->video_win.height, 0, s1) < 0)
         return -1;
 
     desired_palette = -1;
@@ -338,7 +339,7 @@ static int grab_read_close(AVFormatContext *s1)
     return 0;
 }
 
-AVInputFormat v4l_demuxer = {
+AVInputFormat ff_v4l_demuxer = {
     "video4linux",
     NULL_IF_CONFIG_SMALL("Video4Linux device grab"),
     sizeof(VideoData),

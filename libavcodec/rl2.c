@@ -2,20 +2,20 @@
  * RL2 Video Decoder
  * Copyright (C) 2008 Sascha Sommer (saschasommer@freenet.de)
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -50,7 +50,7 @@ typedef struct Rl2Context {
 /**
  * Run Length Decode a single 320x200 frame
  * @param s rl2 context
- * @param buf input buffer
+ * @param in input buffer
  * @param size input buffer size
  * @param out ouput buffer
  * @param stride stride of the output buffer
@@ -169,15 +169,6 @@ static av_cold int rl2_decode_init(AVCodecContext *avctx)
 }
 
 
-/**
- * Decode a single frame
- * @param avctx decoder context
- * @param data decoded frame
- * @param data_size size of the decoded frame
- * @param buf input buffer
- * @param buf_size input buffer size
- * @return 0 success, -1 on error
- */
 static int rl2_decode_frame(AVCodecContext *avctx,
                               void *data, int *data_size,
                               AVPacket *avpkt)
@@ -228,7 +219,7 @@ static av_cold int rl2_decode_end(AVCodecContext *avctx)
 }
 
 
-AVCodec rl2_decoder = {
+AVCodec ff_rl2_decoder = {
     "rl2",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RL2,

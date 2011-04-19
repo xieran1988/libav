@@ -2,20 +2,20 @@
  * DES encryption/decryption
  * Copyright (c) 2007 Reimar Doeffinger
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include <inttypes.h>
@@ -297,10 +297,10 @@ int av_des_init(AVDES *d, const uint8_t *key, int key_bits, int decrypt) {
 }
 
 void av_des_crypt(AVDES *d, uint8_t *dst, const uint8_t *src, int count, uint8_t *iv, int decrypt) {
-    uint64_t iv_val = iv ? be2me_64(*(uint64_t *)iv) : 0;
+    uint64_t iv_val = iv ? av_be2ne64(*(uint64_t *)iv) : 0;
     while (count-- > 0) {
         uint64_t dst_val;
-        uint64_t src_val = src ? be2me_64(*(const uint64_t *)src) : 0;
+        uint64_t src_val = src ? av_be2ne64(*(const uint64_t *)src) : 0;
         if (decrypt) {
             uint64_t tmp = src_val;
             if (d->triple_des) {
@@ -317,12 +317,12 @@ void av_des_crypt(AVDES *d, uint8_t *dst, const uint8_t *src, int count, uint8_t
             }
             iv_val = iv ? dst_val : 0;
         }
-        *(uint64_t *)dst = be2me_64(dst_val);
+        *(uint64_t *)dst = av_be2ne64(dst_val);
         src += 8;
         dst += 8;
     }
     if (iv)
-        *(uint64_t *)iv = be2me_64(iv_val);
+        *(uint64_t *)iv = av_be2ne64(iv_val);
 }
 
 #ifdef TEST

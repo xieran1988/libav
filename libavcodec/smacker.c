@@ -2,20 +2,20 @@
  * Smacker decoder
  * Copyright (c) 2006 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -32,6 +32,7 @@
 #include <stdlib.h>
 
 #include "avcodec.h"
+#include "libavutil/audioconvert.h"
 
 #define ALT_BITSTREAM_READER_LE
 #include "get_bits.h"
@@ -167,7 +168,7 @@ static int smacker_decode_bigtree(GetBitContext *gb, HuffContext *hc, DBCtx *ctx
 }
 
 /**
- * Store large tree as FFmpeg's vlc codes
+ * Store large tree as Libav's vlc codes
  */
 static int smacker_decode_header_tree(SmackVContext *smk, GetBitContext *gb, int **recodes, int *last, int size)
 {
@@ -554,8 +555,8 @@ static av_cold int decode_end(AVCodecContext *avctx)
 
 static av_cold int smka_decode_init(AVCodecContext *avctx)
 {
-    avctx->channel_layout = (avctx->channels==2) ? CH_LAYOUT_STEREO : CH_LAYOUT_MONO;
-    avctx->sample_fmt = avctx->bits_per_coded_sample == 8 ? SAMPLE_FMT_U8 : SAMPLE_FMT_S16;
+    avctx->channel_layout = (avctx->channels==2) ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
+    avctx->sample_fmt = avctx->bits_per_coded_sample == 8 ? AV_SAMPLE_FMT_U8 : AV_SAMPLE_FMT_S16;
     return 0;
 }
 
@@ -618,7 +619,7 @@ static int smka_decode_frame(AVCodecContext *avctx, void *data, int *data_size, 
     }
     if(bits) { //decode 16-bit data
         for(i = stereo; i >= 0; i--)
-            pred[i] = bswap_16(get_bits(&gb, 16));
+            pred[i] = av_bswap16(get_bits(&gb, 16));
         for(i = 0; i < stereo; i++)
             *samples++ = pred[i];
         for(i = 0; i < unp_size / 2; i++) {
@@ -677,19 +678,16 @@ static int smka_decode_frame(AVCodecContext *avctx, void *data, int *data_size, 
     for(i = 0; i < 4; i++) {
         if(vlc[i].table)
             free_vlc(&vlc[i]);
-        if(h[i].bits)
-            av_free(h[i].bits);
-        if(h[i].lengths)
-            av_free(h[i].lengths);
-        if(h[i].values)
-            av_free(h[i].values);
+        av_free(h[i].bits);
+        av_free(h[i].lengths);
+        av_free(h[i].values);
     }
 
     *data_size = unp_size;
     return buf_size;
 }
 
-AVCodec smacker_decoder = {
+AVCodec ff_smacker_decoder = {
     "smackvid",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_SMACKVIDEO,
@@ -702,7 +700,7 @@ AVCodec smacker_decoder = {
     .long_name = NULL_IF_CONFIG_SMALL("Smacker video"),
 };
 
-AVCodec smackaud_decoder = {
+AVCodec ff_smackaud_decoder = {
     "smackaud",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_SMACKAUDIO,

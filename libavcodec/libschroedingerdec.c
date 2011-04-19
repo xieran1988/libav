@@ -2,20 +2,20 @@
  * Dirac decoder support via Schroedinger libraries
  * Copyright (c) 2008 BBC, Anuradha Suraparaju <asuraparaju at gmail dot com >
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -27,6 +27,7 @@
 * (http://dirac.sourceforge.net/specification.html).
 */
 
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 #include "libdirac_libschro.h"
 #include "libschroedinger.h"
@@ -117,7 +118,7 @@ static SchroBuffer* FfmpegFindNextSchroParseUnit(FfmpegSchroParseUnitContext *pa
 }
 
 /**
-* Returns FFmpeg chroma format.
+* Returns Libav chroma format.
 */
 static enum PixelFormat GetFfmpegChromaFormat(SchroChromaFormat schro_pix_fmt)
 {
@@ -168,9 +169,9 @@ static void libschroedinger_handle_first_access_unit(AVCodecContext *avccontext)
 
     p_schro_params->format = schro_decoder_get_video_format(decoder);
 
-    /* Tell FFmpeg about sequence details. */
-    if (avcodec_check_dimensions(avccontext, p_schro_params->format->width,
-                                 p_schro_params->format->height) < 0) {
+    /* Tell Libav about sequence details. */
+    if (av_image_check_size(p_schro_params->format->width, p_schro_params->format->height,
+                            0, avccontext) < 0) {
         av_log(avccontext, AV_LOG_ERROR, "invalid dimensions (%dx%d)\n",
                p_schro_params->format->width, p_schro_params->format->height);
         avccontext->height = avccontext->width = 0;
@@ -345,7 +346,7 @@ static void libschroedinger_flush(AVCodecContext *avccontext)
     p_schro_params->eos_signalled = 0;
 }
 
-AVCodec libschroedinger_decoder = {
+AVCodec ff_libschroedinger_decoder = {
     "libschroedinger",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_DIRAC,

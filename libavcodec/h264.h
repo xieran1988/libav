@@ -2,20 +2,20 @@
  * H.26L/H.264/AVC/JVT/14496-10/... encoder/decoder
  * Copyright (c) 2003 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -39,8 +39,8 @@
 #define interlaced_dct interlaced_dct_is_a_bad_name
 #define mb_intra mb_intra_is_not_initialized_see_mb_type
 
-#define LUMA_DC_BLOCK_INDEX   25
-#define CHROMA_DC_BLOCK_INDEX 26
+#define LUMA_DC_BLOCK_INDEX   24
+#define CHROMA_DC_BLOCK_INDEX 25
 
 #define CHROMA_DC_COEFF_TOKEN_VLC_BITS 8
 #define COEFF_TOKEN_VLC_BITS           8
@@ -209,6 +209,7 @@ typedef struct SPS{
     int bit_depth_luma;                ///< bit_depth_luma_minus8 + 8
     int bit_depth_chroma;              ///< bit_depth_chroma_minus8 + 8
     int residual_color_transform_flag; ///< residual_colour_transform_flag
+    int constraint_set_flags;          ///< constraint_set[0-3]_flag
 }SPS;
 
 /**
@@ -406,6 +407,7 @@ typedef struct H264Context{
     GetBitContext *inter_gb_ptr;
 
     DECLARE_ALIGNED(16, DCTELEM, mb)[16*24];
+    DECLARE_ALIGNED(16, DCTELEM, mb_luma_dc)[16];
     DCTELEM mb_padding[256];        ///< as mb is addressed by scantable[i] and scantable is uint8_t we can either check that i is not too large or ensure that there is some unused stuff after mb
 
     /**
@@ -464,6 +466,7 @@ typedef struct H264Context{
      */
     int is_avc; ///< this flag is != 0 if codec is avc1
     int nal_length_size; ///< Number of bytes used for nal length (1, 2 or 4)
+    int got_first; ///< this flag is != 0 if we've parsed a frame
 
     SPS *sps_buffers[MAX_SPS_COUNT];
     PPS *pps_buffers[MAX_PPS_COUNT];
@@ -599,10 +602,6 @@ typedef struct H264Context{
 
 extern const uint8_t ff_h264_chroma_qp[52];
 
-void ff_svq3_luma_dc_dequant_idct_c(DCTELEM *block, int qp);
-
-void ff_svq3_add_idct_c(uint8_t *dst, DCTELEM *block, int stride, int qp, int dc);
-
 /**
  * Decode SEI
  */
@@ -614,12 +613,17 @@ int ff_h264_decode_sei(H264Context *h);
 int ff_h264_decode_seq_parameter_set(H264Context *h);
 
 /**
+ * compute profile from sps
+ */
+int ff_h264_get_profile(SPS *sps);
+
+/**
  * Decode PPS
  */
 int ff_h264_decode_picture_parameter_set(H264Context *h, int bit_length);
 
 /**
- * Decodes a network abstraction layer unit.
+ * Decode a network abstraction layer unit.
  * @param consumed is the number of bytes used as input
  * @param length is the length of the array
  * @param dst_length is the number of decoded bytes FIXME here or a decode rbsp tailing?
@@ -628,29 +632,23 @@ int ff_h264_decode_picture_parameter_set(H264Context *h, int bit_length);
 const uint8_t *ff_h264_decode_nal(H264Context *h, const uint8_t *src, int *dst_length, int *consumed, int length);
 
 /**
- * identifies the exact end of the bitstream
- * @return the length of the trailing, or 0 if damaged
- */
-int ff_h264_decode_rbsp_trailing(H264Context *h, const uint8_t *src);
-
-/**
- * frees any data that may have been allocated in the H264 context like SPS, PPS etc.
+ * Free any data that may have been allocated in the H264 context like SPS, PPS etc.
  */
 av_cold void ff_h264_free_context(H264Context *h);
 
 /**
- * reconstructs bitstream slice_type.
+ * Reconstruct bitstream slice_type.
  */
 int ff_h264_get_slice_type(const H264Context *h);
 
 /**
- * allocates tables.
+ * Allocate tables.
  * needs width/height
  */
 int ff_h264_alloc_tables(H264Context *h);
 
 /**
- * fills the default_ref_list.
+ * Fill the default_ref_list.
  */
 int ff_h264_fill_default_ref_list(H264Context *h);
 
@@ -659,38 +657,41 @@ void ff_h264_fill_mbaff_ref_list(H264Context *h);
 void ff_h264_remove_all_refs(H264Context *h);
 
 /**
- * Executes the reference picture marking (memory management control operations).
+ * Execute the reference picture marking (memory management control operations).
  */
 int ff_h264_execute_ref_pic_marking(H264Context *h, MMCO *mmco, int mmco_count);
 
 int ff_h264_decode_ref_pic_marking(H264Context *h, GetBitContext *gb);
 
+void ff_generate_sliding_window_mmcos(H264Context *h);
+
 
 /**
- * checks if the top & left blocks are available if needed & changes the dc mode so it only uses the available blocks.
+ * Check if the top & left blocks are available if needed & change the dc mode so it only uses the available blocks.
  */
 int ff_h264_check_intra4x4_pred_mode(H264Context *h);
 
 /**
- * checks if the top & left blocks are available if needed & changes the dc mode so it only uses the available blocks.
+ * Check if the top & left blocks are available if needed & change the dc mode so it only uses the available blocks.
  */
 int ff_h264_check_intra_pred_mode(H264Context *h, int mode);
 
 void ff_h264_write_back_intra_pred_mode(H264Context *h);
 void ff_h264_hl_decode_mb(H264Context *h);
 int ff_h264_frame_start(H264Context *h);
+int ff_h264_decode_extradata(H264Context *h);
 av_cold int ff_h264_decode_init(AVCodecContext *avctx);
 av_cold int ff_h264_decode_end(AVCodecContext *avctx);
 av_cold void ff_h264_decode_init_vlc(void);
 
 /**
- * decodes a macroblock
+ * Decode a macroblock
  * @return 0 if OK, AC_ERROR / DC_ERROR / MV_ERROR if an error is noticed
  */
 int ff_h264_decode_mb_cavlc(H264Context *h);
 
 /**
- * decodes a CABAC coded macroblock
+ * Decode a CABAC coded macroblock
  * @return 0 if OK, AC_ERROR / DC_ERROR / MV_ERROR if an error is noticed
  */
 int ff_h264_decode_mb_cabac(H264Context *h);
@@ -721,8 +722,20 @@ o-o o-o
  / / /
 o-o o-o
 */
+
+/* Scan8 organization:
+ *   0 1 2 3 4 5 6 7
+ * 0   u u y y y y y
+ * 1 u U U y Y Y Y Y
+ * 2 u U U y Y Y Y Y
+ * 3   v v y Y Y Y Y
+ * 4 v V V y Y Y Y Y
+ * 5 v V V   DYDUDV
+ * DY/DU/DV are for luma/chroma DC.
+ */
+
 //This table must be here because scan8[constant] must be known at compiletime
-static const uint8_t scan8[16 + 2*4]={
+static const uint8_t scan8[16 + 2*4 + 3]={
  4+1*8, 5+1*8, 4+2*8, 5+2*8,
  6+1*8, 7+1*8, 6+2*8, 7+2*8,
  4+3*8, 5+3*8, 4+4*8, 5+4*8,
@@ -731,6 +744,7 @@ static const uint8_t scan8[16 + 2*4]={
  1+2*8, 2+2*8,
  1+4*8, 2+4*8,
  1+5*8, 2+5*8,
+ 4+5*8, 5+5*8, 6+5*8
 };
 
 static av_always_inline uint32_t pack16to32(int a, int b){
@@ -1253,7 +1267,7 @@ static inline int get_dct8x8_allowed(H264Context *h){
 /**
  * decodes a P_SKIP or B_SKIP macroblock
  */
-static void decode_mb_skip(H264Context *h){
+static void av_unused decode_mb_skip(H264Context *h){
     MpegEncContext * const s = &h->s;
     const int mb_xy= h->mb_xy;
     int mb_type=0;

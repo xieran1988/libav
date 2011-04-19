@@ -11,20 +11,20 @@
  * 50 Mbps (DVCPRO50) support
  * Copyright (c) 2006 Daniel Maas <dmaas@maasdigital.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #include <time.h>
@@ -232,8 +232,8 @@ static void dv_inject_metadata(DVMuxContext *c, uint8_t* frame)
  * The following 3 functions constitute our interface to the world
  */
 
-int dv_assemble_frame(DVMuxContext *c, AVStream* st,
-                      uint8_t* data, int data_size, uint8_t** frame)
+static int dv_assemble_frame(DVMuxContext *c, AVStream* st,
+                             uint8_t* data, int data_size, uint8_t** frame)
 {
     int i, reqasize;
 
@@ -285,7 +285,7 @@ int dv_assemble_frame(DVMuxContext *c, AVStream* st,
     return 0;
 }
 
-DVMuxContext* dv_init_mux(AVFormatContext* s)
+static DVMuxContext* dv_init_mux(AVFormatContext* s)
 {
     DVMuxContext *c = s->priv_data;
     AVStream *vst = NULL;
@@ -354,14 +354,13 @@ bail_out:
     return NULL;
 }
 
-void dv_delete_mux(DVMuxContext *c)
+static void dv_delete_mux(DVMuxContext *c)
 {
     int i;
     for (i=0; i < c->n_ast; i++)
         av_fifo_free(c->audio_data[i]);
 }
 
-#if CONFIG_DV_MUXER
 static int dv_write_header(AVFormatContext *s)
 {
     if (!dv_init_mux(s)) {
@@ -382,8 +381,8 @@ static int dv_write_packet(struct AVFormatContext *s, AVPacket *pkt)
     fsize = dv_assemble_frame(s->priv_data, s->streams[pkt->stream_index],
                               pkt->data, pkt->size, &frame);
     if (fsize > 0) {
-        put_buffer(s->pb, frame, fsize);
-        put_flush_packet(s->pb);
+        avio_write(s->pb, frame, fsize);
+        avio_flush(s->pb);
     }
     return 0;
 }
@@ -400,7 +399,7 @@ static int dv_write_trailer(struct AVFormatContext *s)
     return 0;
 }
 
-AVOutputFormat dv_muxer = {
+AVOutputFormat ff_dv_muxer = {
     "dv",
     NULL_IF_CONFIG_SMALL("DV video format"),
     NULL,
@@ -412,4 +411,3 @@ AVOutputFormat dv_muxer = {
     dv_write_packet,
     dv_write_trailer,
 };
-#endif /* CONFIG_DV_MUXER */

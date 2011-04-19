@@ -2,20 +2,20 @@
  * Matroska constants
  * Copyright (c) 2003-2004 The ffmpeg Project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -148,7 +148,8 @@
 #define MATROSKA_ID_TAGNAME             0x45A3
 #define MATROSKA_ID_TAGSTRING           0x4487
 #define MATROSKA_ID_TAGLANG             0x447A
-#define MATROSKA_ID_TAGDEFAULT          0x44B4
+#define MATROSKA_ID_TAGDEFAULT          0x4484
+#define MATROSKA_ID_TAGDEFAULT_BUG      0x44B4
 #define MATROSKA_ID_TAGTARGETS          0x63C0
 #define MATROSKA_ID_TAGTARGETS_TYPE       0x63CA
 #define MATROSKA_ID_TAGTARGETS_TYPEVALUE  0x68CA

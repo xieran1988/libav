@@ -2,23 +2,24 @@
  * iWMMXt optimized DSP utils
  * Copyright (c) 2004 AGAWA Koji
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/cpu.h"
 #include "libavcodec/dsputil.h"
 
 #define DEF(x, y) x ## _no_rnd_ ## y ##_iwmmxt
@@ -150,18 +151,19 @@ static void nop(uint8_t *block, const uint8_t *pixels, int line_size, int h)
 /* A run time test is not simple. If this file is compiled in
  * then we should install the functions
  */
-int mm_flags = FF_MM_IWMMXT; /* multimedia extension flags */
 
 void ff_dsputil_init_iwmmxt(DSPContext* c, AVCodecContext *avctx)
 {
+    int mm_flags = AV_CPU_FLAG_IWMMXT; /* multimedia extension flags */
+
     if (avctx->dsp_mask) {
-        if (avctx->dsp_mask & FF_MM_FORCE)
+        if (avctx->dsp_mask & AV_CPU_FLAG_FORCE)
             mm_flags |= (avctx->dsp_mask & 0xffff);
         else
             mm_flags &= ~(avctx->dsp_mask & 0xffff);
     }
 
-    if (!(mm_flags & FF_MM_IWMMXT)) return;
+    if (!(mm_flags & AV_CPU_FLAG_IWMMXT)) return;
 
     c->add_pixels_clamped = add_pixels_clamped_iwmmxt;
 

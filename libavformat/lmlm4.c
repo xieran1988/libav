@@ -5,20 +5,20 @@
  * Due to a lack of sample files, only files with one channel are supported.
  * u-law and ADPCM audio are unsupported for the same reason.
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -78,13 +78,13 @@ static int lmlm4_read_header(AVFormatContext *s, AVFormatParameters *ap) {
 }
 
 static int lmlm4_read_packet(AVFormatContext *s, AVPacket *pkt) {
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     int ret;
     unsigned int frame_type, packet_size, padding, frame_size;
 
-    get_be16(pb);                       /* channel number */
-    frame_type  = get_be16(pb);
-    packet_size = get_be32(pb);
+    avio_rb16(pb);                       /* channel number */
+    frame_type  = avio_rb16(pb);
+    packet_size = avio_rb32(pb);
     padding     = -packet_size & 511;
     frame_size  = packet_size - 8;
 
@@ -100,7 +100,7 @@ static int lmlm4_read_packet(AVFormatContext *s, AVPacket *pkt) {
     if ((ret = av_get_packet(pb, pkt, frame_size)) <= 0)
         return AVERROR(EIO);
 
-    url_fskip(pb, padding);
+    avio_skip(pb, padding);
 
     switch (frame_type) {
         case LMLM4_I_FRAME:
@@ -117,7 +117,7 @@ static int lmlm4_read_packet(AVFormatContext *s, AVPacket *pkt) {
     return ret;
 }
 
-AVInputFormat lmlm4_demuxer = {
+AVInputFormat ff_lmlm4_demuxer = {
     "lmlm4",
     NULL_IF_CONFIG_SMALL("lmlm4 raw format"),
     0,

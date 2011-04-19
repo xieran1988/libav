@@ -2,20 +2,20 @@
  * Electronic Arts TGV Video Decoder
  * Copyright (c) 2007-2008 Peter Ross
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -32,6 +32,7 @@
 #define ALT_BITSTREAM_READER_LE
 #include "get_bits.h"
 #include "libavutil/lzo.h"
+#include "libavutil/imgutils.h"
 
 #define EA_PREAMBLE_SIZE    8
 #define kVGT_TAG MKTAG('k', 'V', 'G', 'T')
@@ -275,7 +276,7 @@ static int tgv_decode_frame(AVCodecContext *avctx,
         }
     }
 
-    if (avcodec_check_dimensions(avctx, s->width, s->height))
+    if (av_image_check_size(s->width, s->height, 0, avctx))
         return -1;
 
     /* shuffle */
@@ -333,7 +334,7 @@ static av_cold int tgv_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec eatgv_decoder = {
+AVCodec ff_eatgv_decoder = {
     "eatgv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_TGV,

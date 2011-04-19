@@ -3,20 +3,20 @@
  * Copyright (c) 2003 Fabrice Bellard
  * Copyright (c) 2006 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -121,7 +121,7 @@ av_cold void ff_lzw_decode_close(LZWState **p)
 
 /**
  * Initialize LZW decoder
- * @param s LZW context
+ * @param p LZW context
  * @param csize initial code size in bits
  * @param buf input data
  * @param buf_size input data size
@@ -161,7 +161,7 @@ int ff_lzw_decode_init(LZWState *p, int csize, const uint8_t *buf, int buf_size,
  * NOTE: the algorithm here is inspired from the LZW GIF decoder
  *  written by Steven A. Bennett in 1987.
  *
- * @param s LZW context
+ * @param p LZW context
  * @param buf output buffer
  * @param len number of bytes to decode
  * @return number of bytes decoded

@@ -1,18 +1,18 @@
 /*
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -31,6 +31,8 @@
 #if HAVE_ALTIVEC_H
 #include <altivec.h>
 #endif
+
+#include "types_altivec.h"
 
 // used to build registers permutation vectors (vcprm)
 // the 's' are for words in the _s_econd vector
@@ -100,6 +102,17 @@ static inline vector unsigned char unaligned_load(int offset, uint8_t *src)
     register vector unsigned char second = vec_ld(offset+15, src);
     register vector unsigned char mask = vec_lvsl(offset, src);
     return vec_perm(first, second, mask);
+}
+
+/**
+ * loads vector known misalignment
+ * @param perm_vec the align permute vector to combine the two loads from lvsl
+ */
+static inline vec_u8 load_with_perm_vec(int offset, uint8_t *src, vec_u8 perm_vec)
+{
+    vec_u8 a = vec_ld(offset, src);
+    vec_u8 b = vec_ld(offset+15, src);
+    return vec_perm(a, b, perm_vec);
 }
 
 #endif /* AVCODEC_PPC_UTIL_ALTIVEC_H */

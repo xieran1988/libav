@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2009 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -67,12 +67,12 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
     pic->key_frame= 1;
 
     for(;;){
-        uint32_t v= be2me_32(*src++);
+        uint32_t v= av_be2ne32(*src++);
         *udst++= (v>>16) & 0xFFC0;
         *ydst++= (v>>6 ) & 0xFFC0;
         *vdst++= (v<<4 ) & 0xFFC0;
 
-        v= be2me_32(*src++);
+        v= av_be2ne32(*src++);
         *ydst++= (v>>16) & 0xFFC0;
 
         if(ydst >= yend){
@@ -87,7 +87,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
         *udst++= (v>>6 ) & 0xFFC0;
         *ydst++= (v<<4 ) & 0xFFC0;
 
-        v= be2me_32(*src++);
+        v= av_be2ne32(*src++);
         *vdst++= (v>>16) & 0xFFC0;
         *ydst++= (v>>6 ) & 0xFFC0;
 
@@ -102,7 +102,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
 
         *udst++= (v<<4 ) & 0xFFC0;
 
-        v= be2me_32(*src++);
+        v= av_be2ne32(*src++);
         *ydst++= (v>>16) & 0xFFC0;
         *vdst++= (v>>6 ) & 0xFFC0;
         *ydst++= (v<<4 ) & 0xFFC0;
@@ -132,7 +132,7 @@ static av_cold int decode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec v210x_decoder = {
+AVCodec ff_v210x_decoder = {
     "v210x",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_V210X,

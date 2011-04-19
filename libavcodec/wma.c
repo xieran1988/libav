@@ -1,25 +1,26 @@
 /*
  * WMA compatible codec
- * Copyright (c) 2002-2007 The FFmpeg Project
+ * Copyright (c) 2002-2007 The Libav Project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "avcodec.h"
+#include "sinewin.h"
 #include "wma.h"
 #include "wmadata.h"
 
@@ -126,6 +127,7 @@ int ff_wma_init(AVCodecContext *avctx, int flags2)
     s->block_align = avctx->block_align;
 
     dsputil_init(&s->dsp, avctx);
+    ff_fmt_convert_init(&s->fmt_conv, avctx);
 
     if (avctx->codec->id == CODEC_ID_WMAV1) {
         s->version = 1;
@@ -217,13 +219,13 @@ int ff_wma_init(AVCodecContext *avctx, int flags2)
             high_freq = high_freq * 0.5;
         }
     }
-    dprintf(s->avctx, "flags2=0x%x\n", flags2);
-    dprintf(s->avctx, "version=%d channels=%d sample_rate=%d bitrate=%d block_align=%d\n",
+    av_dlog(s->avctx, "flags2=0x%x\n", flags2);
+    av_dlog(s->avctx, "version=%d channels=%d sample_rate=%d bitrate=%d block_align=%d\n",
             s->version, s->nb_channels, s->sample_rate, s->bit_rate,
             s->block_align);
-    dprintf(s->avctx, "bps=%f bps1=%f high_freq=%f bitoffset=%d\n",
+    av_dlog(s->avctx, "bps=%f bps1=%f high_freq=%f bitoffset=%d\n",
             bps, bps1, high_freq, s->byte_offset_bits);
-    dprintf(s->avctx, "use_noise_coding=%d use_exp_vlc=%d nb_block_sizes=%d\n",
+    av_dlog(s->avctx, "use_noise_coding=%d use_exp_vlc=%d nb_block_sizes=%d\n",
             s->use_noise_coding, s->use_exp_vlc, s->nb_block_sizes);
 
     /* compute the scale factor band sizes for each MDCT block size */
@@ -429,7 +431,7 @@ int ff_wma_end(AVCodecContext *avctx)
 
 /**
  * Decode an uncompressed coefficient.
- * @param s codec context
+ * @param gb GetBitContext
  * @return the decoded coefficient
  */
 unsigned int ff_wma_get_large_val(GetBitContext* gb)

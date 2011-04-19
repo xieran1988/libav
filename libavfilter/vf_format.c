@@ -1,20 +1,20 @@
 /*
- * copyright (c) 2007 Bobby Bingham
+ * Copyright (c) 2007 Bobby Bingham
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -94,7 +94,7 @@ static int query_formats_format(AVFilterContext *ctx)
 
 AVFilter avfilter_vf_format = {
     .name      = "format",
-    .description = "Convert the input video to one of the specified pixel formats.",
+    .description = NULL_IF_CONFIG_SMALL("Convert the input video to one of the specified pixel formats."),
 
     .init      = init,
 
@@ -124,7 +124,7 @@ static int query_formats_noformat(AVFilterContext *ctx)
 
 AVFilter avfilter_vf_noformat = {
     .name      = "noformat",
-    .description = "Force libavfilter not to use any of the specified pixel formats for the input to the next filter.",
+    .description = NULL_IF_CONFIG_SMALL("Force libavfilter not to use any of the specified pixel formats for the input to the next filter."),
 
     .init      = init,
 

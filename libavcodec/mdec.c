@@ -4,20 +4,20 @@
  *
  * based upon code from Sebastian Jedruszkiewicz <elf@frogger.rules.pl>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -229,9 +229,11 @@ static av_cold int decode_init(AVCodecContext *avctx){
     ff_mpeg12_init_vlcs();
     ff_init_scantable(a->dsp.idct_permutation, &a->scantable, ff_zigzag_direct);
 
+    if( avctx->idct_algo == FF_IDCT_AUTO )
+        avctx->idct_algo = FF_IDCT_SIMPLE;
     p->qstride= 0;
     p->qscale_table= av_mallocz(a->mb_width);
-    avctx->pix_fmt= PIX_FMT_YUV420P;
+    avctx->pix_fmt= PIX_FMT_YUVJ420P;
 
     return 0;
 }
@@ -248,7 +250,7 @@ static av_cold int decode_end(AVCodecContext *avctx){
     return 0;
 }
 
-AVCodec mdec_decoder = {
+AVCodec ff_mdec_decoder = {
     "mdec",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MDEC,

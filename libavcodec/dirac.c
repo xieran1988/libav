@@ -2,20 +2,20 @@
  * Copyright (C) 2007 Marco Gerards <marco@gnu.org>
  * Copyright (C) 2009 David Conrad
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -25,6 +25,7 @@
  * @author Marco Gerards <marco@gnu.org>
  */
 
+#include "libavutil/imgutils.h"
 #include "dirac.h"
 #include "avcodec.h"
 #include "golomb.h"
@@ -268,7 +269,7 @@ int ff_dirac_parse_sequence_header(AVCodecContext *avctx, GetBitContext *gb,
     if (parse_source_parameters(avctx, gb, source))
         return -1;
 
-    if (avcodec_check_dimensions(avctx, source->width, source->height))
+    if (av_image_check_size(source->width, source->height, 0, avctx))
         return -1;
 
     avcodec_set_dimensions(avctx, source->width, source->height);

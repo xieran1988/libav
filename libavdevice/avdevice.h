@@ -1,18 +1,18 @@
 /*
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -21,8 +21,8 @@
 
 #include "libavutil/avutil.h"
 
-#define LIBAVDEVICE_VERSION_MAJOR 52
-#define LIBAVDEVICE_VERSION_MINOR  2
+#define LIBAVDEVICE_VERSION_MAJOR 53
+#define LIBAVDEVICE_VERSION_MINOR  0
 #define LIBAVDEVICE_VERSION_MICRO  0
 
 #define LIBAVDEVICE_VERSION_INT AV_VERSION_INT(LIBAVDEVICE_VERSION_MAJOR, \
@@ -34,17 +34,17 @@
 #define LIBAVDEVICE_BUILD       LIBAVDEVICE_VERSION_INT
 
 /**
- * Returns the LIBAVDEVICE_VERSION_INT constant.
+ * Return the LIBAVDEVICE_VERSION_INT constant.
  */
 unsigned avdevice_version(void);
 
 /**
- * Returns the libavdevice build-time configuration.
+ * Return the libavdevice build-time configuration.
  */
 const char *avdevice_configuration(void);
 
 /**
- * Returns the libavdevice license.
+ * Return the libavdevice license.
  */
 const char *avdevice_license(void);
 

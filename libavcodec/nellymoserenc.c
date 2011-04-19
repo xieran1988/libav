@@ -4,20 +4,20 @@
  *
  * Copyright (c) 2008 Bartlomiej Wolowiec
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -28,7 +28,7 @@
  *
  * Generic codec information: libavcodec/nellymoserdec.c
  *
- * Some information also from: http://samples.mplayerhq.hu/A-codecs/Nelly_Moser/ASAO/ASAO.zip
+ * Some information also from: http://samples.libav.org/A-codecs/Nelly_Moser/ASAO/ASAO.zip
  *                             (Copyright Joseph Artsimovich and UAB "DKD")
  *
  * for more information about nellymoser format, visit:
@@ -39,6 +39,7 @@
 #include "avcodec.h"
 #include "dsputil.h"
 #include "fft.h"
+#include "sinewin.h"
 
 #define BITSTREAM_WRITER_LE
 #include "put_bits.h"
@@ -113,16 +114,16 @@ static const uint8_t quant_lut_offset[8] = { 0, 0, 1, 4, 11, 32, 81, 230 };
 
 static void apply_mdct(NellyMoserEncodeContext *s)
 {
-    memcpy(s->in_buff, s->buf[s->bufsel], NELLY_BUF_LEN * sizeof(float));
-    s->dsp.vector_fmul(s->in_buff, ff_sine_128, NELLY_BUF_LEN);
+    s->dsp.vector_fmul(s->in_buff, s->buf[s->bufsel], ff_sine_128, NELLY_BUF_LEN);
     s->dsp.vector_fmul_reverse(s->in_buff + NELLY_BUF_LEN, s->buf[s->bufsel] + NELLY_BUF_LEN, ff_sine_128,
                                NELLY_BUF_LEN);
-    ff_mdct_calc(&s->mdct_ctx, s->mdct_out, s->in_buff);
+    s->mdct_ctx.mdct_calc(&s->mdct_ctx, s->mdct_out, s->in_buff);
 
-    s->dsp.vector_fmul(s->buf[s->bufsel] + NELLY_BUF_LEN, ff_sine_128, NELLY_BUF_LEN);
+    s->dsp.vector_fmul(s->buf[s->bufsel] + NELLY_BUF_LEN, s->buf[s->bufsel] + NELLY_BUF_LEN,
+                       ff_sine_128, NELLY_BUF_LEN);
     s->dsp.vector_fmul_reverse(s->buf[s->bufsel] + 2 * NELLY_BUF_LEN, s->buf[1 - s->bufsel], ff_sine_128,
                                NELLY_BUF_LEN);
-    ff_mdct_calc(&s->mdct_ctx, s->mdct_out + NELLY_BUF_LEN, s->buf[s->bufsel] + NELLY_BUF_LEN);
+    s->mdct_ctx.mdct_calc(&s->mdct_ctx, s->mdct_out + NELLY_BUF_LEN, s->buf[s->bufsel] + NELLY_BUF_LEN);
 }
 
 static av_cold int encode_init(AVCodecContext *avctx)
@@ -270,7 +271,7 @@ static void get_exponent_dynamic(NellyMoserEncodeContext *s, float *cand, int *i
 }
 
 /**
- * Encodes NELLY_SAMPLES samples. It assumes, that samples contains 3 * NELLY_BUF_LEN values
+ * Encode NELLY_SAMPLES samples. It assumes, that samples contains 3 * NELLY_BUF_LEN values
  *  @param s               encoder context
  *  @param output          output buffer
  *  @param output_size     size of output buffer
@@ -351,7 +352,7 @@ static void encode_block(NellyMoserEncodeContext *s, unsigned char *output, int 
 static int encode_frame(AVCodecContext *avctx, uint8_t *frame, int buf_size, void *data)
 {
     NellyMoserEncodeContext *s = avctx->priv_data;
-    int16_t *samples = data;
+    const int16_t *samples = data;
     int i;
 
     if (s->last_frame)
@@ -382,7 +383,7 @@ static int encode_frame(AVCodecContext *avctx, uint8_t *frame, int buf_size, voi
     return 0;
 }
 
-AVCodec nellymoser_encoder = {
+AVCodec ff_nellymoser_encoder = {
     .name = "nellymoser",
     .type = AVMEDIA_TYPE_AUDIO,
     .id = CODEC_ID_NELLYMOSER,
@@ -392,4 +393,5 @@ AVCodec nellymoser_encoder = {
     .close = encode_end,
     .capabilities = CODEC_CAP_SMALL_LAST_FRAME | CODEC_CAP_DELAY,
     .long_name = NULL_IF_CONFIG_SMALL("Nellymoser Asao"),
+    .sample_fmts = (const enum AVSampleFormat[]){AV_SAMPLE_FMT_S16,AV_SAMPLE_FMT_NONE},
 };

@@ -2,20 +2,20 @@
  * various utilities for ffmpeg system
  * copyright (c) 2000, 2001, 2002 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -32,6 +32,8 @@
 #if defined(__MINGW32__) && !defined(__MINGW32CE__)
 #  include <fcntl.h>
 #  define lseek(f,p,w) _lseeki64((f), (p), (w))
+#  define stat _stati64
+#  define fstat(f,s) _fstati64((f), (s))
 #endif /* defined(__MINGW32__) && !defined(__MINGW32CE__) */
 
 static inline int is_dos_path(const char *path)
@@ -43,23 +45,6 @@ static inline int is_dos_path(const char *path)
     return 0;
 }
 
-#ifdef __BEOS__
-#  include <sys/socket.h>
-#  include <netinet/in.h>
-   /* not net_server ? */
-#  include <BeBuild.h>
-   /* R5 didn't have usleep, fake it. Haiku and Zeta has it now. */
-#  if B_BEOS_VERSION <= B_BEOS_VERSION_5
-#    include <OS.h>
-     /* doesn't set errno but that's enough */
-#    define usleep(t)  snooze((bigtime_t)(t))
-#  endif
-#  ifndef SA_RESTART
-#    warning SA_RESTART not implemented; ffserver might misbehave.
-#    define SA_RESTART 0
-#  endif
-#endif
-
 #if CONFIG_NETWORK
 #if !HAVE_SOCKLEN_T
 typedef int socklen_t;
@@ -70,7 +55,6 @@ typedef int socklen_t;
 #define closesocket close
 #endif
 
-#if CONFIG_FFSERVER
 #if !HAVE_POLL_H
 typedef unsigned long nfds_t;
 
@@ -97,7 +81,6 @@ struct pollfd {
 
 int poll(struct pollfd *fds, nfds_t numfds, int timeout);
 #endif /* HAVE_POLL_H */
-#endif /* CONFIG_FFSERVER */
 #endif /* CONFIG_NETWORK */
 
 #endif /* AVFORMAT_OS_SUPPORT_H */

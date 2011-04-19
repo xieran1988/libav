@@ -2,20 +2,20 @@
  * Quicktime Animation (RLE) Video Decoder
  * Copyright (C) 2004 the ffmpeg project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -46,6 +46,7 @@ typedef struct QtrleContext {
     const unsigned char *buf;
     int size;
 
+    uint32_t pal[256];
 } QtrleContext;
 
 #define CHECK_STREAM_PTR(n) \
@@ -511,12 +512,15 @@ static int qtrle_decode_frame(AVCodecContext *avctx,
     }
 
     if(has_palette) {
-        /* make the palette available on the way out */
-        memcpy(s->frame.data[1], s->avctx->palctrl->palette, AVPALETTE_SIZE);
-        if (s->avctx->palctrl->palette_changed) {
+        const uint8_t *pal = av_packet_get_side_data(avpkt, AV_PKT_DATA_PALETTE, NULL);
+
+        if (pal) {
             s->frame.palette_has_changed = 1;
-            s->avctx->palctrl->palette_changed = 0;
+            memcpy(s->pal, pal, AVPALETTE_SIZE);
         }
+
+        /* make the palette available on the way out */
+        memcpy(s->frame.data[1], s->pal, AVPALETTE_SIZE);
     }
 
 done:
@@ -537,7 +541,7 @@ static av_cold int qtrle_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec qtrle_decoder = {
+AVCodec ff_qtrle_decoder = {
     "qtrle",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_QTRLE,

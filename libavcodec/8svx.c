@@ -2,20 +2,20 @@
  * 8SVX audio decoder
  * Copyright (C) 2008 Jaikrishnan Menon
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -88,11 +88,11 @@ static av_cold int eightsvx_decode_init(AVCodecContext *avctx)
         default:
           return -1;
     }
-    avctx->sample_fmt = SAMPLE_FMT_S16;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
     return 0;
 }
 
-AVCodec eightsvx_fib_decoder = {
+AVCodec ff_eightsvx_fib_decoder = {
   .name           = "8svx_fib",
   .type           = AVMEDIA_TYPE_AUDIO,
   .id             = CODEC_ID_8SVX_FIB,
@@ -102,7 +102,7 @@ AVCodec eightsvx_fib_decoder = {
   .long_name      = NULL_IF_CONFIG_SMALL("8SVX fibonacci"),
 };
 
-AVCodec eightsvx_exp_decoder = {
+AVCodec ff_eightsvx_exp_decoder = {
   .name           = "8svx_exp",
   .type           = AVMEDIA_TYPE_AUDIO,
   .id             = CODEC_ID_8SVX_EXP,

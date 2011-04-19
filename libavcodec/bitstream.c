@@ -6,20 +6,20 @@
  *
  * alternative bitstream reader & writer by Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -275,8 +275,8 @@ int init_vlc_sparse(VLC *vlc, int nb_bits, int nb_codes,
              const void *symbols, int symbols_wrap, int symbols_size,
              int flags)
 {
-    VLCcode buf[nb_codes];
-    int i, j;
+    VLCcode *buf;
+    int i, j, ret;
 
     vlc->bits = nb_bits;
     if(flags & INIT_VLC_USE_NEW_STATIC){
@@ -294,6 +294,8 @@ int init_vlc_sparse(VLC *vlc, int nb_bits, int nb_codes,
 #ifdef DEBUG_VLC
     av_log(NULL,AV_LOG_DEBUG,"build table nb_codes=%d\n", nb_codes);
 #endif
+
+    buf = av_malloc((nb_codes+1)*sizeof(VLCcode));
 
     assert(symbols_size <= 2 || !symbols);
     j = 0;
@@ -319,7 +321,10 @@ int init_vlc_sparse(VLC *vlc, int nb_bits, int nb_codes,
     COPY(buf[j].bits && buf[j].bits <= nb_bits);
     nb_codes = j;
 
-    if (build_table(vlc, nb_bits, nb_codes, buf, flags) < 0) {
+    ret = build_table(vlc, nb_bits, nb_codes, buf, flags);
+
+    av_free(buf);
+    if (ret < 0) {
         av_freep(&vlc->table);
         return -1;
     }

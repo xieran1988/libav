@@ -2,20 +2,20 @@
  * KMVC decoder
  * Copyright (c) 2006 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -233,6 +233,7 @@ static int decode_frame(AVCodecContext * avctx, void *data, int *data_size, AVPa
     int i;
     int header;
     int blocksize;
+    const uint8_t *pal = av_packet_get_side_data(avpkt, AV_PKT_DATA_PALETTE, NULL);
 
     if (ctx->pic.data[0])
         avctx->release_buffer(avctx, &ctx->pic);
@@ -264,19 +265,17 @@ static int decode_frame(AVCodecContext * avctx, void *data, int *data_size, AVPa
         ctx->pic.pict_type = FF_P_TYPE;
     }
 
-    /* if palette has been changed, copy it from palctrl */
-    if (ctx->avctx->palctrl && ctx->avctx->palctrl->palette_changed) {
-        memcpy(ctx->pal, ctx->avctx->palctrl->palette, AVPALETTE_SIZE);
-        ctx->setpal = 1;
-        ctx->avctx->palctrl->palette_changed = 0;
-    }
-
     if (header & KMVC_PALETTE) {
         ctx->pic.palette_has_changed = 1;
         // palette starts from index 1 and has 127 entries
         for (i = 1; i <= ctx->palsize; i++) {
             ctx->pal[i] = bytestream_get_be24(&buf);
         }
+    }
+
+    if (pal) {
+        ctx->pic.palette_has_changed = 1;
+        memcpy(ctx->pal, pal, AVPALETTE_SIZE);
     }
 
     if (ctx->setpal) {
@@ -374,9 +373,6 @@ static av_cold int decode_init(AVCodecContext * avctx)
             src += 4;
         }
         c->setpal = 1;
-        if (c->avctx->palctrl) {
-            c->avctx->palctrl->palette_changed = 0;
-        }
     }
 
     avctx->pix_fmt = PIX_FMT_PAL8;
@@ -401,7 +397,7 @@ static av_cold int decode_end(AVCodecContext * avctx)
     return 0;
 }
 
-AVCodec kmvc_decoder = {
+AVCodec ff_kmvc_decoder = {
     "kmvc",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_KMVC,

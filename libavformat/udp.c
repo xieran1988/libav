@@ -2,20 +2,20 @@
  * UDP prototype streaming system
  * Copyright (c) 2000, 2001, 2002 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -25,25 +25,20 @@
  */
 
 #define _BSD_SOURCE     /* Needed for using struct ip_mreq with recent glibc */
+#define _DARWIN_C_SOURCE /* Needed for using IP_MULTICAST_TTL on OS X */
 #include "avformat.h"
+#include "avio_internal.h"
+#include "libavutil/parseutils.h"
 #include <unistd.h>
 #include "internal.h"
 #include "network.h"
 #include "os_support.h"
-#if HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
+#include "url.h"
 #include <sys/time.h>
 
 #ifndef IPV6_ADD_MEMBERSHIP
 #define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
 #define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
-#endif
-#ifndef IN_MULTICAST
-#define IN_MULTICAST(a) ((((uint32_t)(a)) & 0xf0000000) == 0xe0000000)
-#endif
-#ifndef IN6_IS_ADDR_MULTICAST
-#define IN6_IS_ADDR_MULTICAST(a) (((uint8_t *) (a))[0] == 0xff)
 #endif
 
 typedef struct {
@@ -55,6 +50,7 @@ typedef struct {
     int reuse_socket;
     struct sockaddr_storage dest_addr;
     int dest_addr_len;
+    int is_connected;
 } UDPContext;
 
 #define UDP_TX_BUF_SIZE 32768
@@ -96,7 +92,7 @@ static int udp_join_multicast_group(int sockfd, struct sockaddr *addr)
         }
     }
 #endif
-#if HAVE_STRUCT_IPV6_MREQ
+#if HAVE_STRUCT_IPV6_MREQ && defined(IPPROTO_IPV6)
     if (addr->sa_family == AF_INET6) {
         struct ipv6_mreq mreq6;
 
@@ -125,7 +121,7 @@ static int udp_leave_multicast_group(int sockfd, struct sockaddr *addr)
         }
     }
 #endif
-#if HAVE_STRUCT_IPV6_MREQ
+#if HAVE_STRUCT_IPV6_MREQ && defined(IPPROTO_IPV6)
     if (addr->sa_family == AF_INET6) {
         struct ipv6_mreq mreq6;
 
@@ -180,20 +176,6 @@ static int udp_set_url(struct sockaddr_storage *addr,
     freeaddrinfo(res0);
 
     return addr_len;
-}
-
-static int is_multicast_address(struct sockaddr_storage *addr)
-{
-    if (addr->ss_family == AF_INET) {
-        return IN_MULTICAST(ntohl(((struct sockaddr_in *)addr)->sin_addr.s_addr));
-    }
-#if HAVE_STRUCT_SOCKADDR_IN6
-    if (addr->ss_family == AF_INET6) {
-        return IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6 *)addr)->sin6_addr);
-    }
-#endif
-
-    return 0;
 }
 
 static int udp_socket_create(UDPContext *s,
@@ -256,34 +238,50 @@ static int udp_port(struct sockaddr_storage *addr, int addr_len)
  *         'pkt_size=n'  : set max packet size
  *         'reuse=1'     : enable reusing the socket
  *
- * @param s1 media file context
+ * @param h media file context
  * @param uri of the remote server
  * @return zero if no error.
  */
-int udp_set_remote_url(URLContext *h, const char *uri)
+int ff_udp_set_remote_url(URLContext *h, const char *uri)
 {
     UDPContext *s = h->priv_data;
-    char hostname[256];
+    char hostname[256], buf[10];
     int port;
+    const char *p;
 
-    ff_url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port, NULL, 0, uri);
+    av_url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port, NULL, 0, uri);
 
     /* set the destination address */
     s->dest_addr_len = udp_set_url(&s->dest_addr, hostname, port);
     if (s->dest_addr_len < 0) {
         return AVERROR(EIO);
     }
-    s->is_multicast = is_multicast_address(&s->dest_addr);
+    s->is_multicast = ff_is_multicast_address((struct sockaddr*) &s->dest_addr);
+    p = strchr(uri, '?');
+    if (p) {
+        if (av_find_info_tag(buf, sizeof(buf), "connect", p)) {
+            int was_connected = s->is_connected;
+            s->is_connected = strtol(buf, NULL, 10);
+            if (s->is_connected && !was_connected) {
+                if (connect(s->udp_fd, (struct sockaddr *) &s->dest_addr,
+                            s->dest_addr_len)) {
+                    s->is_connected = 0;
+                    av_log(NULL, AV_LOG_ERROR, "connect: %s\n", strerror(errno));
+                    return AVERROR(EIO);
+                }
+            }
+        }
+    }
 
     return 0;
 }
 
 /**
- * Return the local port used by the UDP connexion
- * @param s1 media file context
+ * Return the local port used by the UDP connection
+ * @param h media file context
  * @return the local port number
  */
-int udp_get_local_port(URLContext *h)
+int ff_udp_get_local_port(URLContext *h)
 {
     UDPContext *s = h->priv_data;
     return s->local_port;
@@ -294,7 +292,7 @@ int udp_get_local_port(URLContext *h)
  * streams at the same time.
  * @param h media file context
  */
-#if (LIBAVFORMAT_VERSION_MAJOR >= 53)
+#if !FF_API_UDP_GET_FILE
 static
 #endif
 int udp_get_file_handle(URLContext *h)
@@ -315,11 +313,12 @@ static int udp_open(URLContext *h, const char *uri, int flags)
     char buf[256];
     struct sockaddr_storage my_addr;
     int len;
+    int reuse_specified = 0;
 
     h->is_streamed = 1;
     h->max_packet_size = 1472;
 
-    is_output = (flags & URL_WRONLY);
+    is_output = (flags & AVIO_WRONLY);
 
     s = av_mallocz(sizeof(UDPContext));
     if (!s)
@@ -331,46 +330,62 @@ static int udp_open(URLContext *h, const char *uri, int flags)
 
     p = strchr(uri, '?');
     if (p) {
-        s->reuse_socket = find_info_tag(buf, sizeof(buf), "reuse", p);
-        if (find_info_tag(buf, sizeof(buf), "ttl", p)) {
+        if (av_find_info_tag(buf, sizeof(buf), "reuse", p)) {
+            const char *endptr=NULL;
+            s->reuse_socket = strtol(buf, &endptr, 10);
+            /* assume if no digits were found it is a request to enable it */
+            if (buf == endptr)
+                s->reuse_socket = 1;
+            reuse_specified = 1;
+        }
+        if (av_find_info_tag(buf, sizeof(buf), "ttl", p)) {
             s->ttl = strtol(buf, NULL, 10);
         }
-        if (find_info_tag(buf, sizeof(buf), "localport", p)) {
+        if (av_find_info_tag(buf, sizeof(buf), "localport", p)) {
             s->local_port = strtol(buf, NULL, 10);
         }
-        if (find_info_tag(buf, sizeof(buf), "pkt_size", p)) {
+        if (av_find_info_tag(buf, sizeof(buf), "pkt_size", p)) {
             h->max_packet_size = strtol(buf, NULL, 10);
         }
-        if (find_info_tag(buf, sizeof(buf), "buffer_size", p)) {
+        if (av_find_info_tag(buf, sizeof(buf), "buffer_size", p)) {
             s->buffer_size = strtol(buf, NULL, 10);
+        }
+        if (av_find_info_tag(buf, sizeof(buf), "connect", p)) {
+            s->is_connected = strtol(buf, NULL, 10);
         }
     }
 
     /* fill the dest addr */
-    ff_url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port, NULL, 0, uri);
+    av_url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port, NULL, 0, uri);
 
-    /* XXX: fix ff_url_split */
+    /* XXX: fix av_url_split */
     if (hostname[0] == '\0' || hostname[0] == '?') {
         /* only accepts null hostname if input */
-        if (flags & URL_WRONLY)
+        if (flags & AVIO_WRONLY)
             goto fail;
     } else {
-        udp_set_remote_url(h, uri);
+        if (ff_udp_set_remote_url(h, uri) < 0)
+            goto fail;
     }
 
-    if (s->is_multicast && !(h->flags & URL_WRONLY))
+    if (s->is_multicast && !(h->flags & AVIO_WRONLY))
         s->local_port = port;
     udp_fd = udp_socket_create(s, &my_addr, &len);
     if (udp_fd < 0)
         goto fail;
 
-    if (s->reuse_socket)
+    /* Follow the requested reuse option, unless it's multicast in which
+     * case enable reuse unless explicitely disabled.
+     */
+    if (s->reuse_socket || (s->is_multicast && !reuse_specified)) {
+        s->reuse_socket = 1;
         if (setsockopt (udp_fd, SOL_SOCKET, SO_REUSEADDR, &(s->reuse_socket), sizeof(s->reuse_socket)) != 0)
             goto fail;
+    }
 
     /* the bind is needed to give a port to the socket now */
     /* if multicast, try the multicast address bind first */
-    if (s->is_multicast && !(h->flags & URL_WRONLY)) {
+    if (s->is_multicast && !(h->flags & AVIO_WRONLY)) {
         bind_ret = bind(udp_fd,(struct sockaddr *)&s->dest_addr, len);
     }
     /* bind to the local address if not multicast or if the multicast
@@ -383,7 +398,7 @@ static int udp_open(URLContext *h, const char *uri, int flags)
     s->local_port = udp_port(&my_addr, len);
 
     if (s->is_multicast) {
-        if (h->flags & URL_WRONLY) {
+        if (h->flags & AVIO_WRONLY) {
             /* output */
             if (udp_set_multicast_ttl(udp_fd, s->ttl, (struct sockaddr *)&s->dest_addr) < 0)
                 goto fail;
@@ -411,6 +426,12 @@ static int udp_open(URLContext *h, const char *uri, int flags)
         /* make the socket non-blocking */
         ff_socket_nonblock(udp_fd, 1);
     }
+    if (s->is_connected) {
+        if (connect(udp_fd, (struct sockaddr *) &s->dest_addr, s->dest_addr_len)) {
+            av_log(NULL, AV_LOG_ERROR, "connect: %s\n", strerror(errno));
+            goto fail;
+        }
+    }
 
     s->udp_fd = udp_fd;
     return 0;
@@ -424,75 +445,54 @@ static int udp_open(URLContext *h, const char *uri, int flags)
 static int udp_read(URLContext *h, uint8_t *buf, int size)
 {
     UDPContext *s = h->priv_data;
-    int len;
-    fd_set rfds;
     int ret;
-    struct timeval tv;
 
-    for(;;) {
-        if (url_interrupt_cb())
-            return AVERROR(EINTR);
-        FD_ZERO(&rfds);
-        FD_SET(s->udp_fd, &rfds);
-        tv.tv_sec = 0;
-        tv.tv_usec = 100 * 1000;
-        ret = select(s->udp_fd + 1, &rfds, NULL, NULL, &tv);
-        if (ret < 0) {
-            if (ff_neterrno() == FF_NETERROR(EINTR))
-                continue;
-            return AVERROR(EIO);
-        }
-        if (!(ret > 0 && FD_ISSET(s->udp_fd, &rfds)))
-            continue;
-        len = recv(s->udp_fd, buf, size, 0);
-        if (len < 0) {
-            if (ff_neterrno() != FF_NETERROR(EAGAIN) &&
-                ff_neterrno() != FF_NETERROR(EINTR))
-                return AVERROR(EIO);
-        } else {
-            break;
-        }
+    if (!(h->flags & AVIO_FLAG_NONBLOCK)) {
+        ret = ff_network_wait_fd(s->udp_fd, 0);
+        if (ret < 0)
+            return ret;
     }
-    return len;
+    ret = recv(s->udp_fd, buf, size, 0);
+    return ret < 0 ? ff_neterrno() : ret;
 }
 
-static int udp_write(URLContext *h, uint8_t *buf, int size)
+static int udp_write(URLContext *h, const uint8_t *buf, int size)
 {
     UDPContext *s = h->priv_data;
     int ret;
 
-    for(;;) {
+    if (!(h->flags & AVIO_FLAG_NONBLOCK)) {
+        ret = ff_network_wait_fd(s->udp_fd, 1);
+        if (ret < 0)
+            return ret;
+    }
+
+    if (!s->is_connected) {
         ret = sendto (s->udp_fd, buf, size, 0,
                       (struct sockaddr *) &s->dest_addr,
                       s->dest_addr_len);
-        if (ret < 0) {
-            if (ff_neterrno() != FF_NETERROR(EINTR) &&
-                ff_neterrno() != FF_NETERROR(EAGAIN))
-                return AVERROR(EIO);
-        } else {
-            break;
-        }
-    }
-    return size;
+    } else
+        ret = send(s->udp_fd, buf, size, 0);
+
+    return ret < 0 ? ff_neterrno() : ret;
 }
 
 static int udp_close(URLContext *h)
 {
     UDPContext *s = h->priv_data;
 
-    if (s->is_multicast && !(h->flags & URL_WRONLY))
+    if (s->is_multicast && !(h->flags & AVIO_WRONLY))
         udp_leave_multicast_group(s->udp_fd, (struct sockaddr *)&s->dest_addr);
     closesocket(s->udp_fd);
     av_free(s);
     return 0;
 }
 
-URLProtocol udp_protocol = {
-    "udp",
-    udp_open,
-    udp_read,
-    udp_write,
-    NULL, /* seek */
-    udp_close,
+URLProtocol ff_udp_protocol = {
+    .name                = "udp",
+    .url_open            = udp_open,
+    .url_read            = udp_read,
+    .url_write           = udp_write,
+    .url_close           = udp_close,
     .url_get_file_handle = udp_get_file_handle,
 };

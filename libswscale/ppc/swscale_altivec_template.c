@@ -4,20 +4,20 @@
  * Copyright (C) 2004 Romain Dolbeau <romain@dolbeau.org>
  * based on the equivalent C code in swscale.c
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -86,8 +86,8 @@ altivec_packIntArrayToCharArray(int *val, uint8_t* dest, int dstW)
 }
 
 static inline void
-yuv2yuvX_altivec_real(const int16_t *lumFilter, int16_t **lumSrc, int lumFilterSize,
-                      const int16_t *chrFilter, int16_t **chrSrc, int chrFilterSize,
+yuv2yuvX_altivec_real(const int16_t *lumFilter, const int16_t **lumSrc, int lumFilterSize,
+                      const int16_t *chrFilter, const int16_t **chrSrc, int chrFilterSize,
                       uint8_t *dest, uint8_t *uDest, uint8_t *vDest, int dstW, int chrDstW)
 {
     const vector signed int vini = {(1 << 18), (1 << 18), (1 << 18), (1 << 18)};
@@ -389,14 +389,14 @@ static inline void hScale_altivec_real(int16_t *dst, int dstW,
     }
 }
 
-static inline int yv12toyuy2_unscaled_altivec(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY,
+static inline int yv12toyuy2_unscaled_altivec(SwsContext *c, const uint8_t* src[], int srcStride[], int srcSliceY,
                                               int srcSliceH, uint8_t* dstParam[], int dstStride_a[])
 {
     uint8_t *dst=dstParam[0] + dstStride_a[0]*srcSliceY;
     // yv12toyuy2(src[0], src[1], src[2], dst, c->srcW, srcSliceH, srcStride[0], srcStride[1], dstStride[0]);
-    uint8_t *ysrc = src[0];
-    uint8_t *usrc = src[1];
-    uint8_t *vsrc = src[2];
+    const uint8_t *ysrc = src[0];
+    const uint8_t *usrc = src[1];
+    const uint8_t *vsrc = src[2];
     const int width = c->srcW;
     const int height = srcSliceH;
     const int lumStride = srcStride[0];
@@ -467,14 +467,14 @@ static inline int yv12toyuy2_unscaled_altivec(SwsContext *c, uint8_t* src[], int
     return srcSliceH;
 }
 
-static inline int yv12touyvy_unscaled_altivec(SwsContext *c, uint8_t* src[], int srcStride[], int srcSliceY,
+static inline int yv12touyvy_unscaled_altivec(SwsContext *c, const uint8_t* src[], int srcStride[], int srcSliceY,
                                               int srcSliceH, uint8_t* dstParam[], int dstStride_a[])
 {
     uint8_t *dst=dstParam[0] + dstStride_a[0]*srcSliceY;
     // yv12toyuy2(src[0], src[1], src[2], dst, c->srcW, srcSliceH, srcStride[0], srcStride[1], dstStride[0]);
-    uint8_t *ysrc = src[0];
-    uint8_t *usrc = src[1];
-    uint8_t *vsrc = src[2];
+    const uint8_t *ysrc = src[0];
+    const uint8_t *usrc = src[1];
+    const uint8_t *vsrc = src[2];
     const int width = c->srcW;
     const int height = srcSliceH;
     const int lumStride = srcStride[0];

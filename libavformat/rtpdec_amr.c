@@ -2,25 +2,25 @@
  * RTP AMR Depacketizer, RFC 3267
  * Copyright (c) 2010 Martin Storsjo
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "avformat.h"
-#include "rtpdec_amr.h"
+#include "rtpdec_formats.h"
 #include "libavutil/avstring.h"
 
 static const uint8_t frame_sizes_nb[16] = {
@@ -29,6 +29,26 @@ static const uint8_t frame_sizes_nb[16] = {
 static const uint8_t frame_sizes_wb[16] = {
     17, 23, 32, 36, 40, 46, 50, 58, 60, 5, 5, 0, 0, 0, 0, 0
 };
+
+struct PayloadContext {
+    int octet_align;
+    int crc;
+    int interleaving;
+    int channels;
+};
+
+static PayloadContext *amr_new_context(void)
+{
+    PayloadContext *data = av_mallocz(sizeof(PayloadContext));
+    if(!data) return data;
+    data->channels = 1;
+    return data;
+}
+
+static void amr_free_context(PayloadContext *data)
+{
+    av_free(data);
+}
 
 static int amr_handle_packet(AVFormatContext *ctx,
                              PayloadContext *data,
@@ -120,11 +140,34 @@ static int amr_handle_packet(AVFormatContext *ctx,
     return 0;
 }
 
+static int amr_parse_fmtp(AVStream *stream, PayloadContext *data,
+                          char *attr, char *value)
+{
+    /* Some AMR SDP configurations contain "octet-align", without
+     * the trailing =1. Therefore, if the value is empty,
+     * interpret it as "1".
+     */
+    if (!strcmp(value, "")) {
+        av_log(NULL, AV_LOG_WARNING, "AMR fmtp attribute %s had "
+                                     "nonstandard empty value\n", attr);
+        strcpy(value, "1");
+    }
+    if (!strcmp(attr, "octet-align"))
+        data->octet_align = atoi(value);
+    else if (!strcmp(attr, "crc"))
+        data->crc = atoi(value);
+    else if (!strcmp(attr, "interleaving"))
+        data->interleaving = atoi(value);
+    else if (!strcmp(attr, "channels"))
+        data->channels = atoi(value);
+    return 0;
+}
+
 static int amr_parse_sdp_line(AVFormatContext *s, int st_index,
                               PayloadContext *data, const char *line)
 {
     const char *p;
-    char attr[25], value[25];
+    int ret;
 
     /* Parse an fmtp line this one:
      * a=fmtp:97 octet-align=1; interleaving=0
@@ -132,38 +175,13 @@ static int amr_parse_sdp_line(AVFormatContext *s, int st_index,
      * separated key/value pairs.
      */
     if (av_strstart(line, "fmtp:", &p)) {
-        int octet_align = 0;
-        int crc = 0;
-        int interleaving = 0;
-        int channels = 1;
-
-        while (*p && *p == ' ') p++; /* strip spaces */
-        while (*p && *p != ' ') p++; /* eat protocol identifier */
-        while (*p && *p == ' ') p++; /* strip trailing spaces */
-
-        while (ff_rtsp_next_attr_and_value(&p, attr, sizeof(attr), value, sizeof(value))) {
-            /* Some AMR SDP configurations contain "octet-align", without
-             * the trailing =1. Therefore, if the value is empty,
-             * interpret it as "1".
-             */
-            if (!strcmp(value, "")) {
-                av_log(s, AV_LOG_WARNING, "AMR fmtp attribute %s had "
-                                          "nonstandard empty value\n", attr);
-                strcpy(value, "1");
-            }
-            if (!strcmp(attr, "octet-align"))
-                octet_align = atoi(value);
-            else if (!strcmp(attr, "crc"))
-                crc = atoi(value);
-            else if (!strcmp(attr, "interleaving"))
-                interleaving = atoi(value);
-            else if (!strcmp(attr, "channels"))
-                channels = atoi(value);
-        }
-        if (!octet_align || crc || interleaving || channels != 1) {
+        ret = ff_parse_fmtp(s->streams[st_index], data, p, amr_parse_fmtp);
+        if (!data->octet_align || data->crc ||
+            data->interleaving || data->channels != 1) {
             av_log(s, AV_LOG_ERROR, "Unsupported RTP/AMR configuration!\n");
             return -1;
         }
+        return ret;
     }
     return 0;
 }
@@ -173,6 +191,8 @@ RTPDynamicProtocolHandler ff_amr_nb_dynamic_handler = {
     .codec_type       = AVMEDIA_TYPE_AUDIO,
     .codec_id         = CODEC_ID_AMR_NB,
     .parse_sdp_a_line = amr_parse_sdp_line,
+    .open             = amr_new_context,
+    .close            = amr_free_context,
     .parse_packet     = amr_handle_packet,
 };
 
@@ -181,6 +201,8 @@ RTPDynamicProtocolHandler ff_amr_wb_dynamic_handler = {
     .codec_type       = AVMEDIA_TYPE_AUDIO,
     .codec_id         = CODEC_ID_AMR_WB,
     .parse_sdp_a_line = amr_parse_sdp_line,
+    .open             = amr_new_context,
+    .close            = amr_free_context,
     .parse_packet     = amr_handle_packet,
 };
 

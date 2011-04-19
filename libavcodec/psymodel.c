@@ -2,20 +2,20 @@
  * audio encoder psychoacoustic model
  * Copyright (C) 2008 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -53,7 +53,7 @@ FFPsyWindowInfo ff_psy_suggest_window(FFPsyContext *ctx,
 }
 
 void ff_psy_set_band_info(FFPsyContext *ctx, int channel,
-                          const float *coeffs, FFPsyWindowInfo *wi)
+                          const float *coeffs, const FFPsyWindowInfo *wi)
 {
     ctx->model->analyze(ctx, channel, coeffs, wi);
 }
@@ -88,8 +88,9 @@ av_cold struct FFPsyPreprocessContext* ff_psy_preprocess_init(AVCodecContext *av
         cutoff_coeff = 2.0 * avctx->cutoff / avctx->sample_rate;
 
     if (cutoff_coeff)
-    ctx->fcoeffs = ff_iir_filter_init_coeffs(FF_FILTER_TYPE_BUTTERWORTH, FF_FILTER_MODE_LOWPASS,
-                                             FILT_ORDER, cutoff_coeff, 0.0, 0.0);
+    ctx->fcoeffs = ff_iir_filter_init_coeffs(avctx, FF_FILTER_TYPE_BUTTERWORTH,
+                                             FF_FILTER_MODE_LOWPASS, FILT_ORDER,
+                                             cutoff_coeff, 0.0, 0.0);
     if (ctx->fcoeffs) {
         ctx->fstate = av_mallocz(sizeof(ctx->fstate[0]) * avctx->channels);
         for (i = 0; i < avctx->channels; i++)
@@ -123,5 +124,6 @@ av_cold void ff_psy_preprocess_end(struct FFPsyPreprocessContext *ctx)
         for (i = 0; i < ctx->avctx->channels; i++)
             ff_iir_filter_free_state(ctx->fstate[i]);
     av_freep(&ctx->fstate);
+    av_free(ctx);
 }
 

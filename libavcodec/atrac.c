@@ -3,20 +3,20 @@
  * Copyright (c) 2006-2008 Maxim Poliakovski
  * Copyright (c) 2006-2008 Benjamin Larsson
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -32,8 +32,8 @@
 #include "dsputil.h"
 #include "atrac.h"
 
-float sf_table[64];
-float qmf_window[48];
+float ff_atrac_sf_table[64];
+static float qmf_window[48];
 
 static const float qmf_48tap_half[24] = {
    -0.00001461907, -0.00009205479,-0.000056157569,0.00030117269,
@@ -54,9 +54,9 @@ void atrac_generate_tables(void)
     float s;
 
     /* Generate scale factors */
-    if (!sf_table[63])
+    if (!ff_atrac_sf_table[63])
         for (i=0 ; i<64 ; i++)
-            sf_table[i] = pow(2.0, (i - 15) / 3.0);
+            ff_atrac_sf_table[i] = pow(2.0, (i - 15) / 3.0);
 
     /* Generate the QMF window. */
     if (!qmf_window[47])

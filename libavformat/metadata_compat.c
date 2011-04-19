@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2009  Aurelien Jacobs <aurel@gnuage.org>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -23,7 +23,7 @@
 #include "metadata.h"
 #include "libavutil/avstring.h"
 
-#if LIBAVFORMAT_VERSION_MAJOR < 53
+#if FF_API_OLD_METADATA
 
 #define SIZE_OFFSET(x) sizeof(((AVFormatContext*)0)->x),offsetof(AVFormatContext,x)
 
@@ -108,10 +108,11 @@ void ff_metadata_demux_compat(AVFormatContext *ctx)
 
 
 #define FILL_METADATA(s, key, value) {                                        \
-    if (value && *value && !av_metadata_get(s->metadata, #key, NULL, 0))      \
+    if (!av_metadata_get(s->metadata, #key, NULL, 0))                         \
         av_metadata_set2(&s->metadata, #key, value, 0);                       \
     }
-#define FILL_METADATA_STR(s, key)  FILL_METADATA(s, key, s->key)
+#define FILL_METADATA_STR(s, key) {                                           \
+    if (s->key && *s->key)  FILL_METADATA(s, key, s->key); }
 #define FILL_METADATA_INT(s, key) {                                           \
     char number[10];                                                          \
     snprintf(number, sizeof(number), "%d", s->key);                           \
@@ -144,4 +145,4 @@ void ff_metadata_mux_compat(AVFormatContext *ctx)
     }
 }
 
-#endif /* LIBAVFORMAT_VERSION_MAJOR < 53 */
+#endif /* FF_API_OLD_METADATA */

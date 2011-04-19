@@ -2,20 +2,20 @@
  * (c) 2001 Fabrice Bellard
  *     2007 Marc Hoffman <marc.hoffman@analog.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <math.h>
 
+#include "libavutil/cpu.h"
 #include "libavutil/common.h"
 #include "libavutil/lfg.h"
 
@@ -94,24 +95,24 @@ struct algo algos[] = {
   {"SIMPLE-C",        1, ff_simple_idct,     ff_ref_idct, NO_PERM},
 
 #if HAVE_MMX
-  {"MMX",             0, ff_fdct_mmx,        ff_ref_fdct, NO_PERM, FF_MM_MMX},
+  {"MMX",             0, ff_fdct_mmx,        ff_ref_fdct, NO_PERM, AV_CPU_FLAG_MMX},
 #if HAVE_MMX2
-  {"MMX2",            0, ff_fdct_mmx2,       ff_ref_fdct, NO_PERM, FF_MM_MMX2},
-  {"SSE2",            0, ff_fdct_sse2,       ff_ref_fdct, NO_PERM, FF_MM_SSE2},
+  {"MMX2",            0, ff_fdct_mmx2,       ff_ref_fdct, NO_PERM, AV_CPU_FLAG_MMX2},
+  {"SSE2",            0, ff_fdct_sse2,       ff_ref_fdct, NO_PERM, AV_CPU_FLAG_SSE2},
 #endif
 
 #if CONFIG_GPL
-  {"LIBMPEG2-MMX",    1, ff_mmx_idct,        ff_ref_idct, MMX_PERM, FF_MM_MMX},
-  {"LIBMPEG2-MMX2",   1, ff_mmxext_idct,     ff_ref_idct, MMX_PERM, FF_MM_MMX2},
+  {"LIBMPEG2-MMX",    1, ff_mmx_idct,        ff_ref_idct, MMX_PERM, AV_CPU_FLAG_MMX},
+  {"LIBMPEG2-MMX2",   1, ff_mmxext_idct,     ff_ref_idct, MMX_PERM, AV_CPU_FLAG_MMX2},
 #endif
-  {"SIMPLE-MMX",      1, ff_simple_idct_mmx, ff_ref_idct, MMX_SIMPLE_PERM, FF_MM_MMX},
-  {"XVID-MMX",        1, ff_idct_xvid_mmx,   ff_ref_idct, NO_PERM, FF_MM_MMX},
-  {"XVID-MMX2",       1, ff_idct_xvid_mmx2,  ff_ref_idct, NO_PERM, FF_MM_MMX2},
-  {"XVID-SSE2",       1, ff_idct_xvid_sse2,  ff_ref_idct, SSE2_PERM, FF_MM_SSE2},
+  {"SIMPLE-MMX",      1, ff_simple_idct_mmx, ff_ref_idct, MMX_SIMPLE_PERM, AV_CPU_FLAG_MMX},
+  {"XVID-MMX",        1, ff_idct_xvid_mmx,   ff_ref_idct, NO_PERM, AV_CPU_FLAG_MMX},
+  {"XVID-MMX2",       1, ff_idct_xvid_mmx2,  ff_ref_idct, NO_PERM, AV_CPU_FLAG_MMX2},
+  {"XVID-SSE2",       1, ff_idct_xvid_sse2,  ff_ref_idct, SSE2_PERM, AV_CPU_FLAG_SSE2},
 #endif
 
 #if HAVE_ALTIVEC
-  {"altivecfdct",     0, fdct_altivec,       ff_ref_fdct, NO_PERM, FF_MM_ALTIVEC},
+  {"altivecfdct",     0, fdct_altivec,       ff_ref_fdct, NO_PERM, AV_CPU_FLAG_ALTIVEC},
 #endif
 
 #if ARCH_BFIN
@@ -187,7 +188,7 @@ DECLARE_ALIGNED(8, static DCTELEM, block_org)[64];
 static inline void mmx_emms(void)
 {
 #if HAVE_MMX
-    if (cpu_flags & FF_MM_MMX)
+    if (cpu_flags & AV_CPU_FLAG_MMX)
         __asm__ volatile ("emms\n\t");
 #endif
 }
@@ -554,7 +555,7 @@ int main(int argc, char **argv)
     int test_idct = 0, test_248_dct = 0;
     int c,i;
     int test=1;
-    cpu_flags = mm_support();
+    cpu_flags = av_get_cpu_flags();
 
     ff_ref_dct_init();
     idct_mmx_init();

@@ -4,20 +4,20 @@
  * Copyright (C) 2009 Michael Niedermayer <michaelni@gmx.at>
  * Copyright (c) 2009 Baptiste Coudurier <baptiste dot coudurier at gmail dot com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -68,7 +68,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size,
 
 #define READ_PIXELS(a, b, c)         \
     do {                             \
-        val  = le2me_32(*src++);     \
+        val  = av_le2ne32(*src++);     \
         *a++ =  val <<  6;           \
         *b++ = (val >>  4) & 0xFFC0; \
         *c++ = (val >> 14) & 0xFFC0; \
@@ -86,14 +86,14 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size,
         if (w < avctx->width - 1) {
             READ_PIXELS(u, y, v);
 
-            val  = le2me_32(*src++);
+            val  = av_le2ne32(*src++);
             *y++ =  val <<  6;
         }
         if (w < avctx->width - 3) {
             *u++ = (val >>  4) & 0xFFC0;
             *y++ = (val >> 14) & 0xFFC0;
 
-            val  = le2me_32(*src++);
+            val  = av_le2ne32(*src++);
             *v++ =  val <<  6;
             *y++ = (val >>  4) & 0xFFC0;
         }
@@ -120,7 +120,7 @@ static av_cold int decode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec v210_decoder = {
+AVCodec ff_v210_decoder = {
     "v210",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_V210,

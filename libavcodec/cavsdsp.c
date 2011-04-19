@@ -5,25 +5,26 @@
  *
  * Copyright (c) 2006  Stefan Gehrer <stefan.gehrer@gmx.de>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include <stdio.h>
 #include "dsputil.h"
+#include "cavsdsp.h"
 
 /*****************************************************************************
  *
@@ -510,7 +511,12 @@ CAVS_MC(put_, 16)
 CAVS_MC(avg_, 8)
 CAVS_MC(avg_, 16)
 
-av_cold void ff_cavsdsp_init(DSPContext* c, AVCodecContext *avctx) {
+#define ff_put_cavs_qpel8_mc00_c  ff_put_pixels8x8_c
+#define ff_avg_cavs_qpel8_mc00_c  ff_avg_pixels8x8_c
+#define ff_put_cavs_qpel16_mc00_c ff_put_pixels16x16_c
+#define ff_avg_cavs_qpel16_mc00_c ff_avg_pixels16x16_c
+
+av_cold void ff_cavsdsp_init(CAVSDSPContext* c, AVCodecContext *avctx) {
 #define dspfunc(PFX, IDX, NUM) \
     c->PFX ## _pixels_tab[IDX][ 0] = ff_ ## PFX ## NUM ## _mc00_c; \
     c->PFX ## _pixels_tab[IDX][ 1] = ff_ ## PFX ## NUM ## _mc10_c; \
@@ -537,4 +543,6 @@ av_cold void ff_cavsdsp_init(DSPContext* c, AVCodecContext *avctx) {
     c->cavs_filter_cv = cavs_filter_cv_c;
     c->cavs_filter_ch = cavs_filter_ch_c;
     c->cavs_idct8_add = cavs_idct8_add_c;
+
+    if (HAVE_MMX) ff_cavsdsp_init_mmx(c, avctx);
 }

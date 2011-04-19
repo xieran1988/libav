@@ -2,20 +2,20 @@
  * Interface to xvidcore for mpeg4 encoding
  * Copyright (c) 2004 Adam Thayer <krevnik@comcast.net>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -25,11 +25,18 @@
  * @author Adam Thayer (krevnik@comcast.net)
  */
 
+/* needed for mkstemp() */
+#define _XOPEN_SOURCE 600
+
 #include <xvid.h>
 #include <unistd.h>
 #include "avcodec.h"
+#include "libavutil/cpu.h"
 #include "libavutil/intreadwrite.h"
 #include "libxvid_internal.h"
+#if !HAVE_MKSTEMP
+#include <fcntl.h>
+#endif
 
 /**
  * Buffer management macros.
@@ -38,35 +45,33 @@
 #define BUFFER_REMAINING(x)         (BUFFER_SIZE - strlen(x))
 #define BUFFER_CAT(x)               (&((x)[strlen(x)]))
 
-/* For PPC Use */
-int has_altivec(void);
-
 /**
  * Structure for the private Xvid context.
  * This stores all the private context for the codec.
  */
 struct xvid_context {
-    void *encoder_handle;          /** Handle for Xvid encoder */
-    int xsize, ysize;              /** Frame size */
-    int vop_flags;                 /** VOP flags for Xvid encoder */
-    int vol_flags;                 /** VOL flags for Xvid encoder */
-    int me_flags;                  /** Motion Estimation flags */
-    int qscale;                    /** Do we use constant scale? */
-    int quicktime_format;          /** Are we in a QT-based format? */
-    AVFrame encoded_picture;       /** Encoded frame information */
-    char *twopassbuffer;           /** Character buffer for two-pass */
-    char *old_twopassbuffer;       /** Old character buffer (two-pass) */
-    char *twopassfile;             /** second pass temp file name */
-    unsigned char *intra_matrix;   /** P-Frame Quant Matrix */
-    unsigned char *inter_matrix;   /** I-Frame Quant Matrix */
+    void *encoder_handle;          /**< Handle for Xvid encoder */
+    int xsize;                     /**< Frame x size */
+    int ysize;                     /**< Frame y size */
+    int vop_flags;                 /**< VOP flags for Xvid encoder */
+    int vol_flags;                 /**< VOL flags for Xvid encoder */
+    int me_flags;                  /**< Motion Estimation flags */
+    int qscale;                    /**< Do we use constant scale? */
+    int quicktime_format;          /**< Are we in a QT-based format? */
+    AVFrame encoded_picture;       /**< Encoded frame information */
+    char *twopassbuffer;           /**< Character buffer for two-pass */
+    char *old_twopassbuffer;       /**< Old character buffer (two-pass) */
+    char *twopassfile;             /**< second pass temp file name */
+    unsigned char *intra_matrix;   /**< P-Frame Quant Matrix */
+    unsigned char *inter_matrix;   /**< I-Frame Quant Matrix */
 };
 
 /**
  * Structure for the private first-pass plugin.
  */
 struct xvid_ff_pass1 {
-    int     version;                /** Xvid version */
-    struct xvid_context *context;        /** Pointer to private context */
+    int     version;                /**< Xvid version */
+    struct xvid_context *context;   /**< Pointer to private context */
 };
 
 /* Prototypes - See function implementation for details */
@@ -74,8 +79,46 @@ int xvid_strip_vol_header(AVCodecContext *avctx, unsigned char *frame, unsigned 
 int xvid_ff_2pass(void *ref, int opt, void *p1, void *p2);
 void xvid_correct_framerate(AVCodecContext *avctx);
 
+/* Wrapper to work around the lack of mkstemp() on mingw.
+ * Also, tries to create file in /tmp first, if possible.
+ * *prefix can be a character constant; *filename will be allocated internally.
+ * @return file descriptor of opened file (or -1 on error)
+ * and opened file name in **filename. */
+int ff_tempfile(const char *prefix, char **filename) {
+    int fd=-1;
+#if !HAVE_MKSTEMP
+    *filename = tempnam(".", prefix);
+#else
+    size_t len = strlen(prefix) + 12; /* room for "/tmp/" and "XXXXXX\0" */
+    *filename = av_malloc(len);
+#endif
+    /* -----common section-----*/
+    if (*filename == NULL) {
+        av_log(NULL, AV_LOG_ERROR, "ff_tempfile: Cannot allocate file name\n");
+        return -1;
+    }
+#if !HAVE_MKSTEMP
+    fd = open(*filename, O_RDWR | O_BINARY | O_CREAT, 0444);
+#else
+    snprintf(*filename, len, "/tmp/%sXXXXXX", prefix);
+    fd = mkstemp(*filename);
+    if (fd < 0) {
+        snprintf(*filename, len, "./%sXXXXXX", prefix);
+        fd = mkstemp(*filename);
+    }
+#endif
+    /* -----common section-----*/
+    if (fd < 0) {
+        av_log(NULL, AV_LOG_ERROR, "ff_tempfile: Cannot open temporary file %s\n", *filename);
+        return -1;
+    }
+    return fd; /* success */
+}
+
+#if CONFIG_LIBXVID_ENCODER
+
 /**
- * Creates the private context for the encoder.
+ * Create the private context for the encoder.
  * All buffers are allocated, settings are loaded from the user,
  * and the encoder context created.
  *
@@ -170,7 +213,7 @@ static av_cold int xvid_encode_init(AVCodecContext *avctx)  {
 #if ARCH_PPC
     /* Xvid's PPC support is borked, use libavcodec to detect */
 #if HAVE_ALTIVEC
-    if( has_altivec() ) {
+    if (av_get_cpu_flags() & AV_CPU_FLAG_ALTIVEC) {
         xvid_gbl_init.cpu_flags = XVID_CPU_FORCE | XVID_CPU_ALTIVEC;
     } else
 #endif
@@ -229,7 +272,7 @@ static av_cold int xvid_encode_init(AVCodecContext *avctx)  {
         rc2pass2.version = XVID_VERSION;
         rc2pass2.bitrate = avctx->bit_rate;
 
-        fd = av_tempfile("xvidff.", &(x->twopassfile));
+        fd = ff_tempfile("xvidff.", &(x->twopassfile));
         if( fd == -1 ) {
             av_log(avctx, AV_LOG_ERROR,
                 "Xvid: Cannot write 2-pass pipe\n");
@@ -359,7 +402,7 @@ static av_cold int xvid_encode_init(AVCodecContext *avctx)  {
 }
 
 /**
- * Encodes a single frame.
+ * Encode a single frame.
  *
  * @param avctx AVCodecContext pointer to context
  * @param frame Pointer to encoded frame buffer
@@ -406,7 +449,11 @@ static int xvid_encode_frame(AVCodecContext *avctx,
     xvid_enc_frame.vop_flags = x->vop_flags;
     xvid_enc_frame.vol_flags = x->vol_flags;
     xvid_enc_frame.motion = x->me_flags;
-    xvid_enc_frame.type = XVID_TYPE_AUTO;
+    xvid_enc_frame.type =
+        picture->pict_type == FF_I_TYPE ? XVID_TYPE_IVOP :
+        picture->pict_type == FF_P_TYPE ? XVID_TYPE_PVOP :
+        picture->pict_type == FF_B_TYPE ? XVID_TYPE_BVOP :
+                                          XVID_TYPE_AUTO;
 
     /* Pixel aspect ratio setting */
     if (avctx->sample_aspect_ratio.num < 1 || avctx->sample_aspect_ratio.num > 255 ||
@@ -469,7 +516,7 @@ static int xvid_encode_frame(AVCodecContext *avctx,
 }
 
 /**
- * Destroys the private context for the encoder.
+ * Destroy the private context for the encoder.
  * All buffers are freed, and the Xvid encoder context is destroyed.
  *
  * @param avctx AVCodecContext pointer to context
@@ -480,18 +527,14 @@ static av_cold int xvid_encode_close(AVCodecContext *avctx) {
 
     xvid_encore(x->encoder_handle, XVID_ENC_DESTROY, NULL, NULL);
 
-    if( avctx->extradata != NULL )
-        av_freep(&avctx->extradata);
+    av_freep(&avctx->extradata);
     if( x->twopassbuffer != NULL ) {
         av_free(x->twopassbuffer);
         av_free(x->old_twopassbuffer);
     }
-    if( x->twopassfile != NULL )
-        av_free(x->twopassfile);
-    if( x->intra_matrix != NULL )
-        av_free(x->intra_matrix);
-    if( x->inter_matrix != NULL )
-        av_free(x->inter_matrix);
+    av_free(x->twopassfile);
+    av_free(x->intra_matrix);
+    av_free(x->inter_matrix);
 
     return 0;
 }
@@ -609,7 +652,7 @@ void xvid_correct_framerate(AVCodecContext *avctx) {
  */
 
 /**
- * Initializes the two-pass plugin and context.
+ * Initialize the two-pass plugin and context.
  *
  * @param param Input construction parameter structure
  * @param handle Private context handle
@@ -640,7 +683,7 @@ static int xvid_ff_2pass_create(xvid_plg_create_t * param,
 }
 
 /**
- * Destroys the two-pass plugin context.
+ * Destroy the two-pass plugin context.
  *
  * @param ref Context pointer for the plugin
  * @param param Destrooy context
@@ -656,7 +699,7 @@ static int xvid_ff_2pass_destroy(struct xvid_context *ref,
 }
 
 /**
- * Enables fast encode mode during the first pass.
+ * Enable fast encode mode during the first pass.
  *
  * @param ref Context pointer for the plugin
  * @param param Frame data
@@ -699,7 +742,7 @@ static int xvid_ff_2pass_before(struct xvid_context *ref,
 }
 
 /**
- * Captures statistic data and writes it during first pass.
+ * Capture statistic data and write it during first pass.
  *
  * @param ref Context pointer for the plugin
  * @param param Statistic data
@@ -767,7 +810,7 @@ int xvid_ff_2pass(void *ref, int cmd, void *p1, void *p2) {
 /**
  * Xvid codec definition for libavcodec.
  */
-AVCodec libxvid_encoder = {
+AVCodec ff_libxvid_encoder = {
     "libxvid",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MPEG4,
@@ -778,3 +821,5 @@ AVCodec libxvid_encoder = {
     .pix_fmts= (const enum PixelFormat[]){PIX_FMT_YUV420P, PIX_FMT_NONE},
     .long_name= NULL_IF_CONFIG_SMALL("libxvidcore MPEG-4 part 2"),
 };
+
+#endif /* CONFIG_LIBXVID_ENCODER */

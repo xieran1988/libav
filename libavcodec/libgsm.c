@@ -3,20 +3,20 @@
  * Copyright (c) 2005 Alban Bedel <albeu@free.fr>
  * Copyright (c) 2006, 2007 Michel Bardiaux <mbardiaux@mediaxim.be>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -49,12 +49,12 @@ static av_cold int libgsm_init(AVCodecContext *avctx) {
         if(!avctx->sample_rate)
             avctx->sample_rate= 8000;
 
-        avctx->sample_fmt = SAMPLE_FMT_S16;
+        avctx->sample_fmt = AV_SAMPLE_FMT_S16;
     }else{
         if (avctx->sample_rate != 8000) {
             av_log(avctx, AV_LOG_ERROR, "Sample rate 8000Hz required for GSM, got %dHz\n",
                 avctx->sample_rate);
-            if(avctx->strict_std_compliance > FF_COMPLIANCE_INOFFICIAL)
+            if(avctx->strict_std_compliance > FF_COMPLIANCE_UNOFFICIAL)
                 return -1;
         }
         if (avctx->bit_rate != 13000 /* Official */ &&
@@ -62,7 +62,7 @@ static av_cold int libgsm_init(AVCodecContext *avctx) {
             avctx->bit_rate != 0 /* Unknown; a.o. mov does not set bitrate when decoding */ ) {
             av_log(avctx, AV_LOG_ERROR, "Bitrate 13000bps required for GSM, got %dbps\n",
                 avctx->bit_rate);
-            if(avctx->strict_std_compliance > FF_COMPLIANCE_INOFFICIAL)
+            if(avctx->strict_std_compliance > FF_COMPLIANCE_UNOFFICIAL)
                 return -1;
         }
     }
@@ -112,7 +112,7 @@ static int libgsm_encode_frame(AVCodecContext *avctx,
 }
 
 
-AVCodec libgsm_encoder = {
+AVCodec ff_libgsm_encoder = {
     "libgsm",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_GSM,
@@ -120,11 +120,11 @@ AVCodec libgsm_encoder = {
     libgsm_init,
     libgsm_encode_frame,
     libgsm_close,
-    .sample_fmts = (const enum SampleFormat[]){SAMPLE_FMT_S16,SAMPLE_FMT_NONE},
+    .sample_fmts = (const enum AVSampleFormat[]){AV_SAMPLE_FMT_S16,AV_SAMPLE_FMT_NONE},
     .long_name = NULL_IF_CONFIG_SMALL("libgsm GSM"),
 };
 
-AVCodec libgsm_ms_encoder = {
+AVCodec ff_libgsm_ms_encoder = {
     "libgsm_ms",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_GSM_MS,
@@ -132,7 +132,7 @@ AVCodec libgsm_ms_encoder = {
     libgsm_init,
     libgsm_encode_frame,
     libgsm_close,
-    .sample_fmts = (const enum SampleFormat[]){SAMPLE_FMT_S16,SAMPLE_FMT_NONE},
+    .sample_fmts = (const enum AVSampleFormat[]){AV_SAMPLE_FMT_S16,AV_SAMPLE_FMT_NONE},
     .long_name = NULL_IF_CONFIG_SMALL("libgsm GSM Microsoft variant"),
 };
 
@@ -156,7 +156,7 @@ static int libgsm_decode_frame(AVCodecContext *avctx,
     return avctx->block_align;
 }
 
-AVCodec libgsm_decoder = {
+AVCodec ff_libgsm_decoder = {
     "libgsm",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_GSM,
@@ -168,7 +168,7 @@ AVCodec libgsm_decoder = {
     .long_name = NULL_IF_CONFIG_SMALL("libgsm GSM"),
 };
 
-AVCodec libgsm_ms_decoder = {
+AVCodec ff_libgsm_ms_decoder = {
     "libgsm_ms",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_GSM_MS,

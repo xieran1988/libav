@@ -219,17 +219,17 @@ fi
 
 if [ -n "$do_dnxhd_1080i" ] ; then
 # FIXME: interlaced raw DNxHD decoding is broken
-do_video_encoding dnxhd-1080i.mov "" "-vcodec dnxhd -flags +ildct -s hd1080 -b 120Mb -pix_fmt yuv422p -vframes 5 -an"
+do_video_encoding dnxhd-1080i.mov "" "-vcodec dnxhd -flags +ildct -s hd1080 -b 120M -pix_fmt yuv422p -vframes 5 -an"
 do_video_decoding "-r 25" "-s cif -pix_fmt yuv420p"
 fi
 
 if [ -n "$do_dnxhd_720p" ] ; then
-do_video_encoding dnxhd-720p.dnxhd "" "-s hd720 -b 90Mb -pix_fmt yuv422p -vframes 5 -an"
+do_video_encoding dnxhd-720p.dnxhd "" "-s hd720 -b 90M -pix_fmt yuv422p -vframes 5 -an"
 do_video_decoding "-r 25" "-s cif -pix_fmt yuv420p"
 fi
 
 if [ -n "$do_dnxhd_720p_rd" ] ; then
-do_video_encoding dnxhd-720p-rd.dnxhd "" "-threads 4 -mbd rd -s hd720 -b 90Mb -pix_fmt yuv422p -vframes 5 -an"
+do_video_encoding dnxhd-720p-rd.dnxhd "" "-threads 4 -mbd rd -s hd720 -b 90M -pix_fmt yuv422p -vframes 5 -an"
 do_video_decoding "-r 25" "-s cif -pix_fmt yuv420p"
 fi
 
@@ -248,14 +248,29 @@ do_video_encoding roqav.roq "" "-vframes 5"
 do_video_decoding "" "-pix_fmt yuv420p"
 fi
 
+if [ -n "$do_qtrle" ] ; then
+do_video_encoding qtrle.mov "" "-an -vcodec qtrle"
+do_video_decoding "" "-pix_fmt yuv420p"
+fi
+
+if [ -n "$do_rgb" ] ; then
+do_video_encoding rgb.avi "" "-an -vcodec rawvideo -pix_fmt bgr24"
+do_video_decoding "" "-pix_fmt yuv420p"
+fi
+
+if [ -n "$do_yuv" ] ; then
+do_video_encoding yuv.avi "" "-an -vcodec rawvideo -pix_fmt yuv420p"
+do_video_decoding "" "-pix_fmt yuv420p"
+fi
+
 if [ -n "$do_mp2" ] ; then
 do_audio_encoding mp2.mp2 "-ar 44100"
 do_audio_decoding
 $tiny_psnr $pcm_dst $pcm_ref 2 1924 >> $logfile
 fi
 
-if [ -n "$do_ac3" ] ; then
-do_audio_encoding ac3.rm "" -vn
+if [ -n "$do_ac3_fixed" ] ; then
+do_audio_encoding ac3.rm "" "-vn -acodec ac3_fixed"
 # binaries configured with --disable-sse decode ac3 differently
 #do_audio_decoding
 #$tiny_psnr $pcm_dst $pcm_ref 2 1024 >> $logfile
@@ -348,5 +363,3 @@ do_audio_enc_dec wav dbl pcm_f64le
 do_audio_enc_dec wav s16 pcm_zork
 do_audio_enc_dec 302 s16 pcm_s24daud "-ac 6 -ar 96000"
 fi
-
-rm -f "$bench" "$bench2"

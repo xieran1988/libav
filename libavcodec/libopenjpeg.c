@@ -2,20 +2,20 @@
  * JPEG 2000 decoding support via OpenJPEG
  * Copyright (c) 2009 Jaikrishnan Menon <realityman@gmx.net>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -24,6 +24,7 @@
 * JPEG 2000 decoder using libopenjpeg
 */
 
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 #include "libavutil/intreadwrite.h"
 #define  OPJ_STATIC
@@ -113,7 +114,7 @@ static int libopenjpeg_decode_frame(AVCodecContext *avctx,
     }
     width  = image->comps[0].w << avctx->lowres;
     height = image->comps[0].h << avctx->lowres;
-    if(avcodec_check_dimensions(avctx, width, height) < 0) {
+    if(av_image_check_size(width, height, 0, avctx) < 0) {
         av_log(avctx, AV_LOG_ERROR, "%dx%d dimension invalid.\n", width, height);
         goto done;
     }
@@ -183,7 +184,7 @@ static av_cold int libopenjpeg_decode_close(AVCodecContext *avctx)
 }
 
 
-AVCodec libopenjpeg_decoder = {
+AVCodec ff_libopenjpeg_decoder = {
     "libopenjpeg",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_JPEG2000,
@@ -193,5 +194,6 @@ AVCodec libopenjpeg_decoder = {
     libopenjpeg_decode_close,
     libopenjpeg_decode_frame,
     CODEC_CAP_DR1,
+    .max_lowres = 5,
     .long_name = NULL_IF_CONFIG_SMALL("OpenJPEG based JPEG 2000 decoder"),
 } ;

@@ -2,20 +2,20 @@
  * H.26L/H.264/AVC/JVT/14496-10/... reference picture handling
  * Copyright (c) 2003 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -474,6 +474,25 @@ static void print_long_term(H264Context *h) {
     }
 }
 
+void ff_generate_sliding_window_mmcos(H264Context *h) {
+    MpegEncContext * const s = &h->s;
+    assert(h->long_ref_count + h->short_ref_count <= h->sps.ref_frame_count);
+
+    h->mmco_index= 0;
+    if(h->short_ref_count && h->long_ref_count + h->short_ref_count == h->sps.ref_frame_count &&
+            !(FIELD_PICTURE && !s->first_field && s->current_picture_ptr->reference)) {
+        h->mmco[0].opcode= MMCO_SHORT2UNUSED;
+        h->mmco[0].short_pic_num= h->short_ref[ h->short_ref_count - 1 ]->frame_num;
+        h->mmco_index= 1;
+        if (FIELD_PICTURE) {
+            h->mmco[0].short_pic_num *= 2;
+            h->mmco[1].opcode= MMCO_SHORT2UNUSED;
+            h->mmco[1].short_pic_num= h->mmco[0].short_pic_num + 1;
+            h->mmco_index= 2;
+        }
+    }
+}
+
 int ff_h264_execute_ref_pic_marking(H264Context *h, MMCO *mmco, int mmco_count){
     MpegEncContext * const s = &h->s;
     int i, av_uninit(j);
@@ -673,20 +692,7 @@ int ff_h264_decode_ref_pic_marking(H264Context *h, GetBitContext *gb){
             }
             h->mmco_index= i;
         }else{
-            assert(h->long_ref_count + h->short_ref_count <= h->sps.ref_frame_count);
-
-            if(h->short_ref_count && h->long_ref_count + h->short_ref_count == h->sps.ref_frame_count &&
-                    !(FIELD_PICTURE && !s->first_field && s->current_picture_ptr->reference)) {
-                h->mmco[0].opcode= MMCO_SHORT2UNUSED;
-                h->mmco[0].short_pic_num= h->short_ref[ h->short_ref_count - 1 ]->frame_num;
-                h->mmco_index= 1;
-                if (FIELD_PICTURE) {
-                    h->mmco[0].short_pic_num *= 2;
-                    h->mmco[1].opcode= MMCO_SHORT2UNUSED;
-                    h->mmco[1].short_pic_num= h->mmco[0].short_pic_num + 1;
-                    h->mmco_index= 2;
-                }
-            }
+            ff_generate_sliding_window_mmcos(h);
         }
     }
 

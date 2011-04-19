@@ -5,26 +5,28 @@
  * MMX-optimized DSP functions, based on H.264 optimizations by
  * Michael Niedermayer and Loren Merritt
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "libavutil/common.h"
+#include "libavutil/cpu.h"
 #include "libavutil/x86_cpu.h"
 #include "libavcodec/dsputil.h"
+#include "libavcodec/cavsdsp.h"
 #include "dsputil_mmx.h"
 
 /*****************************************************************************
@@ -118,7 +120,7 @@ static void cavs_idct8_add_mmx(uint8_t *dst, int16_t *block, int stride)
     for(i=0; i<2; i++){
         DECLARE_ALIGNED(8, uint64_t, tmp);
 
-        cavs_idct8_1d(block+4*i, ff_pw_4);
+        cavs_idct8_1d(block+4*i, ff_pw_4.a);
 
         __asm__ volatile(
             "psraw     $3, %%mm7  \n\t"
@@ -172,7 +174,7 @@ static void cavs_idct8_add_mmx(uint8_t *dst, int16_t *block, int stride)
         );
     }
 
-    add_pixels_clamped_mmx(b2, dst, stride);
+    ff_add_pixels_clamped_mmx(b2, dst, stride);
 }
 
 /*****************************************************************************
@@ -437,7 +439,7 @@ CAVS_MC(put_, 16,mmx2)
 CAVS_MC(avg_, 8, mmx2)
 CAVS_MC(avg_, 16,mmx2)
 
-void ff_cavsdsp_init_mmx2(DSPContext* c, AVCodecContext *avctx) {
+static void ff_cavsdsp_init_mmx2(CAVSDSPContext* c, AVCodecContext *avctx) {
 #define dspfunc(PFX, IDX, NUM) \
     c->PFX ## _pixels_tab[IDX][ 0] = ff_ ## PFX ## NUM ## _mc00_mmx2; \
     c->PFX ## _pixels_tab[IDX][ 2] = ff_ ## PFX ## NUM ## _mc20_mmx2; \
@@ -453,7 +455,7 @@ void ff_cavsdsp_init_mmx2(DSPContext* c, AVCodecContext *avctx) {
     c->cavs_idct8_add = cavs_idct8_add_mmx;
 }
 
-void ff_cavsdsp_init_3dnow(DSPContext* c, AVCodecContext *avctx) {
+static void ff_cavsdsp_init_3dnow(CAVSDSPContext* c, AVCodecContext *avctx) {
 #define dspfunc(PFX, IDX, NUM) \
     c->PFX ## _pixels_tab[IDX][ 0] = ff_ ## PFX ## NUM ## _mc00_mmx2; \
     c->PFX ## _pixels_tab[IDX][ 2] = ff_ ## PFX ## NUM ## _mc20_3dnow; \
@@ -467,4 +469,12 @@ void ff_cavsdsp_init_3dnow(DSPContext* c, AVCodecContext *avctx) {
     dspfunc(avg_cavs_qpel, 1, 8);
 #undef dspfunc
     c->cavs_idct8_add = cavs_idct8_add_mmx;
+}
+
+void ff_cavsdsp_init_mmx(CAVSDSPContext *c, AVCodecContext *avctx)
+{
+    int mm_flags = av_get_cpu_flags();
+
+    if (mm_flags & AV_CPU_FLAG_MMX2)  ff_cavsdsp_init_mmx2 (c, avctx);
+    if (mm_flags & AV_CPU_FLAG_3DNOW) ff_cavsdsp_init_3dnow(c, avctx);
 }

@@ -2,20 +2,20 @@
  * Brute Force & Ignorance (BFI) video decoder
  * Copyright (c) 2008 Sisir Koppaka
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -47,7 +47,7 @@ static av_cold int bfi_decode_init(AVCodecContext * avctx)
 static int bfi_decode_frame(AVCodecContext * avctx, void *data,
                             int *data_size, AVPacket *avpkt)
 {
-    const uint8_t *buf = avpkt->data;
+    const uint8_t *buf = avpkt->data, *buf_end = avpkt->data + avpkt->size;
     int buf_size = avpkt->size;
     BFIContext *bfi = avctx->priv_data;
     uint8_t *dst = bfi->dst;
@@ -99,6 +99,11 @@ static int bfi_decode_frame(AVCodecContext * avctx, void *data,
         unsigned int code = byte >> 6;
         unsigned int length = byte & ~0xC0;
 
+        if (buf >= buf_end) {
+            av_log(avctx, AV_LOG_ERROR, "Input resolution larger than actual frame.\n");
+            return -1;
+        }
+
         /* Get length and offset(if required) */
         if (length == 0) {
             if (code == 1) {
@@ -121,6 +126,10 @@ static int bfi_decode_frame(AVCodecContext * avctx, void *data,
         switch (code) {
 
         case 0:                //Normal Chain
+            if (length >= buf_end - buf) {
+                av_log(avctx, AV_LOG_ERROR, "Frame larger than buffer.\n");
+                return -1;
+            }
             bytestream_get_buffer(&buf, dst, length);
             dst += length;
             break;
@@ -171,7 +180,7 @@ static av_cold int bfi_decode_close(AVCodecContext * avctx)
     return 0;
 }
 
-AVCodec bfi_decoder = {
+AVCodec ff_bfi_decoder = {
     .name = "bfi",
     .type = AVMEDIA_TYPE_VIDEO,
     .id = CODEC_ID_BFI,

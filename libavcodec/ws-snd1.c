@@ -2,23 +2,24 @@
  * Westwood SNDx codecs
  * Copyright (c) 2005 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include <stdint.h>
 #include "libavutil/intreadwrite.h"
 #include "avcodec.h"
 
@@ -31,8 +32,8 @@
  * http://www.multimedia.cx
  */
 
-static const char ws_adpcm_2bit[] = { -2, -1, 0, 1};
-static const char ws_adpcm_4bit[] = {
+static const int8_t ws_adpcm_2bit[] = { -2, -1, 0, 1};
+static const int8_t ws_adpcm_4bit[] = {
     -9, -8, -6, -5, -4, -3, -2, -1,
      0,  1,  2,  3,  4,  5,  6,  8 };
 
@@ -42,7 +43,7 @@ static av_cold int ws_snd_decode_init(AVCodecContext * avctx)
 {
 //    WSSNDContext *c = avctx->priv_data;
 
-    avctx->sample_fmt = SAMPLE_FMT_S16;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
     return 0;
 }
 
@@ -120,7 +121,7 @@ static int ws_snd_decode_frame(AVCodecContext *avctx,
             break;
         case 2: /* no compression */
             if (count & 0x20) { /* big delta */
-                char t;
+                int8_t t;
                 t = count;
                 t <<= 3;
                 sample += t >> 3;
@@ -145,7 +146,7 @@ static int ws_snd_decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-AVCodec ws_snd1_decoder = {
+AVCodec ff_ws_snd1_decoder = {
     "ws_snd1",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_WESTWOOD_SND1,

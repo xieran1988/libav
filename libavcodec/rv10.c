@@ -3,20 +3,20 @@
  * Copyright (c) 2000,2001 Fabrice Bellard
  * Copyright (c) 2002-2004 Michael Niedermayer
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -25,6 +25,7 @@
  * RV10/RV20 decoder
  */
 
+#include "libavutil/imgutils.h"
 #include "avcodec.h"
 #include "dsputil.h"
 #include "mpegvideo.h"
@@ -245,7 +246,7 @@ static int rv10_decode_picture_header(MpegEncContext *s)
     if(!marker) av_log(s->avctx, AV_LOG_ERROR, "marker missing\n");
     pb_frame = get_bits1(&s->gb);
 
-    dprintf(s->avctx, "pict_type=%d pb_frame=%d\n", s->pict_type, pb_frame);
+    av_dlog(s->avctx, "pict_type=%d pb_frame=%d\n", s->pict_type, pb_frame);
 
     if (pb_frame){
         av_log(s->avctx, AV_LOG_ERROR, "pb frame not supported\n");
@@ -264,7 +265,7 @@ static int rv10_decode_picture_header(MpegEncContext *s)
             s->last_dc[0] = get_bits(&s->gb, 8);
             s->last_dc[1] = get_bits(&s->gb, 8);
             s->last_dc[2] = get_bits(&s->gb, 8);
-            dprintf(s->avctx, "DC:%d %d %d\n", s->last_dc[0],
+            av_dlog(s->avctx, "DC:%d %d %d\n", s->last_dc[0],
                     s->last_dc[1], s->last_dc[2]);
         }
     }
@@ -369,7 +370,7 @@ static int rv20_decode_picture_header(MpegEncContext *s)
         }
         if(new_w != s->width || new_h != s->height){
             av_log(s->avctx, AV_LOG_DEBUG, "attempting to change resolution to %dx%d\n", new_w, new_h);
-            if (avcodec_check_dimensions(s->avctx, new_w, new_h) < 0)
+            if (av_image_check_size(new_w, new_h, 0, s->avctx) < 0)
                 return -1;
             MPV_common_end(s);
             avcodec_set_dimensions(s->avctx, new_w, new_h);
@@ -560,7 +561,7 @@ static int rv10_decode_packet(AVCodecContext *avctx,
         ff_er_frame_start(s);
     }
 
-    dprintf(avctx, "qscale=%d\n", s->qscale);
+    av_dlog(avctx, "qscale=%d\n", s->qscale);
 
     /* default quantization values */
     if(s->codec_id== CODEC_ID_RV10){
@@ -599,7 +600,7 @@ static int rv10_decode_packet(AVCodecContext *avctx,
     for(s->mb_num_left= mb_count; s->mb_num_left>0; s->mb_num_left--) {
         int ret;
         ff_update_block_index(s);
-        dprintf(avctx, "**mb x=%d y=%d\n", s->mb_x, s->mb_y);
+        av_dlog(avctx, "**mb x=%d y=%d\n", s->mb_x, s->mb_y);
 
         s->mv_dir = MV_DIR_FORWARD;
         s->mv_type = MV_TYPE_16X16;
@@ -654,7 +655,7 @@ static int rv10_decode_frame(AVCodecContext *avctx,
     int slice_count;
     const uint8_t *slices_hdr = NULL;
 
-    dprintf(avctx, "*****frame %d size=%d\n", avctx->frame_number, buf_size);
+    av_dlog(avctx, "*****frame %d size=%d\n", avctx->frame_number, buf_size);
 
     /* no supplementary picture */
     if (buf_size == 0) {
@@ -706,7 +707,7 @@ static int rv10_decode_frame(AVCodecContext *avctx,
     return buf_size;
 }
 
-AVCodec rv10_decoder = {
+AVCodec ff_rv10_decoder = {
     "rv10",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RV10,
@@ -716,11 +717,12 @@ AVCodec rv10_decoder = {
     rv10_decode_end,
     rv10_decode_frame,
     CODEC_CAP_DR1,
+    .max_lowres = 3,
     .long_name = NULL_IF_CONFIG_SMALL("RealVideo 1.0"),
     .pix_fmts= ff_pixfmt_list_420,
 };
 
-AVCodec rv20_decoder = {
+AVCodec ff_rv20_decoder = {
     "rv20",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_RV20,
@@ -731,6 +733,7 @@ AVCodec rv20_decoder = {
     rv10_decode_frame,
     CODEC_CAP_DR1 | CODEC_CAP_DELAY,
     .flush= ff_mpeg_flush,
+    .max_lowres = 3,
     .long_name = NULL_IF_CONFIG_SMALL("RealVideo 2.0"),
     .pix_fmts= ff_pixfmt_list_420,
 };

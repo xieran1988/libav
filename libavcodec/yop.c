@@ -6,24 +6,25 @@
  * derived from the code by
  * Copyright (C) 2009 Thomas P. Higdon <thomas.p.higdon@gmail.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "libavutil/intreadwrite.h"
+#include "libavutil/imgutils.h"
 
 #include "avcodec.h"
 #include "get_bits.h"
@@ -84,7 +85,7 @@ static av_cold int yop_decode_init(AVCodecContext *avctx)
     s->avctx = avctx;
 
     if (avctx->width & 1 || avctx->height & 1 ||
-        avcodec_check_dimensions(avctx, avctx->width, avctx->height) < 0) {
+        av_image_check_size(avctx->width, avctx->height, 0, avctx) < 0) {
         av_log(avctx, AV_LOG_ERROR, "YOP has invalid dimensions\n");
         return -1;
     }
@@ -114,7 +115,7 @@ static av_cold int yop_decode_close(AVCodecContext *avctx)
 }
 
 /**
- * Paints a macroblock using the pattern in paint_lut.
+ * Paint a macroblock using the pattern in paint_lut.
  * @param s codec context
  * @param tag the tag that was in the nibble
  */
@@ -130,7 +131,7 @@ static void yop_paint_block(YopDecContext *s, int tag)
 }
 
 /**
- * Copies a previously painted macroblock to the current_block.
+ * Copy a previously painted macroblock to the current_block.
  * @param copy_tag the tag that was in the nibble
  */
 static int yop_copy_previous_block(YopDecContext *s, int copy_tag)
@@ -155,7 +156,7 @@ static int yop_copy_previous_block(YopDecContext *s, int copy_tag)
 }
 
 /**
- * Returns the next nibble in sequence, consuming a new byte on the input
+ * Return the next nibble in sequence, consuming a new byte on the input
  * only if necessary.
  */
 static uint8_t yop_get_next_nibble(YopDecContext *s)
@@ -173,7 +174,7 @@ static uint8_t yop_get_next_nibble(YopDecContext *s)
 }
 
 /**
- * Takes s->dstptr to the next macroblock in sequence.
+ * Take s->dstptr to the next macroblock in sequence.
  */
 static void yop_next_macroblock(YopDecContext *s)
 {
@@ -247,7 +248,7 @@ static int yop_decode_frame(AVCodecContext *avctx, void *data, int *data_size,
     return avpkt->size;
 }
 
-AVCodec yop_decoder = {
+AVCodec ff_yop_decoder = {
     "yop",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_YOP,

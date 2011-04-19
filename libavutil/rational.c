@@ -2,20 +2,20 @@
  * rational numbers
  * Copyright (c) 2003 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -25,7 +25,7 @@
  * @author Michael Niedermayer <michaelni@gmx.at>
  */
 
-#include <assert.h>
+#include "avassert.h"
 //#include <math.h>
 #include <limits.h>
 
@@ -67,7 +67,7 @@ int av_reduce(int *dst_num, int *dst_den, int64_t num, int64_t den, int64_t max)
         num= den;
         den= next_den;
     }
-    assert(av_gcd(a1.num, a1.den) <= 1U);
+    av_assert2(av_gcd(a1.num, a1.den) <= 1U);
 
     *dst_num = sign ? -a1.num : a1.num;
     *dst_den = a1.den;
@@ -96,10 +96,14 @@ AVRational av_sub_q(AVRational b, AVRational c){
 AVRational av_d2q(double d, int max){
     AVRational a;
 #define LOG2  0.69314718055994530941723212145817656807550013436025
-    int exponent= FFMAX( (int)(log(fabs(d) + 1e-20)/LOG2), 0);
-    int64_t den= 1LL << (61 - exponent);
+    int exponent;
+    int64_t den;
     if (isnan(d))
         return (AVRational){0,0};
+    if (isinf(d))
+        return (AVRational){ d<0 ? -1:1, 0 };
+    exponent = FFMAX( (int)(log(fabs(d) + 1e-20)/LOG2), 0);
+    den = 1LL << (61 - exponent);
     av_reduce(&a.num, &a.den, (int64_t)(d * den + 0.5), den, max);
 
     return a;
@@ -129,3 +133,23 @@ int av_find_nearest_q_idx(AVRational q, const AVRational* q_list)
 
     return nearest_q_idx;
 }
+
+#ifdef TEST
+main(){
+    AVRational a,b;
+    for(a.num=-2; a.num<=2; a.num++){
+        for(a.den=-2; a.den<=2; a.den++){
+            for(b.num=-2; b.num<=2; b.num++){
+                for(b.den=-2; b.den<=2; b.den++){
+                    int c= av_cmp_q(a,b);
+                    double d= av_q2d(a) == av_q2d(b) ? 0 : (av_q2d(a) - av_q2d(b));
+                    if(d>0) d=1;
+                    else if(d<0) d=-1;
+                    else if(d != d) d= INT_MIN;
+                    if(c!=d) av_log(0, AV_LOG_ERROR, "%d/%d %d/%d, %d %f\n", a.num, a.den, b.num, b.den, c,d);
+                }
+            }
+        }
+    }
+}
+#endif

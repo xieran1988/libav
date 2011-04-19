@@ -2,30 +2,32 @@
  * pixel format descriptor
  * Copyright (c) 2009 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include <stdio.h>
+#include <string.h>
 #include "pixfmt.h"
 #include "pixdesc.h"
 
 #include "intreadwrite.h"
 
-void read_line(uint16_t *dst, const uint8_t *data[4], const int linesize[4],
-               const AVPixFmtDescriptor *desc, int x, int y, int c, int w, int read_pal_component)
+void av_read_image_line(uint16_t *dst, const uint8_t *data[4], const int linesize[4],
+                        const AVPixFmtDescriptor *desc, int x, int y, int c, int w, int read_pal_component)
 {
     AVComponentDescriptor comp= desc->comp[c];
     int plane= comp.plane;
@@ -51,11 +53,14 @@ void read_line(uint16_t *dst, const uint8_t *data[4], const int linesize[4],
         }
     } else {
         const uint8_t *p = data[plane]+ y*linesize[plane] + x*step + comp.offset_plus1-1;
+        int is_8bit = shift + depth <= 8;
+
+        if (is_8bit)
+            p += !!(flags & PIX_FMT_BE);
 
         while(w--){
-            int val;
-            if(flags & PIX_FMT_BE) val= AV_RB16(p);
-            else                   val= AV_RL16(p);
+            int val = is_8bit ? *p :
+                flags & PIX_FMT_BE ? AV_RB16(p) : AV_RL16(p);
             val = (val>>shift) & mask;
             if(read_pal_component)
                 val= data[1][4*val + c];
@@ -65,8 +70,8 @@ void read_line(uint16_t *dst, const uint8_t *data[4], const int linesize[4],
     }
 }
 
-void write_line(const uint16_t *src, uint8_t *data[4], const int linesize[4],
-                const AVPixFmtDescriptor *desc, int x, int y, int c, int w)
+void av_write_image_line(const uint16_t *src, uint8_t *data[4], const int linesize[4],
+                         const AVPixFmtDescriptor *desc, int x, int y, int c, int w)
 {
     AVComponentDescriptor comp = desc->comp[c];
     int plane = comp.plane;
@@ -89,15 +94,23 @@ void write_line(const uint16_t *src, uint8_t *data[4], const int linesize[4],
         int shift = comp.shift;
         uint8_t *p = data[plane]+ y*linesize[plane] + x*step + comp.offset_plus1-1;
 
-        while (w--) {
-            if (flags & PIX_FMT_BE) {
-                uint16_t val = AV_RB16(p) | (*src++<<shift);
-                AV_WB16(p, val);
-            } else {
-                uint16_t val = AV_RL16(p) | (*src++<<shift);
-                AV_WL16(p, val);
+        if (shift + depth <= 8) {
+            p += !!(flags & PIX_FMT_BE);
+            while (w--) {
+                *p |= (*src++<<shift);
+                p += step;
             }
-            p+= step;
+        } else {
+            while (w--) {
+                if (flags & PIX_FMT_BE) {
+                    uint16_t val = AV_RB16(p) | (*src++<<shift);
+                    AV_WB16(p, val);
+                } else {
+                    uint16_t val = AV_RL16(p) | (*src++<<shift);
+                    AV_WL16(p, val);
+                }
+                p+= step;
+            }
         }
     }
 }
@@ -617,6 +630,29 @@ const AVPixFmtDescriptor av_pix_fmt_descriptors[PIX_FMT_NB] = {
             {0,1,1,0,3},        /* B */
         },
     },
+    [PIX_FMT_BGR48BE] = {
+        .name = "bgr48be",
+        .nb_components= 3,
+        .log2_chroma_w= 0,
+        .log2_chroma_h= 0,
+        .comp = {
+            {0,5,1,0,15},       /* B */
+            {0,5,3,0,15},       /* G */
+            {0,5,5,0,15},       /* R */
+        },
+        .flags = PIX_FMT_BE,
+    },
+    [PIX_FMT_BGR48LE] = {
+        .name = "bgr48le",
+        .nb_components= 3,
+        .log2_chroma_w= 0,
+        .log2_chroma_h= 0,
+        .comp = {
+            {0,5,1,0,15},       /* B */
+            {0,5,3,0,15},       /* G */
+            {0,5,5,0,15},       /* R */
+        },
+    },
     [PIX_FMT_BGR565BE] = {
         .name = "bgr565be",
         .nb_components= 3,
@@ -837,4 +873,18 @@ int av_get_bits_per_pixel(const AVPixFmtDescriptor *pixdesc)
     }
 
     return bits >> log2_pixels;
+}
+
+char *av_get_pix_fmt_string (char *buf, int buf_size, enum PixelFormat pix_fmt)
+{
+    /* print header */
+    if (pix_fmt < 0) {
+        snprintf (buf, buf_size, "name      " " nb_components" " nb_bits");
+    } else {
+        const AVPixFmtDescriptor *pixdesc = &av_pix_fmt_descriptors[pix_fmt];
+        snprintf(buf, buf_size, "%-11s %7d %10d",
+                 pixdesc->name, pixdesc->nb_components, av_get_bits_per_pixel(pixdesc));
+    }
+
+    return buf;
 }

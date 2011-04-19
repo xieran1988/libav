@@ -2,20 +2,20 @@
  * Escape 124 Video Decoder
  * Copyright (C) 2008 Eli Friedman (eli.friedman@gmail.com)
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -195,15 +195,6 @@ static const uint16_t mask_matrix[] = {0x1,   0x2,   0x10,   0x20,
                                        0x100, 0x200, 0x1000, 0x2000,
                                        0x400, 0x800, 0x4000, 0x8000};
 
-/**
- * Decode a single frame
- * @param avctx decoder context
- * @param data decoded frame
- * @param data_size size of the decoded frame
- * @param buf input buffer
- * @param buf_size input buffer size
- * @return 0 success, -1 on error
- */
 static int escape124_decode_frame(AVCodecContext *avctx,
                                   void *data, int *data_size,
                                   AVPacket *avpkt)
@@ -372,7 +363,7 @@ static int escape124_decode_frame(AVCodecContext *avctx,
 }
 
 
-AVCodec escape124_decoder = {
+AVCodec ff_escape124_decoder = {
     "escape124",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ESCAPE124,

@@ -2,20 +2,20 @@
  * MLP decoder
  * Copyright (c) 2007-2008 Ian Caulfield
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -41,7 +41,7 @@
 
 static const char* sample_message =
     "Please file a bug report following the instructions at "
-    "http://ffmpeg.org/bugreports.html and include "
+    "http://libav.org/bugreports.html and include "
     "a sample of this file.";
 
 typedef struct SubStream {
@@ -318,9 +318,9 @@ static int read_major_sync(MLPDecodeContext *m, GetBitContext *gb)
 
     m->avctx->bits_per_raw_sample = mh.group1_bits;
     if (mh.group1_bits > 16)
-        m->avctx->sample_fmt = SAMPLE_FMT_S32;
+        m->avctx->sample_fmt = AV_SAMPLE_FMT_S32;
     else
-        m->avctx->sample_fmt = SAMPLE_FMT_S16;
+        m->avctx->sample_fmt = AV_SAMPLE_FMT_S16;
 
     m->params_valid = 1;
     for (substr = 0; substr < MAX_SUBSTREAMS; substr++)
@@ -931,7 +931,7 @@ static int output_data_internal(MLPDecodeContext *m, unsigned int substr,
 static int output_data(MLPDecodeContext *m, unsigned int substr,
                        uint8_t *data, unsigned int *data_size)
 {
-    if (m->avctx->sample_fmt == SAMPLE_FMT_S32)
+    if (m->avctx->sample_fmt == AV_SAMPLE_FMT_S32)
         return output_data_internal(m, substr, data, data_size, 1);
     else
         return output_data_internal(m, substr, data, data_size, 0);
@@ -939,8 +939,8 @@ static int output_data(MLPDecodeContext *m, unsigned int substr,
 
 
 /** Read an access unit from the stream.
- *  Returns < 0 on error, 0 if not enough data is present in the input stream
- *  otherwise returns the number of bytes consumed. */
+ *  @return negative on error, 0 if not enough data is present in the input stream,
+ *  otherwise the number of bytes consumed. */
 
 static int read_access_unit(AVCodecContext *avctx, void* data, int *data_size,
                             AVPacket *avpkt)
@@ -1137,7 +1137,7 @@ error:
     return -1;
 }
 
-AVCodec mlp_decoder = {
+AVCodec ff_mlp_decoder = {
     "mlp",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_MLP,
@@ -1150,7 +1150,7 @@ AVCodec mlp_decoder = {
 };
 
 #if CONFIG_TRUEHD_DECODER
-AVCodec truehd_decoder = {
+AVCodec ff_truehd_decoder = {
     "truehd",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_TRUEHD,

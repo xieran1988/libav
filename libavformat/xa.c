@@ -2,20 +2,20 @@
  * Maxis XA (.xa) File Demuxer
  * Copyright (c) 2008 Robert Marston
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -66,7 +66,7 @@ static int xa_read_header(AVFormatContext *s,
                AVFormatParameters *ap)
 {
     MaxisXADemuxContext *xa = s->priv_data;
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     AVStream *st;
 
     /*Set up the XA Audio Decoder*/
@@ -76,15 +76,15 @@ static int xa_read_header(AVFormatContext *s,
 
     st->codec->codec_type   = AVMEDIA_TYPE_AUDIO;
     st->codec->codec_id     = CODEC_ID_ADPCM_EA_MAXIS_XA;
-    url_fskip(pb, 4);       /* Skip the XA ID */
-    xa->out_size            =  get_le32(pb);
-    url_fskip(pb, 2);       /* Skip the tag */
-    st->codec->channels     = get_le16(pb);
-    st->codec->sample_rate  = get_le32(pb);
+    avio_skip(pb, 4);       /* Skip the XA ID */
+    xa->out_size            =  avio_rl32(pb);
+    avio_skip(pb, 2);       /* Skip the tag */
+    st->codec->channels     = avio_rl16(pb);
+    st->codec->sample_rate  = avio_rl32(pb);
     /* Value in file is average byte rate*/
-    st->codec->bit_rate     = get_le32(pb) * 8;
-    st->codec->block_align  = get_le16(pb);
-    st->codec->bits_per_coded_sample = get_le16(pb);
+    st->codec->bit_rate     = avio_rl32(pb) * 8;
+    st->codec->block_align  = avio_rl16(pb);
+    st->codec->bits_per_coded_sample = avio_rl16(pb);
 
     av_set_pts_info(st, 64, 1, st->codec->sample_rate);
 
@@ -96,7 +96,7 @@ static int xa_read_packet(AVFormatContext *s,
 {
     MaxisXADemuxContext *xa = s->priv_data;
     AVStream *st = s->streams[0];
-    ByteIOContext *pb = s->pb;
+    AVIOContext *pb = s->pb;
     unsigned int packet_size;
     int ret;
 
@@ -118,7 +118,7 @@ static int xa_read_packet(AVFormatContext *s,
     return ret;
 }
 
-AVInputFormat xa_demuxer = {
+AVInputFormat ff_xa_demuxer = {
     "xa",
     NULL_IF_CONFIG_SMALL("Maxis XA File Format"),
     sizeof(MaxisXADemuxContext),

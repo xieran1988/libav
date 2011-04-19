@@ -4,20 +4,20 @@
  * Copyright (c) 2007 Reynaldo H. Verdejo Pinochet (QCELP decoder)
  * Copyright (c) 2008 Vladimir Voroshilov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -65,6 +65,14 @@ void ff_acelp_lsf2lsp(int16_t *lsp, const int16_t *lsf, int lp_order)
         lsp[i] = ff_cos(lsf[i] * 20861 >> 15); // divide by PI and (0,13) -> (0,14)
 }
 
+void ff_acelp_lsf2lspd(double *lsp, const float *lsf, int lp_order)
+{
+    int i;
+
+    for(i = 0; i < lp_order; i++)
+        lsp[i] = cos(2.0 * M_PI * lsf[i]);
+}
+
 /**
  * \brief decodes polynomial coefficients from LSP
  * \param f [out] decoded polynomial coefficients (-0x20000000 <= (3.22) <= 0x1fffffff)
@@ -90,8 +98,8 @@ static void lsp2poly(int* f, const int16_t* lsp, int lp_half_order)
 void ff_acelp_lsp2lpc(int16_t* lp, const int16_t* lsp, int lp_half_order)
 {
     int i;
-    int f1[lp_half_order+1]; // (3.22)
-    int f2[lp_half_order+1]; // (3.22)
+    int f1[MAX_LP_HALF_ORDER+1]; // (3.22)
+    int f2[MAX_LP_HALF_ORDER+1]; // (3.22)
 
     lsp2poly(f1, lsp  , lp_half_order);
     lsp2poly(f2, lsp+1, lp_half_order);
@@ -109,9 +117,35 @@ void ff_acelp_lsp2lpc(int16_t* lp, const int16_t* lsp, int lp_half_order)
     }
 }
 
+void ff_amrwb_lsp2lpc(const double *lsp, float *lp, int lp_order)
+{
+    int lp_half_order = lp_order >> 1;
+    double buf[lp_half_order + 1];
+    double pa[lp_half_order + 1];
+    double *qa = buf + 1;
+    int i,j;
+
+    qa[-1] = 0.0;
+
+    ff_lsp2polyf(lsp    , pa, lp_half_order    );
+    ff_lsp2polyf(lsp + 1, qa, lp_half_order - 1);
+
+    for (i = 1, j = lp_order - 1; i < lp_half_order; i++, j--) {
+        double paf =  pa[i]            * (1 + lsp[lp_order - 1]);
+        double qaf = (qa[i] - qa[i-2]) * (1 - lsp[lp_order - 1]);
+        lp[i-1]  = (paf + qaf) * 0.5;
+        lp[j-1]  = (paf - qaf) * 0.5;
+    }
+
+    lp[lp_half_order - 1] = (1.0 + lsp[lp_order - 1]) *
+        pa[lp_half_order] * 0.5;
+
+    lp[lp_order - 1] = lsp[lp_order - 1];
+}
+
 void ff_acelp_lp_decode(int16_t* lp_1st, int16_t* lp_2nd, const int16_t* lsp_2nd, const int16_t* lsp_prev, int lp_order)
 {
-    int16_t lsp_1st[lp_order]; // (0.15)
+    int16_t lsp_1st[MAX_LP_ORDER]; // (0.15)
     int i;
 
     /* LSP values for first subframe (3.2.5 of G.729, Equation 24)*/

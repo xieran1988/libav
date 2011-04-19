@@ -3,20 +3,20 @@
  *
  * Copyright (c) 2002-2004 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -30,7 +30,7 @@
 #include "dsputil.h"
 #include "ratecontrol.h"
 #include "mpegvideo.h"
-#include "eval.h"
+#include "libavutil/eval.h"
 
 #undef NDEBUG // Always check asserts, the speed effect is far too small to disable them.
 #include <assert.h>
@@ -66,8 +66,7 @@ static inline double bits2qp(RateControlEntry *rce, double bits){
 int ff_rate_control_init(MpegEncContext *s)
 {
     RateControlContext *rcc= &s->rc_context;
-    int i;
-    const char *error = NULL;
+    int i, res;
     static const char * const const_names[]={
         "PI",
         "E",
@@ -107,10 +106,10 @@ int ff_rate_control_init(MpegEncContext *s)
     };
     emms_c();
 
-    rcc->rc_eq_eval = ff_parse_expr(s->avctx->rc_eq ? s->avctx->rc_eq : "tex^qComp", const_names, func1, func1_names, NULL, NULL, &error);
-    if (!rcc->rc_eq_eval) {
-        av_log(s->avctx, AV_LOG_ERROR, "Error parsing rc_eq \"%s\": %s\n", s->avctx->rc_eq, error? error : "");
-        return -1;
+    res = av_expr_parse(&rcc->rc_eq_eval, s->avctx->rc_eq ? s->avctx->rc_eq : "tex^qComp", const_names, func1_names, func1, NULL, NULL, 0, s->avctx);
+    if (res < 0) {
+        av_log(s->avctx, AV_LOG_ERROR, "Error parsing rc_eq \"%s\"\n", s->avctx->rc_eq);
+        return res;
     }
 
     for(i=0; i<5; i++){
@@ -255,7 +254,7 @@ void ff_rate_control_uninit(MpegEncContext *s)
     RateControlContext *rcc= &s->rc_context;
     emms_c();
 
-    ff_free_expr(rcc->rc_eq_eval);
+    av_expr_free(rcc->rc_eq_eval);
     av_freep(&rcc->entry);
 
 #if CONFIG_LIBXVID
@@ -339,7 +338,7 @@ static double get_qscale(MpegEncContext *s, RateControlEntry *rce, double rate_f
         0
     };
 
-    bits= ff_eval_expr(rcc->rc_eq_eval, const_values, rce);
+    bits = av_expr_eval(rcc->rc_eq_eval, const_values, rce);
     if (isnan(bits)) {
         av_log(s->avctx, AV_LOG_ERROR, "Error evaluating rc_eq \"%s\"\n", s->avctx->rc_eq);
         return -1;

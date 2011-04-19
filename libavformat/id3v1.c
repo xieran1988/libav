@@ -2,26 +2,25 @@
  * ID3v1 header parser
  * Copyright (c) 2003 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include "id3v1.h"
 #include "libavcodec/avcodec.h"
-#include "libavutil/avstring.h"
 
 const char * const ff_id3v1_genre_str[ID3v1_GENRE_MAX + 1] = {
       [0] = "Blues",
@@ -202,6 +201,7 @@ static void get_string(AVFormatContext *s, const char *key,
  */
 static int parse_tag(AVFormatContext *s, const uint8_t *buf)
 {
+    char str[5];
     int genre;
 
     if (!(buf[0] == 'T' &&
@@ -213,8 +213,10 @@ static int parse_tag(AVFormatContext *s, const uint8_t *buf)
     get_string(s, "album",   buf + 63, 30);
     get_string(s, "date",    buf + 93,  4);
     get_string(s, "comment", buf + 97, 30);
-    if (buf[125] == 0 && buf[126] != 0)
-        av_metadata_set2(&s->metadata, "track", av_d2str(buf[126]), AV_METADATA_DONT_STRDUP_VAL);
+    if (buf[125] == 0 && buf[126] != 0) {
+        snprintf(str, sizeof(str), "%d", buf[126]);
+        av_metadata_set2(&s->metadata, "track", str, 0);
+    }
     genre = buf[127];
     if (genre <= ID3v1_GENRE_MAX)
         av_metadata_set2(&s->metadata, "genre", ff_id3v1_genre_str[genre], 0);
@@ -223,19 +225,20 @@ static int parse_tag(AVFormatContext *s, const uint8_t *buf)
 
 void ff_id3v1_read(AVFormatContext *s)
 {
-    int ret, filesize;
+    int ret;
     uint8_t buf[ID3v1_TAG_SIZE];
+    int64_t filesize, position = avio_tell(s->pb);
 
-    if (!url_is_streamed(s->pb)) {
+    if (s->pb->seekable) {
         /* XXX: change that */
-        filesize = url_fsize(s->pb);
+        filesize = avio_size(s->pb);
         if (filesize > 128) {
-            url_fseek(s->pb, filesize - 128, SEEK_SET);
-            ret = get_buffer(s->pb, buf, ID3v1_TAG_SIZE);
+            avio_seek(s->pb, filesize - 128, SEEK_SET);
+            ret = avio_read(s->pb, buf, ID3v1_TAG_SIZE);
             if (ret == ID3v1_TAG_SIZE) {
                 parse_tag(s, buf);
             }
-            url_fseek(s->pb, 0, SEEK_SET);
+            avio_seek(s->pb, position, SEEK_SET);
         }
     }
 }

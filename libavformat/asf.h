@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2000, 2001 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -44,6 +44,8 @@ typedef struct {
 
     uint16_t stream_language_index;
 
+    int      palette_changed;
+    uint32_t palette[256];
 } ASFStream;
 
 typedef uint8_t ff_asf_guid[16];
@@ -79,64 +81,6 @@ typedef struct {
     uint16_t packet_count;
 } ASFIndex;
 
-
-typedef struct {
-    uint32_t seqno;
-    int is_streamed;
-    int asfid2avid[128];                 ///< conversion table from asf ID 2 AVStream ID
-    ASFStream streams[128];              ///< it's max number and it's not that big
-    uint32_t stream_bitrates[128];       ///< max number of streams, bitrate for each (for streaming)
-    char stream_languages[128][6];       ///< max number of streams, language for each (RFC1766, e.g. en-US)
-    /* non streamed additonnal info */
-    uint64_t nb_packets;                 ///< how many packets are there in the file, invalid if broadcasting
-    int64_t duration;                    ///< in 100ns units
-    /* packet filling */
-    unsigned char multi_payloads_present;
-    int packet_size_left;
-    int packet_timestamp_start;
-    int packet_timestamp_end;
-    unsigned int packet_nb_payloads;
-    int packet_nb_frames;
-    uint8_t packet_buf[PACKET_SIZE];
-    ByteIOContext pb;
-    /* only for reading */
-    uint64_t data_offset;                ///< beginning of the first data packet
-    uint64_t data_object_offset;         ///< data object offset (excl. GUID & size)
-    uint64_t data_object_size;           ///< size of the data object
-    int index_read;
-
-    ASFMainHeader hdr;
-
-    int packet_flags;
-    int packet_property;
-    int packet_timestamp;
-    int packet_segsizetype;
-    int packet_segments;
-    int packet_seq;
-    int packet_replic_size;
-    int packet_key_frame;
-    int packet_padsize;
-    unsigned int packet_frag_offset;
-    unsigned int packet_frag_size;
-    int64_t packet_frag_timestamp;
-    int packet_multi_size;
-    int packet_obj_size;
-    int packet_time_delta;
-    int packet_time_start;
-    int64_t packet_pos;
-
-    int stream_index;
-
-
-    int64_t last_indexed_pts;
-    ASFIndex* index_ptr;
-    uint32_t nb_index_count;
-    uint32_t nb_index_memory_alloc;
-    uint16_t maximum_packet;
-
-    ASFStream* asf_st;                   ///< currently decoded stream
-} ASFContext;
-
 extern const ff_asf_guid ff_asf_header;
 extern const ff_asf_guid ff_asf_file_header;
 extern const ff_asf_guid ff_asf_stream_header;
@@ -145,6 +89,7 @@ extern const ff_asf_guid ff_asf_audio_stream;
 extern const ff_asf_guid ff_asf_audio_conceal_none;
 extern const ff_asf_guid ff_asf_audio_conceal_spread;
 extern const ff_asf_guid ff_asf_video_stream;
+extern const ff_asf_guid ff_asf_jfif_media;
 extern const ff_asf_guid ff_asf_video_conceal_none;
 extern const ff_asf_guid ff_asf_command_stream;
 extern const ff_asf_guid ff_asf_comment_header;
@@ -228,7 +173,13 @@ extern const AVMetadataConv ff_asf_metadata_conv[];
 
 #define ASF_PL_FLAG_KEY_FRAME 0x80 //1000 0000
 
-extern AVInputFormat asf_demuxer;
-int ff_put_str16_nolen(ByteIOContext *s, const char *tag);
+extern AVInputFormat ff_asf_demuxer;
+
+static av_always_inline int ff_guidcmp(const void *g1, const void *g2)
+{
+    return memcmp(g1, g2, sizeof(ff_asf_guid));
+}
+
+void ff_get_guid(AVIOContext *s, ff_asf_guid *g);
 
 #endif /* AVFORMAT_ASF_H */

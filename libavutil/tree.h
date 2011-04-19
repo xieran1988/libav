@@ -1,20 +1,20 @@
 /*
  * copyright (c) 2006 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -33,7 +33,7 @@ struct AVTreeNode;
 extern const int av_tree_node_size;
 
 /**
- * Finds an element.
+ * Find an element.
  * @param root a pointer to the root node of the tree
  * @param next If next is not NULL, then next[0] will contain the previous
  *             element and next[1] the next element. If either does not exist,
@@ -44,7 +44,7 @@ extern const int av_tree_node_size;
 void *av_tree_find(const struct AVTreeNode *root, void *key, int (*cmp)(void *key, const void *b), void *next[2]);
 
 /**
- * Inserts or removes an element.
+ * Insert or remove an element.
  * If *next is NULL, then the supplied element will be removed if it exists.
  * If *next is not NULL, then the supplied element will be inserted, unless
  * it already exists in the tree.
@@ -67,7 +67,7 @@ void *av_tree_find(const struct AVTreeNode *root, void *key, int (*cmp)(void *ke
  *                 return av_tree_insert(rootp, key, cmp, next);
  *             }
  *             void *tree_remove(struct AVTreeNode **rootp, void *key, int (*cmp)(void *key, const void *b, AVTreeNode **next)){
- *                 if(*next) av_freep(next);
+ *                 av_freep(next);
  *                 return av_tree_insert(rootp, key, cmp, next);
  *             }
  *             @endcode
@@ -80,7 +80,7 @@ void *av_tree_insert(struct AVTreeNode **rootp, void *key, int (*cmp)(void *key,
 void av_tree_destroy(struct AVTreeNode *t);
 
 /**
- * Applies enu(opaque, &elem) to all the elements in the tree in a given range.
+ * Apply enu(opaque, &elem) to all the elements in the tree in a given range.
  *
  * @param cmp a comparison function that returns < 0 for a element below the
  *            range, > 0 for a element above the range and == 0 for a

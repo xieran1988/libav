@@ -1,20 +1,20 @@
 /*
  * copyright (c) 2001 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -26,9 +26,14 @@
 #ifndef AVCODEC_MPEGAUDIO_H
 #define AVCODEC_MPEGAUDIO_H
 
+#ifndef CONFIG_FLOAT
+#   define CONFIG_FLOAT 0
+#endif
+
 #include "avcodec.h"
 #include "get_bits.h"
 #include "dsputil.h"
+#include "dct.h"
 
 #define CONFIG_AUDIO_NONSHORT 0
 
@@ -65,23 +70,31 @@
 
 #define FIX(a)   ((int)((a) * FRAC_ONE))
 
-#if CONFIG_MPEGAUDIO_HP && CONFIG_AUDIO_NONSHORT
+#if CONFIG_FLOAT
+typedef float OUT_INT;
+#define OUT_FMT AV_SAMPLE_FMT_FLT
+#elif CONFIG_MPEGAUDIO_HP && CONFIG_AUDIO_NONSHORT
 typedef int32_t OUT_INT;
 #define OUT_MAX INT32_MAX
 #define OUT_MIN INT32_MIN
 #define OUT_SHIFT (WFRAC_BITS + FRAC_BITS - 31)
-#define OUT_FMT SAMPLE_FMT_S32
+#define OUT_FMT AV_SAMPLE_FMT_S32
 #else
 typedef int16_t OUT_INT;
 #define OUT_MAX INT16_MAX
 #define OUT_MIN INT16_MIN
 #define OUT_SHIFT (WFRAC_BITS + FRAC_BITS - 15)
-#define OUT_FMT SAMPLE_FMT_S16
+#define OUT_FMT AV_SAMPLE_FMT_S16
 #endif
 
-#if FRAC_BITS <= 15
+#if CONFIG_FLOAT
+#   define INTFLOAT float
+typedef float MPA_INT;
+#elif FRAC_BITS <= 15
+#   define INTFLOAT int
 typedef int16_t MPA_INT;
 #else
+#   define INTFLOAT int
 typedef int32_t MPA_INT;
 #endif
 
@@ -105,7 +118,7 @@ typedef struct GranuleDef {
     int preflag;
     int short_start, long_end; /* long/short band indexes */
     uint8_t scale_factors[40];
-    int32_t sb_hybrid[SBLIMIT * 18]; /* 576 samples */
+    INTFLOAT sb_hybrid[SBLIMIT * 18]; /* 576 samples */
 } GranuleDef;
 
 #define MPA_DECODE_HEADER \
@@ -134,17 +147,21 @@ typedef struct MPADecodeContext {
     GetBitContext in_gb;
     DECLARE_ALIGNED(16, MPA_INT, synth_buf)[MPA_MAX_CHANNELS][512 * 2];
     int synth_buf_offset[MPA_MAX_CHANNELS];
-    DECLARE_ALIGNED(16, int32_t, sb_samples)[MPA_MAX_CHANNELS][36][SBLIMIT];
-    int32_t mdct_buf[MPA_MAX_CHANNELS][SBLIMIT * 18]; /* previous samples, for layer 3 MDCT */
+    DECLARE_ALIGNED(16, INTFLOAT, sb_samples)[MPA_MAX_CHANNELS][36][SBLIMIT];
+    INTFLOAT mdct_buf[MPA_MAX_CHANNELS][SBLIMIT * 18]; /* previous samples, for layer 3 MDCT */
     GranuleDef granules[2][2]; /* Used in Layer 3 */
 #ifdef DEBUG
     int frame_count;
 #endif
-    void (*compute_antialias)(struct MPADecodeContext *s, struct GranuleDef *g);
     int adu_mode; ///< 0 for standard mp3, 1 for adu formatted mp3
     int dither_state;
     int error_recognition;
     AVCodecContext* avctx;
+#if CONFIG_FLOAT
+    DCTContext dct;
+#endif
+    void (*apply_window_mp3)(MPA_INT *synth_buf, MPA_INT *window,
+                             int *dither_state, OUT_INT *samples, int incr);
 } MPADecodeContext;
 
 /* layer 3 huffman tables */
@@ -161,7 +178,17 @@ void ff_mpa_synth_init(MPA_INT *window);
 void ff_mpa_synth_filter(MPA_INT *synth_buf_ptr, int *synth_buf_offset,
                          MPA_INT *window, int *dither_state,
                          OUT_INT *samples, int incr,
-                         int32_t sb_samples[SBLIMIT]);
+                         INTFLOAT sb_samples[SBLIMIT]);
+
+void ff_mpa_synth_init_float(MPA_INT *window);
+void ff_mpa_synth_filter_float(MPADecodeContext *s,
+                         MPA_INT *synth_buf_ptr, int *synth_buf_offset,
+                         MPA_INT *window, int *dither_state,
+                         OUT_INT *samples, int incr,
+                         INTFLOAT sb_samples[SBLIMIT]);
+
+void ff_mpegaudiodec_init_mmx(MPADecodeContext *s);
+void ff_mpegaudiodec_init_altivec(MPADecodeContext *s);
 
 /* fast header check for resync */
 static inline int ff_mpa_check_header(uint32_t header){

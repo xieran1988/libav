@@ -62,7 +62,7 @@ ogg_save (AVFormatContext * s)
     struct ogg_state *ost =
         av_malloc(sizeof (*ost) + (ogg->nstreams-1) * sizeof (*ogg->streams));
     int i;
-    ost->pos = url_ftell (s->pb);
+    ost->pos = avio_tell (s->pb);
     ost->curidx = ogg->curidx;
     ost->next = ogg->state;
     ost->nstreams = ogg->nstreams;
@@ -84,7 +84,7 @@ static int
 ogg_restore (AVFormatContext * s, int discard)
 {
     struct ogg *ogg = s->priv_data;
-    ByteIOContext *bc = s->pb;
+    AVIOContext *bc = s->pb;
     struct ogg_state *ost = ogg->state;
     int i;
 
@@ -97,7 +97,7 @@ ogg_restore (AVFormatContext * s, int discard)
         for (i = 0; i < ogg->nstreams; i++)
             av_free (ogg->streams[i].buf);
 
-        url_fseek (bc, ost->pos, SEEK_SET);
+        avio_seek (bc, ost->pos, SEEK_SET);
         ogg->curidx = ost->curidx;
         ogg->nstreams = ost->nstreams;
         memcpy(ogg->streams, ost->streams,
@@ -194,7 +194,7 @@ ogg_new_buf(struct ogg *ogg, int idx)
 static int
 ogg_read_page (AVFormatContext * s, int *str)
 {
-    ByteIOContext *bc = s->pb;
+    AVIOContext *bc = s->pb;
     struct ogg *ogg = s->priv_data;
     struct ogg_stream *os;
     int i = 0;
@@ -207,7 +207,7 @@ ogg_read_page (AVFormatContext * s, int *str)
     uint8_t sync[4];
     int sp = 0;
 
-    if (get_buffer (bc, sync, 4) < 4)
+    if (avio_read (bc, sync, 4) < 4)
         return -1;
 
     do{
@@ -218,8 +218,8 @@ ogg_read_page (AVFormatContext * s, int *str)
             sync[(sp + 2) & 3] == 'g' && sync[(sp + 3) & 3] == 'S')
             break;
 
-        c = url_fgetc (bc);
-        if (c < 0)
+        c = avio_r8(bc);
+        if (bc->eof_reached)
             return -1;
         sync[sp++ & 3] = c;
     }while (i++ < MAX_PAGE_SIZE);
@@ -229,30 +229,40 @@ ogg_read_page (AVFormatContext * s, int *str)
         return -1;
     }
 
-    if (url_fgetc (bc) != 0)      /* version */
+    if (avio_r8(bc) != 0)      /* version */
         return -1;
 
-    flags = url_fgetc (bc);
-    gp = get_le64 (bc);
-    serial = get_le32 (bc);
-    seq = get_le32 (bc);
-    crc = get_le32 (bc);
-    nsegs = url_fgetc (bc);
+    flags = avio_r8(bc);
+    gp = avio_rl64 (bc);
+    serial = avio_rl32 (bc);
+    seq = avio_rl32 (bc);
+    crc = avio_rl32 (bc);
+    nsegs = avio_r8(bc);
 
     idx = ogg_find_stream (ogg, serial);
     if (idx < 0){
+        if (ogg->headers) {
+                int n;
+
+                for (n = 0; n < ogg->nstreams; n++) {
+                    av_free(ogg->streams[n].buf);
+                    av_free(ogg->streams[n].private);
+                }
+                ogg->curidx   = -1;
+                ogg->nstreams = 0;
+        }
         idx = ogg_new_stream (s, serial);
         if (idx < 0)
             return -1;
     }
 
     os = ogg->streams + idx;
-    os->page_pos = url_ftell(bc) - 27;
+    os->page_pos = avio_tell(bc) - 27;
 
     if(os->psize > 0)
         ogg_new_buf(ogg, idx);
 
-    if (get_buffer (bc, os->segments, nsegs) < nsegs)
+    if (avio_read (bc, os->segments, nsegs) < nsegs)
         return -1;
 
     os->nsegs = nsegs;
@@ -284,7 +294,7 @@ ogg_read_page (AVFormatContext * s, int *str)
         os->buf = nb;
     }
 
-    if (get_buffer (bc, os->buf + os->bufpos, size) < size)
+    if (avio_read (bc, os->buf + os->bufpos, size) < size)
         return -1;
 
     os->bufpos += size;
@@ -363,7 +373,7 @@ ogg_packet (AVFormatContext * s, int *str, int *dstart, int *dsize, int64_t *fpo
 #endif
 
     if (os->granule == -1)
-        av_log(s, AV_LOG_WARNING, "Page at %lld is missing granule\n", os->page_pos);
+        av_log(s, AV_LOG_WARNING, "Page at %"PRId64" is missing granule\n", os->page_pos);
 
     ogg->curidx = idx;
     os->incomplete = 0;
@@ -373,9 +383,27 @@ ogg_packet (AVFormatContext * s, int *str, int *dstart, int *dsize, int64_t *fpo
         if (!os->header){
             os->segp = segp;
             os->psize = psize;
-            if (!ogg->headers)
-                s->data_offset = os->sync_pos;
+
+            // We have reached the first non-header packet in this stream.
+            // Unfortunately more header packets may still follow for others,
+            // so we reset this later unless we are done with the headers
+            // for all streams.
             ogg->headers = 1;
+
+            // Update the header state for all streams and
+            // compute the data_offset.
+            if (!s->data_offset)
+                s->data_offset = os->sync_pos;
+            for (i = 0; i < ogg->nstreams; i++) {
+                struct ogg_stream *cur_os = ogg->streams + i;
+                if (cur_os->header > 0)
+                    ogg->headers = 0;
+
+                // if we have a partial non-header packet, its start is
+                // obviously at or after the data start
+                if (cur_os->incomplete)
+                    s->data_offset = FFMIN(s->data_offset, cur_os->sync_pos);
+            }
         }else{
             os->pstart += os->psize;
             os->psize = 0;
@@ -437,20 +465,20 @@ ogg_get_length (AVFormatContext * s)
     int i;
     int64_t size, end;
 
-    if(url_is_streamed(s->pb))
+    if(!s->pb->seekable)
         return 0;
 
 // already set
     if (s->duration != AV_NOPTS_VALUE)
         return 0;
 
-    size = url_fsize(s->pb);
+    size = avio_size(s->pb);
     if(size < 0)
         return 0;
     end = size > MAX_PAGE_SIZE? size - MAX_PAGE_SIZE: 0;
 
     ogg_save (s);
-    url_fseek (s->pb, end, SEEK_SET);
+    avio_seek (s->pb, end, SEEK_SET);
 
     while (!ogg_read_page (s, &i)){
         if (ogg->streams[i].granule != -1 && ogg->streams[i].granule != 0 &&
@@ -583,13 +611,13 @@ ogg_read_timestamp (AVFormatContext * s, int stream_index, int64_t * pos_arg,
 {
     struct ogg *ogg = s->priv_data;
     struct ogg_stream *os = ogg->streams + stream_index;
-    ByteIOContext *bc = s->pb;
+    AVIOContext *bc = s->pb;
     int64_t pts = AV_NOPTS_VALUE;
     int i;
-    url_fseek(bc, *pos_arg, SEEK_SET);
+    avio_seek(bc, *pos_arg, SEEK_SET);
     ogg_reset(ogg);
 
-    while (url_ftell(bc) < pos_limit && !ogg_packet(s, &i, NULL, NULL, pos_arg)) {
+    while (avio_tell(bc) < pos_limit && !ogg_packet(s, &i, NULL, NULL, pos_arg)) {
         if (i == stream_index) {
             pts = ogg_calc_pts(s, i, NULL);
             if (os->keyframe_seek && !(os->pflags & AV_PKT_FLAG_KEY))
@@ -630,7 +658,7 @@ static int ogg_probe(AVProbeData *p)
         return 0;
 }
 
-AVInputFormat ogg_demuxer = {
+AVInputFormat ff_ogg_demuxer = {
     "ogg",
     NULL_IF_CONFIG_SMALL("Ogg"),
     sizeof (struct ogg),
@@ -641,6 +669,5 @@ AVInputFormat ogg_demuxer = {
     ogg_read_seek,
     ogg_read_timestamp,
     .extensions = "ogg",
-    .metadata_conv = ff_vorbiscomment_metadata_conv,
     .flags = AVFMT_GENERIC_INDEX,
 };

@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2010 Mans Rullgard <mans@mansr.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -86,7 +86,12 @@ void ff_h264_idct_add8_neon(uint8_t **dest, const int *block_offset,
                             DCTELEM *block, int stride,
                             const uint8_t nnzc[6*8]);
 
-#if HAVE_NEON
+void ff_h264_idct8_add_neon(uint8_t *dst, DCTELEM *block, int stride);
+void ff_h264_idct8_dc_add_neon(uint8_t *dst, DCTELEM *block, int stride);
+void ff_h264_idct8_add4_neon(uint8_t *dst, const int *block_offset,
+                             DCTELEM *block, int stride,
+                             const uint8_t nnzc[6*8]);
+
 static void ff_h264dsp_init_neon(H264DSPContext *c)
 {
     c->h264_v_loop_filter_luma   = ff_h264_v_loop_filter_luma_neon;
@@ -117,8 +122,10 @@ static void ff_h264dsp_init_neon(H264DSPContext *c)
     c->h264_idct_add16      = ff_h264_idct_add16_neon;
     c->h264_idct_add16intra = ff_h264_idct_add16intra_neon;
     c->h264_idct_add8       = ff_h264_idct_add8_neon;
+    c->h264_idct8_add       = ff_h264_idct8_add_neon;
+    c->h264_idct8_dc_add    = ff_h264_idct8_dc_add_neon;
+    c->h264_idct8_add4      = ff_h264_idct8_add4_neon;
 }
-#endif
 
 void ff_h264dsp_init_arm(H264DSPContext *c)
 {

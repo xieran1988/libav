@@ -6,20 +6,20 @@
  *  Written by Nick Kurshev.
  *  YUV & runtime CPU stuff by Michael (michaelni@gmx.at)
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -47,7 +47,7 @@ extern void (*rgb16to32)   (const uint8_t *src, uint8_t *dst, long src_size);
 extern void (*rgb24tobgr24)(const uint8_t *src, uint8_t *dst, long src_size);
 extern void (*rgb24to16)   (const uint8_t *src, uint8_t *dst, long src_size);
 extern void (*rgb24to15)   (const uint8_t *src, uint8_t *dst, long src_size);
-extern void (*rgb32tobgr32)(const uint8_t *src, uint8_t *dst, long src_size);
+extern void (*shuffle_bytes_2103)(const uint8_t *src, uint8_t *dst, long src_size);
 extern void (*rgb32tobgr16)(const uint8_t *src, uint8_t *dst, long src_size);
 extern void (*rgb32tobgr15)(const uint8_t *src, uint8_t *dst, long src_size);
 
@@ -65,7 +65,6 @@ void bgr8torgb8  (const uint8_t *src, uint8_t *dst, long src_size);
 
 void shuffle_bytes_0321(const uint8_t *src, uint8_t *dst, long src_size);
 void shuffle_bytes_1230(const uint8_t *src, uint8_t *dst, long src_size);
-void shuffle_bytes_2103(const uint8_t *src, uint8_t *dst, long src_size);
 void shuffle_bytes_3012(const uint8_t *src, uint8_t *dst, long src_size);
 void shuffle_bytes_3210(const uint8_t *src, uint8_t *dst, long src_size);
 
@@ -168,5 +167,7 @@ extern void (*yuyvtoyuv422)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, const u
                             long lumStride, long chromStride, long srcStride);
 
 void sws_rgb2rgb_init(int flags);
+
+void rgb2rgb_init_x86(int flags);
 
 #endif /* SWSCALE_RGB2RGB_H */

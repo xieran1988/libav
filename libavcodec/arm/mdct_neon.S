@@ -2,20 +2,20 @@
  * ARM NEON optimised MDCT
  * Copyright (c) 2009 Mans Rullgard <mans@mansr.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -31,8 +31,8 @@ function ff_imdct_half_neon, export=1
         push            {r4-r8,lr}
 
         mov             r12, #1
-        ldr             lr,  [r0, #28]          @ mdct_bits
-        ldr             r4,  [r0, #32]          @ tcos
+        ldr             lr,  [r0, #20]          @ mdct_bits
+        ldr             r4,  [r0, #24]          @ tcos
         ldr             r3,  [r0, #8]           @ revtab
         lsl             r12, r12, lr            @ n  = 1 << nbits
         lsr             lr,  r12, #2            @ n4 = n >> 2
@@ -76,8 +76,8 @@ function ff_imdct_half_neon, export=1
         bl              ff_fft_calc_neon
 
         mov             r12, #1
-        ldr             lr,  [r4, #28]          @ mdct_bits
-        ldr             r4,  [r4, #32]          @ tcos
+        ldr             lr,  [r4, #20]          @ mdct_bits
+        ldr             r4,  [r4, #24]          @ tcos
         lsl             r12, r12, lr            @ n  = 1 << nbits
         lsr             lr,  r12, #3            @ n8 = n >> 3
 
@@ -127,7 +127,7 @@ endfunc
 function ff_imdct_calc_neon, export=1
         push            {r4-r6,lr}
 
-        ldr             r3,  [r0, #28]
+        ldr             r3,  [r0, #20]
         mov             r4,  #1
         mov             r5,  r1
         lsl             r4,  r4,  r3
@@ -164,8 +164,8 @@ function ff_mdct_calc_neon, export=1
         push            {r4-r10,lr}
 
         mov             r12, #1
-        ldr             lr,  [r0, #28]          @ mdct_bits
-        ldr             r4,  [r0, #32]          @ tcos
+        ldr             lr,  [r0, #20]          @ mdct_bits
+        ldr             r4,  [r0, #24]          @ tcos
         ldr             r3,  [r0, #8]           @ revtab
         lsl             lr,  r12, lr            @ n  = 1 << nbits
         add             r7,  r2,  lr            @ in4u
@@ -253,8 +253,8 @@ function ff_mdct_calc_neon, export=1
         bl              ff_fft_calc_neon
 
         mov             r12, #1
-        ldr             lr,  [r4, #28]          @ mdct_bits
-        ldr             r4,  [r4, #32]          @ tcos
+        ldr             lr,  [r4, #20]          @ mdct_bits
+        ldr             r4,  [r4, #24]          @ tcos
         lsl             r12, r12, lr            @ n  = 1 << nbits
         lsr             lr,  r12, #3            @ n8 = n >> 3
 

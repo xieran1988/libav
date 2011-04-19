@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2001-2003 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -29,8 +29,8 @@
 
 #include "libavutil/avutil.h"
 
-#define LIBSWSCALE_VERSION_MAJOR 0
-#define LIBSWSCALE_VERSION_MINOR 11
+#define LIBSWSCALE_VERSION_MAJOR 1
+#define LIBSWSCALE_VERSION_MINOR 0
 #define LIBSWSCALE_VERSION_MICRO 0
 
 #define LIBSWSCALE_VERSION_INT  AV_VERSION_INT(LIBSWSCALE_VERSION_MAJOR, \
@@ -42,6 +42,14 @@
 #define LIBSWSCALE_BUILD        LIBSWSCALE_VERSION_INT
 
 #define LIBSWSCALE_IDENT        "SwS" AV_STRINGIFY(LIBSWSCALE_VERSION)
+
+/**
+ * Those FF_API_* defines are not part of public API.
+ * They may change, break or disappear at any time.
+ */
+#ifndef FF_API_SWS_GETCONTEXT
+#define FF_API_SWS_GETCONTEXT  (LIBSWSCALE_VERSION_MAJOR < 2)
+#endif
 
 /**
  * Returns the LIBSWSCALE_VERSION_INT constant.
@@ -92,6 +100,7 @@ const char *swscale_license(void);
 #define SWS_CPU_CAPS_3DNOW    0x40000000
 #define SWS_CPU_CAPS_ALTIVEC  0x10000000
 #define SWS_CPU_CAPS_BFIN     0x01000000
+#define SWS_CPU_CAPS_SSE2     0x02000000
 
 #define SWS_MAX_REDUCE_CUTOFF 0.002
 
@@ -143,11 +152,27 @@ int sws_isSupportedInput(enum PixelFormat pix_fmt);
 int sws_isSupportedOutput(enum PixelFormat pix_fmt);
 
 /**
+ * Allocates an empty SwsContext. This must be filled and passed to
+ * sws_init_context(). For filling see AVOptions, options.c and
+ * sws_setColorspaceDetails().
+ */
+struct SwsContext *sws_alloc_context(void);
+
+/**
+ * Initializes the swscaler context sws_context.
+ *
+ * @return zero or positive value on success, a negative value on
+ * error
+ */
+int sws_init_context(struct SwsContext *sws_context, SwsFilter *srcFilter, SwsFilter *dstFilter);
+
+/**
  * Frees the swscaler context swsContext.
  * If swsContext is NULL, then does nothing.
  */
 void sws_freeContext(struct SwsContext *swsContext);
 
+#if FF_API_SWS_GETCONTEXT
 /**
  * Allocates and returns a SwsContext. You need it to perform
  * scaling/conversion operations using sws_scale().
@@ -160,11 +185,14 @@ void sws_freeContext(struct SwsContext *swsContext);
  * @param dstFormat the destination image format
  * @param flags specify which algorithm and options to use for rescaling
  * @return a pointer to an allocated context, or NULL in case of error
+ * @note this function is to be removed after a saner alternative is
+ *       written
  */
 struct SwsContext *sws_getContext(int srcW, int srcH, enum PixelFormat srcFormat,
                                   int dstW, int dstH, enum PixelFormat dstFormat,
                                   int flags, SwsFilter *srcFilter,
                                   SwsFilter *dstFilter, const double *param);
+#endif
 
 /**
  * Scales the image slice in srcSlice and puts the resulting scaled
@@ -194,6 +222,7 @@ struct SwsContext *sws_getContext(int srcW, int srcH, enum PixelFormat srcFormat
  */
 int sws_scale(struct SwsContext *context, const uint8_t* const srcSlice[], const int srcStride[],
               int srcSliceY, int srcSliceH, uint8_t* const dst[], const int dstStride[]);
+
 #if LIBSWSCALE_VERSION_MAJOR < 1
 /**
  * @deprecated Use sws_scale() instead.

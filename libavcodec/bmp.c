@@ -2,20 +2,20 @@
  * BMP image format decoder
  * Copyright (c) 2005 Mans Rullgard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -290,7 +290,7 @@ static int bmp_decode_frame(AVCodecContext *avctx,
                 uint16_t *dst = (uint16_t *) ptr;
 
                 for(j = 0; j < avctx->width; j++)
-                    *dst++ = le2me_16(*src++);
+                    *dst++ = av_le2ne16(*src++);
 
                 buf += n;
                 ptr += linesize;
@@ -335,7 +335,7 @@ static av_cold int bmp_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec bmp_decoder = {
+AVCodec ff_bmp_decoder = {
     "bmp",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_BMP,

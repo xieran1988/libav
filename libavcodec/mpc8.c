@@ -2,20 +2,20 @@
  * Musepack SV8 decoder
  * Copyright (c) 2007 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -30,6 +30,7 @@
 #include "get_bits.h"
 #include "dsputil.h"
 #include "mpegaudio.h"
+#include "libavutil/audioconvert.h"
 
 #include "mpc.h"
 #include "mpcdata.h"
@@ -99,6 +100,7 @@ static av_cold int mpc8_decode_init(AVCodecContext * avctx)
     MPCContext *c = avctx->priv_data;
     GetBitContext gb;
     static int vlc_initialized = 0;
+    int channels;
 
     static VLC_TYPE band_table[542][2];
     static VLC_TYPE q1_table[520][2];
@@ -125,12 +127,16 @@ static av_cold int mpc8_decode_init(AVCodecContext * avctx)
 
     skip_bits(&gb, 3);//sample rate
     c->maxbands = get_bits(&gb, 5) + 1;
-    skip_bits(&gb, 4);//channels
+    channels = get_bits(&gb, 4) + 1;
+    if (channels > 2) {
+        av_log_missing_feature(avctx, "Multichannel MPC SV8", 1);
+        return -1;
+    }
     c->MSS = get_bits1(&gb);
     c->frames = 1 << (get_bits(&gb, 3) * 2);
 
-    avctx->sample_fmt = SAMPLE_FMT_S16;
-    avctx->channel_layout = (avctx->channels==2) ? CH_LAYOUT_STEREO : CH_LAYOUT_MONO;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
+    avctx->channel_layout = (avctx->channels==2) ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
 
     if(vlc_initialized) return 0;
     av_log(avctx, AV_LOG_DEBUG, "Initing VLC\n");
@@ -387,19 +393,19 @@ static int mpc8_decode_frame(AVCodecContext * avctx,
         }
     }
 
-    ff_mpc_dequantize_and_synth(c, maxband, data);
+    ff_mpc_dequantize_and_synth(c, maxband, data, avctx->channels);
 
     c->cur_frame++;
 
     c->last_bits_used = get_bits_count(gb);
     if(c->cur_frame >= c->frames)
         c->cur_frame = 0;
-    *data_size =  MPC_FRAME_SIZE * 4;
+    *data_size =  MPC_FRAME_SIZE * 2 * avctx->channels;
 
     return c->cur_frame ? c->last_bits_used >> 3 : buf_size;
 }
 
-AVCodec mpc8_decoder = {
+AVCodec ff_mpc8_decoder = {
     "mpc8",
     AVMEDIA_TYPE_AUDIO,
     CODEC_ID_MUSEPACK8,

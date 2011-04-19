@@ -21,20 +21,24 @@ endif
 ifndef V
 Q      = @
 ECHO   = printf "$(1)\t%s\n" $(2)
-BRIEF  = CC AS YASM AR LD HOSTCC STRIP CP
+BRIEF  = CC AS YASM AR LD HOSTCC
 SILENT = DEPCC YASMDEP RM RANLIB
 MSG    = $@
 M      = @$(call ECHO,$(TAG),$@);
 $(foreach VAR,$(BRIEF), \
-    $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
-$(foreach VAR,$(SILENT),$(eval $(VAR) = @$($(VAR))))
+    $(eval override $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
+$(foreach VAR,$(SILENT),$(eval override $(VAR) = @$($(VAR))))
 $(eval INSTALL = @$(call ECHO,INSTALL,$$(^:$(SRC_DIR)/%=%)); $(INSTALL))
 endif
 
 ALLFFLIBS = avcodec avdevice avfilter avformat avutil postproc swscale
 
-CPPFLAGS := -I$(BUILD_ROOT_REL) -I$(SRC_PATH) $(CPPFLAGS)
+IFLAGS   := -I$(BUILD_ROOT_REL) -I$(SRC_PATH)
+CPPFLAGS := $(IFLAGS) $(CPPFLAGS)
 CFLAGS   += $(ECFLAGS)
+YASMFLAGS += $(IFLAGS) -Pconfig.asm
+
+HOSTCFLAGS += $(IFLAGS)
 
 %.o: %.c
 	$(CCDEP)
@@ -53,6 +57,10 @@ CFLAGS   += $(ECFLAGS)
 	$(Q)sed 's/$$MAJOR/$($(basename $(@F))_VERSION_MAJOR)/' $^ > $@
 
 %.c %.h: TAG = GEN
+
+# Dummy rule to stop make trying to rebuild removed or renamed headers
+%.h:
+	@:
 
 install: install-libs install-headers
 install-libs: install-libs-yes
@@ -81,7 +89,7 @@ FFLDFLAGS   := $(addprefix -L$(BUILD_ROOT)/lib,$(ALLFFLIBS)) $(LDFLAGS)
 
 EXAMPLES  := $(addprefix $(SUBDIR),$(addsuffix -example$(EXESUF),$(EXAMPLES)))
 OBJS      := $(addprefix $(SUBDIR),$(sort $(OBJS)))
-TESTOBJS  := $(addprefix $(SUBDIR),$(TESTOBJS))
+TESTOBJS  := $(addprefix $(SUBDIR),$(TESTOBJS) $(TESTPROGS:%=%-test.o))
 TESTPROGS := $(addprefix $(SUBDIR),$(addsuffix -test$(EXESUF),$(TESTPROGS)))
 HOSTOBJS  := $(addprefix $(SUBDIR),$(addsuffix .o,$(HOSTPROGS)))
 HOSTPROGS := $(addprefix $(SUBDIR),$(addsuffix $(HOSTEXESUF),$(HOSTPROGS)))
@@ -99,11 +107,8 @@ $(HOSTOBJS): %.o: %.c
 $(HOSTPROGS): %$(HOSTEXESUF): %.o
 	$(HOSTCC) $(HOSTLDFLAGS) -o $@ $< $(HOSTLIBS)
 
-DEPS := $(OBJS:.o=.d)
-depend dep: $(DEPS)
-
 CLEANSUFFIXES     = *.d *.o *~ *.ho *.map *.ver
 DISTCLEANSUFFIXES = *.pc
 LIBSUFFIXES       = *.a *.lib *.so *.so.* *.dylib *.dll *.def *.dll.a *.exp
 
--include $(wildcard $(DEPS))
+-include $(wildcard $(OBJS:.o=.d) $(TESTOBJS:.o=.d))

@@ -4,30 +4,39 @@
  *
  * VC-3 encoder funded by the British Broadcasting Corporation
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 //#define DEBUG
 #define RC_VARIANCE 1 // use variance or ssd for fast rc
 
+#include "libavutil/opt.h"
 #include "avcodec.h"
 #include "dsputil.h"
 #include "mpegvideo.h"
 #include "dnxhdenc.h"
+
+#define VE AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM
+
+static const AVOption options[]={
+    {"nitris_compat", "encode with Avid Nitris compatibility", offsetof(DNXHDEncContext, nitris_compat), FF_OPT_TYPE_INT, 0, 0, 1, VE},
+{NULL}
+};
+static const AVClass class = { "dnxhd", av_default_item_name, options, LIBAVUTIL_VERSION_INT };
 
 int dct_quantize_c(MpegEncContext *s, DCTELEM *block, int n, int qscale, int *overflow);
 
@@ -146,7 +155,7 @@ static int dnxhd_init_rc(DNXHDEncContext *ctx)
     if (ctx->m.avctx->mb_decision != FF_MB_DECISION_RD)
         FF_ALLOCZ_OR_GOTO(ctx->m.avctx, ctx->mb_cmp, ctx->m.mb_num*sizeof(RCCMPEntry), fail);
 
-    ctx->frame_bits = (ctx->cid_table->coding_unit_size - 640 - 4) * 8;
+    ctx->frame_bits = (ctx->cid_table->coding_unit_size - 640 - 4 - ctx->min_padding) * 8;
     ctx->qscale = 1;
     ctx->lambda = 2<<LAMBDA_FRAC_BITS; // qscale 2
     return 0;
@@ -198,6 +207,10 @@ static int dnxhd_encode_init(AVCodecContext *avctx)
     if (dnxhd_init_qmat(ctx, ctx->m.intra_quant_bias, 0) < 0) // XXX tune lbias/cbias
         return -1;
 
+    // Avid Nitris hardware decoder requires a minimum amount of padding in the coding unit payload
+    if (ctx->nitris_compat)
+        ctx->min_padding = 1600;
+
     if (dnxhd_init_vlc(ctx) < 0)
         return -1;
     if (dnxhd_init_rc(ctx) < 0)
@@ -239,12 +252,12 @@ static int dnxhd_write_header(AVCodecContext *avctx, uint8_t *buf)
     buf[5] = ctx->interlaced ? ctx->cur_field+2 : 0x01;
     buf[6] = 0x80; // crc flag off
     buf[7] = 0xa0; // reserved
-    AV_WB16(buf + 0x18, avctx->height); // ALPF
+    AV_WB16(buf + 0x18, avctx->height>>ctx->interlaced); // ALPF
     AV_WB16(buf + 0x1a, avctx->width);  // SPL
-    AV_WB16(buf + 0x1d, avctx->height); // NAL
+    AV_WB16(buf + 0x1d, avctx->height>>ctx->interlaced); // NAL
 
     buf[0x21] = 0x38; // FIXME 8 bit per comp
-    buf[0x22] = 0x88 + (ctx->frame.interlaced_frame<<2);
+    buf[0x22] = 0x88 + (ctx->interlaced<<2);
     AV_WB32(buf + 0x28, ctx->cid); // CID
     buf[0x2c] = ctx->interlaced ? 0 : 0x80;
 
@@ -552,7 +565,7 @@ static int dnxhd_encode_rdo(AVCodecContext *avctx, DNXHDEncContext *ctx)
             if (bits > ctx->frame_bits)
                 break;
         }
-        //dprintf(ctx->m.avctx, "lambda %d, up %u, down %u, bits %d, frame %d\n",
+        //av_dlog(ctx->m.avctx, "lambda %d, up %u, down %u, bits %d, frame %d\n",
         //        lambda, last_higher, last_lower, bits, ctx->frame_bits);
         if (end) {
             if (bits > ctx->frame_bits)
@@ -582,7 +595,7 @@ static int dnxhd_encode_rdo(AVCodecContext *avctx, DNXHDEncContext *ctx)
             down_step = 1<<LAMBDA_FRAC_BITS;
         }
     }
-    //dprintf(ctx->m.avctx, "out lambda %d\n", lambda);
+    //av_dlog(ctx->m.avctx, "out lambda %d\n", lambda);
     ctx->lambda = lambda;
     return 0;
 }
@@ -610,7 +623,7 @@ static int dnxhd_find_qscale(DNXHDEncContext *ctx)
             if (bits > ctx->frame_bits)
                 break;
         }
-        //dprintf(ctx->m.avctx, "%d, qscale %d, bits %d, frame %d, higher %d, lower %d\n",
+        //av_dlog(ctx->m.avctx, "%d, qscale %d, bits %d, frame %d, higher %d, lower %d\n",
         //        ctx->m.avctx->frame_number, qscale, bits, ctx->frame_bits, last_higher, last_lower);
         if (bits < ctx->frame_bits) {
             if (qscale == 1)
@@ -640,7 +653,7 @@ static int dnxhd_find_qscale(DNXHDEncContext *ctx)
                 return -1;
         }
     }
-    //dprintf(ctx->m.avctx, "out qscale %d\n", qscale);
+    //av_dlog(ctx->m.avctx, "out qscale %d\n", qscale);
     ctx->qscale = qscale;
     return 0;
 }
@@ -848,7 +861,7 @@ static int dnxhd_encode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec dnxhd_encoder = {
+AVCodec ff_dnxhd_encoder = {
     "dnxhd",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_DNXHD,
@@ -858,4 +871,5 @@ AVCodec dnxhd_encoder = {
     dnxhd_encode_end,
     .pix_fmts = (const enum PixelFormat[]){PIX_FMT_YUV422P, PIX_FMT_NONE},
     .long_name = NULL_IF_CONFIG_SMALL("VC3/DNxHD"),
+    .priv_class = &class,
 };

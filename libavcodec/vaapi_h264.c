@@ -3,20 +3,20 @@
  *
  * Copyright (C) 2008-2009 Splitted-Desktop Systems
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -24,12 +24,12 @@
 #include "h264.h"
 
 /** @file
- *  This file implements the glue code between FFmpeg's and VA API's
+ *  This file implements the glue code between Libav's and VA API's
  *  structures for H.264 decoding.
  */
 
 /**
- * Initializes an empty VA API picture.
+ * Initialize an empty VA API picture.
  *
  * VA API requires a fixed-size reference picture array.
  */
@@ -42,10 +42,10 @@ static void init_vaapi_pic(VAPictureH264 *va_pic)
 }
 
 /**
- * Translates an FFmpeg Picture into its VA API form.
+ * Translate an Libav Picture into its VA API form.
  *
  * @param[out] va_pic          A pointer to VA API's own picture struct
- * @param[in]  pic             A pointer to the FFmpeg picture struct to convert
+ * @param[in]  pic             A pointer to the Libav picture struct to convert
  * @param[in]  pic_structure   The picture field type (as defined in mpegvideo.h),
  *                             supersedes pic's field type if nonzero.
  */
@@ -55,6 +55,7 @@ static void fill_vaapi_pic(VAPictureH264 *va_pic,
 {
     if (pic_structure == 0)
         pic_structure = pic->reference;
+    pic_structure &= PICT_FRAME; /* PICT_TOP_FIELD|PICT_BOTTOM_FIELD */
 
     va_pic->picture_id = ff_vaapi_get_surface_id(pic);
     va_pic->frame_idx  = pic->long_ref ? pic->pic_id : pic->frame_num;
@@ -82,7 +83,7 @@ typedef struct DPB {
 } DPB;
 
 /**
- * Appends picture to the decoded picture buffer, in a VA API form that
+ * Append picture to the decoded picture buffer, in a VA API form that
  * merges the second field picture attributes with the first, if
  * available.  The decoded picture buffer's size must be large enough
  * to receive the new VA API picture object.
@@ -117,7 +118,7 @@ static int dpb_add(DPB *dpb, Picture *pic)
     return 0;
 }
 
-/** Fills in VA API reference frames array. */
+/** Fill in VA API reference frames array. */
 static int fill_vaapi_ReferenceFrames(VAPictureParameterBufferH264 *pic_param,
                                       H264Context                  *h)
 {
@@ -145,11 +146,11 @@ static int fill_vaapi_ReferenceFrames(VAPictureParameterBufferH264 *pic_param,
 }
 
 /**
- * Fills in VA API reference picture lists from the FFmpeg reference
+ * Fill in VA API reference picture lists from the Libav reference
  * picture list.
  *
  * @param[out] RefPicList  VA API internal reference picture list
- * @param[in]  ref_list    A pointer to the FFmpeg reference list
+ * @param[in]  ref_list    A pointer to the Libav reference list
  * @param[in]  ref_count   The number of reference pictures in ref_list
  */
 static void fill_vaapi_RefPicList(VAPictureH264 RefPicList[32],
@@ -166,7 +167,7 @@ static void fill_vaapi_RefPicList(VAPictureH264 RefPicList[32],
 }
 
 /**
- * Fills in prediction weight table.
+ * Fill in prediction weight table.
  *
  * VA API requires a plain prediction weight table as it does not infer
  * any value.
@@ -216,7 +217,7 @@ static void fill_vaapi_plain_pred_weight_table(H264Context   *h,
     }
 }
 
-/** Initializes and starts decoding a frame with VA API. */
+/** Initialize and start decoding a frame with VA API. */
 static int start_frame(AVCodecContext          *avctx,
                        av_unused const uint8_t *buffer,
                        av_unused uint32_t       size)
@@ -227,7 +228,7 @@ static int start_frame(AVCodecContext          *avctx,
     VAPictureParameterBufferH264 *pic_param;
     VAIQMatrixBufferH264 *iq_matrix;
 
-    dprintf(avctx, "start_frame()\n");
+    av_dlog(avctx, "start_frame()\n");
 
     vactx->slice_param_size = sizeof(VASliceParameterBufferH264);
 
@@ -257,7 +258,7 @@ static int start_frame(AVCodecContext          *avctx,
     pic_param->seq_fields.bits.delta_pic_order_always_zero_flag = h->sps.delta_pic_order_always_zero_flag;
     pic_param->num_slice_groups_minus1                          = h->pps.slice_group_count - 1;
     pic_param->slice_group_map_type                             = h->pps.mb_slice_group_map_type;
-    pic_param->slice_group_change_rate_minus1                   = 0; /* XXX: unimplemented in FFmpeg */
+    pic_param->slice_group_change_rate_minus1                   = 0; /* XXX: unimplemented in Libav */
     pic_param->pic_init_qp_minus26                              = h->pps.init_qp - 26;
     pic_param->pic_init_qs_minus26                              = h->pps.init_qs - 26;
     pic_param->chroma_qp_index_offset                           = h->pps.chroma_qp_index_offset[0];
@@ -284,16 +285,16 @@ static int start_frame(AVCodecContext          *avctx,
     return 0;
 }
 
-/** Ends a hardware decoding based frame. */
+/** End a hardware decoding based frame. */
 static int end_frame(AVCodecContext *avctx)
 {
     H264Context * const h = avctx->priv_data;
 
-    dprintf(avctx, "end_frame()\n");
+    av_dlog(avctx, "end_frame()\n");
     return ff_vaapi_common_end_frame(&h->s);
 }
 
-/** Decodes the given H.264 slice with VA API. */
+/** Decode the given H.264 slice with VA API. */
 static int decode_slice(AVCodecContext *avctx,
                         const uint8_t  *buffer,
                         uint32_t        size)
@@ -302,7 +303,7 @@ static int decode_slice(AVCodecContext *avctx,
     MpegEncContext * const s = &h->s;
     VASliceParameterBufferH264 *slice_param;
 
-    dprintf(avctx, "decode_slice(): buffer %p, size %d\n", buffer, size);
+    av_dlog(avctx, "decode_slice(): buffer %p, size %d\n", buffer, size);
 
     /* Fill in VASliceParameterBufferH264. */
     slice_param = (VASliceParameterBufferH264 *)ff_vaapi_alloc_slice(avctx->hwaccel_context, buffer, size);
@@ -334,7 +335,7 @@ static int decode_slice(AVCodecContext *avctx,
     return 0;
 }
 
-AVHWAccel h264_vaapi_hwaccel = {
+AVHWAccel ff_h264_vaapi_hwaccel = {
     .name           = "h264_vaapi",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_H264,

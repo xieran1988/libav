@@ -1,20 +1,20 @@
 /*
  * copyright (c) 2006 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -39,9 +39,9 @@
 #define AV_VERSION_DOT(a, b, c) a ##.## b ##.## c
 #define AV_VERSION(a, b, c) AV_VERSION_DOT(a, b, c)
 
-#define LIBAVUTIL_VERSION_MAJOR 50
-#define LIBAVUTIL_VERSION_MINOR 15
-#define LIBAVUTIL_VERSION_MICRO  1
+#define LIBAVUTIL_VERSION_MAJOR 51
+#define LIBAVUTIL_VERSION_MINOR  0
+#define LIBAVUTIL_VERSION_MICRO  0
 
 #define LIBAVUTIL_VERSION_INT   AV_VERSION_INT(LIBAVUTIL_VERSION_MAJOR, \
                                                LIBAVUTIL_VERSION_MINOR, \
@@ -54,17 +54,25 @@
 #define LIBAVUTIL_IDENT         "Lavu" AV_STRINGIFY(LIBAVUTIL_VERSION)
 
 /**
- * Returns the LIBAVUTIL_VERSION_INT constant.
+ * Those FF_API_* defines are not part of public API.
+ * They may change, break or disappear at any time.
+ */
+#ifndef FF_API_OLD_EVAL_NAMES
+#define FF_API_OLD_EVAL_NAMES (LIBAVUTIL_VERSION_MAJOR < 51)
+#endif
+
+/**
+ * Return the LIBAVUTIL_VERSION_INT constant.
  */
 unsigned avutil_version(void);
 
 /**
- * Returns the libavutil build-time configuration.
+ * Return the libavutil build-time configuration.
  */
 const char *avutil_configuration(void);
 
 /**
- * Returns the libavutil license.
+ * Return the libavutil license.
  */
 const char *avutil_license(void);
 
@@ -77,6 +85,25 @@ enum AVMediaType {
     AVMEDIA_TYPE_ATTACHMENT,
     AVMEDIA_TYPE_NB
 };
+
+#define FF_LAMBDA_SHIFT 7
+#define FF_LAMBDA_SCALE (1<<FF_LAMBDA_SHIFT)
+#define FF_QP2LAMBDA 118 ///< factor to convert from H.263 QP to lambda
+#define FF_LAMBDA_MAX (256*128-1)
+
+#define FF_QUALITY_SCALE FF_LAMBDA_SCALE //FIXME maybe remove
+
+#define AV_NOPTS_VALUE          INT64_C(0x8000000000000000)
+#define AV_TIME_BASE            1000000
+#define AV_TIME_BASE_Q          (AVRational){1, AV_TIME_BASE}
+
+/**
+ * Those FF_API_* defines are not part of public API.
+ * They may change, break or disappear at any time.
+ */
+#ifndef FF_API_OLD_IMAGE_NAMES
+#define FF_API_OLD_IMAGE_NAMES (LIBAVUTIL_VERSION_MAJOR < 51)
+#endif
 
 #include "common.h"
 #include "error.h"

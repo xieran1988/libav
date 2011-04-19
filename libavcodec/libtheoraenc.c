@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2006 Paul Richards <paul.richards@gmail.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -30,7 +30,7 @@
  * and o_ prefixes on variables which are libogg types.
  */
 
-/* FFmpeg includes */
+/* Libav includes */
 #include "libavutil/intreadwrite.h"
 #include "libavutil/log.h"
 #include "libavutil/base64.h"
@@ -49,7 +49,7 @@ typedef struct TheoraContext {
     int         keyframe_mask;
 } TheoraContext;
 
-/** Concatenates an ogg_packet into the extradata. */
+/** Concatenate an ogg_packet into the extradata. */
 static int concatenate_packet(unsigned int* offset,
                               AVCodecContext* avc_context,
                               const ogg_packet* packet)
@@ -101,7 +101,7 @@ static int get_stats(AVCodecContext *avctx, int eos)
         memcpy(h->stats + h->stats_offset, buf, bytes);
         h->stats_offset += bytes;
     } else {
-        int b64_size = ((h->stats_offset + 2) / 3) * 4 + 1;
+        int b64_size = AV_BASE64_SIZE(h->stats_offset);
         // libtheora generates a summary header at the end
         memcpy(h->stats, buf, bytes);
         avctx->stats_out = av_malloc(b64_size);
@@ -357,7 +357,7 @@ static av_cold int encode_close(AVCodecContext* avc_context)
 }
 
 /** AVCodec struct exposed to libavcodec */
-AVCodec libtheora_encoder = {
+AVCodec ff_libtheora_encoder = {
     .name = "libtheora",
     .type = AVMEDIA_TYPE_VIDEO,
     .id = CODEC_ID_THEORA,

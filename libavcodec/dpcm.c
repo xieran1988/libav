@@ -2,25 +2,25 @@
  * Assorted DPCM codecs
  * Copyright (c) 2003 The ffmpeg Project
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /**
- * @file: dpcm.c
+ * @file
  * Assorted DPCM (differential pulse code modulation) audio codecs
  * by Mike Melanson (melanson@pcisys.net)
  * Xan DPCM decoder by Mario Brito (mbrito@student.dei.uc.pt)
@@ -155,7 +155,7 @@ static av_cold int dpcm_decode_init(AVCodecContext *avctx)
         break;
     }
 
-    avctx->sample_fmt = SAMPLE_FMT_S16;
+    avctx->sample_fmt = AV_SAMPLE_FMT_S16;
     return 0;
 }
 
@@ -299,7 +299,7 @@ static int dpcm_decode_frame(AVCodecContext *avctx,
 }
 
 #define DPCM_DECODER(id, name, long_name_)      \
-AVCodec name ## _decoder = {                    \
+AVCodec ff_ ## name ## _decoder = {             \
     #name,                                      \
     AVMEDIA_TYPE_AUDIO,                         \
     id,                                         \
@@ -309,7 +309,7 @@ AVCodec name ## _decoder = {                    \
     NULL,                                       \
     dpcm_decode_frame,                          \
     .long_name = NULL_IF_CONFIG_SMALL(long_name_), \
-};
+}
 
 DPCM_DECODER(CODEC_ID_INTERPLAY_DPCM, interplay_dpcm, "DPCM Interplay");
 DPCM_DECODER(CODEC_ID_ROQ_DPCM, roq_dpcm, "DPCM id RoQ");

@@ -2,20 +2,20 @@
  * RTP definitions
  * Copyright (c) 2002 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 #ifndef AVFORMAT_RTP_H
@@ -75,5 +75,20 @@ enum CodecID ff_rtp_codec_id(const char *buf, enum AVMediaType codec_type);
 /* RTCP paquets use 0.5 % of the bandwidth */
 #define RTCP_TX_RATIO_NUM 5
 #define RTCP_TX_RATIO_DEN 1000
+
+/* An arbitrary id value for RTP Xiph streams - only relevant to indicate
+ * the the configuration has changed within a stream (by changing the
+ * ident value sent).
+ */
+#define RTP_XIPH_IDENT 0xfecdba
+
+/* RTCP packet types */
+enum RTCPType {
+    RTCP_SR     = 200,
+    RTCP_RR,   // 201
+    RTCP_SDES, // 202
+    RTCP_BYE,  // 203
+    RTCP_APP   // 204
+};
 
 #endif /* AVFORMAT_RTP_H */

@@ -7,20 +7,20 @@
  * mostly rewritten by Michael Niedermayer <michaelni@gmx.at>
  * and improved by Zdenek Kabelac <kabi@users.sf.net>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -586,6 +586,49 @@ static void DEF(put_no_rnd_pixels8_x2)(uint8_t *block, const uint8_t *pixels, in
         :"%"REG_a, "memory");
 }
 
+static void DEF(put_no_rnd_pixels8_x2_exact)(uint8_t *block, const uint8_t *pixels, int line_size, int h)
+{
+    __asm__ volatile (
+        "pcmpeqb %%mm6, %%mm6           \n\t"
+        "1:                             \n\t"
+        "movq  (%1),     %%mm0          \n\t"
+        "movq  (%1, %3), %%mm2          \n\t"
+        "movq 1(%1),     %%mm1          \n\t"
+        "movq 1(%1, %3), %%mm3          \n\t"
+        "pxor  %%mm6, %%mm0             \n\t"
+        "pxor  %%mm6, %%mm2             \n\t"
+        "pxor  %%mm6, %%mm1             \n\t"
+        "pxor  %%mm6, %%mm3             \n\t"
+        PAVGB" %%mm1, %%mm0             \n\t"
+        PAVGB" %%mm3, %%mm2             \n\t"
+        "pxor  %%mm6, %%mm0             \n\t"
+        "pxor  %%mm6, %%mm2             \n\t"
+        "movq  %%mm0, (%2)              \n\t"
+        "movq  %%mm2, (%2, %3)          \n\t"
+        "movq  (%1, %3,2), %%mm0        \n\t"
+        "movq 1(%1, %3,2), %%mm1        \n\t"
+        "movq  (%1, %4),   %%mm2        \n\t"
+        "movq 1(%1, %4),   %%mm3        \n\t"
+        "pxor  %%mm6, %%mm0             \n\t"
+        "pxor  %%mm6, %%mm1             \n\t"
+        "pxor  %%mm6, %%mm2             \n\t"
+        "pxor  %%mm6, %%mm3             \n\t"
+        PAVGB" %%mm1, %%mm0             \n\t"
+        PAVGB" %%mm3, %%mm2             \n\t"
+        "pxor  %%mm6, %%mm0             \n\t"
+        "pxor  %%mm6, %%mm2             \n\t"
+        "movq  %%mm0, (%2, %3,2)        \n\t"
+        "movq  %%mm2, (%2, %4)          \n\t"
+        "lea   (%1, %3,4), %1           \n\t"
+        "lea   (%2, %3,4), %2           \n\t"
+        "subl  $4, %0                   \n\t"
+        "jg 1b                          \n\t"
+        : "+g"(h), "+r"(pixels), "+r"(block)
+        : "r" ((x86_reg)line_size), "r"((x86_reg)3*line_size)
+        : "memory"
+    );
+}
+
 static void DEF(put_pixels8_y2)(uint8_t *block, const uint8_t *pixels, int line_size, int h)
 {
     __asm__ volatile(
@@ -648,6 +691,44 @@ static void DEF(put_no_rnd_pixels8_y2)(uint8_t *block, const uint8_t *pixels, in
         :"+g"(h), "+S"(pixels), "+D" (block)
         :"r" ((x86_reg)line_size)
         :"%"REG_a, "memory");
+}
+
+static void DEF(put_no_rnd_pixels8_y2_exact)(uint8_t *block, const uint8_t *pixels, int line_size, int h)
+{
+    __asm__ volatile (
+        "movq     (%1), %%mm0           \n\t"
+        "pcmpeqb %%mm6, %%mm6           \n\t"
+        "add        %3, %1              \n\t"
+        "pxor    %%mm6, %%mm0           \n\t"
+        "1:                             \n\t"
+        "movq  (%1),     %%mm1          \n\t"
+        "movq  (%1, %3), %%mm2          \n\t"
+        "pxor  %%mm6, %%mm1             \n\t"
+        "pxor  %%mm6, %%mm2             \n\t"
+        PAVGB" %%mm1, %%mm0             \n\t"
+        PAVGB" %%mm2, %%mm1             \n\t"
+        "pxor  %%mm6, %%mm0             \n\t"
+        "pxor  %%mm6, %%mm1             \n\t"
+        "movq  %%mm0, (%2)              \n\t"
+        "movq  %%mm1, (%2, %3)          \n\t"
+        "movq  (%1, %3,2), %%mm1        \n\t"
+        "movq  (%1, %4),   %%mm0        \n\t"
+        "pxor  %%mm6, %%mm1             \n\t"
+        "pxor  %%mm6, %%mm0             \n\t"
+        PAVGB" %%mm1, %%mm2             \n\t"
+        PAVGB" %%mm0, %%mm1             \n\t"
+        "pxor  %%mm6, %%mm2             \n\t"
+        "pxor  %%mm6, %%mm1             \n\t"
+        "movq %%mm2, (%2, %3,2)         \n\t"
+        "movq %%mm1, (%2, %4)           \n\t"
+        "lea   (%1, %3,4), %1           \n\t"
+        "lea   (%2, %3,4), %2           \n\t"
+        "subl $4, %0                    \n\t"
+        "jg 1b                          \n\t"
+        :"+g"(h), "+r"(pixels), "+r" (block)
+        :"r" ((x86_reg)line_size), "r"((x86_reg)3*line_size)
+        :"memory"
+    );
 }
 
 static void DEF(avg_pixels8)(uint8_t *block, const uint8_t *pixels, int line_size, int h)
@@ -757,7 +838,7 @@ static void DEF(avg_pixels8_xy2)(uint8_t *block, const uint8_t *pixels, int line
         "lea (%3, %3), %%"REG_a"        \n\t"
         "movq (%1), %%mm0               \n\t"
         PAVGB" 1(%1), %%mm0             \n\t"
-         ASMALIGN(3)
+         ".p2align 3                    \n\t"
         "1:                             \n\t"
         "movq (%1, %%"REG_a"), %%mm2    \n\t"
         "movq (%1, %3), %%mm1           \n\t"

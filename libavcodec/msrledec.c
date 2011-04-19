@@ -2,20 +2,20 @@
  * Microsoft RLE decoder
  * Copyright (C) 2008 Konstantin Shishkov
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -45,7 +45,7 @@ static int msrle_decode_pal4(AVCodecContext *avctx, AVPicture *pic,
     unsigned char rle_code;
     unsigned char extra_byte, odd_pixel;
     unsigned char stream_byte;
-    int pixel_ptr = 0;
+    unsigned int pixel_ptr = 0;
     int row_dec = pic->linesize[0];
     int row_ptr = (avctx->height - 1) * row_dec;
     int frame_size = row_dec * avctx->height;
@@ -70,39 +70,37 @@ static int msrle_decode_pal4(AVCodecContext *avctx, AVPicture *pic,
                 pixel_ptr += stream_byte;
                 FETCH_NEXT_STREAM_BYTE();
                 row_ptr -= stream_byte * row_dec;
-        } else {
-            // copy pixels from encoded stream
-            odd_pixel =  stream_byte & 1;
-            rle_code = (stream_byte + 1) / 2;
-            extra_byte = rle_code & 0x01;
-            if ((row_ptr + pixel_ptr + stream_byte > frame_size) ||
-                (row_ptr < 0)) {
-                av_log(avctx, AV_LOG_ERROR, " MS RLE: frame ptr just went out of bounds (1)\n");
-                return -1;
-            }
+            } else {
+                // copy pixels from encoded stream
+                odd_pixel =  stream_byte & 1;
+                rle_code = (stream_byte + 1) / 2;
+                extra_byte = rle_code & 0x01;
+                if (row_ptr + pixel_ptr + stream_byte > frame_size) {
+                    av_log(avctx, AV_LOG_ERROR, " MS RLE: frame ptr just went out of bounds (1)\n");
+                    return -1;
+                }
 
-            for (i = 0; i < rle_code; i++) {
-                if (pixel_ptr >= avctx->width)
-                    break;
-                FETCH_NEXT_STREAM_BYTE();
-                pic->data[0][row_ptr + pixel_ptr] = stream_byte >> 4;
-                pixel_ptr++;
-                if (i + 1 == rle_code && odd_pixel)
-                    break;
-                if (pixel_ptr >= avctx->width)
-                    break;
-                pic->data[0][row_ptr + pixel_ptr] = stream_byte & 0x0F;
-                pixel_ptr++;
-            }
+                for (i = 0; i < rle_code; i++) {
+                    if (pixel_ptr >= avctx->width)
+                        break;
+                    FETCH_NEXT_STREAM_BYTE();
+                    pic->data[0][row_ptr + pixel_ptr] = stream_byte >> 4;
+                    pixel_ptr++;
+                    if (i + 1 == rle_code && odd_pixel)
+                        break;
+                    if (pixel_ptr >= avctx->width)
+                        break;
+                    pic->data[0][row_ptr + pixel_ptr] = stream_byte & 0x0F;
+                    pixel_ptr++;
+                }
 
-            // if the RLE code is odd, skip a byte in the stream
-            if (extra_byte)
-              stream_ptr++;
+                // if the RLE code is odd, skip a byte in the stream
+                if (extra_byte)
+                    stream_ptr++;
             }
         } else {
             // decode a run of data
-            if ((row_ptr + pixel_ptr + stream_byte > frame_size) ||
-                (row_ptr < 0)) {
+            if (row_ptr + pixel_ptr + stream_byte > frame_size) {
                 av_log(avctx, AV_LOG_ERROR, " MS RLE: frame ptr just went out of bounds (1)\n");
                 return -1;
             }
@@ -138,6 +136,7 @@ static int msrle_decode_8_16_24_32(AVCodecContext *avctx, AVPicture *pic, int de
     int p1, p2, line=avctx->height - 1, pos=0, i;
     uint16_t av_uninit(pix16);
     uint32_t av_uninit(pix32);
+    unsigned int width= FFABS(pic->linesize[0]) / (depth >> 3);
 
     output = pic->data[0] + (avctx->height - 1) * pic->linesize[0];
     output_end = pic->data[0] + (avctx->height) * pic->linesize[0];
@@ -159,11 +158,11 @@ static int msrle_decode_8_16_24_32(AVCodecContext *avctx, AVPicture *pic, int de
                 p1 = *src++;
                 p2 = *src++;
                 line -= p2;
-                if (line < 0){
+                pos += p1;
+                if (line < 0 || pos >= width){
                     av_log(avctx, AV_LOG_ERROR, "Skip beyond picture bounds\n");
                     return -1;
                 }
-                pos += p1;
                 output = pic->data[0] + line * pic->linesize[0] + pos * (depth >> 3);
                 continue;
             }

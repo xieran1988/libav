@@ -2,20 +2,20 @@
  * XVideo Motion Compensation
  * Copyright (c) 2003 Ivan Kalvachev
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -33,7 +33,7 @@
 #include "xvmc_internal.h"
 
 /**
- * Initializes the block field of the MpegEncContext pointer passed as
+ * Initialize the block field of the MpegEncContext pointer passed as
  * parameter after making sure that the data is not corrupted.
  * In order to implement something like direct rendering instead of decoding
  * coefficients in s->blocks and then copying them, copy them directly
@@ -48,7 +48,7 @@ void ff_xvmc_init_block(MpegEncContext *s)
 }
 
 /**
- * Fills individual block pointers, so there are no gaps in the data_block array
+ * Fill individual block pointers, so there are no gaps in the data_block array
  * in case not all blocks in the macroblock are coded.
  */
 void ff_xvmc_pack_pblocks(MpegEncContext *s, int cbp)
@@ -67,7 +67,7 @@ void ff_xvmc_pack_pblocks(MpegEncContext *s, int cbp)
 }
 
 /**
- * Finds and stores the surfaces that are used as reference frames.
+ * Find and store the surfaces that are used as reference frames.
  * This function should be called for every new field and/or frame.
  * It should be safe to call the function a few times for the same field.
  */
@@ -134,7 +134,7 @@ return -1;
 }
 
 /**
- * Completes frame/field rendering by passing any remaining blocks.
+ * Complete frame/field rendering by passing any remaining blocks.
  * Normally ff_draw_horiz_band() is called for each slice, however,
  * some leftover blocks, for example from error_resilience(), may remain.
  * It should be safe to call the function a few times for the same field.
@@ -149,8 +149,8 @@ void ff_xvmc_field_end(MpegEncContext *s)
 }
 
 /**
- * Synthesizes the data needed by XvMC to render one macroblock of data.
- * Fills all relevant fields, if necessary do IDCT.
+ * Synthesize the data needed by XvMC to render one macroblock of data.
+ * Fill all relevant fields, if necessary do IDCT.
  */
 void ff_xvmc_decode_mb(MpegEncContext *s)
 {
@@ -301,7 +301,7 @@ void ff_xvmc_decode_mb(MpegEncContext *s)
     for (i = 0; i < blocks_per_mb; i++) {
         if (s->block_last_index[i] >= 0) {
             // I do not have unsigned_intra MOCO to test, hope it is OK.
-            if (s->mb_intra && (render->idct || (!render->idct && !render->unsigned_intra)))
+            if (s->mb_intra && (render->idct || !render->unsigned_intra))
                 *s->pblocks[i][0] -= 1 << 10;
             if (!render->idct) {
                 s->dsp.idct(*s->pblocks[i]);

@@ -2,20 +2,20 @@
  * MPEG Audio header decoder
  * Copyright (c) 2001, 2002 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -91,20 +91,20 @@ int ff_mpegaudio_decode_header(MPADecodeHeader *s, uint32_t header)
     }
 
 #if defined(DEBUG)
-    dprintf(NULL, "layer%d, %d Hz, %d kbits/s, ",
+    av_dlog(NULL, "layer%d, %d Hz, %d kbits/s, ",
            s->layer, s->sample_rate, s->bit_rate);
     if (s->nb_channels == 2) {
         if (s->layer == 3) {
             if (s->mode_ext & MODE_EXT_MS_STEREO)
-                dprintf(NULL, "ms-");
+                av_dlog(NULL, "ms-");
             if (s->mode_ext & MODE_EXT_I_STEREO)
-                dprintf(NULL, "i-");
+                av_dlog(NULL, "i-");
         }
-        dprintf(NULL, "stereo");
+        av_dlog(NULL, "stereo");
     } else {
-        dprintf(NULL, "mono");
+        av_dlog(NULL, "mono");
     }
-    dprintf(NULL, "\n");
+    av_dlog(NULL, "\n");
 #endif
     return 0;
 }

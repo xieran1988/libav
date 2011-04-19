@@ -2,20 +2,20 @@
  * Constants for DV codec
  * Copyright (c) 2002 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -52,7 +52,7 @@ static const DVprofile dv_profiles[] = {
       .ltc_divisor = 30,
       .height = 480,
       .width = 720,
-      .sar = {{10, 11}, {40, 33}},
+      .sar = {{8, 9}, {32, 27}},
       .work_chunks = &work_chunks_dv25ntsc[0],
       .idct_factor = &dv_idct_factor_sd[0],
       .pix_fmt = PIX_FMT_YUV411P,
@@ -72,7 +72,7 @@ static const DVprofile dv_profiles[] = {
       .ltc_divisor = 25,
       .height = 576,
       .width = 720,
-      .sar = {{59, 54}, {118, 81}},
+      .sar = {{16, 15}, {64, 45}},
       .work_chunks = &work_chunks_dv25pal[0],
       .idct_factor = &dv_idct_factor_sd[0],
       .pix_fmt = PIX_FMT_YUV420P,
@@ -92,7 +92,7 @@ static const DVprofile dv_profiles[] = {
       .ltc_divisor = 25,
       .height = 576,
       .width = 720,
-      .sar = {{59, 54}, {118, 81}},
+      .sar = {{16, 15}, {64, 45}},
       .work_chunks = &work_chunks_dv25pal411[0],
       .idct_factor = &dv_idct_factor_sd[0],
       .pix_fmt = PIX_FMT_YUV411P,
@@ -112,7 +112,7 @@ static const DVprofile dv_profiles[] = {
       .ltc_divisor = 30,
       .height = 480,
       .width = 720,
-      .sar = {{10, 11}, {40, 33}},
+      .sar = {{8, 9}, {32, 27}},
       .work_chunks = &work_chunks_dv50ntsc[0],
       .idct_factor = &dv_idct_factor_sd[0],
       .pix_fmt = PIX_FMT_YUV422P,
@@ -132,7 +132,7 @@ static const DVprofile dv_profiles[] = {
       .ltc_divisor = 25,
       .height = 576,
       .width = 720,
-      .sar = {{59, 54}, {118, 81}},
+      .sar = {{16, 15}, {64, 45}},
       .work_chunks = &work_chunks_dv50pal[0],
       .idct_factor = &dv_idct_factor_sd[0],
       .pix_fmt = PIX_FMT_YUV422P,
@@ -232,7 +232,7 @@ static const DVprofile dv_profiles[] = {
       .ltc_divisor = 25,
       .height = 576,
       .width = 720,
-      .sar = {{59, 54}, {118, 81}},
+      .sar = {{16, 15}, {64, 45}},
       .work_chunks = &work_chunks_dv25pal[0],
       .idct_factor = &dv_idct_factor_sd[0],
       .pix_fmt = PIX_FMT_YUV420P,
@@ -255,7 +255,7 @@ const DVprofile* ff_dv_frame_profile(const DVprofile *sys,
    int stype = frame[80*5 + 48 + 3] & 0x1f;
 
    /* 576i50 25Mbps 4:1:1 is a special case */
-   if (dsf == 1 && stype == 0 && frame[5] & 0x07) {
+   if (dsf == 1 && stype == 0 && frame[4] & 0x07 /* the APT field */) {
        return &dv_profiles[2];
    }
 

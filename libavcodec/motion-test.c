@@ -1,20 +1,20 @@
 /*
  * (c) 2001 Fabrice Bellard
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     AVCodecContext *ctx;
     int c;
     DSPContext cctx, mmxctx;
-    int flags[2] = { FF_MM_MMX, FF_MM_MMX2 };
+    int flags[2] = { AV_CPU_FLAG_MMX, AV_CPU_FLAG_MMX2 };
     int flags_size = HAVE_MMX2 ? 2 : 1;
 
     for(;;) {
@@ -145,11 +145,11 @@ int main(int argc, char **argv)
     printf("ffmpeg motion test\n");
 
     ctx = avcodec_alloc_context();
-    ctx->dsp_mask = FF_MM_FORCE;
+    ctx->dsp_mask = AV_CPU_FLAG_FORCE;
     dsputil_init(&cctx, ctx);
     for (c = 0; c < flags_size; c++) {
         int x;
-        ctx->dsp_mask = FF_MM_FORCE | flags[c];
+        ctx->dsp_mask = AV_CPU_FLAG_FORCE | flags[c];
         dsputil_init(&mmxctx, ctx);
 
         for (x = 0; x < 2; x++) {

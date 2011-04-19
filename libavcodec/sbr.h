@@ -3,20 +3,20 @@
  * Copyright (c) 2008-2009 Robert Swain ( rob opendot cl )
  * Copyright (c) 2010      Alex Converse <alex.converse@gmail.com>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -31,6 +31,7 @@
 
 #include <stdint.h>
 #include "fft.h"
+#include "aacps.h"
 
 /**
  * Spectral Band Replication header - spectrum parameters that invoke a reset if they differ from the previous header.
@@ -57,7 +58,7 @@ typedef struct {
  */
 typedef struct {
     /**
-     * @defgroup bitstream     Main bitstream data variables
+     * @defgroup aac_bitstream     Main bitstream data variables
      * @{
      */
     unsigned           bs_frame_class;
@@ -133,6 +134,7 @@ typedef struct {
     ///The number of frequency bands in f_master
     unsigned           n_master;
     SBRData            data[2];
+    PSContext          ps;
     ///N_Low and N_High respectively, the number of frequency bands for low and high resolution
     unsigned           n[2];
     ///Number of noise floor bands
@@ -157,7 +159,7 @@ typedef struct {
     ///QMF output of the HF generator
     float              X_high[64][40][2];
     ///QMF values of the reconstructed signal
-    DECLARE_ALIGNED(16, float, X)[2][2][32][64];
+    DECLARE_ALIGNED(16, float, X)[2][2][38][64];
     ///Zeroth coefficient used to filter the subband signals
     float              alpha0[64][2];
     ///First coefficient used to filter the subband signals
@@ -176,7 +178,7 @@ typedef struct {
     float              s_m[7][48];
     float              gain[7][48];
     DECLARE_ALIGNED(16, float, qmf_filter_scratch)[5][64];
-    RDFTContext        rdft;
+    FFTContext         mdct_ana;
     FFTContext         mdct;
 } SpectralBandReplication;
 

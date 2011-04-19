@@ -2,23 +2,24 @@
  * MMX and SSE2 optimized snow DSP utils
  * Copyright (c) 2005-2006 Robert Edele <yartrebo@earthlink.net>
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "libavutil/cpu.h"
 #include "libavutil/x86_cpu.h"
 #include "libavcodec/avcodec.h"
 #include "libavcodec/snow.h"
@@ -811,7 +812,7 @@ snow_inner_add_yblock_sse2_end_16
              "add %%"REG_c", "PTR_SIZE"*2(%%"REG_a");\n\t"\
              "add %%"REG_c", "PTR_SIZE"*1(%%"REG_a");\n\t"\
              "add %%"REG_c", (%%"REG_a")     \n\t"\
-             "add $"PTR_SIZE"*1, %1          \n\t"\
+             "add"OPSIZE " $"PTR_SIZE"*1, %1 \n\t"\
              "add %%"REG_c", %0              \n\t"\
              "dec %2                         \n\t"\
              "jnz 1b                         \n\t"\
@@ -874,10 +875,10 @@ static void ff_snow_inner_add_yblock_mmx(const uint8_t *obmc, const int obmc_str
 
 void ff_dwt_init_x86(DWTContext *c)
 {
-    mm_flags = mm_support();
+    int mm_flags = av_get_cpu_flags();
 
-    if (mm_flags & FF_MM_MMX) {
-        if(mm_flags & FF_MM_SSE2 & 0){
+    if (mm_flags & AV_CPU_FLAG_MMX) {
+        if(mm_flags & AV_CPU_FLAG_SSE2 & 0){
             c->horizontal_compose97i = ff_snow_horizontal_compose97i_sse2;
 #if HAVE_7REGS
             c->vertical_compose97i = ff_snow_vertical_compose97i_sse2;
@@ -885,7 +886,7 @@ void ff_dwt_init_x86(DWTContext *c)
             c->inner_add_yblock = ff_snow_inner_add_yblock_sse2;
         }
         else{
-            if(mm_flags & FF_MM_MMX2){
+            if(mm_flags & AV_CPU_FLAG_MMX2){
             c->horizontal_compose97i = ff_snow_horizontal_compose97i_mmx;
 #if HAVE_7REGS
             c->vertical_compose97i = ff_snow_vertical_compose97i_mmx;

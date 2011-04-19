@@ -6,20 +6,20 @@
  * see http://www.pcisys.net/~melanson/codecs/huffyuv.txt for a description of
  * the algorithm used
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -32,6 +32,7 @@
 #include "get_bits.h"
 #include "put_bits.h"
 #include "dsputil.h"
+#include "thread.h"
 
 #define VLC_BITS 11
 
@@ -231,11 +232,12 @@ static void heap_sift(HeapElem *h, int root, int size)
     }
 }
 
-static void generate_len_table(uint8_t *dst, const uint64_t *stats, int size){
-    HeapElem h[size];
-    int up[2*size];
-    int len[2*size];
+static void generate_len_table(uint8_t *dst, const uint64_t *stats){
+    HeapElem h[256];
+    int up[2*256];
+    int len[2*256];
     int offset, i, next;
+    int size = 256;
 
     for(offset=1; ; offset<<=1){
         for(i=0; i<size; i++){
@@ -526,6 +528,28 @@ s->bgr32=1;
 
     return 0;
 }
+
+static av_cold int decode_init_thread_copy(AVCodecContext *avctx)
+{
+    HYuvContext *s = avctx->priv_data;
+    int i;
+
+    avctx->coded_frame= &s->picture;
+    alloc_temp(s);
+
+    for (i = 0; i < 6; i++)
+        s->vlc[i].table = NULL;
+
+    if(s->version==2){
+        if(read_huffman_tables(s, ((uint8_t*)avctx->extradata)+4, avctx->extradata_size) < 0)
+            return -1;
+    }else{
+        if(read_old_huffman_tables(s) < 0)
+            return -1;
+    }
+
+    return 0;
+}
 #endif /* CONFIG_HUFFYUV_DECODER || CONFIG_FFVHUFF_DECODER */
 
 #if CONFIG_HUFFYUV_ENCODER || CONFIG_FFVHUFF_ENCODER
@@ -646,7 +670,7 @@ static av_cold int encode_init(AVCodecContext *avctx)
     }
 
     for(i=0; i<3; i++){
-        generate_len_table(s->len[i], s->stats[i], 256);
+        generate_len_table(s->len[i], s->stats[i]);
 
         if(generate_bits_table(s->bits[i], s->len[i])<0){
             return -1;
@@ -949,10 +973,10 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
     s->dsp.bswap_buf((uint32_t*)s->bitstream_buffer, (const uint32_t*)buf, buf_size/4);
 
     if(p->data[0])
-        avctx->release_buffer(avctx, p);
+        ff_thread_release_buffer(avctx, p);
 
     p->reference= 0;
-    if(avctx->get_buffer(avctx, p) < 0){
+    if(ff_thread_get_buffer(avctx, p) < 0){
         av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
         return -1;
     }
@@ -1224,7 +1248,7 @@ static int encode_frame(AVCodecContext *avctx, unsigned char *buf, int buf_size,
 
     if(s->context){
         for(i=0; i<3; i++){
-            generate_len_table(s->len[i], s->stats[i], 256);
+            generate_len_table(s->len[i], s->stats[i]);
             if(generate_bits_table(s->bits[i], s->len[i])<0)
                 return -1;
             size+= store_table(s, s->len[i], &buf[size]);
@@ -1415,7 +1439,7 @@ static av_cold int encode_end(AVCodecContext *avctx)
 #endif /* CONFIG_HUFFYUV_ENCODER || CONFIG_FFVHUFF_ENCODER */
 
 #if CONFIG_HUFFYUV_DECODER
-AVCodec huffyuv_decoder = {
+AVCodec ff_huffyuv_decoder = {
     "huffyuv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_HUFFYUV,
@@ -1424,14 +1448,15 @@ AVCodec huffyuv_decoder = {
     NULL,
     decode_end,
     decode_frame,
-    CODEC_CAP_DR1 | CODEC_CAP_DRAW_HORIZ_BAND,
+    CODEC_CAP_DR1 | CODEC_CAP_DRAW_HORIZ_BAND | CODEC_CAP_FRAME_THREADS,
     NULL,
+    .init_thread_copy = ONLY_IF_THREADS_ENABLED(decode_init_thread_copy),
     .long_name = NULL_IF_CONFIG_SMALL("Huffyuv / HuffYUV"),
 };
 #endif
 
 #if CONFIG_FFVHUFF_DECODER
-AVCodec ffvhuff_decoder = {
+AVCodec ff_ffvhuff_decoder = {
     "ffvhuff",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_FFVHUFF,
@@ -1440,14 +1465,15 @@ AVCodec ffvhuff_decoder = {
     NULL,
     decode_end,
     decode_frame,
-    CODEC_CAP_DR1 | CODEC_CAP_DRAW_HORIZ_BAND,
+    CODEC_CAP_DR1 | CODEC_CAP_DRAW_HORIZ_BAND | CODEC_CAP_FRAME_THREADS,
     NULL,
+    .init_thread_copy = ONLY_IF_THREADS_ENABLED(decode_init_thread_copy),
     .long_name = NULL_IF_CONFIG_SMALL("Huffyuv FFmpeg variant"),
 };
 #endif
 
 #if CONFIG_HUFFYUV_ENCODER
-AVCodec huffyuv_encoder = {
+AVCodec ff_huffyuv_encoder = {
     "huffyuv",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_HUFFYUV,
@@ -1461,7 +1487,7 @@ AVCodec huffyuv_encoder = {
 #endif
 
 #if CONFIG_FFVHUFF_ENCODER
-AVCodec ffvhuff_encoder = {
+AVCodec ff_ffvhuff_encoder = {
     "ffvhuff",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_FFVHUFF,

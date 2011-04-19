@@ -2,20 +2,20 @@
  * ASUS V1/V2 codec
  * Copyright (c) 2003 Michael Niedermayer
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -588,8 +588,8 @@ static av_cold int encode_init(AVCodecContext *avctx){
 
     avctx->extradata= av_mallocz(8);
     avctx->extradata_size=8;
-    ((uint32_t*)avctx->extradata)[0]= le2me_32(a->inv_qscale);
-    ((uint32_t*)avctx->extradata)[1]= le2me_32(AV_RL32("ASUS"));
+    ((uint32_t*)avctx->extradata)[0]= av_le2ne32(a->inv_qscale);
+    ((uint32_t*)avctx->extradata)[1]= av_le2ne32(AV_RL32("ASUS"));
 
     for(i=0; i<64; i++){
         int q= 32*scale*ff_mpeg1_default_intra_matrix[i];
@@ -613,7 +613,7 @@ static av_cold int decode_end(AVCodecContext *avctx){
     return 0;
 }
 
-AVCodec asv1_decoder = {
+AVCodec ff_asv1_decoder = {
     "asv1",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ASV1,
@@ -626,7 +626,7 @@ AVCodec asv1_decoder = {
     .long_name= NULL_IF_CONFIG_SMALL("ASUS V1"),
 };
 
-AVCodec asv2_decoder = {
+AVCodec ff_asv2_decoder = {
     "asv2",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ASV2,
@@ -640,7 +640,7 @@ AVCodec asv2_decoder = {
 };
 
 #if CONFIG_ASV1_ENCODER
-AVCodec asv1_encoder = {
+AVCodec ff_asv1_encoder = {
     "asv1",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ASV1,
@@ -654,7 +654,7 @@ AVCodec asv1_encoder = {
 #endif
 
 #if CONFIG_ASV2_ENCODER
-AVCodec asv2_encoder = {
+AVCodec ff_asv2_encoder = {
     "asv2",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_ASV2,

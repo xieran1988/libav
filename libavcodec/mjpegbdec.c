@@ -2,20 +2,20 @@
  * Apple MJPEG-B decoder
  * Copyright (c) 2002 Alex Beregszaszi
  *
- * This file is part of FFmpeg.
+ * This file is part of Libav.
  *
- * FFmpeg is free software; you can redistribute it and/or
+ * Libav is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * FFmpeg is distributed in the hope that it will be useful,
+ * Libav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
+ * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -113,7 +113,7 @@ read_header:
         init_get_bits(&s->gb, buf_ptr+sos_offs, field_size*8);
         s->mjpb_skiptosod = (sod_offs - sos_offs - show_bits(&s->gb, 16));
         s->start_code = SOS;
-        ff_mjpeg_decode_sos(s);
+        ff_mjpeg_decode_sos(s, NULL, NULL);
     }
 
     if (s->interlaced) {
@@ -129,7 +129,7 @@ read_header:
 
     //XXX FIXME factorize, this looks very similar to the EOI code
 
-    *picture= s->picture;
+    *picture= *s->picture_ptr;
     *data_size = sizeof(AVFrame);
 
     if(!s->lossless){
@@ -145,7 +145,7 @@ read_header:
     return buf_ptr - buf;
 }
 
-AVCodec mjpegb_decoder = {
+AVCodec ff_mjpegb_decoder = {
     "mjpegb",
     AVMEDIA_TYPE_VIDEO,
     CODEC_ID_MJPEGB,
@@ -156,5 +156,6 @@ AVCodec mjpegb_decoder = {
     mjpegb_decode_frame,
     CODEC_CAP_DR1,
     NULL,
+    .max_lowres = 3,
     .long_name = NULL_IF_CONFIG_SMALL("Apple MJPEG-B"),
 };
