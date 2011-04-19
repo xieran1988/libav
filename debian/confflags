@@ -97,8 +97,6 @@ gpl_confflags += $(call cond_enable,/usr/include/faad.h,libfaad)
 # Common configuration flags
 confflags += --extra-version='$(DEB_VERSION)'
 confflags += --prefix=/usr
-confflags += --enable-avfilter
-confflags += --enable-avfilter-lavf
 confflags += --enable-vdpau
 confflags += --enable-bzlib
 confflags += --enable-libgsm
