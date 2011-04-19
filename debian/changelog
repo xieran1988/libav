@@ -1,8 +1,15 @@
-libav (4:0.7-1) UNRELEASED; urgency=low
+libav (4:0.7~b1-1) experimental; urgency=low
 
-  * prepare new upload
+  * New upstream version
+  * bump SONAME and SHLIBS
+  * configure flags --disable-stripping was removed upstream
+  * the MAINTAINERS file was removed upstream
+  * remove patch disable-configuration-warning.patch
+  * drop avfilter confflags, it is enable by default in 0.7
+  * libfaad wrapper has been removed upstream
+  * also update the *contents* of the lintian overrides
 
- -- Reinhard Tartler <siretart@tauware.de>  Tue, 19 Apr 2011 12:53:15 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 19 Apr 2011 15:04:55 +0200
 
 libav (4:0.6.2-1) unstable; urgency=medium
 
