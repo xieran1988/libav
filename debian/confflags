@@ -109,7 +109,6 @@ confflags += --enable-libvorbis
 confflags += --enable-pthreads
 confflags += --enable-zlib
 confflags += --enable-libvpx
-confflags += --disable-stripping
 confflags += --enable-runtime-cpudetect
 ifeq      ($(DEB_HOST_ARCH),armel)
 # this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
