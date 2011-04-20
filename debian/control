@@ -40,7 +40,7 @@ Build-Depends: debhelper (>= 7),
  libxvmc-dev,
  quilt,
  texi2html,
- yasm [i386 amd64],
+ yasm [amd64 i386 kfreebsd-amd64 kfreebsd-i386 mips mipsel s390 sparc powerpc],
  zlib1g-dev
 
 Package: ffmpeg
