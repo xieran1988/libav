@@ -225,9 +225,3 @@ vis_build_confflags += --disable-static
 vis_build_confflags += --extra-cflags="-fPIC -DPIC"
 vis_build_confflags += --disable-ffmpeg
 vis_build_confflags += --disable-ffplay
-
-# Additional documentation for PowerPC
-ifneq (,$(findstring powerpc,$(DEB_BUILD_GNU_TYPE)))
-  extradoc := doc/ffmpeg_powerpc_performance_evaluation_howto.txt
-endif
-
