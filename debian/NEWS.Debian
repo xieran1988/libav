@@ -1,0 +1,8 @@
+libav (4:0.6.2-1) unstable; urgency=low
+
+  * Libav represents the successor of the former ffmpeg source package. It
+    provides all libraries and provides an upgrade path for existing
+    application packages.  
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 19 Mar 2011 08:13:46 +0100
+
