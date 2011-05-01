@@ -1,0 +1,58 @@
+From: Anton Khirnov <anton@khirnov.net>
+Date: Wed, 20 Apr 2011 15:21:39 +0000 (+0200)
+Subject: lavc: provide deprecated avcodec_thread_init until next major version
+X-Git-Url: http://git.libav.org/?p=libav.git;a=commitdiff_plain;h=65af48b55930abe5ac9130be3ff4d9c287a7f010
+
+lavc: provide deprecated avcodec_thread_init until next major version
+
+It was deprecated only recently.
+---
+
+diff --git a/libavcodec/avcodec.h b/libavcodec/avcodec.h
+index 40d3b22..7727ad0 100644
+--- a/libavcodec/avcodec.h
++++ b/libavcodec/avcodec.h
+@@ -3577,6 +3577,14 @@ void avcodec_align_dimensions2(AVCodecContext *s, int *width, int *height,
+ 
+ enum PixelFormat avcodec_default_get_format(struct AVCodecContext *s, const enum PixelFormat * fmt);
+ 
++#if FF_API_THREAD_INIT
++/**
++ * @deprecated Set s->thread_count before calling avcodec_open() instead of calling this.
++ */
++attribute_deprecated
++int avcodec_thread_init(AVCodecContext *s, int thread_count);
++#endif
++
+ int avcodec_default_execute(AVCodecContext *c, int (*func)(AVCodecContext *c2, void *arg2),void *arg, int *ret, int count, int size);
+ int avcodec_default_execute2(AVCodecContext *c, int (*func)(AVCodecContext *c2, void *arg2, int, int),void *arg, int *ret, int count);
+ //FIXME func typedef
+diff --git a/libavcodec/utils.c b/libavcodec/utils.c
+index 0190e66..744e0ad 100644
+--- a/libavcodec/utils.c
++++ b/libavcodec/utils.c
+@@ -1220,3 +1220,11 @@ void ff_thread_await_progress(AVFrame *f, int progress, int field)
+ }
+ 
+ #endif
++
++#if FF_API_THREAD_INIT
++int avcodec_thread_init(AVCodecContext *s, int thread_count)
++{
++    s->thread_count = thread_count;
++    return ff_thread_init(s);
++}
++#endif
+diff --git a/libavcodec/version.h b/libavcodec/version.h
+index 92f9e58..b9c219d 100644
+--- a/libavcodec/version.h
++++ b/libavcodec/version.h
+@@ -65,5 +65,8 @@
+ #ifndef FF_API_OPT_H
+ #define FF_API_OPT_H            (LIBAVCODEC_VERSION_MAJOR < 54)
+ #endif
++#ifndef FF_API_THREAD_INIT
++#define FF_API_THREAD_INIT      (LIBAVCODEC_VERSION_MAJOR < 54)
++#endif
+ 
+ #endif /* AVCODEC_VERSION_H */
