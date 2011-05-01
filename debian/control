@@ -62,8 +62,6 @@ Section: debug
 Priority: extra
 Architecture: any
 Depends: libav-dbg
-Breaks: libav-dbg (<< ${binary:Version})
-Replaces: libav-dbg (<< ${binary:Version})
 Description: Debug symbols for Libav related packages
  This package contains debug data of the Libav related shared libraries.
  .
