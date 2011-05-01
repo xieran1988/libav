@@ -1,8 +1,11 @@
-libav (4:0.7~b1-2) UNRELEASED; urgency=low
+libav (4:0.7~b1-2) experimental; urgency=low
 
-  * start new upload
+  * don't try to install non-existing documentation, fixes FTBFS on powerpc
+  * add NEWS.Debian file
+  * install doc/APIChanges and refer to them in NEWS.Debian (Closes: #623682)
+  * readd deprecated avcodec_thread_init in libavformat
 
- -- Reinhard Tartler <siretart@tauware.de>  Wed, 20 Apr 2011 14:46:47 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 01 May 2011 18:58:40 +0200
 
 libav (4:0.7~b1-1) experimental; urgency=low
 
