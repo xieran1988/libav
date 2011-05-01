@@ -130,7 +130,7 @@ Depends: ${shlibs:Depends},
  ${misc:Depends}
 Description: Libav utility library
  This is the common utility library from Libav. It contains shared code
- used by all other ffmpeg libraries.
+ used by all other Libav libraries.
 
 Package: libavcodec53
 Architecture: any
