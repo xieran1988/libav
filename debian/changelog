@@ -1,3 +1,9 @@
+libav (4:0.7~b1-3) UNRELEASED; urgency=low
+
+  * start new upload
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 03 May 2011 13:12:58 +0200
+
 libav (4:0.7~b1-2) experimental; urgency=low
 
   * don't try to install non-existing documentation, fixes FTBFS on powerpc
