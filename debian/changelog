@@ -1,8 +1,11 @@
 libav (4:0.7~b1-3) UNRELEASED; urgency=low
 
   * start new upload
+  * only install doc/APIChanges in *-dev and libav-doc packages
+  * move note on source package lineage to README.Debian
+  * install NEWS.Debian in libavcodec-dev
 
- -- Reinhard Tartler <siretart@tauware.de>  Tue, 03 May 2011 13:12:58 +0200
+ -- Jonathan Nieder <jrnieder@gmail.com>  Mon, 02 May 2011 19:10:14 -0500
 
 libav (4:0.7~b1-2) experimental; urgency=low
 

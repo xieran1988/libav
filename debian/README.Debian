@@ -76,6 +76,15 @@ packages are:
 
  -- Reinhard Tartler <siretart@tauware.de>, Sun, 26 Jul 2009 10:38:10 +0200
 
+Source package
+==============
+
+Libav represents the successor of the former ffmpeg source package. It
+provides all libraries and provides an upgrade path for existing
+application packages.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 19 Mar 2011 08:13:46 +0100
+
 License of the Debian ffmpeg packages
 =====================================
 
