@@ -61,7 +61,6 @@ build-stamp: $(addprefix build-stamp-, $(FLAVORS)) debian-shared/tools/qt-fastst
 
 clean:
 	dh_testdir
-	dh_testroot
 	rm -f build-stamp $(addprefix build-stamp-, $(FLAVORS)) \
 	    $(addprefix configure-stamp-, $(FLAVORS)) \
 	    build-doxy-stamp
