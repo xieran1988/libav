@@ -1,7 +1,5 @@
 #!/usr/bin/make -f
 
-include /usr/share/quilt/quilt.make
-
 EPOCH=4:
 DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
 DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
@@ -61,12 +59,11 @@ build: build-stamp
 build-stamp: $(addprefix build-stamp-, $(FLAVORS)) debian-shared/tools/qt-faststart
 	touch $@
 
-clean: clean-real unpatch
-clean-real:
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp $(addprefix build-stamp-, $(FLAVORS)) \
-	    $(addprefix configure-stamp-, $(FLAVORS)) patch-stamp \
+	    $(addprefix configure-stamp-, $(FLAVORS)) \
 	    build-doxy-stamp
 	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
 	dh_clean
@@ -153,7 +150,7 @@ binary-arch: build install codecs.txt formats.txt
 binary: binary-indep binary-arch
 
 .PHONY: build $(addprefix build-, $(FLAVORS)) build-doxy \
-	clean clean-real \
+	clean \
 	configure $(addprefix configure-, $(FLAVORS)) \
 	binary binary-indep binary-arch \
 	install \

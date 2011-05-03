@@ -4,6 +4,7 @@ libav (4:0.7~b1-3) UNRELEASED; urgency=low
   * only install doc/APIChanges in *-dev and libav-doc packages
   * move note on source package lineage to README.Debian
   * install NEWS.Debian in libavcodec-dev
+  * use dpkg source format 3.0 (quilt)
 
  -- Jonathan Nieder <jrnieder@gmail.com>  Mon, 02 May 2011 19:10:14 -0500
 
