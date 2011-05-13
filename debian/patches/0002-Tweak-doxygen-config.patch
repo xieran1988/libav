@@ -7,17 +7,14 @@ exclude some directories we use for packaging from doxygen documentation
  Doxyfile |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/Doxyfile b/Doxyfile
-index ee233b9..1251d34 100644
 --- a/Doxyfile
 +++ b/Doxyfile
-@@ -359,7 +359,7 @@ RECURSIVE              = YES
+@@ -563,7 +563,7 @@ RECURSIVE              = YES
  # excluded from the INPUT source files. This way you can easily exclude a
  # subdirectory from a directory tree whose root is specified with the INPUT tag.
  
 -EXCLUDE                =
 +EXCLUDE                = debian debian-shared debian-static debian-cmov .pc .git
  
- # The EXCLUDE_SYMLINKS tag can be used select whether or not files or directories
- # that are symbolic links (a Unix filesystem feature) are excluded from the input.
--- 
+ # The EXCLUDE_SYMLINKS tag can be used select whether or not files or
+ # directories that are symbolic links (a Unix filesystem feature) are excluded
