@@ -4,6 +4,14 @@ releases are sorted from youngest to oldest.
 
 version <next>:
 
+- Lots of deprecated API cruft removed
+- fft and imdct optimizations for AVX (Sandy Bridge) processors
+- DPX image encoder
+- SMPTE 302M AES3 audio decoder
+
+
+version 0.7_beta1:
+
 - WebM support in Matroska de/muxer
 - low overhead Ogg muxing
 - MMS-TCP support
@@ -22,7 +30,6 @@ version <next>:
 - RTP depacketization of QDM2
 - ANSI/ASCII art playback system
 - Lego Mindstorms RSO de/muxer
-- libavcore added
 - SubRip subtitle file muxer and demuxer
 - Chinese AVS encoding via libxavs
 - ffprobe -show_packets option added
@@ -86,6 +93,7 @@ version <next>:
 - AAC encoding via libvo-aacenc
 - AMR-WB encoding via libvo-amrwbenc
 - xWMA demuxer
+- fieldorder video filter added
 
 
 version 0.6:

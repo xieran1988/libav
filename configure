@@ -88,13 +88,12 @@ Configuration options:
   --disable-avcodec        disable libavcodec build
   --disable-avformat       disable libavformat build
   --disable-swscale        disable libswscale build
-  --enable-postproc        enable GPLed postprocessing support [no]
+  --disable-postproc       disable libpostproc build
   --disable-avfilter       disable video filter support [no]
   --disable-pthreads       disable pthreads [auto]
   --enable-w32threads      use Win32 threads [no]
   --enable-x11grab         enable X11 grabbing [no]
   --disable-network        disable network support [no]
-  --disable-mpegaudio-hp   faster (but less accurate) MPEG audio decoding [no]
   --enable-gray            enable full grayscale support (slower color)
   --disable-swscale-alpha  disable alpha channel support in swscale
   --disable-fastdiv        disable table-based division
@@ -169,6 +168,7 @@ External library support:
                            and libraw1394 [no]
   --enable-libdirac        enable Dirac support via libdirac [no]
   --enable-libfaac         enable FAAC support via libfaac [no]
+  --enable-libfreetype     enable libfreetype [no]
   --enable-libgsm          enable GSM support via libgsm [no]
   --enable-libmp3lame      enable MP3 encoding via libmp3lame [no]
   --enable-libnut          enable NUT (de)muxing via libnut,
@@ -928,6 +928,7 @@ CONFIG_LIST="
     libdc1394
     libdirac
     libfaac
+    libfreetype
     libgsm
     libmp3lame
     libnut
@@ -951,7 +952,6 @@ CONFIG_LIST="
     mdct
     memalign_hack
     mlib
-    mpegaudio_hp
     network
     nonfree
     pic
@@ -1077,6 +1077,7 @@ HAVE_LIST="
     llrintf
     local_aligned_16
     local_aligned_8
+    localtime_r
     log2
     log2f
     loongson
@@ -1119,6 +1120,7 @@ HAVE_LIST="
     sys_videoio_h
     ten_operands
     threads
+    trunc
     truncf
     vfp_args
     VirtualAlloc
@@ -1236,19 +1238,19 @@ mdct_select="fft"
 rdft_select="fft"
 
 # decoders / encoders / hardware accelerators
-aac_decoder_select="mdct rdft sinewin"
+aac_decoder_select="mdct sinewin"
 aac_encoder_select="mdct sinewin"
 aac_latm_decoder_select="aac_decoder aac_latm_parser"
 ac3_decoder_select="mdct ac3dsp ac3_parser"
 ac3_encoder_select="mdct ac3dsp"
-ac3_fixed_encoder_select="ac3dsp"
+ac3_fixed_encoder_select="mdct ac3dsp"
 alac_encoder_select="lpc"
 amrnb_decoder_select="lsp"
 amrwb_decoder_select="lsp"
 atrac1_decoder_select="mdct sinewin"
 atrac3_decoder_select="mdct"
-binkaudio_dct_decoder_select="mdct rdft dct"
-binkaudio_rdft_decoder_select="mdct rdft"
+binkaudio_dct_decoder_select="mdct rdft dct sinewin"
+binkaudio_rdft_decoder_select="mdct rdft sinewin"
 cavs_decoder_select="golomb"
 cook_decoder_select="mdct sinewin"
 cscd_decoder_suggest="zlib"
@@ -1278,7 +1280,7 @@ h264_dxva2_hwaccel_deps="dxva2api_h"
 h264_dxva2_hwaccel_select="dxva2 h264_decoder"
 h264_vaapi_hwaccel_select="vaapi"
 h264_vdpau_decoder_select="vdpau h264_decoder"
-imc_decoder_select="fft mdct"
+imc_decoder_select="fft mdct sinewin"
 jpegls_decoder_select="golomb"
 jpegls_encoder_select="golomb"
 ljpeg_encoder_select="aandct"
@@ -1461,16 +1463,18 @@ udp_protocol_deps="network"
 # filters
 blackframe_filter_deps="gpl"
 cropdetect_filter_deps="gpl"
+drawtext_filter_deps="libfreetype"
 frei0r_filter_deps="frei0r dlopen strtok_r"
 frei0r_src_filter_deps="frei0r dlopen strtok_r"
 hqdn3d_filter_deps="gpl"
-scale_filter_deps="swscale"
 ocv_filter_deps="libopencv"
+scale_filter_deps="swscale"
 yadif_filter_deps="gpl"
 
 # libraries
 avdevice_deps="avcodec avformat"
 avformat_deps="avcodec"
+postproc_deps="gpl"
 
 # programs
 ffmpeg_deps="avcodec avformat swscale"
@@ -1638,9 +1642,9 @@ enable ffmpeg
 enable ffplay
 enable ffprobe
 enable ffserver
-enable mpegaudio_hp
 enable network
 enable optimizations
+enable postproc
 enable protocols
 enable static
 enable swscale
@@ -1662,7 +1666,7 @@ LIB_INSTALL_EXTRA_CMD='$$(RANLIB) "$(LIBDIR)/$(LIBNAME)"'
 
 CC_O='-o $@'
 
-host_cflags='-D_ISOC99_SOURCE -D_POSIX_C_SOURCE=200112 -O3 -g -Wall'
+host_cflags='-D_ISOC99_SOURCE -O3 -g -Wall'
 host_libs='-lm'
 
 target_path='$(CURDIR)'
@@ -1825,6 +1829,11 @@ sysinclude_default="${sysroot}/usr/include"
 set_default cc nm pkg_config sysinclude
 enabled cross_compile || host_cc_default=$cc
 set_default host_cc
+
+if ! $pkg_config --version >/dev/null 2>&1; then
+    warn "$pkg_config not found, library detection may fail."
+    pkg_config=false
+fi
 
 exesuf() {
     case $1 in
@@ -2309,7 +2318,7 @@ if test "$?" != 0; then
     die "C compiler test failed."
 fi
 
-add_cppflags -D_ISOC99_SOURCE -D_POSIX_C_SOURCE=200112
+add_cppflags -D_ISOC99_SOURCE
 check_cflags -std=c99
 check_cc -D_FILE_OFFSET_BITS=64 <<EOF && add_cppflags -D_FILE_OFFSET_BITS=64
 #include <stdlib.h>
@@ -2357,7 +2366,6 @@ case $target_os in
         disable symver
         oss_indev_extralibs="-lossaudio"
         oss_outdev_extralibs="-lossaudio"
-        add_cppflags -D_XOPEN_SOURCE=600
         ;;
     openbsd)
         enable malloc_aligned
@@ -2450,6 +2458,7 @@ case $target_os in
         enable dos_paths
         ;;
     linux)
+        add_cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
         enable dv1394
         ;;
     irix*)
@@ -2524,7 +2533,6 @@ die_license_disabled() {
 die_license_disabled gpl libx264
 die_license_disabled gpl libxavs
 die_license_disabled gpl libxvid
-die_license_disabled gpl postproc
 die_license_disabled gpl x11grab
 
 die_license_disabled nonfree libfaac
@@ -2776,6 +2784,7 @@ check_func  getrusage
 check_struct "sys/time.h sys/resource.h" "struct rusage" ru_maxrss
 check_func  inet_aton $network_extralibs
 check_func  isatty
+check_func  localtime_r
 check_func  ${malloc_prefix}memalign            && enable memalign
 check_func  mkstemp
 check_func  mmap
@@ -2839,7 +2848,7 @@ for thread in $THREADS_LIST; do
     fi
 done
 
-check_lib math.h sin -lm
+check_lib math.h sin -lm && LIBM="-lm"
 enabled vaapi && require vaapi va/va.h vaInitialize -lva
 
 check_mathfunc exp2
@@ -2852,6 +2861,7 @@ check_mathfunc lrint
 check_mathfunc lrintf
 check_mathfunc round
 check_mathfunc roundf
+check_mathfunc trunc
 check_mathfunc truncf
 
 # these are off by default, so fail if requested and not available
@@ -2861,6 +2871,7 @@ enabled libdirac   && require_pkg_config dirac                          \
     "libdirac_decoder/dirac_parser.h libdirac_encoder/dirac_encoder.h"  \
     "dirac_decoder_init dirac_encoder_init"
 enabled libfaac    && require2 libfaac "stdint.h faac.h" faacEncGetVersion -lfaac
+enabled libfreetype && require_pkg_config freetype2 "ft2build.h freetype/freetype.h" FT_Init_FreeType
 enabled libgsm     && require  libgsm gsm/gsm.h gsm_create -lgsm
 enabled libmp3lame && require  "libmp3lame >= 3.98.3" lame/lame.h lame_set_VBR_quality -lmp3lame
 enabled libnut     && require  libnut libnut.h nut_demuxer_init -lnut
@@ -3425,10 +3436,10 @@ Cflags: -I\${includedir}
 EOF
 }
 
-pkgconfig_generate libavutil "Libav utility library" "$LIBAVUTIL_VERSION"
-pkgconfig_generate libavcodec "Libav codec library" "$LIBAVCODEC_VERSION" "$extralibs"
+pkgconfig_generate libavutil "Libav utility library" "$LIBAVUTIL_VERSION" "$LIBM"
+pkgconfig_generate libavcodec "Libav codec library" "$LIBAVCODEC_VERSION" "$extralibs" "libavutil = $LIBAVUTIL_VERSION"
 pkgconfig_generate libavformat "Libav container format library" "$LIBAVFORMAT_VERSION" "$extralibs" "libavcodec = $LIBAVCODEC_VERSION"
 pkgconfig_generate libavdevice "Libav device handling library" "$LIBAVDEVICE_VERSION" "$extralibs" "libavformat = $LIBAVFORMAT_VERSION"
 pkgconfig_generate libavfilter "Libav video filtering library" "$LIBAVFILTER_VERSION" "$extralibs"
-pkgconfig_generate libpostproc "Libav post processing library" "$LIBPOSTPROC_VERSION"
-pkgconfig_generate libswscale "Libav image rescaling library" "$LIBSWSCALE_VERSION" "" "libavutil = $LIBAVUTIL_VERSION"
+pkgconfig_generate libpostproc "Libav post processing library" "$LIBPOSTPROC_VERSION" "" "libavutil = $LIBAVUTIL_VERSION"
+pkgconfig_generate libswscale "Libav image rescaling library" "$LIBSWSCALE_VERSION" "$LIBM" "libavutil = $LIBAVUTIL_VERSION"

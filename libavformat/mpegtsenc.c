@@ -76,15 +76,15 @@ typedef struct MpegTSWrite {
 
 static const AVOption options[] = {
     { "mpegts_transport_stream_id", "Set transport_stream_id field.",
-      offsetof(MpegTSWrite, transport_stream_id), FF_OPT_TYPE_INT, 0x0001, 0x0001, 0xffff, AV_OPT_FLAG_ENCODING_PARAM},
+      offsetof(MpegTSWrite, transport_stream_id), FF_OPT_TYPE_INT, {.dbl = 0x0001 }, 0x0001, 0xffff, AV_OPT_FLAG_ENCODING_PARAM},
     { "mpegts_original_network_id", "Set original_network_id field.",
-      offsetof(MpegTSWrite, original_network_id), FF_OPT_TYPE_INT, 0x0001, 0x0001, 0xffff, AV_OPT_FLAG_ENCODING_PARAM},
+      offsetof(MpegTSWrite, original_network_id), FF_OPT_TYPE_INT, {.dbl = 0x0001 }, 0x0001, 0xffff, AV_OPT_FLAG_ENCODING_PARAM},
     { "mpegts_service_id", "Set service_id field.",
-      offsetof(MpegTSWrite, service_id), FF_OPT_TYPE_INT, 0x0001, 0x0001, 0xffff, AV_OPT_FLAG_ENCODING_PARAM},
+      offsetof(MpegTSWrite, service_id), FF_OPT_TYPE_INT, {.dbl = 0x0001 }, 0x0001, 0xffff, AV_OPT_FLAG_ENCODING_PARAM},
     { "mpegts_pmt_start_pid", "Set the first pid of the PMT.",
-      offsetof(MpegTSWrite, pmt_start_pid), FF_OPT_TYPE_INT, 0x1000, 0x1000, 0x1f00, AV_OPT_FLAG_ENCODING_PARAM},
+      offsetof(MpegTSWrite, pmt_start_pid), FF_OPT_TYPE_INT, {.dbl = 0x1000 }, 0x1000, 0x1f00, AV_OPT_FLAG_ENCODING_PARAM},
     { "mpegts_start_pid", "Set the first pid.",
-      offsetof(MpegTSWrite, start_pid), FF_OPT_TYPE_INT, 0x0100, 0x0100, 0x0f00, AV_OPT_FLAG_ENCODING_PARAM},
+      offsetof(MpegTSWrite, start_pid), FF_OPT_TYPE_INT, {.dbl = 0x0100 }, 0x0100, 0x0f00, AV_OPT_FLAG_ENCODING_PARAM},
     { NULL },
 };
 
@@ -421,7 +421,7 @@ static MpegTSService *mpegts_add_service(MpegTSWrite *ts,
     service = av_mallocz(sizeof(MpegTSService));
     if (!service)
         return NULL;
-    service->pmt.pid = ts->pmt_start_pid + ts->nb_services - 1;
+    service->pmt.pid = ts->pmt_start_pid + ts->nb_services;
     service->sid = sid;
     service->provider_name = av_strdup(provider_name);
     service->name = av_strdup(name);
@@ -588,7 +588,7 @@ static int mpegts_write_header(AVFormatContext *s)
     av_free(pids);
     for(i = 0;i < s->nb_streams; i++) {
         st = s->streams[i];
-        av_free(st->priv_data);
+        av_freep(&st->priv_data);
     }
     return -1;
 }

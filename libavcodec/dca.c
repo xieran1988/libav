@@ -321,16 +321,16 @@ typedef struct {
 
     /* Subband samples history (for ADPCM) */
     float subband_samples_hist[DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS][4];
-    DECLARE_ALIGNED(16, float, subband_fir_hist)[DCA_PRIM_CHANNELS_MAX][512];
-    DECLARE_ALIGNED(16, float, subband_fir_noidea)[DCA_PRIM_CHANNELS_MAX][32];
+    DECLARE_ALIGNED(32, float, subband_fir_hist)[DCA_PRIM_CHANNELS_MAX][512];
+    DECLARE_ALIGNED(32, float, subband_fir_noidea)[DCA_PRIM_CHANNELS_MAX][32];
     int hist_index[DCA_PRIM_CHANNELS_MAX];
-    DECLARE_ALIGNED(16, float, raXin)[32];
+    DECLARE_ALIGNED(32, float, raXin)[32];
 
     int output;                 ///< type of output
     float scale_bias;           ///< output scale
 
-    DECLARE_ALIGNED(16, float, subband_samples)[DCA_BLOCKS_MAX][DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS][8];
-    DECLARE_ALIGNED(16, float, samples)[(DCA_PRIM_CHANNELS_MAX+1)*256];
+    DECLARE_ALIGNED(32, float, subband_samples)[DCA_BLOCKS_MAX][DCA_PRIM_CHANNELS_MAX][DCA_SUBBANDS][8];
+    DECLARE_ALIGNED(32, float, samples)[(DCA_PRIM_CHANNELS_MAX+1)*256];
     const float *samples_chanptr[DCA_PRIM_CHANNELS_MAX+1];
 
     uint8_t dca_buffer[DCA_MAX_FRAME_SIZE + DCA_MAX_EXSS_HEADER_SIZE + DCA_BUFFER_PADDING_SIZE];
@@ -1798,7 +1798,7 @@ static int dca_decode_frame(AVCodecContext * avctx,
 
 
     /* There is nothing that prevents a dts frame to change channel configuration
-       but FFmpeg doesn't support that so only set the channels if it is previously
+       but Libav doesn't support that so only set the channels if it is previously
        unset. Ideally during the first probe for channels the crc should be checked
        and only set avctx->channels when the crc is ok. Right now the decoder could
        set the channels based on a broken first frame.*/

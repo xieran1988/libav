@@ -33,7 +33,7 @@
 #define VE AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM
 
 static const AVOption options[]={
-    {"nitris_compat", "encode with Avid Nitris compatibility", offsetof(DNXHDEncContext, nitris_compat), FF_OPT_TYPE_INT, 0, 0, 1, VE},
+    {"nitris_compat", "encode with Avid Nitris compatibility", offsetof(DNXHDEncContext, nitris_compat), FF_OPT_TYPE_INT, {.dbl = 0}, 0, 1, VE},
 {NULL}
 };
 static const AVClass class = { "dnxhd", av_default_item_name, options, LIBAVUTIL_VERSION_INT };
@@ -222,7 +222,7 @@ static int dnxhd_encode_init(AVCodecContext *avctx)
     FF_ALLOCZ_OR_GOTO(ctx->m.avctx, ctx->mb_qscale,  ctx->m.mb_num   *sizeof(uint8_t) , fail);
 
     ctx->frame.key_frame = 1;
-    ctx->frame.pict_type = FF_I_TYPE;
+    ctx->frame.pict_type = AV_PICTURE_TYPE_I;
     ctx->m.avctx->coded_frame = &ctx->frame;
 
     if (avctx->thread_count > MAX_THREADS) {
@@ -433,7 +433,7 @@ static int dnxhd_calc_bits_thread(AVCodecContext *avctx, void *arg, int jobnr, i
             int n = dnxhd_switch_matrix(ctx, i);
 
             memcpy(block, src_block, 64*sizeof(*block));
-            last_index = ctx->m.dct_quantize((MpegEncContext*)ctx, block, i, qscale, &overflow);
+            last_index = ctx->m.dct_quantize(&ctx->m, block, i, qscale, &overflow);
             ac_bits += dnxhd_calc_ac_bits(ctx, block, last_index);
 
             diff = block[0] - ctx->m.last_dc[n];
@@ -478,7 +478,7 @@ static int dnxhd_encode_thread(AVCodecContext *avctx, void *arg, int jobnr, int 
             DCTELEM *block = ctx->blocks[i];
             int last_index, overflow;
             int n = dnxhd_switch_matrix(ctx, i);
-            last_index = ctx->m.dct_quantize((MpegEncContext*)ctx, block, i, qscale, &overflow);
+            last_index = ctx->m.dct_quantize(&ctx->m, block, i, qscale, &overflow);
             //START_TIMER;
             dnxhd_encode_block(ctx, block, last_index, n);
             //STOP_TIMER("encode_block");
@@ -869,6 +869,7 @@ AVCodec ff_dnxhd_encoder = {
     dnxhd_encode_init,
     dnxhd_encode_picture,
     dnxhd_encode_end,
+    .capabilities = CODEC_CAP_SLICE_THREADS,
     .pix_fmts = (const enum PixelFormat[]){PIX_FMT_YUV422P, PIX_FMT_NONE},
     .long_name = NULL_IF_CONFIG_SMALL("VC3/DNxHD"),
     .priv_class = &class,

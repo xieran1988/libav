@@ -175,7 +175,6 @@ static void build_frame_code(AVFormatContext *s){
         }
 
         key_frame= intra_only;
-#if 1
         if(is_audio){
             int frame_bytes= codec->frame_size*(int64_t)codec->bit_rate / (8*codec->sample_rate);
             int pts;
@@ -199,7 +198,6 @@ static void build_frame_code(AVFormatContext *s){
             ft->pts_delta=1;
             start2++;
         }
-#endif
 
         if(codec->has_b_frames){
             pred_count=5;
@@ -586,9 +584,16 @@ static int write_header(AVFormatContext *s){
     nut->avf= s;
 
     nut->stream   = av_mallocz(sizeof(StreamContext)*s->nb_streams);
-    nut->chapter  = av_mallocz(sizeof(ChapterContext)*s->nb_chapters);
+    if (s->nb_chapters)
+        nut->chapter  = av_mallocz(sizeof(ChapterContext)*s->nb_chapters);
     nut->time_base= av_mallocz(sizeof(AVRational   )*(s->nb_streams +
                                                       s->nb_chapters));
+    if (!nut->stream || (s->nb_chapters && !nut->chapter) || !nut->time_base) {
+        av_freep(&nut->stream);
+        av_freep(&nut->chapter);
+        av_freep(&nut->time_base);
+        return AVERROR(ENOMEM);
+    }
 
     for(i=0; i<s->nb_streams; i++){
         AVStream *st= s->streams[i];

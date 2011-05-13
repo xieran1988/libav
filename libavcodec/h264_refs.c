@@ -109,7 +109,7 @@ int ff_h264_fill_default_ref_list(H264Context *h){
     MpegEncContext * const s = &h->s;
     int i, len;
 
-    if(h->slice_type_nos==FF_B_TYPE){
+    if(h->slice_type_nos==AV_PICTURE_TYPE_B){
         Picture *sorted[32];
         int cur_poc, list;
         int lens[2];
@@ -148,7 +148,7 @@ int ff_h264_fill_default_ref_list(H264Context *h){
     for (i=0; i<h->ref_count[0]; i++) {
         tprintf(h->s.avctx, "List0: %s fn:%d 0x%p\n", (h->default_ref_list[0][i].long_ref ? "LT" : "ST"), h->default_ref_list[0][i].pic_id, h->default_ref_list[0][i].data[0]);
     }
-    if(h->slice_type_nos==FF_B_TYPE){
+    if(h->slice_type_nos==AV_PICTURE_TYPE_B){
         for (i=0; i<h->ref_count[1]; i++) {
             tprintf(h->s.avctx, "List1: %s fn:%d 0x%p\n", (h->default_ref_list[1][i].long_ref ? "LT" : "ST"), h->default_ref_list[1][i].pic_id, h->default_ref_list[1][i].data[0]);
         }
@@ -621,15 +621,17 @@ int ff_h264_execute_ref_pic_marking(H264Context *h, MMCO *mmco, int mmco_count){
         }
     }
 
-    if (h->long_ref_count + h->short_ref_count > h->sps.ref_frame_count){
+    if (h->long_ref_count + h->short_ref_count -
+            (h->short_ref[0] == s->current_picture_ptr) > h->sps.ref_frame_count){
 
         /* We have too many reference frames, probably due to corrupted
          * stream. Need to discard one frame. Prevents overrun of the
          * short_ref and long_ref buffers.
          */
         av_log(h->s.avctx, AV_LOG_ERROR,
-               "number of reference frames exceeds max (probably "
-               "corrupt input), discarding one\n");
+               "number of reference frames (%d+%d) exceeds max (%d; probably "
+               "corrupt input), discarding one\n",
+               h->long_ref_count, h->short_ref_count, h->sps.ref_frame_count);
 
         if (h->long_ref_count && !h->short_ref_count) {
             for (i = 0; i < 16; ++i)

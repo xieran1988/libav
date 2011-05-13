@@ -326,7 +326,7 @@ typedef struct MpegEncContext {
     int adaptive_quant;         ///< use adaptive quantization
     int dquant;                 ///< qscale difference to prev qscale
     int closed_gop;             ///< MPEG1/2 GOP is closed
-    int pict_type;              ///< FF_I_TYPE, FF_P_TYPE, FF_B_TYPE, ...
+    int pict_type;              ///< AV_PICTURE_TYPE_I, AV_PICTURE_TYPE_P, AV_PICTURE_TYPE_B, ...
     int last_pict_type; //FIXME removes
     int last_non_b_pict_type;   ///< used for mpeg4 gmc b-frames & ratecontrol
     int dropable;
@@ -386,11 +386,6 @@ typedef struct MpegEncContext {
 
     int no_rounding;  /**< apply no rounding to motion compensation (MPEG4, msmpeg4, ...)
                         for b-frames rounding mode is always 0 */
-
-#if FF_API_HURRY_UP
-    int hurry_up;     /**< when set to 1 during decoding, b frames will be skipped
-                         when set to 2 idct/dequant will be skipped too */
-#endif
 
     /* macroblock layer */
     int mb_x, mb_y;

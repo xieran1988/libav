@@ -27,8 +27,9 @@
 #include "avcodec.h"
 #include "put_bits.h"
 
-#undef  CONFIG_MPEGAUDIO_HP
-#define CONFIG_MPEGAUDIO_HP 0
+#define FRAC_BITS   15   /* fractional bits for sb_samples and dct */
+#define WFRAC_BITS  14   /* fractional bits for window */
+
 #include "mpegaudio.h"
 
 /* currently, cannot change these constants (need to modify
@@ -399,10 +400,8 @@ static void compute_scale_factors(unsigned char scale_code[SBLIMIT],
                 index = 62; /* value 63 is not allowed */
             }
 
-#if 0
-            printf("%2d:%d in=%x %x %d\n",
-                   j, i, vmax, scale_factor_table[index], index);
-#endif
+            av_dlog(NULL, "%2d:%d in=%x %x %d\n",
+                    j, i, vmax, scale_factor_table[index], index);
             /* store the scale factor */
             assert(index >=0 && index <= 63);
             sf[i] = index;
@@ -470,10 +469,8 @@ static void compute_scale_factors(unsigned char scale_code[SBLIMIT],
             code = 0;           /* kill warning */
         }
 
-#if 0
-        printf("%d: %2d %2d %2d %d %d -> %d\n", j,
-               sf[0], sf[1], sf[2], d1, d2, code);
-#endif
+        av_dlog(NULL, "%d: %2d %2d %2d %d %d -> %d\n", j,
+                sf[0], sf[1], sf[2], d1, d2, code);
         scale_code[j] = code;
         sf += 3;
     }
@@ -547,11 +544,9 @@ static void compute_bit_allocation(MpegAudioContext *s,
                 }
             }
         }
-#if 0
-        printf("current=%d max=%d max_sb=%d alloc=%d\n",
-               current_frame_size, max_frame_size, max_sb,
-               bit_alloc[max_sb]);
-#endif
+        av_dlog(NULL, "current=%d max=%d max_sb=%d alloc=%d\n",
+                current_frame_size, max_frame_size, max_sb,
+                bit_alloc[max_sb]);
         if (max_sb < 0)
             break;
 
@@ -591,13 +586,6 @@ static void compute_bit_allocation(MpegAudioContext *s,
     }
     *padding = max_frame_size - current_frame_size;
     assert(*padding >= 0);
-
-#if 0
-    for(i=0;i<s->sblimit;i++) {
-        printf("%d ", bit_alloc[i]);
-    }
-    printf("\n");
-#endif
 }
 
 /*
@@ -719,15 +707,7 @@ static void encode_frame(MpegAudioContext *s,
                             /* group the 3 values to save bits */
                             put_bits(p, -bits,
                                      q[0] + steps * (q[1] + steps * q[2]));
-#if 0
-                            printf("%d: gr1 %d\n",
-                                   i, q[0] + steps * (q[1] + steps * q[2]));
-#endif
                         } else {
-#if 0
-                            printf("%d: gr3 %d %d %d\n",
-                                   i, q[0], q[1], q[2]);
-#endif
                             put_bits(p, bits, q[0]);
                             put_bits(p, bits, q[1]);
                             put_bits(p, bits, q[2]);

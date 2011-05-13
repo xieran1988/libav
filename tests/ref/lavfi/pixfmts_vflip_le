@@ -1,6 +1,8 @@
 abgr                25e72e9dbd01ab00727c976d577f7be5
 argb                19869bf1a5ac0b6af4d8bbe2c104533c
 bgr24               89108a4ba00201f79b75b9305c42352d
+bgr48be             ed82382da09b64a8e04728fcf76e6814
+bgr48le             0f1f135608c2ff24d26d03e939fc2112
 bgr4_byte           407fcf564ed764c38e1d748f700ab921
 bgr555le            bd7b3ec4d684dfad075d89a606cb8b74
 bgr565le            fdb617533e1e7ff512ea5b6b6233e738
@@ -25,8 +27,12 @@ uyvy422             ffbd36720c77398d9a0d03ce2625928f
 yuv410p             7bfb39d7afb49d6a6173e6b23ae321eb
 yuv411p             4a90048cc3a65fac150e53289700efe1
 yuv420p             2e6d6062e8cad37fb3ab2c433b55f382
+yuv420p10be         df97d20b3b4a10c174d4360552c4160d
+yuv420p10le         4b5249208602b941332945c926f80ae9
 yuv420p16be         539076782902664a8acf381bf4f713e8
 yuv420p16le         0f609e588e5a258644ef85170d70e030
+yuv420p9be          be40ec975fb2873891643cbbbddbc3b0
+yuv420p9le          7e606310d3f5ff12badf911e8f333471
 yuv422p             d7f5cb44d9b0210d66d6a8762640ab34
 yuv422p16be         9bd8f8c961822b586fa4cf992be54acc
 yuv422p16le         9c4a1239605c7952b736ac3130163f14

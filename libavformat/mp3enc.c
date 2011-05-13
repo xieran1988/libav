@@ -24,6 +24,7 @@
 #include "id3v1.h"
 #include "id3v2.h"
 #include "rawenc.h"
+#include "libavutil/avstring.h"
 #include "libavutil/intreadwrite.h"
 #include "libavutil/opt.h"
 
@@ -32,7 +33,7 @@ static int id3v1_set_string(AVFormatContext *s, const char *key,
 {
     AVMetadataTag *tag;
     if ((tag = av_metadata_get(s->metadata, key, NULL, 0)))
-        strncpy(buf, tag->value, buf_size);
+        av_strlcpy(buf, tag->value, buf_size);
     return !!tag;
 }
 
@@ -161,7 +162,7 @@ typedef struct MP3Context {
 
 static const AVOption options[] = {
     { "id3v2_version", "Select ID3v2 version to write. Currently 3 and 4 are supported.",
-      offsetof(MP3Context, id3v2_version), FF_OPT_TYPE_INT, 4, 3, 4, AV_OPT_FLAG_ENCODING_PARAM},
+      offsetof(MP3Context, id3v2_version), FF_OPT_TYPE_INT, {.dbl = 4}, 3, 4, AV_OPT_FLAG_ENCODING_PARAM},
     { NULL },
 };
 

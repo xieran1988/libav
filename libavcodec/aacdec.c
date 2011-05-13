@@ -180,9 +180,8 @@ static ChannelElement *get_che(AACContext *ac, int type, int elem_id)
  * @return  Returns error status. 0 - OK, !0 - error
  */
 static av_cold int che_configure(AACContext *ac,
-                         enum ChannelPosition che_pos[4][MAX_ELEM_ID],
-                         int type, int id,
-                         int *channels)
+                                 enum ChannelPosition che_pos[4][MAX_ELEM_ID],
+                                 int type, int id, int *channels)
 {
     if (che_pos[type][id]) {
         if (!ac->che[type][id] && !(ac->che[type][id] = av_mallocz(sizeof(ChannelElement))))
@@ -212,9 +211,9 @@ static av_cold int che_configure(AACContext *ac,
  * @return  Returns error status. 0 - OK, !0 - error
  */
 static av_cold int output_configure(AACContext *ac,
-                            enum ChannelPosition che_pos[4][MAX_ELEM_ID],
-                            enum ChannelPosition new_che_pos[4][MAX_ELEM_ID],
-                            int channel_config, enum OCStatus oc_type)
+                                    enum ChannelPosition che_pos[4][MAX_ELEM_ID],
+                                    enum ChannelPosition new_che_pos[4][MAX_ELEM_ID],
+                                    int channel_config, enum OCStatus oc_type)
 {
     AVCodecContext *avctx = ac->avctx;
     int i, type, channels = 0, ret;
@@ -231,7 +230,7 @@ static av_cold int output_configure(AACContext *ac,
                 return ret;
         }
 
-        memset(ac->tag_che_map, 0,       4 * MAX_ELEM_ID * sizeof(ac->che[0][0]));
+        memset(ac->tag_che_map, 0, 4 * MAX_ELEM_ID * sizeof(ac->che[0][0]));
 
         avctx->channel_layout = aac_channel_layout[channel_config - 1];
     } else {
@@ -346,8 +345,8 @@ static int decode_pce(AVCodecContext *avctx, MPEG4AudioConfig *m4ac,
  * @return  Returns error status. 0 - OK, !0 - error
  */
 static av_cold int set_default_channel_config(AVCodecContext *avctx,
-                                      enum ChannelPosition new_che_pos[4][MAX_ELEM_ID],
-                                      int channel_config)
+                                              enum ChannelPosition new_che_pos[4][MAX_ELEM_ID],
+                                              int channel_config)
 {
     if (channel_config < 1 || channel_config > 7) {
         av_log(avctx, AV_LOG_ERROR, "invalid default channel configuration (%d)\n",
@@ -464,6 +463,11 @@ static int decode_audio_specific_config(AACContext *ac,
     GetBitContext gb;
     int i;
 
+    av_dlog(avctx, "extradata size %d\n", avctx->extradata_size);
+    for (i = 0; i < avctx->extradata_size; i++)
+         av_dlog(avctx, "%02x ", avctx->extradata[i]);
+    av_dlog(avctx, "\n");
+
     init_get_bits(&gb, data, data_size * 8);
 
     if ((i = ff_mpeg4audio_get_config(m4ac, data, data_size)) < 0)
@@ -489,6 +493,10 @@ static int decode_audio_specific_config(AACContext *ac,
                m4ac->sbr == 1? "SBR+" : "", m4ac->object_type);
         return -1;
     }
+
+    av_dlog(avctx, "AOT %d chan config %d sampling index %d (%d) SBR %d PS %d\n",
+            m4ac->object_type, m4ac->chan_config, m4ac->sampling_index,
+            m4ac->sample_rate, m4ac->sbr, m4ac->ps);
 
     return get_bits_count(&gb);
 }
@@ -570,12 +578,6 @@ static av_cold int aac_decode_init(AVCodecContext *avctx)
 
     ac->random_state = 0x1f2e3d4c;
 
-    // -1024 - Compensate wrong IMDCT method.
-    // 60    - Required to scale values to the correct range [-32768,32767]
-    //         for float to int16 conversion. (1 << (60 / 4)) == 32768
-    ac->sf_scale  = 1. / -1024.;
-    ac->sf_offset = 60;
-
     ff_aac_tableinit();
 
     INIT_VLC_STATIC(&vlc_scalefactors,7,FF_ARRAY_ELEMS(ff_aac_scalefactor_code),
@@ -583,9 +585,9 @@ static av_cold int aac_decode_init(AVCodecContext *avctx)
                     ff_aac_scalefactor_code, sizeof(ff_aac_scalefactor_code[0]), sizeof(ff_aac_scalefactor_code[0]),
                     352);
 
-    ff_mdct_init(&ac->mdct,       11, 1, 1.0);
-    ff_mdct_init(&ac->mdct_small,  8, 1, 1.0);
-    ff_mdct_init(&ac->mdct_ltp,   11, 0, 1.0);
+    ff_mdct_init(&ac->mdct,       11, 1, 1.0/1024.0);
+    ff_mdct_init(&ac->mdct_small,  8, 1, 1.0/128.0);
+    ff_mdct_init(&ac->mdct_ltp,   11, 0, -2.0);
     // window initialization
     ff_kbd_window_init(ff_aac_kbd_long_1024, 4.0, 1024);
     ff_kbd_window_init(ff_aac_kbd_short_128, 6.0, 128);
@@ -643,7 +645,7 @@ static void decode_ltp(AACContext *ac, LongTermPrediction *ltp,
     int sfb;
 
     ltp->lag  = get_bits(gb, 11);
-    ltp->coef = ltp_coef[get_bits(gb, 3)] * ac->sf_scale;
+    ltp->coef = ltp_coef[get_bits(gb, 3)];
     for (sfb = 0; sfb < FFMIN(max_sfb, MAX_LTP_LONG_SFB); sfb++)
         ltp->used[sfb] = get_bits1(gb);
 }
@@ -781,9 +783,9 @@ static int decode_scalefactors(AACContext *ac, float sf[120], GetBitContext *gb,
                                enum BandType band_type[120],
                                int band_type_run_end[120])
 {
-    const int sf_offset = ac->sf_offset + (ics->window_sequence[0] == EIGHT_SHORT_SEQUENCE ? 12 : 0);
     int g, i, idx = 0;
-    int offset[3] = { global_gain, global_gain - 90, 100 };
+    int offset[3] = { global_gain, global_gain - 90, 0 };
+    int clipped_offset;
     int noise_flag = 1;
     static const char *sf_str[3] = { "Global gain", "Noise gain", "Intensity stereo position" };
     for (g = 0; g < ics->num_window_groups; g++) {
@@ -795,12 +797,14 @@ static int decode_scalefactors(AACContext *ac, float sf[120], GetBitContext *gb,
             } else if ((band_type[idx] == INTENSITY_BT) || (band_type[idx] == INTENSITY_BT2)) {
                 for (; i < run_end; i++, idx++) {
                     offset[2] += get_vlc2(gb, vlc_scalefactors.table, 7, 3) - 60;
-                    if (offset[2] > 255U) {
-                        av_log(ac->avctx, AV_LOG_ERROR,
-                               "%s (%d) out of range.\n", sf_str[2], offset[2]);
-                        return -1;
+                    clipped_offset = av_clip(offset[2], -155, 100);
+                    if (offset[2] != clipped_offset) {
+                        av_log_ask_for_sample(ac->avctx, "Intensity stereo "
+                                "position clipped (%d -> %d).\nIf you heard an "
+                                "audible artifact, there may be a bug in the "
+                                "decoder. ", offset[2], clipped_offset);
                     }
-                    sf[idx] = ff_aac_pow2sf_tab[-offset[2] + 300];
+                    sf[idx] = ff_aac_pow2sf_tab[-clipped_offset + POW_SF2_ZERO];
                 }
             } else if (band_type[idx] == NOISE_BT) {
                 for (; i < run_end; i++, idx++) {
@@ -808,12 +812,14 @@ static int decode_scalefactors(AACContext *ac, float sf[120], GetBitContext *gb,
                         offset[1] += get_bits(gb, 9) - 256;
                     else
                         offset[1] += get_vlc2(gb, vlc_scalefactors.table, 7, 3) - 60;
-                    if (offset[1] > 255U) {
-                        av_log(ac->avctx, AV_LOG_ERROR,
-                               "%s (%d) out of range.\n", sf_str[1], offset[1]);
-                        return -1;
+                    clipped_offset = av_clip(offset[1], -100, 155);
+                    if (offset[2] != clipped_offset) {
+                        av_log_ask_for_sample(ac->avctx, "Noise gain clipped "
+                                "(%d -> %d).\nIf you heard an audible "
+                                "artifact, there may be a bug in the decoder. ",
+                                offset[1], clipped_offset);
                     }
-                    sf[idx] = -ff_aac_pow2sf_tab[offset[1] + sf_offset + 100];
+                    sf[idx] = -ff_aac_pow2sf_tab[clipped_offset + POW_SF2_ZERO];
                 }
             } else {
                 for (; i < run_end; i++, idx++) {
@@ -823,7 +829,7 @@ static int decode_scalefactors(AACContext *ac, float sf[120], GetBitContext *gb,
                                "%s (%d) out of range.\n", sf_str[0], offset[0]);
                         return -1;
                     }
-                    sf[idx] = -ff_aac_pow2sf_tab[ offset[0] + sf_offset];
+                    sf[idx] = -ff_aac_pow2sf_tab[offset[0] - 100 + POW_SF2_ZERO];
                 }
             }
         }
@@ -1234,8 +1240,7 @@ static av_always_inline float flt16_trunc(float pf)
 }
 
 static av_always_inline void predict(PredictorState *ps, float *coef,
-                                     float sf_scale, float inv_sf_scale,
-                    int output_enable)
+                                     int output_enable)
 {
     const float a     = 0.953125; // 61.0 / 64
     const float alpha = 0.90625;  // 29.0 / 32
@@ -1251,9 +1256,9 @@ static av_always_inline void predict(PredictorState *ps, float *coef,
 
     pv = flt16_round(k1 * r0 + k2 * r1);
     if (output_enable)
-        *coef += pv * sf_scale;
+        *coef += pv;
 
-    e0 = *coef * inv_sf_scale;
+    e0 = *coef;
     e1 = e0 - k1 * r0;
 
     ps->cor1 = flt16_trunc(alpha * cor1 + r1 * e1);
@@ -1271,7 +1276,6 @@ static av_always_inline void predict(PredictorState *ps, float *coef,
 static void apply_prediction(AACContext *ac, SingleChannelElement *sce)
 {
     int sfb, k;
-    float sf_scale = ac->sf_scale, inv_sf_scale = 1 / ac->sf_scale;
 
     if (!sce->ics.predictor_initialized) {
         reset_all_predictors(sce->predictor_state);
@@ -1282,7 +1286,6 @@ static void apply_prediction(AACContext *ac, SingleChannelElement *sce)
         for (sfb = 0; sfb < ff_aac_pred_sfb_max[ac->m4ac.sampling_index]; sfb++) {
             for (k = sce->ics.swb_offset[sfb]; k < sce->ics.swb_offset[sfb + 1]; k++) {
                 predict(&sce->predictor_state[k], &sce->coeffs[k],
-                        sf_scale, inv_sf_scale,
                         sce->ics.predictor_present && sce->ics.prediction_used[sfb]);
             }
         }

@@ -524,6 +524,7 @@ static const StreamType MISC_types[] = {
 static const StreamType REGD_types[] = {
     { MKTAG('d','r','a','c'), AVMEDIA_TYPE_VIDEO, CODEC_ID_DIRAC },
     { MKTAG('A','C','-','3'), AVMEDIA_TYPE_AUDIO,   CODEC_ID_AC3 },
+    { MKTAG('B','S','S','D'), AVMEDIA_TYPE_AUDIO, CODEC_ID_S302M },
     { 0 },
 };
 
@@ -662,9 +663,6 @@ static int mpegts_push_data(MpegTSFilter *filter,
             if (pes->data_index == PES_START_SIZE) {
                 /* we got all the PES or section header. We can now
                    decide */
-#if 0
-                av_hex_dump_log(pes->stream, AV_LOG_DEBUG, pes->header, pes->data_index);
-#endif
                 if (pes->header[0] == 0x00 && pes->header[1] == 0x00 &&
                     pes->header[2] == 0x01) {
                     /* it must be an mpeg2 PES stream */
@@ -674,11 +672,6 @@ static int mpegts_push_data(MpegTSFilter *filter,
                     if ((pes->st && pes->st->discard == AVDISCARD_ALL) ||
                         code == 0x1be) /* padding_stream */
                         goto skip;
-
-#if FF_API_MAX_STREAMS
-                    if (!pes->st && pes->stream->nb_streams == MAX_STREAMS)
-                        goto skip;
-#endif
 
                     /* stream not present in PMT */
                     if (!pes->st) {
@@ -809,7 +802,7 @@ static int mpegts_push_data(MpegTSFilter *filter,
              * a couple of seconds to milliseconds for properly muxed files.
              * total_size is the number of bytes following pes_packet_length
              * in the pes header, i.e. not counting the first 6 bytes */
-            if (pes->total_size < MAX_PES_PAYLOAD &&
+            if (!ts->stop_parse && pes->total_size < MAX_PES_PAYLOAD &&
                 pes->pes_header_size + pes->data_index == pes->total_size + 6) {
                 ts->stop_parse = 1;
                 new_pes_packet(pes, ts->pkt);
@@ -1543,10 +1536,8 @@ static int mpegts_read_header(AVFormatContext *s,
         s->bit_rate = (TS_PACKET_SIZE * 8) * 27e6 / ts->pcr_incr;
         st->codec->bit_rate = s->bit_rate;
         st->start_time = ts->cur_pcr;
-#if 0
-        av_log(ts->stream, AV_LOG_DEBUG, "start=%0.3f pcr=%0.3f incr=%d\n",
-               st->start_time / 1000000.0, pcrs[0] / 27e6, ts->pcr_incr);
-#endif
+        av_dlog(ts->stream, AV_LOG_DEBUG, "start=%0.3f pcr=%0.3f incr=%d\n",
+                st->start_time / 1000000.0, pcrs[0] / 27e6, ts->pcr_incr);
     }
 
     avio_seek(pb, pos, SEEK_SET);

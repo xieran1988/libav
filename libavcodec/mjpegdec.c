@@ -352,7 +352,7 @@ int ff_mjpeg_decode_sof(MJpegDecodeContext *s)
         av_log(s->avctx, AV_LOG_ERROR, "get_buffer() failed\n");
         return -1;
     }
-    s->picture_ptr->pict_type= FF_I_TYPE;
+    s->picture_ptr->pict_type= AV_PICTURE_TYPE_I;
     s->picture_ptr->key_frame= 1;
     s->got_picture = 1;
 
@@ -826,6 +826,10 @@ static int mjpeg_decode_scan(MJpegDecodeContext *s, int nb_components, int Ah, i
             if (s->restart_interval && !s->restart_count)
                 s->restart_count = s->restart_interval;
 
+            if(get_bits_count(&s->gb)>s->gb.size_in_bits){
+                av_log(s->avctx, AV_LOG_ERROR, "overread %d\n", get_bits_count(&s->gb) - s->gb.size_in_bits);
+                return -1;
+            }
             for(i=0;i<nb_components;i++) {
                 uint8_t *ptr;
                 int n, h, v, x, y, c, j;
