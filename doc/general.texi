@@ -96,7 +96,7 @@ library:
     @tab Only embedded audio is decoded.
 @item FLI/FLC/FLX animation     @tab   @tab X
     @tab .fli/.flc files
-@item Flash Video (FLV)         @tab   @tab X
+@item Flash Video (FLV)         @tab X @tab X
     @tab Macromedia Flash video files
 @item framecrc testing format   @tab X @tab
 @item FunCom ISS                @tab   @tab X
@@ -268,7 +268,7 @@ library:
 
 @section Image Formats
 
-FFmpeg can read and write images for each frame of a video sequence. The
+Libav can read and write images for each frame of a video sequence. The
 following image formats are supported:
 
 @multitable @columnfractions .4 .1 .1 .4
@@ -279,7 +279,7 @@ following image formats are supported:
     @tab Only uncompressed GIFs are generated.
 @item BMP          @tab X @tab X
     @tab Microsoft BMP image
-@item DPX          @tab   @tab X
+@item DPX          @tab X @tab X
     @tab Digital Picture Exchange
 @item JPEG         @tab X @tab X
     @tab Progressive JPEG is not supported.
@@ -673,6 +673,7 @@ following image formats are supported:
 @item Sierra VMD audio       @tab     @tab  X
     @tab Used in Sierra VMD files.
 @item Smacker audio          @tab     @tab  X
+@item SMPTE 302M AES3 audio  @tab     @tab  X
 @item Speex                  @tab     @tab  E
     @tab supported through external library libspeex
 @item True Audio (TTA)       @tab     @tab  X
@@ -783,14 +784,6 @@ to configure.
 
 BSD make will not build Libav, you need to install and use GNU Make
 (@file{gmake}).
-
-@subsubsection FreeBSD
-
-FreeBSD will not compile out-of-the-box due to broken system headers.
-Passing @code{--extra-cflags=-D__BSD_VISIBLE} to configure will work
-around the problem. This may have unexpected sideeffects, so use it at
-your own risk. If you care about FreeBSD, please make an attempt at
-getting the system headers fixed.
 
 @subsection (Open)Solaris
 

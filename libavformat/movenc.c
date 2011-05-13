@@ -91,6 +91,7 @@ static int mov_write_stsz_tag(AVIOContext *pb, MOVTrack *track)
     }
     if (equalChunks) {
         int sSize = track->cluster[0].size/track->cluster[0].entries;
+        sSize = FFMAX(1, sSize); // adpcm mono case could make sSize == 0
         avio_wb32(pb, sSize); // sample size
         avio_wb32(pb, entries); // sample count
     }
@@ -534,7 +535,7 @@ static int mov_write_avid_tag(AVIOContext *pb, MOVTrack *track)
     ffio_wfourcc(pb, "ACLR");
     ffio_wfourcc(pb, "ACLR");
     ffio_wfourcc(pb, "0001");
-    avio_wb32(pb, 1); /* yuv 1 / rgb 2 ? */
+    avio_wb32(pb, 2); /* yuv range: full 1 / normal 2 */
     avio_wb32(pb, 0); /* unknown */
 
     avio_wb32(pb, 24); /* size */
@@ -827,7 +828,7 @@ static int mov_write_video_tag(AVIOContext *pb, MOVTrack *track)
     memset(compressor_name,0,32);
     /* FIXME not sure, ISO 14496-1 draft where it shall be set to 0 */
     if (track->mode == MODE_MOV && track->enc->codec && track->enc->codec->name)
-        strncpy(compressor_name,track->enc->codec->name,31);
+        av_strlcpy(compressor_name,track->enc->codec->name,32);
     avio_w8(pb, strlen(compressor_name));
     avio_write(pb, compressor_name, 31);
 

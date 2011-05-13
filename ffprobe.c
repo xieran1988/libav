@@ -1,5 +1,5 @@
 /*
- * FFprobe : Simple Media Prober based on the Libav libraries
+ * ffprobe : Simple Media Prober based on the Libav libraries
  * Copyright (c) 2007-2010 Stefano Sabatini
  *
  * This file is part of Libav.
@@ -23,12 +23,12 @@
 
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
-#include "libavcodec/opt.h"
+#include "libavutil/opt.h"
 #include "libavutil/pixdesc.h"
 #include "libavdevice/avdevice.h"
 #include "cmdutils.h"
 
-const char program_name[] = "FFprobe";
+const char program_name[] = "ffprobe";
 const int program_birth_year = 2007;
 
 static int do_show_format  = 0;
@@ -285,7 +285,7 @@ static int open_input_file(AVFormatContext **fmt_ctx_ptr, const char *filename)
         AVCodec *codec;
 
         if (!(codec = avcodec_find_decoder(stream->codec->codec_id))) {
-            fprintf(stderr, "Unsupported codec (id=%d) for input stream %d\n",
+            fprintf(stderr, "Unsupported codec with id %d for input stream %d\n",
                     stream->codec->codec_id, stream->index);
         } else if (avcodec_open(stream->codec, codec) < 0) {
             fprintf(stderr, "Error while opening codec for input stream %d\n",

@@ -38,7 +38,7 @@
 #include "libavutil/parseutils.h"
 #include "libavutil/pixdesc.h"
 #include "libavutil/eval.h"
-#include "libavcodec/opt.h"
+#include "libavutil/opt.h"
 #include "cmdutils.h"
 #include "version.h"
 #if CONFIG_NETWORK
@@ -88,6 +88,7 @@ void uninit_opts(void)
     }
     av_freep(&opt_names);
     av_freep(&opt_values);
+    opt_name_count = 0;
 }
 
 void log_callback_help(void* ptr, int level, const char* fmt, va_list vl)
@@ -106,6 +107,8 @@ double parse_number_or_die(const char *context, const char *numstr, int type, do
         error= "The value for %s was %s which is not within %f - %f\n";
     else if(type == OPT_INT64 && (int64_t)d != d)
         error= "Expected int64 for %s but found %s\n";
+    else if (type == OPT_INT && (int)d != d)
+        error= "Expected int for %s but found %s\n";
     else
         return d;
     fprintf(stderr, error, context, numstr, min, max);
@@ -155,12 +158,76 @@ static const OptionDef* find_option(const OptionDef *po, const char *name){
     return po;
 }
 
+#if defined(_WIN32) && !defined(__MINGW32CE__)
+#include <windows.h>
+/* Will be leaked on exit */
+static char** win32_argv_utf8 = NULL;
+static int win32_argc = 0;
+
+/**
+ * Prepare command line arguments for executable.
+ * For Windows - perform wide-char to UTF-8 conversion.
+ * Input arguments should be main() function arguments.
+ * @param argc_ptr Arguments number (including executable)
+ * @param argv_ptr Arguments list.
+ */
+static void prepare_app_arguments(int *argc_ptr, char ***argv_ptr)
+{
+    char *argstr_flat;
+    wchar_t **argv_w;
+    int i, buffsize = 0, offset = 0;
+
+    if (win32_argv_utf8) {
+        *argc_ptr = win32_argc;
+        *argv_ptr = win32_argv_utf8;
+        return;
+    }
+
+    win32_argc = 0;
+    argv_w = CommandLineToArgvW(GetCommandLineW(), &win32_argc);
+    if (win32_argc <= 0 || !argv_w)
+        return;
+
+    /* determine the UTF-8 buffer size (including NULL-termination symbols) */
+    for (i = 0; i < win32_argc; i++)
+        buffsize += WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1,
+                                        NULL, 0, NULL, NULL);
+
+    win32_argv_utf8 = av_mallocz(sizeof(char*) * (win32_argc + 1) + buffsize);
+    argstr_flat     = (char*)win32_argv_utf8 + sizeof(char*) * (win32_argc + 1);
+    if (win32_argv_utf8 == NULL) {
+        LocalFree(argv_w);
+        return;
+    }
+
+    for (i = 0; i < win32_argc; i++) {
+        win32_argv_utf8[i] = &argstr_flat[offset];
+        offset += WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1,
+                                      &argstr_flat[offset],
+                                      buffsize - offset, NULL, NULL);
+    }
+    win32_argv_utf8[i] = NULL;
+    LocalFree(argv_w);
+
+    *argc_ptr = win32_argc;
+    *argv_ptr = win32_argv_utf8;
+}
+#else
+static inline void prepare_app_arguments(int *argc_ptr, char ***argv_ptr)
+{
+    /* nothing to do */
+}
+#endif /* WIN32 && !__MINGW32CE__ */
+
 void parse_options(int argc, char **argv, const OptionDef *options,
                    void (* parse_arg_function)(const char*))
 {
     const char *opt, *arg;
     int optindex, handleoptions=1;
     const OptionDef *po;
+
+    /* perform system-dependent conversions for arguments list */
+    prepare_app_arguments(&argc, &argv);
 
     /* parse options */
     optindex = 1;
@@ -214,8 +281,8 @@ unknown_opt:
                     fprintf(stderr, "%s: failed to set value '%s' for option '%s'\n", argv[0], arg, opt);
                     exit(1);
                 }
-            } else {
-                po->u.func_arg(arg);
+            } else if (po->u.func_arg) {
+                    po->u.func_arg(arg);
             }
             if(po->flags & OPT_EXIT)
                 exit(0);
@@ -504,16 +571,6 @@ void show_license(void)
     program_name, program_name, program_name
 #endif
     );
-}
-
-void list_fmts(void (*get_fmt_string)(char *buf, int buf_size, int fmt), int nb_fmts)
-{
-    int i;
-    char fmt_str[128];
-    for (i=-1; i < nb_fmts; i++) {
-        get_fmt_string (fmt_str, sizeof(fmt_str), i);
-        fprintf(stdout, "%s\n", fmt_str);
-    }
 }
 
 void show_formats(void)
@@ -858,6 +915,8 @@ int get_filtered_video_frame(AVFilterContext *ctx, AVFrame *frame,
     memcpy(frame->linesize, picref->linesize, sizeof(frame->linesize));
     frame->interlaced_frame = picref->video->interlaced;
     frame->top_field_first  = picref->video->top_field_first;
+    frame->key_frame        = picref->video->key_frame;
+    frame->pict_type        = picref->video->pict_type;
 
     return 1;
 }

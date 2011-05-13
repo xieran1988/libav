@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#define _SVID_SOURCE //needed for MAP_ANONYMOUS
-#define _DARWIN_C_SOURCE // needed for MAP_ANON
 #include <inttypes.h>
 #include <string.h>
 #include <math.h>
@@ -73,6 +71,8 @@ const char *swscale_license(void)
         || (x)==PIX_FMT_RGB48LE     \
         || (x)==PIX_FMT_RGB32       \
         || (x)==PIX_FMT_RGB32_1     \
+        || (x)==PIX_FMT_BGR48BE     \
+        || (x)==PIX_FMT_BGR48LE     \
         || (x)==PIX_FMT_BGR24       \
         || (x)==PIX_FMT_BGR565      \
         || (x)==PIX_FMT_BGR555      \
@@ -104,9 +104,13 @@ const char *swscale_license(void)
         || (x)==PIX_FMT_YUV440P     \
         || (x)==PIX_FMT_MONOWHITE   \
         || (x)==PIX_FMT_MONOBLACK   \
+        || (x)==PIX_FMT_YUV420P9LE    \
+        || (x)==PIX_FMT_YUV420P10LE   \
         || (x)==PIX_FMT_YUV420P16LE   \
         || (x)==PIX_FMT_YUV422P16LE   \
         || (x)==PIX_FMT_YUV444P16LE   \
+        || (x)==PIX_FMT_YUV420P9BE    \
+        || (x)==PIX_FMT_YUV420P10BE   \
         || (x)==PIX_FMT_YUV420P16BE   \
         || (x)==PIX_FMT_YUV422P16BE   \
         || (x)==PIX_FMT_YUV444P16BE   \
@@ -137,9 +141,13 @@ int sws_isSupportedInput(enum PixelFormat pix_fmt)
         || (x)==PIX_FMT_GRAY8       \
         || (x)==PIX_FMT_YUV410P     \
         || (x)==PIX_FMT_YUV440P     \
+        || (x)==PIX_FMT_YUV420P9LE    \
+        || (x)==PIX_FMT_YUV420P10LE   \
         || (x)==PIX_FMT_YUV420P16LE   \
         || (x)==PIX_FMT_YUV422P16LE   \
         || (x)==PIX_FMT_YUV444P16LE   \
+        || (x)==PIX_FMT_YUV420P9BE    \
+        || (x)==PIX_FMT_YUV420P10BE   \
         || (x)==PIX_FMT_YUV420P16BE   \
         || (x)==PIX_FMT_YUV422P16BE   \
         || (x)==PIX_FMT_YUV444P16BE   \
@@ -1439,13 +1447,6 @@ void sws_printVec2(SwsVector *a, AVClass *log_ctx, int log_level)
         av_log(log_ctx, log_level, "|\n");
     }
 }
-
-#if LIBSWSCALE_VERSION_MAJOR < 1
-void sws_printVec(SwsVector *a)
-{
-    sws_printVec2(a, NULL, AV_LOG_DEBUG);
-}
-#endif
 
 void sws_freeVec(SwsVector *a)
 {

@@ -639,7 +639,7 @@ static int is_intra_more_likely(MpegEncContext *s){
     if(undamaged_count < 5) return 0; //almost all MBs damaged -> use temporal prediction
 
     //prevent dsp.sad() check, that requires access to the image
-    if(CONFIG_MPEG_XVMC_DECODER && s->avctx->xvmc_acceleration && s->pict_type == FF_I_TYPE)
+    if(CONFIG_MPEG_XVMC_DECODER && s->avctx->xvmc_acceleration && s->pict_type == AV_PICTURE_TYPE_I)
         return 1;
 
     skip_amount= FFMAX(undamaged_count/50, 1); //check only upto 50 MBs
@@ -658,7 +658,7 @@ static int is_intra_more_likely(MpegEncContext *s){
             j++;
             if((j%skip_amount) != 0) continue; //skip a few to speed things up
 
-            if(s->pict_type==FF_I_TYPE){
+            if(s->pict_type==AV_PICTURE_TYPE_I){
                 uint8_t *mb_ptr     = s->current_picture.data[0] + mb_x*16 + mb_y*16*s->linesize;
                 uint8_t *last_mb_ptr= s->last_picture.data   [0] + mb_x*16 + mb_y*16*s->linesize;
 
@@ -786,7 +786,6 @@ void ff_er_frame_end(MpegEncContext *s){
         }
     }
 
-#if 1
     /* handle overlapping slices */
     for(error_type=1; error_type<=3; error_type++){
         int end_ok=0;
@@ -807,8 +806,7 @@ void ff_er_frame_end(MpegEncContext *s){
                 end_ok=0;
         }
     }
-#endif
-#if 1
+
     /* handle slices with partitions of different length */
     if(s->partitioned_frame){
         int end_ok=0;
@@ -829,7 +827,7 @@ void ff_er_frame_end(MpegEncContext *s){
                 end_ok=0;
         }
     }
-#endif
+
     /* handle missing slices */
     if(s->error_recognition>=4){
         int end_ok=1;
@@ -853,7 +851,6 @@ void ff_er_frame_end(MpegEncContext *s){
         }
     }
 
-#if 1
     /* backward mark errors */
     distance=9999999;
     for(error_type=1; error_type<=3; error_type++){
@@ -878,7 +875,6 @@ void ff_er_frame_end(MpegEncContext *s){
                 distance= 9999999;
         }
     }
-#endif
 
     /* forward mark errors */
     error=0;
@@ -893,7 +889,7 @@ void ff_er_frame_end(MpegEncContext *s){
             s->error_status_table[mb_xy]|= error;
         }
     }
-#if 1
+
     /* handle not partitioned case */
     if(!s->partitioned_frame){
         for(i=0; i<s->mb_num; i++){
@@ -904,7 +900,6 @@ void ff_er_frame_end(MpegEncContext *s){
             s->error_status_table[mb_xy]= error;
         }
     }
-#endif
 
     dc_error= ac_error= mv_error=0;
     for(i=0; i<s->mb_num; i++){
@@ -977,7 +972,7 @@ void ff_er_frame_end(MpegEncContext *s){
     }
 
     /* guess MVs */
-    if(s->pict_type==FF_B_TYPE){
+    if(s->pict_type==AV_PICTURE_TYPE_B){
         for(mb_y=0; mb_y<s->mb_height; mb_y++){
             for(mb_x=0; mb_x<s->mb_width; mb_x++){
                 int xy= mb_x*2 + mb_y*2*s->b8_stride;
@@ -1065,16 +1060,15 @@ void ff_er_frame_end(MpegEncContext *s){
             s->dc_val[2][mb_x + mb_y*s->mb_stride]= (dcv+4)>>3;
         }
     }
-#if 1
+
     /* guess DC for damaged blocks */
     guess_dc(s, s->dc_val[0], s->mb_width*2, s->mb_height*2, s->b8_stride, 1);
     guess_dc(s, s->dc_val[1], s->mb_width  , s->mb_height  , s->mb_stride, 0);
     guess_dc(s, s->dc_val[2], s->mb_width  , s->mb_height  , s->mb_stride, 0);
-#endif
+
     /* filter luma DC */
     filter181(s->dc_val[0], s->mb_width*2, s->mb_height*2, s->b8_stride);
 
-#if 1
     /* render DC only intra */
     for(mb_y=0; mb_y<s->mb_height; mb_y++){
         for(mb_x=0; mb_x<s->mb_width; mb_x++){
@@ -1094,7 +1088,6 @@ void ff_er_frame_end(MpegEncContext *s){
             put_dc(s, dest_y, dest_cb, dest_cr, mb_x, mb_y);
         }
     }
-#endif
 
     if(s->avctx->error_concealment&FF_EC_DEBLOCK){
         /* filter horizontal block boundaries */
@@ -1114,7 +1107,7 @@ ec_clean:
         const int mb_xy= s->mb_index2xy[i];
         int error= s->error_status_table[mb_xy];
 
-        if(s->pict_type!=FF_B_TYPE && (error&(DC_ERROR|MV_ERROR|AC_ERROR))){
+        if(s->pict_type!=AV_PICTURE_TYPE_B && (error&(DC_ERROR|MV_ERROR|AC_ERROR))){
             s->mbskip_table[mb_xy]=0;
         }
         s->mbintra_table[mb_xy]=1;
