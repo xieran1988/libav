@@ -1,0 +1,27 @@
+Author: Reinhard Tartler <siretart@tauware.de>
+Date:   Sat May 14 16:10:30 2011 +0200
+Origin: upstream, c1f54478050279663217fe5ffa4bc90f60e7030d
+
+    configure: use same CPPFLAGS in kFreeBSD as Linux
+    
+    046f081b46c8479820409cf8f530b988221bd15b reorganized the CPPFLAGS to no
+    longer add -D_POSIX_C_SOURCE unconditionally, but only on systems (e.g.,
+    glibc based ones) that require it.  As kFreeBSD uses glibc, it needs to
+    be treated similar.
+    
+    Additionally, _BSD_SOURCE is turned on to enable some additional types
+    such as caddr_t, which are normally enabled on BSD but not with glibc.
+
+	Modified configure
+Index: libav/configure
+===================================================================
+--- libav.orig/configure	2011-05-15 10:37:33.002501095 +0200
++++ libav/configure	2011-05-15 10:39:43.572501066 +0200
+@@ -2488,6 +2488,7 @@
+         enable dos_paths
+         ;;
+     gnu/kfreebsd)
++        add_cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600 -D_BSD_SOURCE
+         ;;
+     gnu)
+         ;;
