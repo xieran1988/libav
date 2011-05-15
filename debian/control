@@ -60,7 +60,8 @@ Package: ffmpeg-dbg
 Section: debug
 Priority: extra
 Architecture: any
-Depends: libav-dbg
+Depends: libav-dbg,
+ ${misc:Depends}
 Description: Debug symbols for Libav related packages
  This package contains debug data of the Libav related shared libraries.
  .
@@ -91,6 +92,7 @@ Description: Debug symbols for Libav related packages
 Package: libav-source
 Architecture: all
 Section: devel
+Depends: ${misc:Depends}
 Description: Patched Libav sources
  This package contains a tarball the source file that were used to produce
  this package, containing all modifications that have been applied inline.
@@ -101,7 +103,8 @@ Description: Patched Libav sources
 Package: ffmpeg-doc
 Section: doc
 Architecture: all
-Depends: libav-doc
+Depends: libav-doc,
+ ${misc:Depends}
 Description: Documentation of the Libav API (transitional package)
  This package contains the html doxygen documentation of the Libav API.
  .
