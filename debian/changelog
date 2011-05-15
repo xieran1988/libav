@@ -1,3 +1,12 @@
+libav (4:0.7~beta2-2) experimental; urgency=low
+
+  * refresh patches
+  * rename Tweak-doxygen-config patch
+  * add patch from upstream to fix build failure on kFreeBSD
+  * ignore quilt .pc status directory
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 15 May 2011 10:49:54 +0200
+
 libav (4:0.7~beta2-1) experimental; urgency=low
 
   [ Jonathan Nieder ]
