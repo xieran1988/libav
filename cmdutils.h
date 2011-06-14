@@ -19,11 +19,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef FFMPEG_CMDUTILS_H
-#define FFMPEG_CMDUTILS_H
+#ifndef LIBAV_CMDUTILS_H
+#define LIBAV_CMDUTILS_H
 
-#include <inttypes.h>
+#include <stdint.h>
+
 #include "libavcodec/avcodec.h"
+#include "libavfilter/avfilter.h"
 #include "libavformat/avformat.h"
 #include "libswscale/swscale.h"
 
@@ -119,16 +121,14 @@ typedef struct {
 #define OPT_INT    0x0080
 #define OPT_FLOAT  0x0100
 #define OPT_SUBTITLE 0x0200
-#define OPT_FUNC2  0x0400
-#define OPT_INT64  0x0800
-#define OPT_EXIT   0x1000
-#define OPT_DATA   0x2000
+#define OPT_INT64  0x0400
+#define OPT_EXIT   0x0800
+#define OPT_DATA   0x1000
      union {
-        void (*func_arg)(const char *); //FIXME passing error code as int return would be nicer then exit() in the func
         int *int_arg;
         char **str_arg;
         float *float_arg;
-        int (*func2_arg)(const char *, const char *);
+        int (*func_arg)(const char *, const char *);
         int64_t *int64_arg;
     } u;
     const char *help;
@@ -278,9 +278,6 @@ int64_t guess_correct_pts(PtsCorrectionContext *ctx, int64_t pts, int64_t dts);
 FILE *get_preset_file(char *filename, size_t filename_size,
                       const char *preset_name, int is_path, const char *codec_name);
 
-#if CONFIG_AVFILTER
-#include "libavfilter/avfilter.h"
-
 typedef struct {
     enum PixelFormat pix_fmt;
 } FFSinkContext;
@@ -296,6 +293,4 @@ extern AVFilter ffsink;
 int get_filtered_video_frame(AVFilterContext *sink, AVFrame *frame,
                              AVFilterBufferRef **picref, AVRational *pts_tb);
 
-#endif /* CONFIG_AVFILTER */
-
-#endif /* FFMPEG_CMDUTILS_H */
+#endif /* LIBAV_CMDUTILS_H */

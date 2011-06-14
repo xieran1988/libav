@@ -35,6 +35,7 @@
 #include "mpeg4video_parser.h"
 #include "msmpeg4.h"
 #include "vdpau_internal.h"
+#include "thread.h"
 #include "flv.h"
 #include "mpeg4video.h"
 
@@ -69,33 +70,27 @@ av_cold int ff_h263_decode_init(AVCodecContext *avctx)
     case CODEC_ID_MPEG4:
         break;
     case CODEC_ID_MSMPEG4V1:
-        s->h263_msmpeg4 = 1;
         s->h263_pred = 1;
         s->msmpeg4_version=1;
         break;
     case CODEC_ID_MSMPEG4V2:
-        s->h263_msmpeg4 = 1;
         s->h263_pred = 1;
         s->msmpeg4_version=2;
         break;
     case CODEC_ID_MSMPEG4V3:
-        s->h263_msmpeg4 = 1;
         s->h263_pred = 1;
         s->msmpeg4_version=3;
         break;
     case CODEC_ID_WMV1:
-        s->h263_msmpeg4 = 1;
         s->h263_pred = 1;
         s->msmpeg4_version=4;
         break;
     case CODEC_ID_WMV2:
-        s->h263_msmpeg4 = 1;
         s->h263_pred = 1;
         s->msmpeg4_version=5;
         break;
     case CODEC_ID_VC1:
     case CODEC_ID_WMV3:
-        s->h263_msmpeg4 = 1;
         s->h263_pred = 1;
         s->msmpeg4_version=6;
         avctx->chroma_sample_location = AVCHROMA_LOC_LEFT;
@@ -235,6 +230,7 @@ static int decode_slice(MpegEncContext *s){
                     if(++s->mb_x >= s->mb_width){
                         s->mb_x=0;
                         ff_draw_horiz_band(s, s->mb_y*mb_size, mb_size);
+                        MPV_report_decode_progress(s);
                         s->mb_y++;
                     }
                     return 0;
@@ -255,6 +251,7 @@ static int decode_slice(MpegEncContext *s){
         }
 
         ff_draw_horiz_band(s, s->mb_y*mb_size, mb_size);
+        MPV_report_decode_progress(s);
 
         s->mb_x= 0;
     }
@@ -615,6 +612,8 @@ retry:
     if(MPV_frame_start(s, avctx) < 0)
         return -1;
 
+    if (!s->divx_packed) ff_thread_finish_setup(avctx);
+
     if (CONFIG_MPEG4_VDPAU_DECODER && (s->avctx->codec->capabilities & CODEC_CAP_HWACCEL_VDPAU)) {
         ff_vdpau_mpeg4_decode_picture(s, s->gb.buffer, s->gb.buffer_end - s->gb.buffer);
         goto frame_end;
@@ -645,8 +644,11 @@ retry:
             if(s->slice_height==0 || s->mb_x!=0 || (s->mb_y%s->slice_height)!=0 || get_bits_count(&s->gb) > s->gb.size_in_bits)
                 break;
         }else{
+            int prev_x=s->mb_x, prev_y=s->mb_y;
             if(ff_h263_resync(s)<0)
                 break;
+            if (prev_y * s->mb_width + prev_x < s->mb_y * s->mb_width + s->mb_x)
+                s->error_occurred = 1;
         }
 
         if(s->msmpeg4_version<4 && s->h263_pred)
@@ -655,7 +657,7 @@ retry:
         decode_slice(s);
     }
 
-    if (s->h263_msmpeg4 && s->msmpeg4_version<4 && s->pict_type==AV_PICTURE_TYPE_I)
+    if (s->msmpeg4_version && s->msmpeg4_version<4 && s->pict_type==AV_PICTURE_TYPE_I)
         if(!CONFIG_MSMPEG4_DECODER || msmpeg4_decode_ext_header(s, buf_size) < 0){
             s->error_status_table[s->mb_num-1]= AC_ERROR|DC_ERROR|MV_ERROR;
         }

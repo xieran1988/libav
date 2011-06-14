@@ -147,7 +147,7 @@ void avcodec_register_all(void)
     REGISTER_DECODER (MPEGVIDEO, mpegvideo);
     REGISTER_DECODER (MPEG_VDPAU, mpeg_vdpau);
     REGISTER_DECODER (MPEG1_VDPAU, mpeg1_vdpau);
-    REGISTER_ENCDEC  (MSMPEG4V1, msmpeg4v1);
+    REGISTER_DECODER (MSMPEG4V1, msmpeg4v1);
     REGISTER_ENCDEC  (MSMPEG4V2, msmpeg4v2);
     REGISTER_ENCDEC  (MSMPEG4V3, msmpeg4v3);
     REGISTER_DECODER (MSRLE, msrle);
@@ -241,7 +241,7 @@ void avcodec_register_all(void)
     REGISTER_DECODER (COOK, cook);
     REGISTER_DECODER (DCA, dca);
     REGISTER_DECODER (DSICINAUDIO, dsicinaudio);
-    REGISTER_DECODER (EAC3, eac3);
+    REGISTER_ENCDEC  (EAC3, eac3);
     REGISTER_ENCDEC  (FLAC, flac);
     REGISTER_DECODER (GSM, gsm);
     REGISTER_DECODER (GSM_MS, gsm_ms);

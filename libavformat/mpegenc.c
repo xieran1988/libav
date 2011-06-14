@@ -25,7 +25,6 @@
 #include "mpeg.h"
 
 #define MAX_PAYLOAD_SIZE 4096
-//#define DEBUG_SEEK
 
 #undef NDEBUG
 #include <assert.h>
@@ -1075,7 +1074,7 @@ retry:
                 best_dts= pkt_desc->dts;
         }
 
-        av_dlog(ctx, AV_LOG_DEBUG, "bumping scr, scr:%f, dts:%f\n",
+        av_dlog(ctx, "bumping scr, scr:%f, dts:%f\n",
                 scr / 90000.0, best_dts / 90000.0);
         if(best_dts == INT64_MAX)
             return 0;

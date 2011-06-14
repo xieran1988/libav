@@ -106,8 +106,8 @@ Configuration options:
   --disable-lpc            disable LPC code
   --disable-mdct           disable MDCT code
   --disable-rdft           disable RDFT code
-  --disable-vaapi          disable VAAPI code
-  --disable-vdpau          disable VDPAU code
+  --enable-vaapi           enable VAAPI code
+  --enable-vdpau           enable VDPAU code
   --disable-dxva2          disable DXVA2 code
   --enable-runtime-cpudetect detect cpu capabilities at runtime (bigger binary)
   --enable-hardcoded-tables use hardcoded tables instead of runtime generation
@@ -191,7 +191,6 @@ External library support:
   --enable-zlib            enable zlib [autodetect]
 
 Advanced options (experts only):
-  --source-path=PATH       path to source code [$source_path]
   --cross-prefix=PREFIX    use PREFIX for compilation tools [$cross_prefix]
   --enable-cross-compile   assume a cross-compiler is used
   --sysroot=PATH           root of cross-build tree
@@ -952,6 +951,7 @@ CONFIG_LIST="
     mdct
     memalign_hack
     mlib
+    mpegaudiodsp
     network
     nonfree
     pic
@@ -1019,6 +1019,7 @@ ARCH_EXT_LIST='
     ppc4xx
     sse
     ssse3
+    vfpv3
     vis
 '
 
@@ -1069,7 +1070,6 @@ HAVE_LIST="
     inet_aton
     inline_asm
     isatty
-    kbhit
     ldbrx
     libdc1394_1
     libdc1394_2
@@ -1183,7 +1183,6 @@ CMDLINE_SET="
     nm
     pkg_config
     samples
-    source_path
     sysinclude
     sysroot
     target_exec
@@ -1205,6 +1204,7 @@ armv6t2_deps="arm"
 armvfp_deps="arm"
 iwmmxt_deps="arm"
 neon_deps="arm"
+vfpv3_deps="armvfp"
 
 mmi_deps="mips"
 
@@ -1236,6 +1236,7 @@ symver_if_any="symver_asm_label symver_gnu_asm"
 dct_select="rdft"
 mdct_select="fft"
 rdft_select="fft"
+mpegaudiodsp_select="dct"
 
 # decoders / encoders / hardware accelerators
 aac_decoder_select="mdct sinewin"
@@ -1258,6 +1259,7 @@ dca_decoder_select="mdct"
 dnxhd_encoder_select="aandct"
 dxa_decoder_select="zlib"
 eac3_decoder_select="ac3_decoder"
+eac3_encoder_select="mdct ac3dsp"
 eamad_decoder_select="aandct"
 eatgq_decoder_select="aandct"
 eatqi_decoder_select="aandct"
@@ -1287,11 +1289,16 @@ ljpeg_encoder_select="aandct"
 loco_decoder_select="golomb"
 mjpeg_encoder_select="aandct"
 mlp_decoder_select="mlp_parser"
-mp1float_decoder_select="dct"
-mp2float_decoder_select="dct"
-mp3adufloat_decoder_select="dct"
-mp3float_decoder_select="dct"
-mp3on4float_decoder_select="dct"
+mp1_decoder_select="mpegaudiodsp"
+mp2_decoder_select="mpegaudiodsp"
+mp3adu_decoder_select="mpegaudiodsp"
+mp3_decoder_select="mpegaudiodsp"
+mp3on4_decoder_select="mpegaudiodsp"
+mp1float_decoder_select="mpegaudiodsp"
+mp2float_decoder_select="mpegaudiodsp"
+mp3adufloat_decoder_select="mpegaudiodsp"
+mp3float_decoder_select="mpegaudiodsp"
+mp3on4float_decoder_select="mpegaudiodsp"
 mpeg1video_encoder_select="aandct"
 mpeg2video_encoder_select="aandct"
 mpeg4_decoder_select="h263_decoder mpeg4video_parser"
@@ -1316,7 +1323,7 @@ nellymoser_encoder_select="mdct sinewin"
 png_decoder_select="zlib"
 png_encoder_select="zlib"
 qcelp_decoder_select="lsp"
-qdm2_decoder_select="mdct rdft"
+qdm2_decoder_select="mdct rdft mpegaudiodsp"
 ra_144_encoder_select="lpc"
 rv10_decoder_select="h263_decoder"
 rv10_encoder_select="h263_encoder"
@@ -1666,7 +1673,7 @@ LIB_INSTALL_EXTRA_CMD='$$(RANLIB) "$(LIBDIR)/$(LIBNAME)"'
 
 CC_O='-o $@'
 
-host_cflags='-D_ISOC99_SOURCE -O3 -g -Wall'
+host_cflags='-D_ISOC99_SOURCE -O3 -g'
 host_libs='-lm'
 
 target_path='$(CURDIR)'
@@ -1677,13 +1684,12 @@ DEPEND_CMD='$(DEPCC) $(DEPFLAGS) $< | sed -e "/^\#.*/d" -e "s,^[[:space:]]*$(*F)
 DEPFLAGS='$(CPPFLAGS) $(CFLAGS) -MM'
 
 # find source path
-source_path="$(dirname "$0")"
-enable source_path_used
 if test -f configure; then
     source_path="$(pwd)"
     disable source_path_used
 else
-    source_path="$(cd "$source_path"; pwd)"
+    source_path=$(cd $(dirname "$0"); pwd)
+    enable source_path_used
     echo "$source_path" | grep -q '[[:blank:]]' &&
         die "Out of tree builds are impossible with whitespace in source path."
     test -e "$source_path/config.h" &&
@@ -2328,6 +2334,7 @@ check_cc -D_LARGEFILE_SOURCE <<EOF && add_cppflags -D_LARGEFILE_SOURCE
 EOF
 
 check_host_cflags -std=c99
+check_host_cflags -Wall
 
 case "$arch" in
     alpha|ia64|mips|parisc|sparc)
@@ -2451,11 +2458,13 @@ case $target_os in
         objformat="win32"
         enable dos_paths
         check_cflags -fno-common
+        add_cppflags -U__STRICT_ANSI__
         ;;
     *-dos|freedos|opendos)
         network_extralibs="-lsocket"
         objformat="coff"
         enable dos_paths
+        add_cppflags -U__STRICT_ANSI__
         ;;
     linux)
         add_cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
@@ -2467,6 +2476,8 @@ case $target_os in
         ;;
     os/2*)
         ln_s="cp -f"
+        objformat="aout"
+        add_cppflags -D_GNU_SOURCE
         add_ldflags -Zomf -Zbin-files -Zargs-wild -Zmap
         SHFLAGS='$(SUBDIR)$(NAME).def -Zdll -Zomf'
         FFSERVERLDFLAGS=""
@@ -2488,6 +2499,7 @@ case $target_os in
         enable dos_paths
         ;;
     gnu/kfreebsd)
+        add_cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600 -D_BSD_SOURCE
         ;;
     gnu)
         ;;
@@ -2616,6 +2628,7 @@ EOF
     enabled armvfp  && check_asm armvfp  '"fadds s0, s0, s0"'
     enabled iwmmxt  && check_asm iwmmxt  '"wunpckelub wr6, wr4"'
     enabled neon    && check_asm neon    '"vadd.i16 q0, q0, q0"'
+    enabled vfpv3   && check_asm vfpv3   '"vmov.f32 s0, #1.0"'
 
     enabled_all armv6t2 shared !pic && enable_pic
 
@@ -2722,7 +2735,7 @@ EOF
 
         check_yasm "pextrd [eax], xmm0, 1" && enable yasm ||
             die "yasm not found, use --disable-yasm for a crippled build"
-        check_yasm "vpaddw xmm0, xmm0, xmm0" || disable avx
+        check_yasm "vextractf128 xmm0, ymm0, 0" || disable avx
     fi
 
     case "$cpu" in
@@ -2792,7 +2805,6 @@ check_func  ${malloc_prefix}posix_memalign      && enable posix_memalign
 check_func  setrlimit
 check_func  strerror_r
 check_func  strtok_r
-check_func_headers conio.h kbhit
 check_func_headers io.h setmode
 check_func_headers lzo/lzo1x.h lzo1x_999_compress
 check_lib2 "windows.h psapi.h" GetProcessMemoryInfo -lpsapi
@@ -2812,11 +2824,6 @@ check_header vdpau/vdpau_x11.h
 check_header X11/extensions/XvMClib.h
 
 check_struct dxva2api.h DXVA_PictureParameters wDecodedPictureIndex
-
-if ! enabled_any memalign memalign_hack posix_memalign malloc_aligned &&
-     enabled_any $need_memalign ; then
-    die "Error, no aligned memory allocator but SSE enabled, disable it or use --enable-memalign-hack."
-fi
 
 disabled  zlib || check_lib   zlib.h      zlibVersion -lz   || disable  zlib
 disabled bzlib || check_lib2 bzlib.h BZ2_bzlibVersion -lbz2 || disable bzlib
@@ -2892,8 +2899,8 @@ enabled libvpx     && {
     enabled libvpx_encoder && { check_lib2 "vpx/vpx_encoder.h vpx/vp8cx.h" vpx_codec_enc_init_ver -lvpx ||
                                 die "ERROR: libvpx encoder version must be >=0.9.1"; } }
 enabled libx264    && require  libx264 x264.h x264_encoder_encode -lx264 &&
-                      { check_cpp_condition x264.h "X264_BUILD >= 99" ||
-                        die "ERROR: libx264 version must be >= 0.99."; }
+                      { check_cpp_condition x264.h "X264_BUILD >= 115" ||
+                        die "ERROR: libx264 version must be >= 0.115."; }
 enabled libxavs    && require  libxavs xavs.h xavs_encoder_encode -lxavs
 enabled libxvid    && require  libxvid xvid.h xvid_global -lxvidcore
 enabled mlib       && require  mediaLib mlib_types.h mlib_VectorSub_S16_U8_Mod -lmlib
@@ -2979,7 +2986,7 @@ enabled extra_warnings && check_cflags -Winline
 
 # add some linker flags
 check_ldflags -Wl,--warn-common
-check_ldflags '-Wl,-rpath-link,\$(BUILD_ROOT)/libpostproc -Wl,-rpath-link,\$(BUILD_ROOT)/libswscale -Wl,-rpath-link,\$(BUILD_ROOT)/libavfilter -Wl,-rpath-link,\$(BUILD_ROOT)/libavdevice -Wl,-rpath-link,\$(BUILD_ROOT)/libavformat -Wl,-rpath-link,\$(BUILD_ROOT)/libavcodec -Wl,-rpath-link,\$(BUILD_ROOT)/libavutil'
+check_ldflags -Wl,-rpath-link,libpostproc -Wl,-rpath-link,libswscale -Wl,-rpath-link,libavfilter -Wl,-rpath-link,libavdevice -Wl,-rpath-link,libavformat -Wl,-rpath-link,libavcodec -Wl,-rpath-link,libavutil
 test_ldflags -Wl,-Bsymbolic && append SHFLAGS -Wl,-Bsymbolic
 
 echo "X{};" > $TMPV
@@ -3081,6 +3088,9 @@ check_deps $CONFIG_LIST       \
 
 enabled asm || { arch=c; disable $ARCH_LIST $ARCH_EXT_LIST; }
 
+! enabled_any memalign posix_memalign malloc_aligned &&
+    enabled_any $need_memalign && enable memalign_hack
+
 echo "install prefix            $prefix"
 echo "source path               $source_path"
 echo "C compiler                $cc"
@@ -3094,13 +3104,14 @@ fi
 echo "big-endian                ${bigendian-no}"
 echo "runtime cpu detection     ${runtime_cpudetect-no}"
 if enabled x86; then
-    echo "yasm                      ${yasm-no}"
+    echo "${yasmexe}                      ${yasm-no}"
     echo "MMX enabled               ${mmx-no}"
     echo "MMX2 enabled              ${mmx2-no}"
     echo "3DNow! enabled            ${amd3dnow-no}"
     echo "3DNow! extended enabled   ${amd3dnowext-no}"
     echo "SSE enabled               ${sse-no}"
     echo "SSSE3 enabled             ${ssse3-no}"
+    echo "AVX enabled               ${avx-no}"
     echo "CMOV enabled              ${cmov-no}"
     echo "CMOV is fast              ${fast_cmov-no}"
     echo "EBX available             ${ebx_available-no}"
@@ -3239,7 +3250,6 @@ DATADIR=\$(DESTDIR)$datadir
 MANDIR=\$(DESTDIR)$mandir
 SRC_PATH="$source_path"
 SRC_PATH_BARE=$source_path
-BUILD_ROOT="$PWD"
 CC_IDENT=$cc_ident
 ARCH=$arch
 CC=$cc

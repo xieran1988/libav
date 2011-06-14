@@ -36,6 +36,7 @@
 #include "libavformat/avio_internal.h"
 #include "libavutil/avstring.h"
 #include "libavutil/lfg.h"
+#include "libavutil/dict.h"
 #include "libavutil/random_seed.h"
 #include "libavutil/parseutils.h"
 #include "libavutil/opt.h"
@@ -854,7 +855,7 @@ static void close_connection(HTTPContext *c)
         ctx = c->rtp_ctx[i];
         if (ctx) {
             av_write_trailer(ctx);
-            av_metadata_free(&ctx->metadata);
+            av_dict_free(&ctx->metadata);
             av_free(ctx->streams[0]);
             av_free(ctx);
         }
@@ -1760,7 +1761,7 @@ static int http_parse_request(HTTPContext *c)
                 }
             }
 
-#ifdef DEBUG_WMP
+#ifdef DEBUG
             http_log("\nGot request:\n%s\n", c->buffer);
 #endif
 
@@ -1790,7 +1791,7 @@ static int http_parse_request(HTTPContext *c)
         return 0;
     }
 
-#ifdef DEBUG_WMP
+#ifdef DEBUG
     if (strcmp(stream->filename + strlen(stream->filename) - 4, ".asf") == 0)
         http_log("\nGot request:\n%s\n", c->buffer);
 #endif
@@ -2224,16 +2225,16 @@ static int http_prepare_data(HTTPContext *c)
     switch(c->state) {
     case HTTPSTATE_SEND_DATA_HEADER:
         memset(&c->fmt_ctx, 0, sizeof(c->fmt_ctx));
-        av_metadata_set2(&c->fmt_ctx.metadata, "author"   , c->stream->author   , 0);
-        av_metadata_set2(&c->fmt_ctx.metadata, "comment"  , c->stream->comment  , 0);
-        av_metadata_set2(&c->fmt_ctx.metadata, "copyright", c->stream->copyright, 0);
-        av_metadata_set2(&c->fmt_ctx.metadata, "title"    , c->stream->title    , 0);
+        av_dict_set(&c->fmt_ctx.metadata, "author"   , c->stream->author   , 0);
+        av_dict_set(&c->fmt_ctx.metadata, "comment"  , c->stream->comment  , 0);
+        av_dict_set(&c->fmt_ctx.metadata, "copyright", c->stream->copyright, 0);
+        av_dict_set(&c->fmt_ctx.metadata, "title"    , c->stream->title    , 0);
+
+        c->fmt_ctx.streams = av_mallocz(sizeof(AVStream *) * c->stream->nb_streams);
 
         for(i=0;i<c->stream->nb_streams;i++) {
-            AVStream *st;
             AVStream *src;
-            st = av_mallocz(sizeof(AVStream));
-            c->fmt_ctx.streams[i] = st;
+            c->fmt_ctx.streams[i] = av_mallocz(sizeof(AVStream));
             /* if file or feed, then just take streams from FFStream struct */
             if (!c->stream->feed ||
                 c->stream->feed == c->stream)
@@ -2241,9 +2242,9 @@ static int http_prepare_data(HTTPContext *c)
             else
                 src = c->stream->feed->streams[c->stream->feed_streams[i]];
 
-            *st = *src;
-            st->priv_data = 0;
-            st->codec->frame_number = 0; /* XXX: should be done in
+            *(c->fmt_ctx.streams[i]) = *src;
+            c->fmt_ctx.streams[i]->priv_data = 0;
+            c->fmt_ctx.streams[i]->codec->frame_number = 0; /* XXX: should be done in
                                            AVStream, not in codec */
         }
         /* set output format parameters */
@@ -2272,7 +2273,7 @@ static int http_prepare_data(HTTPContext *c)
             http_log("Error writing output header\n");
             return -1;
         }
-        av_metadata_free(&c->fmt_ctx.metadata);
+        av_dict_free(&c->fmt_ctx.metadata);
 
         len = avio_close_dyn_buf(c->fmt_ctx.pb, &c->pb_buffer);
         c->buffer_ptr = c->pb_buffer;
@@ -2927,8 +2928,8 @@ static int prepare_sdp_description(FFStream *stream, uint8_t **pbuffer,
     if (avc == NULL) {
         return -1;
     }
-    av_metadata_set2(&avc->metadata, "title",
-                     stream->title[0] ? stream->title : "No Title", 0);
+    av_dict_set(&avc->metadata, "title",
+               stream->title[0] ? stream->title : "No Title", 0);
     avc->nb_streams = stream->nb_streams;
     if (stream->is_multicast) {
         snprintf(avc->filename, 1024, "rtp://%s:%d?multicast=1?ttl=%d",
@@ -2954,7 +2955,7 @@ static int prepare_sdp_description(FFStream *stream, uint8_t **pbuffer,
 
  sdp_done:
     av_free(avc->streams);
-    av_metadata_free(&avc->metadata);
+    av_dict_free(&avc->metadata);
     av_free(avc);
     av_free(avs);
 
@@ -3274,7 +3275,6 @@ static void rtsp_cmd_pause(HTTPContext *c, const char *url, RTSPMessageHeader *h
 static void rtsp_cmd_teardown(HTTPContext *c, const char *url, RTSPMessageHeader *h)
 {
     HTTPContext *rtp_c;
-    char session_id[32];
 
     rtp_c = find_rtp_session_with_url(url, h->session_id);
     if (!rtp_c) {
@@ -3282,16 +3282,14 @@ static void rtsp_cmd_teardown(HTTPContext *c, const char *url, RTSPMessageHeader
         return;
     }
 
-    av_strlcpy(session_id, rtp_c->session_id, sizeof(session_id));
-
-    /* abort the session */
-    close_connection(rtp_c);
-
     /* now everything is OK, so we can send the connection parameters */
     rtsp_reply_header(c, RTSP_STATUS_OK);
     /* session ID */
-    avio_printf(c->pb, "Session: %s\r\n", session_id);
+    avio_printf(c->pb, "Session: %s\r\n", rtp_c->session_id);
     avio_printf(c->pb, "\r\n");
+
+    /* abort the session */
+    close_connection(rtp_c);
 }
 
 
@@ -3385,6 +3383,9 @@ static int rtp_new_av_stream(HTTPContext *c,
     if (!st)
         goto fail;
     ctx->nb_streams = 1;
+    ctx->streams = av_mallocz(sizeof(AVStream *) * ctx->nb_streams);
+    if (!ctx->streams)
+      goto fail;
     ctx->streams[0] = st;
 
     if (!c->stream->feed ||
@@ -3765,11 +3766,7 @@ static void build_feed_streams(void)
             }
             s->oformat = feed->fmt;
             s->nb_streams = feed->nb_streams;
-            for(i=0;i<s->nb_streams;i++) {
-                AVStream *st;
-                st = feed->streams[i];
-                s->streams[i] = st;
-            }
+            s->streams = feed->streams;
             av_set_parameters(s, NULL);
             if (av_write_header(s) < 0) {
                 http_log("Container doesn't supports the required parameters\n");
