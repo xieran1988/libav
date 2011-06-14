@@ -1,3 +1,12 @@
+libav (4:0.7~rc1-1) experimental; urgency=low
+
+  * New upstream version
+  * Bug fix: "Please add ffmpeg-mt for multithreading support", branch has
+    been finally merged now upstream properly (Closes: #575600).
+  * remove 02-Fix-kfreeBSD-FTBFS.patch, applied upstream
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 14 Jun 2011 22:03:36 +0200
+
 libav (4:0.7~beta2-2) experimental; urgency=low
 
   * refresh patches
