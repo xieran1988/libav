@@ -21,7 +21,7 @@
 ;*
 ;* You should have received a copy of the GNU Lesser General Public
 ;* License along with Libav; if not, write to the Free Software
-;* 51, Inc., Foundation Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+;* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 ;******************************************************************************
 
 %include "x86inc.asm"
@@ -836,6 +836,13 @@ DEBLOCK_LUMA_INTRA avx
     mova [r0+2*r1], m2
 %endmacro
 
+%macro CHROMA_V_LOAD_TC 2
+    movd        %1, [%2]
+    punpcklbw   %1, %1
+    punpcklwd   %1, %1
+    psraw       %1, 6
+%endmacro
+
 %macro DEBLOCK_CHROMA 1
 ;-----------------------------------------------------------------------------
 ; void deblock_v_chroma( uint16_t *pix, int stride, int alpha, int beta, int8_t *tc0 )
@@ -854,7 +861,7 @@ cglobal deblock_v_chroma_10_%1, 5,7-(mmsize/16),8*(mmsize/16)
     LOAD_AB     m4, m5, r2, r3
     LOAD_MASK   m0, m1, m2, m3, m4, m5, m7, m6, m4
     pxor        m4, m4
-    LOAD_TC     m6, r4
+    CHROMA_V_LOAD_TC m6, r4
     psubw       m6, [pw_3]
     pmaxsw      m6, m4
     pand        m7, m6

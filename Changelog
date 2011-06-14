@@ -4,10 +4,21 @@ releases are sorted from youngest to oldest.
 
 version <next>:
 
+- E-AC-3 audio encoder
+- ac3enc: add channel coupling support
+- floating-point sample format support to the ac3, eac3, dca, aac, and vorbis decoders.
+- H264/MPEG frame-level multi-threading
+- All av_metadata_* functions renamed to av_dict_* and moved to libavutil
+
+
+version 0.7_beta2:
+
 - Lots of deprecated API cruft removed
 - fft and imdct optimizations for AVX (Sandy Bridge) processors
 - DPX image encoder
 - SMPTE 302M AES3 audio decoder
+- Remove support for quitting ffmpeg with 'q', ctrl+c should be used.
+- 9bit and 10bit per sample support in the h264 decoder
 
 
 version 0.7_beta1:

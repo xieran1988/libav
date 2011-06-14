@@ -544,11 +544,11 @@ static void compute_bit_allocation(MpegAudioContext *s,
                 }
             }
         }
-        av_dlog(NULL, "current=%d max=%d max_sb=%d alloc=%d\n",
-                current_frame_size, max_frame_size, max_sb,
-                bit_alloc[max_sb]);
         if (max_sb < 0)
             break;
+        av_dlog(NULL, "current=%d max=%d max_sb=%d max_ch=%d alloc=%d\n",
+                current_frame_size, max_frame_size, max_sb, max_ch,
+                bit_alloc[max_ch][max_sb]);
 
         /* find alloc table entry (XXX: not optimal, should use
            pointer table) */
@@ -776,5 +776,3 @@ AVCodec ff_mp2_encoder = {
     .supported_samplerates= (const int[]){44100, 48000,  32000, 22050, 24000, 16000, 0},
     .long_name = NULL_IF_CONFIG_SMALL("MP2 (MPEG audio layer 2)"),
 };
-
-#undef FIX

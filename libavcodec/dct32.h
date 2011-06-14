@@ -1,7 +1,4 @@
 /*
- * G.729 decoder
- * Copyright (c) 2008 Vladimir Voroshilov
- *
  * This file is part of Libav.
  *
  * Libav is free software; you can redistribute it and/or
@@ -18,12 +15,11 @@
  * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#ifndef AVCODEC_G729_H
-#define AVCODEC_G729_H
 
-/**
- * subframe size
- */
-#define SUBFRAME_SIZE 40
+#ifndef AVCODEC_DCT32_H
+#define AVCODEC_DCT32_H
 
-#endif // AVCODEC_G729_H
+void ff_dct32_float(float *dst, const float *src);
+void ff_dct32_fixed(int *dst, const int *src);
+
+#endif

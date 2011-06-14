@@ -42,6 +42,7 @@
 #include "libavutil/intreadwrite.h"
 #include "libavutil/avstring.h"
 #include "libavutil/lzo.h"
+#include "libavutil/dict.h"
 #if CONFIG_ZLIB
 #include <zlib.h>
 #endif
@@ -127,6 +128,7 @@ typedef struct {
     int      sub_packet_size;
     int      sub_packet_cnt;
     int      pkt_cnt;
+    uint64_t buf_timecode;
     uint8_t *buf;
 } MatroskaTrackAudio;
 
@@ -1043,7 +1045,7 @@ static void matroska_merge_packets(AVPacket *out, AVPacket *in)
 }
 
 static void matroska_convert_tag(AVFormatContext *s, EbmlList *list,
-                                 AVMetadata **metadata, char *prefix)
+                                 AVDictionary **metadata, char *prefix)
 {
     MatroskaTag *tags = list->elem;
     char key[1024];
@@ -1059,14 +1061,14 @@ static void matroska_convert_tag(AVFormatContext *s, EbmlList *list,
         if (prefix)  snprintf(key, sizeof(key), "%s/%s", prefix, tags[i].name);
         else         av_strlcpy(key, tags[i].name, sizeof(key));
         if (tags[i].def || !lang) {
-        av_metadata_set2(metadata, key, tags[i].string, 0);
+        av_dict_set(metadata, key, tags[i].string, 0);
         if (tags[i].sub.nb_elem)
             matroska_convert_tag(s, &tags[i].sub, metadata, key);
         }
         if (lang) {
             av_strlcat(key, "-", sizeof(key));
             av_strlcat(key, lang, sizeof(key));
-            av_metadata_set2(metadata, key, tags[i].string, 0);
+            av_dict_set(metadata, key, tags[i].string, 0);
             if (tags[i].sub.nb_elem)
                 matroska_convert_tag(s, &tags[i].sub, metadata, key);
         }
@@ -1084,19 +1086,21 @@ static void matroska_convert_tags(AVFormatContext *s)
         if (tags[i].target.attachuid) {
             MatroskaAttachement *attachment = matroska->attachments.elem;
             for (j=0; j<matroska->attachments.nb_elem; j++)
-                if (attachment[j].uid == tags[i].target.attachuid)
+                if (attachment[j].uid == tags[i].target.attachuid
+                    && attachment[j].stream)
                     matroska_convert_tag(s, &tags[i].tag,
                                          &attachment[j].stream->metadata, NULL);
         } else if (tags[i].target.chapteruid) {
             MatroskaChapter *chapter = matroska->chapters.elem;
             for (j=0; j<matroska->chapters.nb_elem; j++)
-                if (chapter[j].uid == tags[i].target.chapteruid)
+                if (chapter[j].uid == tags[i].target.chapteruid
+                    && chapter[j].chapter)
                     matroska_convert_tag(s, &tags[i].tag,
                                          &chapter[j].chapter->metadata, NULL);
         } else if (tags[i].target.trackuid) {
             MatroskaTrack *track = matroska->tracks.elem;
             for (j=0; j<matroska->tracks.nb_elem; j++)
-                if (track[j].uid == tags[i].target.trackuid)
+                if (track[j].uid == tags[i].target.trackuid && track[j].stream)
                     matroska_convert_tag(s, &tags[i].tag,
                                          &track[j].stream->metadata, NULL);
         } else {
@@ -1232,7 +1236,7 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
     if (matroska->duration)
         matroska->ctx->duration = matroska->duration * matroska->time_scale
                                   * 1000 / AV_TIME_BASE;
-    av_metadata_set2(&s->metadata, "title", matroska->title, 0);
+    av_dict_set(&s->metadata, "title", matroska->title, 0);
 
     tracks = matroska->tracks.elem;
     for (i=0; i < matroska->tracks.nb_elem; i++) {
@@ -1430,8 +1434,8 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
         st->codec->codec_id = codec_id;
         st->start_time = 0;
         if (strcmp(track->language, "und"))
-            av_metadata_set2(&st->metadata, "language", track->language, 0);
-        av_metadata_set2(&st->metadata, "title", track->name, 0);
+            av_dict_set(&st->metadata, "language", track->language, 0);
+        av_dict_set(&st->metadata, "title", track->name, 0);
 
         if (track->flag_default)
             st->disposition |= AV_DISPOSITION_DEFAULT;
@@ -1492,7 +1496,7 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
             AVStream *st = av_new_stream(s, 0);
             if (st == NULL)
                 break;
-            av_metadata_set2(&st->metadata, "filename",attachements[j].filename, 0);
+            av_dict_set(&st->metadata, "filename",attachements[j].filename, 0);
             st->codec->codec_id = CODEC_ID_NONE;
             st->codec->codec_type = AVMEDIA_TYPE_ATTACHMENT;
             st->codec->extradata  = av_malloc(attachements[j].bin.size);
@@ -1520,7 +1524,7 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
             ff_new_chapter(s, chapters[i].uid, (AVRational){1, 1000000000},
                            chapters[i].start, chapters[i].end,
                            chapters[i].title);
-            av_metadata_set2(&chapters[i].chapter->metadata,
+            av_dict_set(&chapters[i].chapter->metadata,
                              "title", chapters[i].title, 0);
             max_start = chapters[i].start;
         }
@@ -1743,6 +1747,8 @@ static int matroska_parse_block(MatroskaDemuxContext *matroska, uint8_t *data,
                 int x;
 
                 if (!track->audio.pkt_cnt) {
+                    if (track->audio.sub_packet_cnt == 0)
+                        track->audio.buf_timecode = timecode;
                     if (st->codec->codec_id == CODEC_ID_RA_288)
                         for (x=0; x<h/2; x++)
                             memcpy(track->audio.buf+x*2*w+y*cfs,
@@ -1765,6 +1771,8 @@ static int matroska_parse_block(MatroskaDemuxContext *matroska, uint8_t *data,
                     av_new_packet(pkt, a);
                     memcpy(pkt->data, track->audio.buf
                            + a * (h*w / a - track->audio.pkt_cnt--), a);
+                    pkt->pts = track->audio.buf_timecode;
+                    track->audio.buf_timecode = AV_NOPTS_VALUE;
                     pkt->pos = pos;
                     pkt->stream_index = st->index;
                     dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
@@ -1908,6 +1916,9 @@ static int matroska_read_seek(AVFormatContext *s, int stream_index,
 
     index_min = index;
     for (i=0; i < matroska->tracks.nb_elem; i++) {
+        tracks[i].audio.pkt_cnt = 0;
+        tracks[i].audio.sub_packet_cnt = 0;
+        tracks[i].audio.buf_timecode = AV_NOPTS_VALUE;
         tracks[i].end_timecode = 0;
         if (tracks[i].type == MATROSKA_TRACK_TYPE_SUBTITLE
             && !tracks[i].stream->discard != AVDISCARD_ALL) {

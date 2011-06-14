@@ -76,7 +76,8 @@ void uninit_opts(void)
     av_freep(&avformat_opts->key);
     av_freep(&avformat_opts);
 #if CONFIG_SWSCALE
-    av_freep(&sws_opts);
+    sws_freeContext(sws_opts);
+    sws_opts = NULL;
 #endif
     for (i = 0; i < opt_name_count; i++) {
         //opt_values are only stored for codec-specific options in which case
@@ -276,13 +277,11 @@ unknown_opt:
                 *po->u.int64_arg = parse_number_or_die(opt, arg, OPT_INT64, INT64_MIN, INT64_MAX);
             } else if (po->flags & OPT_FLOAT) {
                 *po->u.float_arg = parse_number_or_die(opt, arg, OPT_FLOAT, -INFINITY, INFINITY);
-            } else if (po->flags & OPT_FUNC2) {
-                if (po->u.func2_arg(opt, arg) < 0) {
+            } else if (po->u.func_arg) {
+                if (po->u.func_arg(opt, arg) < 0) {
                     fprintf(stderr, "%s: failed to set value '%s' for option '%s'\n", argv[0], arg, opt);
                     exit(1);
                 }
-            } else if (po->u.func_arg) {
-                    po->u.func_arg(arg);
             }
             if(po->flags & OPT_EXIT)
                 exit(0);
@@ -324,7 +323,7 @@ int opt_default(const char *opt, const char *arg){
         AVCodec *p = NULL;
         AVOutputFormat *oformat = NULL;
         while ((p=av_codec_next(p))){
-            AVClass *c= p->priv_class;
+            const AVClass *c = p->priv_class;
             if(c && av_find_opt(&c, opt, NULL, 0, 0))
                 break;
         }

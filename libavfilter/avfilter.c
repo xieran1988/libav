@@ -215,6 +215,7 @@ int avfilter_config_links(AVFilterContext *filter)
     return 0;
 }
 
+#ifdef DEBUG
 static char *ff_get_ref_perms_string(char *buf, size_t buf_size, int perms)
 {
     snprintf(buf, buf_size, "%s%s%s%s%s%s",
@@ -226,6 +227,7 @@ static char *ff_get_ref_perms_string(char *buf, size_t buf_size, int perms)
              perms & AV_PERM_NEG_LINESIZES ? "n" : "");
     return buf;
 }
+#endif
 
 static void ff_dlog_ref(void *ctx, AVFilterBufferRef *ref, int end)
 {
@@ -237,11 +239,13 @@ static void ff_dlog_ref(void *ctx, AVFilterBufferRef *ref, int end)
             ref->pts, ref->pos);
 
     if (ref->video) {
-        av_dlog(ctx, " a:%d/%d s:%dx%d i:%c",
+        av_dlog(ctx, " a:%d/%d s:%dx%d i:%c iskey:%d type:%c",
                 ref->video->pixel_aspect.num, ref->video->pixel_aspect.den,
                 ref->video->w, ref->video->h,
                 !ref->video->interlaced     ? 'P' :         /* Progressive  */
-                ref->video->top_field_first ? 'T' : 'B');   /* Top / Bottom */
+                ref->video->top_field_first ? 'T' : 'B',    /* Top / Bottom */
+                ref->video->key_frame,
+                av_get_picture_type_char(ref->video->pict_type));
     }
     if (ref->audio) {
         av_dlog(ctx, " cl:%"PRId64"d sn:%d s:%d sr:%d p:%d",
