@@ -1,3 +1,5 @@
 # The dependencies for packages within ffmpeg are different than the
 # dependencies for packages that depend on the ffmpeg libraries.
 libav source: debian-rules-calls-debhelper-in-odd-order
+# ffmpeg-dbg is an empty, transitional package
+libav source: dbg-package-missing-depends ffmpeg-dbg
