@@ -1,11 +1,12 @@
 libav (4:0.7-1) experimental; urgency=low
 
-  * Final release
+  * New upstream release.
   * Fixes several potential security issues, Closes: #628448
   * Much imporved libavfilter, Closes: #594108
   * Fixes some overlapping memcpys my using memmove instead, Closes: #627818
   * Bump libswscale SONAME
   * Bump shlibs
+  * Bump Standards version to 3.9.2
 
  -- Reinhard Tartler <siretart@tauware.de>  Tue, 21 Jun 2011 07:49:59 +0200
 
