@@ -1014,7 +1014,7 @@ int ff_h264_decode_extradata(H264Context *h)
 {
     AVCodecContext *avctx = h->s.avctx;
 
-    if(*(char *)avctx->extradata == 1){
+    if(avctx->extradata[0] == 1){
         int i, cnt, nalsize;
         unsigned char *p = avctx->extradata;
 
@@ -1049,7 +1049,7 @@ int ff_h264_decode_extradata(H264Context *h)
             p += nalsize;
         }
         // Now store right nal length size, that will be use to parse all other nals
-        h->nal_length_size = ((*(((char*)(avctx->extradata))+4))&0x03)+1;
+        h->nal_length_size = (avctx->extradata[4] & 0x03) + 1;
     } else {
         h->is_avc = 0;
         if(decode_nal_units(h, avctx->extradata, avctx->extradata_size) < 0)
@@ -2681,9 +2681,20 @@ static int decode_slice_header(H264Context *h, H264Context *h0){
     h->mb_field_decoding_flag= s->picture_structure != PICT_FRAME;
 
     if(h0->current_slice == 0){
-        if(h->frame_num != h->prev_frame_num &&
-          (h->prev_frame_num+1)%(1<<h->sps.log2_max_frame_num) < (h->frame_num - h->sps.ref_frame_count))
-            h->prev_frame_num = h->frame_num - h->sps.ref_frame_count - 1;
+        // Shorten frame num gaps so we don't have to allocate reference frames just to throw them away
+        if(h->frame_num != h->prev_frame_num) {
+            int unwrap_prev_frame_num = h->prev_frame_num, max_frame_num = 1<<h->sps.log2_max_frame_num;
+
+            if (unwrap_prev_frame_num > h->frame_num) unwrap_prev_frame_num -= max_frame_num;
+
+            if ((h->frame_num - unwrap_prev_frame_num) > h->sps.ref_frame_count) {
+                unwrap_prev_frame_num = (h->frame_num - h->sps.ref_frame_count) - 1;
+                if (unwrap_prev_frame_num < 0)
+                    unwrap_prev_frame_num += max_frame_num;
+
+                h->prev_frame_num = unwrap_prev_frame_num;
+            }
+        }
 
         while(h->frame_num !=  h->prev_frame_num &&
               h->frame_num != (h->prev_frame_num+1)%(1<<h->sps.log2_max_frame_num)){
@@ -3674,6 +3685,8 @@ static int decode_nal_units(H264Context *h, const uint8_t *buf, int buf_size){
             switch (hx->nal_unit_type) {
                 case NAL_SPS:
                 case NAL_PPS:
+                case NAL_IDR_SLICE:
+                case NAL_SLICE:
                     nals_needed = nal_index;
             }
             continue;
@@ -3768,7 +3781,8 @@ static int decode_nal_units(H264Context *h, const uint8_t *buf, int buf_size){
             init_get_bits(&s->gb, ptr, bit_length);
             ff_h264_decode_seq_parameter_set(h);
 
-            if(s->flags& CODEC_FLAG_LOW_DELAY)
+            if (s->flags& CODEC_FLAG_LOW_DELAY ||
+                (h->sps.bitstream_restriction_flag && !h->sps.num_reorder_frames))
                 s->low_delay=1;
 
             if(avctx->has_b_frames < 2)
