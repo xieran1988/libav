@@ -80,7 +80,7 @@ Depends: libavutil51 (= ${binary:Version}),
  libavdevice53 (= ${binary:Version}),
  libpostproc52 (= ${binary:Version}),
  libavformat53 (= ${binary:Version}),
- libswscale1 (= ${binary:Version}),
+ libswscale2 (= ${binary:Version}),
  ffmpeg (= ${binary:Version}),
  ${misc:Depends}
 Description: Debug symbols for Libav related packages
@@ -172,7 +172,7 @@ Depends: ${shlibs:Depends},
 Description: Libav video postprocessing library
  This is the video postprocessing library from Libav.
 
-Package: libswscale1
+Package: libswscale2
 Architecture: any
 Depends: ${shlibs:Depends},
  ${misc:Depends}
@@ -272,8 +272,8 @@ Description: Development files for libpostproc
 Package: libswscale-dev
 Section: libdevel
 Architecture: any
-Depends: libswscale1 (>= ${binary:Version}) | libswscale-extra-1 (>= ${source:Upstream-Version}),
- libswscale1 (<= ${source:Upstream-Version}-99) | libswscale-extra-1 (<= ${source:Upstream-Version}-99),
+Depends: libswscale2 (>= ${binary:Version}) | libswscale-extra-1 (>= ${source:Upstream-Version}),
+ libswscale2 (<= ${source:Upstream-Version}-99) | libswscale-extra-1 (<= ${source:Upstream-Version}-99),
  libavutil-dev (= ${binary:Version}),
  ${misc:Depends}
 Description: Development files for libswscale

@@ -1,2 +1,2 @@
 # Overriding these fpic lintian errors. Please see bug #528080.
-libswscale1: shlib-with-non-pic-code
+libswscale2: shlib-with-non-pic-code
