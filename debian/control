@@ -234,7 +234,7 @@ Section: libdevel
 Architecture: any
 Depends: libavformat53 (>= ${binary:Version}) | libavformat-extra-53 (>= ${source:Upstream-Version}),
  libavformat53 (<= ${source:Upstream-Version}-99) | libavformat-extra-53 (<= ${source:Upstream-Version}-99),
- libavcodec-dev (= ${binary:Version}),
+ libavcodec-dev (= ${binary:Version}), libavutil-dev (= ${binary:Version}),
  ${misc:Depends}
 Description: Development files for libavformat
  This is the demuxer library from Libav. It supports most
