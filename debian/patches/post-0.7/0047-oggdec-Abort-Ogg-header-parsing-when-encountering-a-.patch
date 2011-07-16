@@ -1,0 +1,39 @@
+From 5a33a29a91fe0c3fc30eb89a0675258f538c6af8 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Reimar=20D=C3=B6ffinger?= <Reimar.Doeffinger@gmx.de>
+Date: Mon, 4 Jul 2011 02:57:47 +0200
+Subject: [PATCH 47/57] oggdec: Abort Ogg header parsing when encountering a data packet.
+
+Fixes Bugzilla #11.
+
+Signed-off-by: Diego Biurrun <diego@biurrun.de>
+(cherry picked from commit 0a94020b5b073d1abf442e28b6db3be785aa680a)
+---
+ libavformat/oggdec.c |    5 +----
+ 1 files changed, 1 insertions(+), 4 deletions(-)
+
+diff --git a/libavformat/oggdec.c b/libavformat/oggdec.c
+index 998a33b..49f24e9 100644
+--- a/libavformat/oggdec.c
++++ b/libavformat/oggdec.c
+@@ -373,8 +373,7 @@ static int ogg_packet(AVFormatContext *s, int *str, int *dstart, int *dsize,
+ 
+             // We have reached the first non-header packet in this stream.
+             // Unfortunately more header packets may still follow for others,
+-            // so we reset this later unless we are done with the headers
+-            // for all streams.
++            // but if we continue with header parsing we may lose data packets.
+             ogg->headers = 1;
+ 
+             // Update the header state for all streams and
+@@ -383,8 +382,6 @@ static int ogg_packet(AVFormatContext *s, int *str, int *dstart, int *dsize,
+                 s->data_offset = os->sync_pos;
+             for (i = 0; i < ogg->nstreams; i++) {
+                 struct ogg_stream *cur_os = ogg->streams + i;
+-                if (cur_os->header > 0)
+-                    ogg->headers = 0;
+ 
+                 // if we have a partial non-header packet, its start is
+                 // obviously at or after the data start
+-- 
+1.7.4.1
+

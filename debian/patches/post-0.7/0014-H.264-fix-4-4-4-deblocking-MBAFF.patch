@@ -1,0 +1,77 @@
+From 13c943ffb1d0faa6de0de292d196551990e93512 Mon Sep 17 00:00:00 2001
+From: Jason Garrett-Glaser <jason@x264.com>
+Date: Wed, 22 Jun 2011 02:05:14 -0700
+Subject: [PATCH 14/57] H.264: fix 4:4:4 + deblocking + MBAFF
+
+(cherry picked from commit 7c9079ab4cf0bcf34103fc9c5e49ec1fd7dd390c)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/h264.c            |    4 ++--
+ libavcodec/h264_loopfilter.c |   30 ++++++++++++++++++++++--------
+ 2 files changed, 24 insertions(+), 10 deletions(-)
+
+diff --git a/libavcodec/h264.c b/libavcodec/h264.c
+index 124f9a8..6bee7c3 100644
+--- a/libavcodec/h264.c
++++ b/libavcodec/h264.c
+@@ -3300,8 +3300,8 @@ static void loop_filter(H264Context *h, int start_x, int end_x){
+                     uvlinesize = h->mb_uvlinesize = s->uvlinesize * 2;
+                     if(mb_y&1){ //FIXME move out of this function?
+                         dest_y -= s->linesize*15;
+-                        dest_cb-= s->uvlinesize*7;
+-                        dest_cr-= s->uvlinesize*7;
++                        dest_cb-= s->uvlinesize*((8 << CHROMA444)-1);
++                        dest_cr-= s->uvlinesize*((8 << CHROMA444)-1);
+                     }
+                 } else {
+                     linesize   = h->mb_linesize   = s->linesize;
+diff --git a/libavcodec/h264_loopfilter.c b/libavcodec/h264_loopfilter.c
+index 1ae534e..b88c338 100644
+--- a/libavcodec/h264_loopfilter.c
++++ b/libavcodec/h264_loopfilter.c
+@@ -663,19 +663,33 @@ void ff_h264_filter_mb( H264Context *h, int mb_x, int mb_y, uint8_t *img_y, uint
+             filter_mb_mbaff_edgev ( h, img_y                ,   linesize, bS  , 1, qp [0] );
+             filter_mb_mbaff_edgev ( h, img_y  + 8*  linesize,   linesize, bS+4, 1, qp [1] );
+             if (chroma){
+-                filter_mb_mbaff_edgecv( h, img_cb,                uvlinesize, bS  , 1, bqp[0] );
+-                filter_mb_mbaff_edgecv( h, img_cb + 4*uvlinesize, uvlinesize, bS+4, 1, bqp[1] );
+-                filter_mb_mbaff_edgecv( h, img_cr,                uvlinesize, bS  , 1, rqp[0] );
+-                filter_mb_mbaff_edgecv( h, img_cr + 4*uvlinesize, uvlinesize, bS+4, 1, rqp[1] );
++                if (CHROMA444) {
++                    filter_mb_mbaff_edgev ( h, img_cb,                uvlinesize, bS  , 1, bqp[0] );
++                    filter_mb_mbaff_edgev ( h, img_cb + 8*uvlinesize, uvlinesize, bS+4, 1, bqp[1] );
++                    filter_mb_mbaff_edgev ( h, img_cr,                uvlinesize, bS  , 1, rqp[0] );
++                    filter_mb_mbaff_edgev ( h, img_cr + 8*uvlinesize, uvlinesize, bS+4, 1, rqp[1] );
++                }else{
++                    filter_mb_mbaff_edgecv( h, img_cb,                uvlinesize, bS  , 1, bqp[0] );
++                    filter_mb_mbaff_edgecv( h, img_cb + 4*uvlinesize, uvlinesize, bS+4, 1, bqp[1] );
++                    filter_mb_mbaff_edgecv( h, img_cr,                uvlinesize, bS  , 1, rqp[0] );
++                    filter_mb_mbaff_edgecv( h, img_cr + 4*uvlinesize, uvlinesize, bS+4, 1, rqp[1] );
++                }
+             }
+         }else{
+             filter_mb_mbaff_edgev ( h, img_y              , 2*  linesize, bS  , 2, qp [0] );
+             filter_mb_mbaff_edgev ( h, img_y  +   linesize, 2*  linesize, bS+1, 2, qp [1] );
+             if (chroma){
+-                filter_mb_mbaff_edgecv( h, img_cb,              2*uvlinesize, bS  , 2, bqp[0] );
+-                filter_mb_mbaff_edgecv( h, img_cb + uvlinesize, 2*uvlinesize, bS+1, 2, bqp[1] );
+-                filter_mb_mbaff_edgecv( h, img_cr,              2*uvlinesize, bS  , 2, rqp[0] );
+-                filter_mb_mbaff_edgecv( h, img_cr + uvlinesize, 2*uvlinesize, bS+1, 2, rqp[1] );
++                if (CHROMA444) {
++                    filter_mb_mbaff_edgev ( h, img_cb,              2*uvlinesize, bS  , 2, bqp[0] );
++                    filter_mb_mbaff_edgev ( h, img_cb + uvlinesize, 2*uvlinesize, bS+1, 2, bqp[1] );
++                    filter_mb_mbaff_edgev ( h, img_cr,              2*uvlinesize, bS  , 2, rqp[0] );
++                    filter_mb_mbaff_edgev ( h, img_cr + uvlinesize, 2*uvlinesize, bS+1, 2, rqp[1] );
++                }else{
++                    filter_mb_mbaff_edgecv( h, img_cb,              2*uvlinesize, bS  , 2, bqp[0] );
++                    filter_mb_mbaff_edgecv( h, img_cb + uvlinesize, 2*uvlinesize, bS+1, 2, bqp[1] );
++                    filter_mb_mbaff_edgecv( h, img_cr,              2*uvlinesize, bS  , 2, rqp[0] );
++                    filter_mb_mbaff_edgecv( h, img_cr + uvlinesize, 2*uvlinesize, bS+1, 2, rqp[1] );
++                }
+             }
+         }
+     }
+-- 
+1.7.4.1
+

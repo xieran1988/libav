@@ -1,0 +1,34 @@
+From cb66b552700c4fe54f3387eb12207049ff63dfe3 Mon Sep 17 00:00:00 2001
+From: Ronald S. Bultje <rsbultje@gmail.com>
+Date: Tue, 28 Jun 2011 22:24:21 -0700
+Subject: [PATCH 23/57] ogg: fix double free when finding length of small chained oggs.
+
+ogg_save() copies streams[], but doesn't keep track of free()'ed
+struct members. Thus, if in between a call to ogg_save() and
+ogg_restore(), streams[].private was free()'ed, this would result
+in a double free -> crash, which happened when e.g. playing small
+chained ogg fragments.
+(cherry picked from commit 9ed6cbc3ee2ae3e7472fb25192a7e36fd7b15533)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavformat/oggdec.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/oggdec.c b/libavformat/oggdec.c
+index f1ad630..998a33b 100644
+--- a/libavformat/oggdec.c
++++ b/libavformat/oggdec.c
+@@ -238,7 +238,8 @@ static int ogg_read_page(AVFormatContext *s, int *str)
+ 
+             for (n = 0; n < ogg->nstreams; n++) {
+                 av_freep(&ogg->streams[n].buf);
+-                av_freep(&ogg->streams[n].private);
++                if (!ogg->state || ogg->state->streams[n].private != ogg->streams[n].private)
++                    av_freep(&ogg->streams[n].private);
+             }
+             ogg->curidx   = -1;
+             ogg->nstreams = 0;
+-- 
+1.7.4.1
+

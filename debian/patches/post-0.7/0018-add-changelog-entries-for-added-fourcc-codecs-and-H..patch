@@ -1,0 +1,30 @@
+From 9c709f053474dd74890f32662b7d7010e5cc0b0d Mon Sep 17 00:00:00 2001
+From: Reinhard Tartler <siretart@tauware.de>
+Date: Thu, 23 Jun 2011 09:50:43 +0200
+Subject: [PATCH 18/57] add changelog entries for added fourcc codecs and H.264 fixes
+
+---
+ Changelog |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+diff --git a/Changelog b/Changelog
+index b785197..276812b 100644
+--- a/Changelog
++++ b/Changelog
+@@ -2,6 +2,13 @@ Entries are sorted chronologically from oldest to youngest within each release,
+ releases are sorted from youngest to oldest.
+ 
+ 
++version 0.7.1:
++
++- added various additional FOURCC codec identifiers
++- H.264 4:4:4 fixes
++- build system fixes
++
++
+ version 0.7:
+ 
+ - E-AC-3 audio encoder
+-- 
+1.7.4.1
+

@@ -1,0 +1,865 @@
+From 2fe47b21c825460f01d3cb5546b29b686b909e4d Mon Sep 17 00:00:00 2001
+From: Reinhard Tartler <siretart@tauware.de>
+Date: Sun, 3 Jul 2011 18:55:01 +0200
+Subject: [PATCH 28/57] doxygen: Prefer member groups over grouping into modules
+
+Before this, almost all module groups have been used for grouping functions
+and fields in structures semantically. This causes them to not appear
+properly in the file documentation and needlessly clutters up the "Modules"
+index.
+
+Additionally, this commit streamlines some spelling and appearances.
+(cherry picked from commit 21a19b7912fe0622f3d1748ff102fcc7bc7a974a)
+---
+ libavcodec/aac.h        |    9 ++-
+ libavcodec/ac3.h        |    4 +-
+ libavcodec/ac3dec.h     |   30 +++++-----
+ libavcodec/amrnbdec.c   |   16 +++---
+ libavcodec/apedec.c     |    2 +-
+ libavcodec/ass.h        |    3 +-
+ libavcodec/avcodec.h    |    4 +-
+ libavcodec/h264.h       |    2 +-
+ libavcodec/qcelpdata.h  |    4 +-
+ libavcodec/rv34.c       |  155 +++++++++++++++++++++++------------------------
+ libavcodec/rv40data.h   |    2 +-
+ libavcodec/sbr.h        |    8 +-
+ libavcodec/tableprint.h |    3 +-
+ libavcodec/vc1.c        |    2 +-
+ libavcodec/vc1dec.c     |    6 +-
+ libavcodec/wmavoice.c   |   22 ++++---
+ libavformat/avio.h      |   12 ++--
+ libavformat/rtmppkt.h   |    2 +-
+ libavutil/lzo.h         |    2 +-
+ 19 files changed, 143 insertions(+), 145 deletions(-)
+
+diff --git a/libavcodec/aac.h b/libavcodec/aac.h
+index 76b6a78..4861ec0 100644
+--- a/libavcodec/aac.h
++++ b/libavcodec/aac.h
+@@ -258,7 +258,7 @@ typedef struct {
+     DynamicRangeControl che_drc;
+ 
+     /**
+-     * @defgroup elements Channel element related data.
++     * @name Channel element related data
+      * @{
+      */
+     enum ChannelPosition che_pos[4][MAX_ELEM_ID]; /**< channel element channel mapping with the
+@@ -270,14 +270,15 @@ typedef struct {
+     /** @} */
+ 
+     /**
+-     * @defgroup temporary aligned temporary buffers (We do not want to have these on the stack.)
++     * @name temporary aligned temporary buffers
++     * (We do not want to have these on the stack.)
+      * @{
+      */
+     DECLARE_ALIGNED(32, float, buf_mdct)[1024];
+     /** @} */
+ 
+     /**
+-     * @defgroup tables   Computed / set up during initialization.
++     * @name Computed / set up during initialization
+      * @{
+      */
+     FFTContext mdct;
+@@ -289,7 +290,7 @@ typedef struct {
+     /** @} */
+ 
+     /**
+-     * @defgroup output   Members used for output interleaving.
++     * @name Members used for output interleaving
+      * @{
+      */
+     float *output_data[MAX_CHANNELS];                 ///< Points to each element's 'ret' buffer (PCM output).
+diff --git a/libavcodec/ac3.h b/libavcodec/ac3.h
+index c06f3d5..9adad93 100644
+--- a/libavcodec/ac3.h
++++ b/libavcodec/ac3.h
+@@ -92,7 +92,7 @@ typedef struct AC3BitAllocParameters {
+  * Coded AC-3 header values up to the lfeon element, plus derived values.
+  */
+ typedef struct {
+-    /** @defgroup coded Coded elements
++    /** @name Coded elements
+      * @{
+      */
+     uint16_t sync_word;
+@@ -110,7 +110,7 @@ typedef struct {
+     int num_blocks;                         ///< number of audio blocks
+     /** @} */
+ 
+-    /** @defgroup derived Derived values
++    /** @name Derived values
+      * @{
+      */
+     uint8_t sr_shift;
+diff --git a/libavcodec/ac3dec.h b/libavcodec/ac3dec.h
+index 590bee6..aed8743 100644
+--- a/libavcodec/ac3dec.h
++++ b/libavcodec/ac3dec.h
+@@ -67,7 +67,7 @@ typedef struct {
+     GetBitContext gbc;                      ///< bitstream reader
+     uint8_t *input_buffer;                  ///< temp buffer to prevent overread
+ 
+-///@defgroup bsi bit stream information
++///@name Bit stream information
+ ///@{
+     int frame_type;                         ///< frame type                             (strmtyp)
+     int substreamid;                        ///< substream identification
+@@ -85,7 +85,7 @@ typedef struct {
+     int eac3;                               ///< indicates if current frame is E-AC-3
+ ///@}
+ 
+-///@defgroup audfrm frame syntax parameters
++///@name Frame syntax parameters
+     int snr_offset_strategy;                ///< SNR offset strategy                    (snroffststr)
+     int block_switch_syntax;                ///< block switch syntax enabled            (blkswe)
+     int dither_flag_syntax;                 ///< dither flag syntax enabled             (dithflage)
+@@ -95,7 +95,7 @@ typedef struct {
+     int skip_syntax;                        ///< skip field syntax enabled              (skipflde)
+  ///@}
+ 
+-///@defgroup cpl standard coupling
++///@name Standard coupling
+     int cpl_in_use[AC3_MAX_BLOCKS];         ///< coupling in use                        (cplinu)
+     int cpl_strategy_exists[AC3_MAX_BLOCKS];///< coupling strategy exists               (cplstre)
+     int channel_in_cpl[AC3_MAX_CHANNELS];   ///< channel in coupling                    (chincpl)
+@@ -108,7 +108,7 @@ typedef struct {
+     int cpl_coords[AC3_MAX_CHANNELS][AC3_MAX_CPL_BANDS]; ///< coupling coordinates      (cplco)
+ ///@}
+ 
+-///@defgroup spx spectral extension
++///@name Spectral extension
+ ///@{
+     int spx_in_use;                             ///< spectral extension in use              (spxinu)
+     uint8_t channel_uses_spx[AC3_MAX_CHANNELS]; ///< channel uses spectral extension        (chinspx)
+@@ -124,12 +124,12 @@ typedef struct {
+     float spx_signal_blend[AC3_MAX_CHANNELS][SPX_MAX_BANDS];///< spx signal blending factor (sblendfact)
+ ///@}
+ 
+-///@defgroup aht adaptive hybrid transform
++///@name Adaptive hybrid transform
+     int channel_uses_aht[AC3_MAX_CHANNELS];                         ///< channel AHT in use (chahtinu)
+     int pre_mantissa[AC3_MAX_CHANNELS][AC3_MAX_COEFS][AC3_MAX_BLOCKS];  ///< pre-IDCT mantissas
+ ///@}
+ 
+-///@defgroup channel channel
++///@name Channel
+     int fbw_channels;                           ///< number of full-bandwidth channels
+     int channels;                               ///< number of total channels
+     int lfe_ch;                                 ///< index of LFE channel
+@@ -139,27 +139,27 @@ typedef struct {
+     int out_channels;                           ///< number of output channels
+ ///@}
+ 
+-///@defgroup dynrng dynamic range
++///@name Dynamic range
+     float dynamic_range[2];                 ///< dynamic range
+ ///@}
+ 
+-///@defgroup bandwidth bandwidth
++///@name Bandwidth
+     int start_freq[AC3_MAX_CHANNELS];       ///< start frequency bin                    (strtmant)
+     int end_freq[AC3_MAX_CHANNELS];         ///< end frequency bin                      (endmant)
+ ///@}
+ 
+-///@defgroup rematrixing rematrixing
++///@name Rematrixing
+     int num_rematrixing_bands;              ///< number of rematrixing bands            (nrematbnd)
+     int rematrixing_flags[4];               ///< rematrixing flags                      (rematflg)
+ ///@}
+ 
+-///@defgroup exponents exponents
++///@name Exponents
+     int num_exp_groups[AC3_MAX_CHANNELS];           ///< Number of exponent groups      (nexpgrp)
+     int8_t dexps[AC3_MAX_CHANNELS][AC3_MAX_COEFS];  ///< decoded exponents
+     int exp_strategy[AC3_MAX_BLOCKS][AC3_MAX_CHANNELS]; ///< exponent strategies        (expstr)
+ ///@}
+ 
+-///@defgroup bitalloc bit allocation
++///@name Bit allocation
+     AC3BitAllocParameters bit_alloc_params;         ///< bit allocation parameters
+     int first_cpl_leak;                             ///< first coupling leak state      (firstcplleak)
+     int snr_offset[AC3_MAX_CHANNELS];               ///< signal-to-noise ratio offsets  (snroffst)
+@@ -175,25 +175,25 @@ typedef struct {
+     uint8_t dba_values[AC3_MAX_CHANNELS][8];        ///< delta values for each segment
+ ///@}
+ 
+-///@defgroup dithering zero-mantissa dithering
++///@name Zero-mantissa dithering
+     int dither_flag[AC3_MAX_CHANNELS];      ///< dither flags                           (dithflg)
+     AVLFG dith_state;                       ///< for dither generation
+ ///@}
+ 
+-///@defgroup imdct IMDCT
++///@name IMDCT
+     int block_switch[AC3_MAX_CHANNELS];     ///< block switch flags                     (blksw)
+     FFTContext imdct_512;                   ///< for 512 sample IMDCT
+     FFTContext imdct_256;                   ///< for 256 sample IMDCT
+ ///@}
+ 
+-///@defgroup opt optimization
++///@name Optimization
+     DSPContext dsp;                         ///< for optimization
+     AC3DSPContext ac3dsp;
+     FmtConvertContext fmt_conv;             ///< optimized conversion functions
+     float mul_bias;                         ///< scaling for float_to_int16 conversion
+ ///@}
+ 
+-///@defgroup arrays aligned arrays
++///@name Aligned arrays
+     DECLARE_ALIGNED(16, int,   fixed_coeffs)[AC3_MAX_CHANNELS][AC3_MAX_COEFS];       ///< fixed-point transform coefficients
+     DECLARE_ALIGNED(32, float, transform_coeffs)[AC3_MAX_CHANNELS][AC3_MAX_COEFS];   ///< transform coefficients
+     DECLARE_ALIGNED(32, float, delay)[AC3_MAX_CHANNELS][AC3_BLOCK_SIZE];             ///< delay - added to the next block
+diff --git a/libavcodec/amrnbdec.c b/libavcodec/amrnbdec.c
+index 4e24e26..1c90aad 100644
+--- a/libavcodec/amrnbdec.c
++++ b/libavcodec/amrnbdec.c
+@@ -204,7 +204,7 @@ static enum Mode unpack_bitstream(AMRContext *p, const uint8_t *buf,
+ }
+ 
+ 
+-/// @defgroup amr_lpc_decoding AMR pitch LPC coefficient decoding functions
++/// @name AMR pitch LPC coefficient decoding functions
+ /// @{
+ 
+ /**
+@@ -341,7 +341,7 @@ static void lsf2lsp_3(AMRContext *p)
+ /// @}
+ 
+ 
+-/// @defgroup amr_pitch_vector_decoding AMR pitch vector decoding functions
++/// @name AMR pitch vector decoding functions
+ /// @{
+ 
+ /**
+@@ -403,7 +403,7 @@ static void decode_pitch_vector(AMRContext *p,
+ /// @}
+ 
+ 
+-/// @defgroup amr_algebraic_code_book AMR algebraic code book (fixed) vector decoding functions
++/// @name AMR algebraic code book (fixed) vector decoding functions
+ /// @{
+ 
+ /**
+@@ -547,7 +547,7 @@ static void pitch_sharpening(AMRContext *p, int subframe, enum Mode mode,
+ /// @}
+ 
+ 
+-/// @defgroup amr_gain_decoding AMR gain decoding functions
++/// @name AMR gain decoding functions
+ /// @{
+ 
+ /**
+@@ -633,7 +633,7 @@ static void decode_gains(AMRContext *p, const AMRNBSubframe *amr_subframe,
+ /// @}
+ 
+ 
+-/// @defgroup amr_pre_processing AMR pre-processing functions
++/// @name AMR preprocessing functions
+ /// @{
+ 
+ /**
+@@ -751,7 +751,7 @@ static const float *anti_sparseness(AMRContext *p, AMRFixed *fixed_sparse,
+ /// @}
+ 
+ 
+-/// @defgroup amr_synthesis AMR synthesis functions
++/// @name AMR synthesis functions
+ /// @{
+ 
+ /**
+@@ -812,7 +812,7 @@ static int synthesis(AMRContext *p, float *lpc,
+ /// @}
+ 
+ 
+-/// @defgroup amr_update AMR update functions
++/// @name AMR update functions
+ /// @{
+ 
+ /**
+@@ -837,7 +837,7 @@ static void update_state(AMRContext *p)
+ /// @}
+ 
+ 
+-/// @defgroup amr_postproc AMR Post processing functions
++/// @name AMR Postprocessing functions
+ /// @{
+ 
+ /**
+diff --git a/libavcodec/apedec.c b/libavcodec/apedec.c
+index d5a7efd..f92b375 100644
+--- a/libavcodec/apedec.c
++++ b/libavcodec/apedec.c
+@@ -217,7 +217,7 @@ static av_cold int ape_decode_close(AVCodecContext * avctx)
+ }
+ 
+ /**
+- * @defgroup rangecoder APE range decoder
++ * @name APE range decoding functions
+  * @{
+  */
+ 
+diff --git a/libavcodec/ass.h b/libavcodec/ass.h
+index d350cf3..594b5f3 100644
+--- a/libavcodec/ass.h
++++ b/libavcodec/ass.h
+@@ -25,8 +25,7 @@
+ #include "avcodec.h"
+ 
+ /**
+- * Default values for ASS style.
+- * @defgroup ass_default
++ * @name Default values for ASS style
+  * @{
+  */
+ #define ASS_DEFAULT_FONT        "Arial"
+diff --git a/libavcodec/avcodec.h b/libavcodec/avcodec.h
+index a70d8ad..835279e 100644
+--- a/libavcodec/avcodec.h
++++ b/libavcodec/avcodec.h
+@@ -2488,7 +2488,7 @@ typedef struct AVCodecContext {
+ 
+ #if FF_API_FLAC_GLOBAL_OPTS
+     /**
+-     * @defgroup flac_opts FLAC options
++     * @name FLAC options
+      * @deprecated Use FLAC encoder private options instead.
+      * @{
+      */
+@@ -2897,7 +2897,7 @@ typedef struct AVCodec {
+     const AVProfile *profiles;              ///< array of recognized profiles, or NULL if unknown, array is terminated by {FF_PROFILE_UNKNOWN}
+ 
+     /**
+-     * @defgroup framethreading Frame-level threading support functions.
++     * @name Frame-level threading support functions
+      * @{
+      */
+     /**
+diff --git a/libavcodec/h264.h b/libavcodec/h264.h
+index 3abf895..e3cc815 100644
+--- a/libavcodec/h264.h
++++ b/libavcodec/h264.h
+@@ -507,7 +507,7 @@ typedef struct H264Context{
+     int          cabac_init_idc;
+ 
+     /**
+-     * @defgroup multithreading Members for slice based multithreading
++     * @name Members for slice based multithreading
+      * @{
+      */
+     struct H264Context *thread_context[MAX_THREADS];
+diff --git a/libavcodec/qcelpdata.h b/libavcodec/qcelpdata.h
+index df33e91..672da49 100644
+--- a/libavcodec/qcelpdata.h
++++ b/libavcodec/qcelpdata.h
+@@ -38,14 +38,14 @@
+  * QCELP unpacked data frame
+  */
+ typedef struct {
+-/// @defgroup qcelp_codebook_parameters QCELP excitation codebook parameters
++/// @name QCELP excitation codebook parameters
+ /// @{
+     uint8_t cbsign[16]; ///!< sign of the codebook gain for each codebook subframe
+     uint8_t cbgain[16]; ///!< unsigned codebook gain for each codebook subframe
+     uint8_t cindex[16]; ///!< codebook index for each codebook subframe
+ /// @}
+ 
+-/// @defgroup qcelp_pitch_parameters QCELP pitch prediction parameters
++/// @name QCELP pitch prediction parameters
+ /// @{
+     uint8_t plag[4];    ///!< pitch lag for each pitch subframe
+     uint8_t pfrac[4];   ///!< fractional pitch lag for each pitch subframe
+diff --git a/libavcodec/rv34.c b/libavcodec/rv34.c
+index b5d314c..c5dcfdc 100644
+--- a/libavcodec/rv34.c
++++ b/libavcodec/rv34.c
+@@ -62,8 +62,10 @@ static const int rv34_mb_type_to_lavc[12] = {
+ 
+ static RV34VLC intra_vlcs[NUM_INTRA_TABLES], inter_vlcs[NUM_INTER_TABLES];
+ 
++static int rv34_decode_mv(RV34DecContext *r, int block_type);
++
+ /**
+- * @defgroup vlc RV30/40 VLC generating functions
++ * @name RV30/40 VLC generating functions
+  * @{
+  */
+ 
+@@ -171,7 +173,7 @@ static av_cold void rv34_init_tables(void)
+ 
+ 
+ /**
+- * @defgroup transform RV30/40 inverse transform functions
++ * @name RV30/40 inverse transform functions
+  * @{
+  */
+ 
+@@ -246,7 +248,7 @@ static void rv34_inv_transform_noround(DCTELEM *block){
+ 
+ 
+ /**
+- * @defgroup block RV30/40 4x4 block decoding functions
++ * @name RV30/40 4x4 block decoding functions
+  * @{
+  */
+ 
+@@ -393,7 +395,7 @@ static inline void rv34_dequant4x4_16x16(DCTELEM *block, int Qdc, int Q)
+ 
+ 
+ /**
+- * @defgroup rv3040_bitstream RV30/40 bitstream parsing
++ * @name RV30/40 bitstream parsing
+  * @{
+  */
+ 
+@@ -432,10 +434,76 @@ static inline int rv34_decode_dquant(GetBitContext *gb, int quant)
+         return get_bits(gb, 5);
+ }
+ 
++/**
++ * Decode macroblock header and return CBP in case of success, -1 otherwise.
++ */
++static int rv34_decode_mb_header(RV34DecContext *r, int8_t *intra_types)
++{
++    MpegEncContext *s = &r->s;
++    GetBitContext *gb = &s->gb;
++    int mb_pos = s->mb_x + s->mb_y * s->mb_stride;
++    int i, t;
++
++    if(!r->si.type){
++        r->is16 = get_bits1(gb);
++        if(!r->is16 && !r->rv30){
++            if(!get_bits1(gb))
++                av_log(s->avctx, AV_LOG_ERROR, "Need DQUANT\n");
++        }
++        s->current_picture_ptr->mb_type[mb_pos] = r->is16 ? MB_TYPE_INTRA16x16 : MB_TYPE_INTRA;
++        r->block_type = r->is16 ? RV34_MB_TYPE_INTRA16x16 : RV34_MB_TYPE_INTRA;
++    }else{
++        r->block_type = r->decode_mb_info(r);
++        if(r->block_type == -1)
++            return -1;
++        s->current_picture_ptr->mb_type[mb_pos] = rv34_mb_type_to_lavc[r->block_type];
++        r->mb_type[mb_pos] = r->block_type;
++        if(r->block_type == RV34_MB_SKIP){
++            if(s->pict_type == AV_PICTURE_TYPE_P)
++                r->mb_type[mb_pos] = RV34_MB_P_16x16;
++            if(s->pict_type == AV_PICTURE_TYPE_B)
++                r->mb_type[mb_pos] = RV34_MB_B_DIRECT;
++        }
++        r->is16 = !!IS_INTRA16x16(s->current_picture_ptr->mb_type[mb_pos]);
++        rv34_decode_mv(r, r->block_type);
++        if(r->block_type == RV34_MB_SKIP){
++            fill_rectangle(intra_types, 4, 4, r->intra_types_stride, 0, sizeof(intra_types[0]));
++            return 0;
++        }
++        r->chroma_vlc = 1;
++        r->luma_vlc   = 0;
++    }
++    if(IS_INTRA(s->current_picture_ptr->mb_type[mb_pos])){
++        if(r->is16){
++            t = get_bits(gb, 2);
++            fill_rectangle(intra_types, 4, 4, r->intra_types_stride, t, sizeof(intra_types[0]));
++            r->luma_vlc   = 2;
++        }else{
++            if(r->decode_intra_types(r, gb, intra_types) < 0)
++                return -1;
++            r->luma_vlc   = 1;
++        }
++        r->chroma_vlc = 0;
++        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 0);
++    }else{
++        for(i = 0; i < 16; i++)
++            intra_types[(i & 3) + (i>>2) * r->intra_types_stride] = 0;
++        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 1);
++        if(r->mb_type[mb_pos] == RV34_MB_P_MIX16x16){
++            r->is16 = 1;
++            r->chroma_vlc = 1;
++            r->luma_vlc   = 2;
++            r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 0);
++        }
++    }
++
++    return rv34_decode_cbp(gb, r->cur_vlcs, r->is16);
++}
++
+ /** @} */ //bitstream functions
+ 
+ /**
+- * @defgroup mv motion vector related code (prediction, reconstruction, motion compensation)
++ * @name motion vector related code (prediction, reconstruction, motion compensation)
+  * @{
+  */
+ 
+@@ -885,7 +953,7 @@ static int rv34_decode_mv(RV34DecContext *r, int block_type)
+ /** @} */ // mv group
+ 
+ /**
+- * @defgroup recons Macroblock reconstruction functions
++ * @name Macroblock reconstruction functions
+  * @{
+  */
+ /** mapping of RV30/40 intra prediction types to standard H.264 types */
+@@ -1027,79 +1095,6 @@ static void rv34_output_macroblock(RV34DecContext *r, int8_t *intra_types, int c
+     }
+ }
+ 
+-/** @} */ // recons group
+-
+-/**
+- * @addtogroup bitstream
+- * Decode macroblock header and return CBP in case of success, -1 otherwise.
+- */
+-static int rv34_decode_mb_header(RV34DecContext *r, int8_t *intra_types)
+-{
+-    MpegEncContext *s = &r->s;
+-    GetBitContext *gb = &s->gb;
+-    int mb_pos = s->mb_x + s->mb_y * s->mb_stride;
+-    int i, t;
+-
+-    if(!r->si.type){
+-        r->is16 = get_bits1(gb);
+-        if(!r->is16 && !r->rv30){
+-            if(!get_bits1(gb))
+-                av_log(s->avctx, AV_LOG_ERROR, "Need DQUANT\n");
+-        }
+-        s->current_picture_ptr->mb_type[mb_pos] = r->is16 ? MB_TYPE_INTRA16x16 : MB_TYPE_INTRA;
+-        r->block_type = r->is16 ? RV34_MB_TYPE_INTRA16x16 : RV34_MB_TYPE_INTRA;
+-    }else{
+-        r->block_type = r->decode_mb_info(r);
+-        if(r->block_type == -1)
+-            return -1;
+-        s->current_picture_ptr->mb_type[mb_pos] = rv34_mb_type_to_lavc[r->block_type];
+-        r->mb_type[mb_pos] = r->block_type;
+-        if(r->block_type == RV34_MB_SKIP){
+-            if(s->pict_type == AV_PICTURE_TYPE_P)
+-                r->mb_type[mb_pos] = RV34_MB_P_16x16;
+-            if(s->pict_type == AV_PICTURE_TYPE_B)
+-                r->mb_type[mb_pos] = RV34_MB_B_DIRECT;
+-        }
+-        r->is16 = !!IS_INTRA16x16(s->current_picture_ptr->mb_type[mb_pos]);
+-        rv34_decode_mv(r, r->block_type);
+-        if(r->block_type == RV34_MB_SKIP){
+-            fill_rectangle(intra_types, 4, 4, r->intra_types_stride, 0, sizeof(intra_types[0]));
+-            return 0;
+-        }
+-        r->chroma_vlc = 1;
+-        r->luma_vlc   = 0;
+-    }
+-    if(IS_INTRA(s->current_picture_ptr->mb_type[mb_pos])){
+-        if(r->is16){
+-            t = get_bits(gb, 2);
+-            fill_rectangle(intra_types, 4, 4, r->intra_types_stride, t, sizeof(intra_types[0]));
+-            r->luma_vlc   = 2;
+-        }else{
+-            if(r->decode_intra_types(r, gb, intra_types) < 0)
+-                return -1;
+-            r->luma_vlc   = 1;
+-        }
+-        r->chroma_vlc = 0;
+-        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 0);
+-    }else{
+-        for(i = 0; i < 16; i++)
+-            intra_types[(i & 3) + (i>>2) * r->intra_types_stride] = 0;
+-        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 1);
+-        if(r->mb_type[mb_pos] == RV34_MB_P_MIX16x16){
+-            r->is16 = 1;
+-            r->chroma_vlc = 1;
+-            r->luma_vlc   = 2;
+-            r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 0);
+-        }
+-    }
+-
+-    return rv34_decode_cbp(gb, r->cur_vlcs, r->is16);
+-}
+-
+-/**
+- * @addtogroup recons
+- * @{
+- */
+ /**
+  * mask for retrieving all bits in coded block pattern
+  * corresponding to one 8x8 block
+@@ -1109,6 +1104,8 @@ static int rv34_decode_mb_header(RV34DecContext *r, int8_t *intra_types)
+ #define U_CBP_MASK 0x0F0000
+ #define V_CBP_MASK 0xF00000
+ 
++/** @} */ // recons group
++
+ 
+ static void rv34_apply_differences(RV34DecContext *r, int cbp)
+ {
+diff --git a/libavcodec/rv40data.h b/libavcodec/rv40data.h
+index 4787075..1b6e8c3 100644
+--- a/libavcodec/rv40data.h
++++ b/libavcodec/rv40data.h
+@@ -65,7 +65,7 @@ static const uint8_t rv40_luma_dc_quant[2][32] = {
+ };
+ 
+ /**
+- * @defgroup loopfilter coefficients used by the RV40 loop filter
++ * @name Coefficients used by the RV40 loop filter
+  * @{
+  */
+ /**
+diff --git a/libavcodec/sbr.h b/libavcodec/sbr.h
+index cbf3e23..5b0f334 100644
+--- a/libavcodec/sbr.h
++++ b/libavcodec/sbr.h
+@@ -42,7 +42,7 @@ typedef struct {
+     uint8_t bs_xover_band;
+ 
+     /**
+-     * @defgroup bs_header_extra_1     Variables associated with bs_header_extra_1
++     * @name Variables associated with bs_header_extra_1
+      * @{
+      */
+     uint8_t bs_freq_scale;
+@@ -58,7 +58,7 @@ typedef struct {
+  */
+ typedef struct {
+     /**
+-     * @defgroup aac_bitstream     Main bitstream data variables
++     * @name Main bitstream data variables
+      * @{
+      */
+     unsigned           bs_frame_class;
+@@ -74,7 +74,7 @@ typedef struct {
+     /** @} */
+ 
+     /**
+-     * @defgroup state         State variables
++     * @name State variables
+      * @{
+      */
+     DECLARE_ALIGNED(16, float, synthesis_filterbank_samples)[SBR_SYNTHESIS_BUF_SIZE];
+@@ -116,7 +116,7 @@ typedef struct {
+     SpectrumParameters spectrum_params;
+     int                bs_amp_res_header;
+     /**
+-     * @defgroup bs_header_extra_2     variables associated with bs_header_extra_2
++     * @name Variables associated with bs_header_extra_2
+      * @{
+      */
+     unsigned           bs_limiter_bands;
+diff --git a/libavcodec/tableprint.h b/libavcodec/tableprint.h
+index ddf2635..c89f310 100644
+--- a/libavcodec/tableprint.h
++++ b/libavcodec/tableprint.h
+@@ -56,8 +56,7 @@ void write_##type##_2d_array(const void *arg, int len, int len2)\
+ }
+ 
+ /**
+- * \defgroup printfuncs Predefined functions for printing tables
+- *
++ * @name Predefined functions for printing tables
+  * \{
+  */
+ void write_int8_t_array     (const int8_t   *, int);
+diff --git a/libavcodec/vc1.c b/libavcodec/vc1.c
+index 7b878c1..32869b9 100644
+--- a/libavcodec/vc1.c
++++ b/libavcodec/vc1.c
+@@ -40,7 +40,7 @@
+ 
+ /***********************************************************************/
+ /**
+- * @defgroup vc1bitplane VC-1 Bitplane decoding
++ * @name VC-1 Bitplane decoding
+  * @see 8.7, p56
+  * @{
+  */
+diff --git a/libavcodec/vc1dec.c b/libavcodec/vc1dec.c
+index 186610e..8fca2da 100644
+--- a/libavcodec/vc1dec.c
++++ b/libavcodec/vc1dec.c
+@@ -137,7 +137,7 @@ static int vc1_init_common(VC1Context *v)
+ 
+ /***********************************************************************/
+ /**
+- * @defgroup vc1bitplane VC-1 Bitplane decoding
++ * @name VC-1 Bitplane decoding
+  * @see 8.7, p56
+  * @{
+  */
+@@ -774,7 +774,7 @@ static void vc1_mc_4mv_chroma(VC1Context *v)
+ 
+ /***********************************************************************/
+ /**
+- * @defgroup vc1block VC-1 Block-level functions
++ * @name VC-1 Block-level functions
+  * @see 7.1.4, p91 and 8.1.1.7, p(1)04
+  * @{
+  */
+@@ -1512,7 +1512,7 @@ static inline int vc1_pred_dc(MpegEncContext *s, int overlap, int pq, int n,
+ /** @} */ // Block group
+ 
+ /**
+- * @defgroup vc1_std_mb VC1 Macroblock-level functions in Simple/Main Profiles
++ * @name VC1 Macroblock-level functions in Simple/Main Profiles
+  * @see 7.1.4, p91 and 8.1.1.7, p(1)04
+  * @{
+  */
+diff --git a/libavcodec/wmavoice.c b/libavcodec/wmavoice.c
+index 4e69b83..eb3bcb0 100644
+--- a/libavcodec/wmavoice.c
++++ b/libavcodec/wmavoice.c
+@@ -128,9 +128,7 @@ static const struct frame_type_desc {
+  */
+ typedef struct {
+     /**
+-     * @defgroup struct_global Global values
+-     * Global values, specified in the stream header / extradata or used
+-     * all over.
++     * @name Global values specified in the stream header / extradata or used all over.
+      * @{
+      */
+     GetBitContext gb;             ///< packet bitreader. During decoder init,
+@@ -182,8 +180,9 @@ typedef struct {
+ 
+     /**
+      * @}
+-     * @defgroup struct_packet Packet values
+-     * Packet values, specified in the packet header or related to a packet.
++     *
++     * @name Packet values specified in the packet header or related to a packet.
++     *
+      * A packet is considered to be a single unit of data provided to this
+      * decoder by the demuxer.
+      * @{
+@@ -213,7 +212,8 @@ typedef struct {
+ 
+     /**
+      * @}
+-     * @defgroup struct_frame Frame and superframe values
++     *
++     * @name Frame and superframe values
+      * Superframe and frame data - these can change from frame to frame,
+      * although some of them do in that case serve as a cache / history for
+      * the next frame or superframe.
+@@ -256,7 +256,9 @@ typedef struct {
+     float synth_history[MAX_LSPS]; ///< see #excitation_history
+     /**
+      * @}
+-     * @defgroup post_filter Postfilter values
++     *
++     * @name Postfilter values
++     *
+      * Variables used for postfilter implementation, mostly history for
+      * smoothing and so on, and context variables for FFT/iFFT.
+      * @{
+@@ -432,7 +434,7 @@ static av_cold int wmavoice_decode_init(AVCodecContext *ctx)
+ }
+ 
+ /**
+- * @defgroup postfilter Postfilter functions
++ * @name Postfilter functions
+  * Postfilter functions (gain control, wiener denoise filter, DC filter,
+  * kalman smoothening, plus surrounding code to wrap it)
+  * @{
+@@ -825,7 +827,7 @@ static void dequant_lsps(double *lsps, int num,
+ }
+ 
+ /**
+- * @defgroup lsp_dequant LSP dequantization routines
++ * @name LSP dequantization routines
+  * LSP dequantization routines, for 10/16LSPs and independent/residual coding.
+  * @note we assume enough bits are available, caller should check.
+  * lsp10i() consumes 24 bits; lsp10r() consumes an additional 24 bits;
+@@ -969,7 +971,7 @@ static void dequant_lsp16r(GetBitContext *gb,
+ 
+ /**
+  * @}
+- * @defgroup aw Pitch-adaptive window coding functions
++ * @name Pitch-adaptive window coding functions
+  * The next few functions are for pitch-adaptive window coding.
+  * @{
+  */
+diff --git a/libavformat/avio.h b/libavformat/avio.h
+index e07e3c3..211fe93 100644
+--- a/libavformat/avio.h
++++ b/libavformat/avio.h
+@@ -145,7 +145,7 @@ typedef struct URLPollEntry {
+ attribute_deprecated int url_poll(URLPollEntry *poll_table, int n, int timeout);
+ 
+ /**
+- * @defgroup open_modes URL open modes
++ * @name URL open modes
+  * The flags argument to url_open and cosins must be one of the following
+  * constants, optionally ORed with other flags.
+  * @{
+@@ -176,7 +176,7 @@ extern URLInterruptCB *url_interrupt_cb;
+ 
+ /**
+  * @defgroup old_url_funcs Old url_* functions
+- * @deprecated use the buffered API based on AVIOContext instead
++ * The following functions are deprecated. Use the buffered API based on #AVIOContext instead.
+  * @{
+  */
+ attribute_deprecated int url_open_protocol (URLContext **puc, struct URLProtocol *up,
+@@ -235,7 +235,7 @@ attribute_deprecated AVIOContext *av_alloc_put_byte(
+ 
+ /**
+  * @defgroup old_avio_funcs Old put_/get_*() functions
+- * @deprecated use the avio_ -prefixed functions instead.
++ * The following functions are deprecated. Use the "avio_"-prefixed functions instead.
+  * @{
+  */
+ attribute_deprecated int          get_buffer(AVIOContext *s, unsigned char *buf, int size);
+@@ -272,7 +272,7 @@ attribute_deprecated int64_t av_url_read_fseek (AVIOContext *h,    int stream_in
+ 
+ /**
+  * @defgroup old_url_f_funcs Old url_f* functions
+- * @deprecated use the avio_ -prefixed functions instead.
++ * The following functions are deprecated, use the "avio_"-prefixed functions instead.
+  * @{
+  */
+ attribute_deprecated int url_fopen( AVIOContext **s, const char *url, int flags);
+@@ -479,7 +479,7 @@ void avio_flush(AVIOContext *s);
+ int avio_read(AVIOContext *s, unsigned char *buf, int size);
+ 
+ /**
+- * @defgroup avio_read Functions for reading from AVIOContext.
++ * @name Functions for reading from AVIOContext
+  * @{
+  *
+  * @note return 0 if EOF, so you cannot use it if EOF handling is
+@@ -523,7 +523,7 @@ int avio_get_str16be(AVIOContext *pb, int maxlen, char *buf, int buflen);
+ 
+ 
+ /**
+- * @defgroup open_modes URL open modes
++ * @name URL open modes
+  * The flags argument to avio_open must be one of the following
+  * constants, optionally ORed with other flags.
+  * @{
+diff --git a/libavformat/rtmppkt.h b/libavformat/rtmppkt.h
+index bb34758..8372484 100644
+--- a/libavformat/rtmppkt.h
++++ b/libavformat/rtmppkt.h
+@@ -138,7 +138,7 @@ int ff_rtmp_packet_write(URLContext *h, RTMPPacket *p,
+ void ff_rtmp_packet_dump(void *ctx, RTMPPacket *p);
+ 
+ /**
+- * @defgroup amffuncs functions used to work with AMF format (which is also used in .flv)
++ * @name Functions used to work with the AMF format (which is also used in .flv)
+  * @see amf_* funcs in libavformat/flvdec.c
+  * @{
+  */
+diff --git a/libavutil/lzo.h b/libavutil/lzo.h
+index 01c9280..a3924de 100644
+--- a/libavutil/lzo.h
++++ b/libavutil/lzo.h
+@@ -24,7 +24,7 @@
+ 
+ #include <stdint.h>
+ 
+-/** \defgroup errflags Error flags returned by av_lzo1x_decode
++/** @name Error flags returned by av_lzo1x_decode
+   * \{ */
+ //! end of the input buffer reached before decoding finished
+ #define AV_LZO_INPUT_DEPLETED 1
+-- 
+1.7.4.1
+

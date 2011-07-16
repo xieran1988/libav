@@ -1,0 +1,105 @@
+From c5c265435114ccbfd489a04d8e2f8f3d05d4d858 Mon Sep 17 00:00:00 2001
+From: Reinhard Tartler <siretart@tauware.de>
+Date: Fri, 1 Jul 2011 20:50:33 +0200
+Subject: [PATCH 29/57] libavformat: Add an example how to use the metadata API
+
+Also include it into the doxygen documentation
+(cherry picked from commit 12489443dec228d60fa3dc56695f6ddae08beb37)
+---
+ libavformat/Makefile           |    2 +-
+ libavformat/avformat.h         |    2 +
+ libavformat/metadata-example.c |   56 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 59 insertions(+), 1 deletions(-)
+ create mode 100644 libavformat/metadata-example.c
+
+diff --git a/libavformat/Makefile b/libavformat/Makefile
+index c2fa8af..7a8aba6 100644
+--- a/libavformat/Makefile
++++ b/libavformat/Makefile
+@@ -335,7 +335,7 @@ OBJS-$(CONFIG_UDP_PROTOCOL)              += udp.o
+ # libavdevice dependencies
+ OBJS-$(CONFIG_JACK_INDEV)                += timefilter.o
+ 
+-EXAMPLES  = output
++EXAMPLES  = metadata output
+ TESTPROGS = timefilter
+ 
+ include $(SUBDIR)../subdir.mak
+diff --git a/libavformat/avformat.h b/libavformat/avformat.h
+index 05e80f1..8561a50 100644
+--- a/libavformat/avformat.h
++++ b/libavformat/avformat.h
+@@ -109,6 +109,8 @@ struct AVFormatContext;
+  variant_bitrate -- the total bitrate of the bitrate variant that the current stream is part of
+  @endverbatim
+  *
++ * Look in the examples section for an application example how to use the Metadata API.
++ *
+  * @}
+  */
+ 
+diff --git a/libavformat/metadata-example.c b/libavformat/metadata-example.c
+new file mode 100644
+index 0000000..7bf77e7
+--- /dev/null
++++ b/libavformat/metadata-example.c
+@@ -0,0 +1,56 @@
++/*
++ * Copyright (c) 2011 Reinhard Tartler
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++ * THE SOFTWARE.
++ */
++
++/**
++ * @file
++ * @example libavformat/metadata-example.c
++ * Shows how the metadata API can be used in application programs.
++ */
++
++#include <stdio.h>
++
++#include <libavformat/avformat.h>
++#include <libavutil/dict.h>
++
++int main (int argc, char **argv)
++{
++    AVFormatContext *fmt_ctx = NULL;
++    AVDictionaryEntry *tag = NULL;
++    int ret;
++
++    if (argc != 2) {
++        printf("usage: %s <input_file>\n"
++               "example program to demonstrate the use of the libavformat metadata API.\n"
++               "\n", argv[0]);
++        return 1;
++    }
++
++    av_register_all();
++    if ((ret = avformat_open_input(&fmt_ctx, argv[1], NULL, NULL)))
++        return ret;
++
++    while ((tag = av_dict_get(fmt_ctx->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
++        printf("%s=%s\n", tag->key, tag->value);
++
++    avformat_free_context(fmt_ctx);
++    return 0;
++}
+-- 
+1.7.4.1
+

@@ -1,0 +1,30 @@
+From d734d4ce6ae6e798b17c26ed1cc228891897b34f Mon Sep 17 00:00:00 2001
+From: Stefano Sabatini <stefano.sabatini-lala@poste.it>
+Date: Sat, 2 Jul 2011 13:22:35 +0200
+Subject: [PATCH 31/57] suggest to use av_get_bytes_per_sample() in av_get_bits_per_sample_format() doxy
+
+The previously suggested replacement - av_get_bits_per_sample_fmt() -
+was also deprecated.
+
+Signed-off-by: Ronald S. Bultje <rsbultje@gmail.com>
+(cherry picked from commit ccfa626db863b6019fd4c316d19d8f7018543bed)
+---
+ libavcodec/avcodec.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/avcodec.h b/libavcodec/avcodec.h
+index 835279e..9a3076a 100644
+--- a/libavcodec/avcodec.h
++++ b/libavcodec/avcodec.h
+@@ -3847,7 +3847,7 @@ int av_get_bits_per_sample(enum CodecID codec_id);
+ 
+ #if FF_API_OLD_SAMPLE_FMT
+ /**
+- * @deprecated Use av_get_bits_per_sample_fmt() instead.
++ * @deprecated Use av_get_bytes_per_sample() instead.
+  */
+ attribute_deprecated
+ int av_get_bits_per_sample_format(enum AVSampleFormat sample_fmt);
+-- 
+1.7.4.1
+

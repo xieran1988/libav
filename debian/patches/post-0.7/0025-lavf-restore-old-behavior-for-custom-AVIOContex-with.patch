@@ -1,0 +1,42 @@
+From b263e94f774fa612c8329ddd95b35fdf5dac86d5 Mon Sep 17 00:00:00 2001
+From: Anton Khirnov <anton@khirnov.net>
+Date: Fri, 24 Jun 2011 07:58:16 +0200
+Subject: [PATCH 25/57] lavf: restore old behavior for custom AVIOContex with an AVFMT_NOFILE format.
+
+av_open_input_stream used to allow this, even though it makes no sense.
+Make it just print a warning instead of failing, thus restoring
+compatibility.
+
+Note that avformat_open_input() will still reject this combination.
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+(cherry picked from commit 4f731c4429e1fe66a5c92ff15feb63253a36d8fb)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavformat/utils.c |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/utils.c b/libavformat/utils.c
+index 29390b8..0e6b001 100644
+--- a/libavformat/utils.c
++++ b/libavformat/utils.c
+@@ -459,9 +459,14 @@ int av_open_input_stream(AVFormatContext **ic_ptr,
+         err = AVERROR(ENOMEM);
+         goto fail;
+     }
+-    ic->pb = pb;
++    if (pb && fmt && fmt->flags & AVFMT_NOFILE)
++        av_log(ic, AV_LOG_WARNING, "Custom AVIOContext makes no sense and "
++                                   "will be ignored with AVFMT_NOFILE format.\n");
++    else
++        ic->pb = pb;
+ 
+     err = avformat_open_input(&ic, filename, fmt, &opts);
++    ic->pb = ic->pb ? ic->pb : pb; // don't leak custom pb if it wasn't set above
+ 
+     *ic_ptr = ic;
+ fail:
+-- 
+1.7.4.1
+

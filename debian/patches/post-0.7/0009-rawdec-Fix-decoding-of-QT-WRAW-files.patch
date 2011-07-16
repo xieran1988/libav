@@ -1,0 +1,54 @@
+From fcd26ebc8f371612e56e9f591b578d519e04c4c2 Mon Sep 17 00:00:00 2001
+From: ami_stuff <ami_stuff@o2.pl>
+Date: Tue, 24 May 2011 23:38:01 +0200
+Subject: [PATCH 09/57] rawdec: Fix decoding of QT WRAW files.
+
+From some tests it results that:
+1. All of the AVI/MOV WRAW files need to be flipped.
+2. MOV WRAW files need to use AVI color modes.
+3. Assigning PAL8 mode by default to WRAW codec is not correct.
+(cherry picked from commit 67e7dc54049d9b51a0c2168c8265145a9aef7780)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/raw.c    |    1 -
+ libavcodec/rawdec.c |    4 +++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/raw.c b/libavcodec/raw.c
+index 4bc07b8..aa1ea30 100644
+--- a/libavcodec/raw.c
++++ b/libavcodec/raw.c
+@@ -123,7 +123,6 @@ const PixelFormatTag ff_raw_pix_fmt_tags[] = {
+     { PIX_FMT_YUYV422, MKTAG('y', 'u', 'v', '2') },
+     { PIX_FMT_YUYV422, MKTAG('y', 'u', 'v', 's') },
+     { PIX_FMT_YUYV422, MKTAG('D', 'V', 'O', 'O') }, /* Digital Voodoo SD 8 Bit */
+-    { PIX_FMT_PAL8,    MKTAG('W', 'R', 'A', 'W') },
+     { PIX_FMT_RGB555LE,MKTAG('L', '5', '5', '5') },
+     { PIX_FMT_RGB565LE,MKTAG('L', '5', '6', '5') },
+     { PIX_FMT_RGB565BE,MKTAG('B', '5', '6', '5') },
+diff --git a/libavcodec/rawdec.c b/libavcodec/rawdec.c
+index 6b3387f..5e8e6c4 100644
+--- a/libavcodec/rawdec.c
++++ b/libavcodec/rawdec.c
+@@ -78,6 +78,8 @@ static av_cold int raw_init_decoder(AVCodecContext *avctx)
+ 
+     if (avctx->codec_tag == MKTAG('r','a','w',' '))
+         avctx->pix_fmt = find_pix_fmt(pix_fmt_bps_mov, avctx->bits_per_coded_sample);
++    else if (avctx->codec_tag == MKTAG('W','R','A','W'))
++        avctx->pix_fmt = find_pix_fmt(pix_fmt_bps_avi, avctx->bits_per_coded_sample);
+     else if (avctx->codec_tag)
+         avctx->pix_fmt = find_pix_fmt(ff_raw_pix_fmt_tags, avctx->codec_tag);
+     else if (avctx->pix_fmt == PIX_FMT_NONE && avctx->bits_per_coded_sample)
+@@ -98,7 +100,7 @@ static av_cold int raw_init_decoder(AVCodecContext *avctx)
+     avctx->coded_frame= &context->pic;
+ 
+     if((avctx->extradata_size >= 9 && !memcmp(avctx->extradata + avctx->extradata_size - 9, "BottomUp", 9)) ||
+-       avctx->codec_tag == MKTAG( 3 ,  0 ,  0 ,  0 ))
++        avctx->codec_tag == MKTAG(3, 0, 0, 0) || avctx->codec_tag == MKTAG('W','R','A','W'))
+         context->flip=1;
+ 
+     return 0;
+-- 
+1.7.4.1
+

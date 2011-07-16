@@ -1,0 +1,34 @@
+From 43de5c034fe8d9bf1687faec8865b5967291004b Mon Sep 17 00:00:00 2001
+From: Diego Biurrun <diego@biurrun.de>
+Date: Sun, 3 Jul 2011 16:33:25 +0200
+Subject: [PATCH 40/57] doxygen: Escape '\' in Doxygen documentation.
+
+(cherry picked from commit c81a2b9b4f5488c831dc27635152394ab632c46a)
+---
+ libavformat/internal.h |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libavformat/internal.h b/libavformat/internal.h
+index 7413b09..c1a4b4f 100644
+--- a/libavformat/internal.h
++++ b/libavformat/internal.h
+@@ -157,14 +157,14 @@ void ff_put_v(AVIOContext *bc, uint64_t val);
+ 
+ /**
+  * Read a whole line of text from AVIOContext. Stop reading after reaching
+- * either a \n, a \0 or EOF. The returned string is always \0 terminated,
++ * either a \\n, a \\0 or EOF. The returned string is always \\0-terminated,
+  * and may be truncated if the buffer is too small.
+  *
+  * @param s the read-only AVIOContext
+  * @param buf buffer to store the read line
+  * @param maxlen size of the buffer
+  * @return the length of the string written in the buffer, not including the
+- *         final \0
++ *         final \\0
+  */
+ int ff_get_line(AVIOContext *s, char *buf, int maxlen);
+ 
+-- 
+1.7.4.1
+

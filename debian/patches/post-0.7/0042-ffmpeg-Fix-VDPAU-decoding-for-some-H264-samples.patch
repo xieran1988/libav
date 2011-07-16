@@ -1,0 +1,27 @@
+From b9e126fbe2510523dece2fe5433cdd00ab52f2f5 Mon Sep 17 00:00:00 2001
+From: Carl Eugen Hoyos <cehoyos@ag.or.at>
+Date: Mon, 27 Jun 2011 07:25:58 +0000
+Subject: [PATCH 42/57] ffmpeg: Fix VDPAU decoding for some H264 samples.
+
+(cherry picked from commit a4ab70f92e4d8705434a2fee42a2b69a8bfa6bb1)
+---
+ libavcodec/vdpau.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/vdpau.c b/libavcodec/vdpau.c
+index 5f8f091..5312b4b 100644
+--- a/libavcodec/vdpau.c
++++ b/libavcodec/vdpau.c
+@@ -183,7 +183,8 @@ void ff_vdpau_h264_picture_complete(MpegEncContext *s)
+     render->info.h264.deblocking_filter_control_present_flag = h->pps.deblocking_filter_parameters_present;
+     render->info.h264.redundant_pic_cnt_present_flag         = h->pps.redundant_pic_cnt_present;
+     memcpy(render->info.h264.scaling_lists_4x4, h->pps.scaling_matrix4, sizeof(render->info.h264.scaling_lists_4x4));
+-    memcpy(render->info.h264.scaling_lists_8x8, h->pps.scaling_matrix8, sizeof(render->info.h264.scaling_lists_8x8));
++    memcpy(render->info.h264.scaling_lists_8x8[0], h->pps.scaling_matrix8[0], sizeof(render->info.h264.scaling_lists_8x8[0]));
++    memcpy(render->info.h264.scaling_lists_8x8[1], h->pps.scaling_matrix8[3], sizeof(render->info.h264.scaling_lists_8x8[0]));
+ 
+     ff_draw_horiz_band(s, 0, s->avctx->height);
+     render->bitstream_buffers_used = 0;
+-- 
+1.7.4.1
+
