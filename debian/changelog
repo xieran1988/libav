@@ -1,3 +1,13 @@
+libav (4:0.7-2) experimental; urgency=low
+
+  [ Arnout Engelen ]
+  * libavformat-dev depends on libavutil-dev
+
+  [ Reinhard Tartler ]
+  * Add backported patches for 0.7.1
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 16 Jul 2011 14:38:21 +0200
+
 libav (4:0.7-1) experimental; urgency=low
 
   * New upstream release.
