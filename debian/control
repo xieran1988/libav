@@ -6,7 +6,7 @@ Uploaders: Sam Hocevar (Debian packages) <sam+deb@zoy.org>,
  Loic Minier <lool@dooz.org>,
  Reinhard Tartler <siretart@tauware.de>,
  Fabian Greffrath <fabian+debian@greffrath.com>,
- Andres Mejia <mcitadel@gmail.com>,
+ Andres Mejia <amejia@debian.org>,
  Jonas Smedegaard <dr@jones.dk>
 DM-Upload-Allowed: yes
 Standards-Version: 3.9.2
