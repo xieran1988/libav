@@ -93,6 +93,7 @@ gpl_confflags += --enable-x11grab
 
 # Common configuration flags
 confflags += --extra-version='$(DEB_VERSION)'
+confflags += --arch='$(DEB_HOST_ARCH_CPU)'
 confflags += --prefix=/usr
 confflags += --enable-vdpau
 confflags += --enable-bzlib
