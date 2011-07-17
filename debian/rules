@@ -27,13 +27,8 @@ $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
 $(info CFLAGS = $(CFLAGS))
 $(info LDFLAGS = $(LDFLAGS))
 
-snapshot_version:
-	[ ! -r .svnrevision ] || \
-		cp .svnrevision $@
-	touch $@
-
 configure-%: configure-stamp-%
-configure-stamp-%: $(QUILT_STAMPFN) snapshot_version
+configure-stamp-%: $(QUILT_STAMPFN)
 	dh_testdir
 	mkdir -p debian-$*
 	cd debian-$* && CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" $(CURDIR)/configure \
