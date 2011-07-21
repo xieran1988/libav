@@ -7,9 +7,11 @@ libav (4:0.7.1-1) experimental; urgency=low
   * Pass --arch to configure
   * no longer generate 'snapshot_version'
   * disable jackd output support on the hurd
-  * Use proper architecture wildcards for Linux-only dependencies, Closes: #634460
+  * Use proper architecture wildcards for Linux-only dependencies,
+    Closes: #634460
   * Drop "backported patches"
   * Imported Upstream version 0.7.1
+  * Fix installation of codecs.txt and formats.txt
 
  -- Reinhard Tartler <siretart@tauware.de>  Thu, 21 Jul 2011 12:18:48 +0200
 
