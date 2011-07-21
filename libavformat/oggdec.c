@@ -238,7 +238,8 @@ static int ogg_read_page(AVFormatContext *s, int *str)
 
             for (n = 0; n < ogg->nstreams; n++) {
                 av_freep(&ogg->streams[n].buf);
-                av_freep(&ogg->streams[n].private);
+                if (!ogg->state || ogg->state->streams[n].private != ogg->streams[n].private)
+                    av_freep(&ogg->streams[n].private);
             }
             ogg->curidx   = -1;
             ogg->nstreams = 0;
@@ -372,8 +373,7 @@ static int ogg_packet(AVFormatContext *s, int *str, int *dstart, int *dsize,
 
             // We have reached the first non-header packet in this stream.
             // Unfortunately more header packets may still follow for others,
-            // so we reset this later unless we are done with the headers
-            // for all streams.
+            // but if we continue with header parsing we may lose data packets.
             ogg->headers = 1;
 
             // Update the header state for all streams and
@@ -382,8 +382,6 @@ static int ogg_packet(AVFormatContext *s, int *str, int *dstart, int *dsize,
                 s->data_offset = os->sync_pos;
             for (i = 0; i < ogg->nstreams; i++) {
                 struct ogg_stream *cur_os = ogg->streams + i;
-                if (cur_os->header > 0)
-                    ogg->headers = 0;
 
                 // if we have a partial non-header packet, its start is
                 // obviously at or after the data start
@@ -585,15 +583,15 @@ static int64_t ogg_read_timestamp(AVFormatContext *s, int stream_index,
                                   int64_t *pos_arg, int64_t pos_limit)
 {
     struct ogg *ogg = s->priv_data;
-    struct ogg_stream *os = ogg->streams + stream_index;
     AVIOContext *bc = s->pb;
     int64_t pts = AV_NOPTS_VALUE;
-    int i;
+    int i = -1;
     avio_seek(bc, *pos_arg, SEEK_SET);
     ogg_reset(ogg);
 
     while (avio_tell(bc) < pos_limit && !ogg_packet(s, &i, NULL, NULL, pos_arg)) {
         if (i == stream_index) {
+            struct ogg_stream *os = ogg->streams + stream_index;
             pts = ogg_calc_pts(s, i, NULL);
             if (os->keyframe_seek && !(os->pflags & AV_PKT_FLAG_KEY))
                 pts = AV_NOPTS_VALUE;
@@ -619,6 +617,7 @@ static int ogg_read_seek(AVFormatContext *s, int stream_index,
         os->keyframe_seek = 1;
 
     ret = av_seek_frame_binary(s, stream_index, timestamp, flags);
+    os = ogg->streams + stream_index;
     if (ret < 0)
         os->keyframe_seek = 0;
     return ret;

@@ -1682,7 +1682,7 @@ static av_always_inline void hl_decode_mb_predict_luma(H264Context *h, int mb_ty
                         uint64_t tr_high;
                         if(dir == DIAG_DOWN_LEFT_PRED || dir == VERT_LEFT_PRED){
                             const int topright_avail= (h->topright_samples_available<<i)&0x8000;
-                            assert(mb_y || linesize <= block_offset[i]);
+                            assert(s->mb_y || linesize <= block_offset[i]);
                             if(!topright_avail){
                                 if (pixel_shift) {
                                     tr_high= ((uint16_t*)ptr)[3 - linesize/2]*0x0001000100010001ULL;
@@ -1744,7 +1744,7 @@ static av_always_inline void hl_decode_mb_idct_luma(H264Context *h, int mb_type,
                         h->hpc.pred16x16_add[h->intra16x16_pred_mode](dest_y, block_offset, h->mb + (p*256 << pixel_shift), linesize);
                     }else{
                         for(i=0; i<16; i++){
-                            if(h->non_zero_count_cache[ scan8[i+p*16] ] || dctcoef_get(h->mb, pixel_shift, i*16))
+                            if(h->non_zero_count_cache[ scan8[i+p*16] ] || dctcoef_get(h->mb, pixel_shift, i*16+p*256))
                                 s->dsp.add_pixels4(dest_y + block_offset[i], h->mb + (i*16+p*256 << pixel_shift), linesize);
                         }
                     }
@@ -2485,7 +2485,8 @@ static int decode_slice_header(H264Context *h, H264Context *h0){
 
     s->dropable= h->nal_ref_idc == 0;
 
-    if((s->avctx->flags2 & CODEC_FLAG2_FAST) && !h->nal_ref_idc){
+    /* FIXME: 2tap qpel isn't implemented for high bit depth. */
+    if((s->avctx->flags2 & CODEC_FLAG2_FAST) && !h->nal_ref_idc && !h->pixel_shift){
         s->me.qpel_put= s->dsp.put_2tap_qpel_pixels_tab;
         s->me.qpel_avg= s->dsp.avg_2tap_qpel_pixels_tab;
     }else{
@@ -3300,8 +3301,8 @@ static void loop_filter(H264Context *h, int start_x, int end_x){
                     uvlinesize = h->mb_uvlinesize = s->uvlinesize * 2;
                     if(mb_y&1){ //FIXME move out of this function?
                         dest_y -= s->linesize*15;
-                        dest_cb-= s->uvlinesize*7;
-                        dest_cr-= s->uvlinesize*7;
+                        dest_cb-= s->uvlinesize*((8 << CHROMA444)-1);
+                        dest_cr-= s->uvlinesize*((8 << CHROMA444)-1);
                     }
                 } else {
                     linesize   = h->mb_linesize   = s->linesize;
