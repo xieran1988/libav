@@ -1,8 +1,9 @@
-libav (4:0.7.1-2) UNRELEASED; urgency=low
+libav (4:0.7.1-2) experimental; urgency=low
 
-  * start new upload
+  * Build against libx264. Closes: #418228, #440681
+  * Build against xvidcore to enable xvid encoding
 
- -- Reinhard Tartler <siretart@tauware.de>  Tue, 26 Jul 2011 12:08:24 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 26 Jul 2011 21:58:18 +0200
 
 libav (4:0.7.1-1) experimental; urgency=low
 
