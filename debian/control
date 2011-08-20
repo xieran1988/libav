@@ -275,8 +275,8 @@ Description: Development files for libpostproc
 Package: libswscale-dev
 Section: libdevel
 Architecture: any
-Depends: libswscale2 (>= ${binary:Version}) | libswscale-extra-1 (>= ${source:Upstream-Version}),
- libswscale2 (<= ${source:Upstream-Version}-99) | libswscale-extra-1 (<= ${source:Upstream-Version}.99),
+Depends: libswscale2 (>= ${binary:Version}) | libswscale-extra-2 (>= ${source:Upstream-Version}),
+ libswscale2 (<= ${source:Upstream-Version}-99) | libswscale-extra-2 (<= ${source:Upstream-Version}.99),
  libavutil-dev (= ${binary:Version}),
  ${misc:Depends}
 Description: Development files for libswscale
