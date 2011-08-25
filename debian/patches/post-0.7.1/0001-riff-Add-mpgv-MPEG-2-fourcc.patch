@@ -1,0 +1,26 @@
+From a05219d801cdf0fd83301e893301e9f6ba0ab6ed Mon Sep 17 00:00:00 2001
+From: Alex Converse <alex.converse@gmail.com>
+Date: Fri, 22 Jul 2011 10:13:22 -0700
+Subject: [PATCH 1/4] riff: Add mpgv MPEG-2 fourcc
+
+Supported by mplayer and seen in the wild.
+(cherry picked from commit 505345ed5d180093a44da8d70ac541898c31c22f)
+---
+ libavformat/riff.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/libavformat/riff.c b/libavformat/riff.c
+index 817349c..0df569e 100644
+--- a/libavformat/riff.c
++++ b/libavformat/riff.c
+@@ -130,6 +130,7 @@ const AVCodecTag ff_codec_bmp_tags[] = {
+     { CODEC_ID_MPEG2VIDEO,   MKTAG('s', 'l', 'i', 'f') },
+     { CODEC_ID_MPEG2VIDEO,   MKTAG('E', 'M', '2', 'V') },
+     { CODEC_ID_MPEG2VIDEO,   MKTAG('M', '7', '0', '1') }, /* Matrox MPEG2 intra-only */
++    { CODEC_ID_MPEG2VIDEO,   MKTAG('m', 'p', 'g', 'v') },
+     { CODEC_ID_MJPEG,        MKTAG('M', 'J', 'P', 'G') },
+     { CODEC_ID_MJPEG,        MKTAG('L', 'J', 'P', 'G') },
+     { CODEC_ID_MJPEG,        MKTAG('d', 'm', 'b', '1') },
+-- 
+1.7.4.1
+

@@ -1,1 +1,5 @@
 01-Tweak-doxygen-config.patch
+
+post-0.7.1/0001-riff-Add-mpgv-MPEG-2-fourcc.patch
+post-0.7.1/0002-jpegdec-actually-search-for-and-parse-RSTn.patch
+post-0.7.1/0003-cavs-fix-some-crashes-with-invalid-bitstreams.patch
