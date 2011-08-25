@@ -1,4 +1,5 @@
 01-Tweak-doxygen-config.patch
+02-make-MAP_ANONYMOUS_AVAILABLE.patch
 
 post-0.7.1/0001-riff-Add-mpgv-MPEG-2-fourcc.patch
 post-0.7.1/0002-jpegdec-actually-search-for-and-parse-RSTn.patch
