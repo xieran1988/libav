@@ -1,0 +1,34 @@
+From: Kim Nguyen <kim@nguyen.vg>
+Date: Mon, 20 Jun 2011 22:18:54 +0000 (+0200)
+Subject: Fixes use of altivec flavor on PowerPC of libav-0.7
+X-Git-Tag: n0.8~20
+X-Git-Url: http://git.videolan.org/?p=ffmpeg.git;a=commitdiff_plain;h=2d16394f972dca8cc5e5b5bf9ab0b343a6239b76
+Reported-by: Elimar Riesebieter <riesebie@lxtec.de>
+Origin: http://ffmpeg.org/trac/ffmpeg/ticket/272#comment:8
+Bug: http://bugzilla.libav.org/show_bug.cgi?id=40
+Forwarded: http://bugzilla.libav.org/show_bug.cgi?id=40
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=639948
+Found by: Lennart Sorensen
+
+ppc32: Fix movrel
+
+Fixes ticket272
+---
+
+diff --git a/libavcodec/ppc/asm.S b/libavcodec/ppc/asm.S
+index e372d53..2706d6b 100644
+--- a/libavcodec/ppc/asm.S
++++ b/libavcodec/ppc/asm.S
+@@ -67,7 +67,11 @@ X(\name):
+ 
+ .macro movrel rd, sym
+ #if CONFIG_PIC
+-    lwz     \rd, \sym@got(r2)
++    bcl             20, 31, lab_pic_\@
++lab_pic_\@:
++    mflr    \rd
++    addis   \rd, \rd, (\sym - lab_pic_\@)@ha
++    addi    \rd, \rd, (\sym - lab_pic_\@)@l
+ #else
+     lis     \rd, \sym@ha
+     la      \rd, \sym@l(\rd)
