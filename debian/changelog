@@ -1,3 +1,10 @@
+libav (4:0.7.1-5) unstable; urgency=low
+
+  * sync patches with upstream release branch
+  * Fix segmentation fault on ppc32, Closes: #639948
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 05 Sep 2011 07:25:06 +0200
+
 libav (4:0.7.1-4) unstable; urgency=low
 
   * upload to unstable
