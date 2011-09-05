@@ -1,0 +1,27 @@
+From b37131f798941af1eb88e2d550203bdebb8b4324 Mon Sep 17 00:00:00 2001
+From: Pino Toscano <pino@debian.org>
+Date: Fri, 12 Aug 2011 14:11:21 +0200
+Subject: [PATCH 4/6] configure: add missing CFLAGS to fix building on the HURD
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+Signed-off-by: Luca Barbato <lu_zero@gentoo.org>
+(cherry picked from commit f60d13663742d1c695680ede83c4d646bc57d380)
+---
+ configure |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/configure b/configure
+index 5e40e08..b6e2ff9 100755
+--- a/configure
++++ b/configure
+@@ -2504,6 +2504,7 @@ case $target_os in
+         add_cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600 -D_BSD_SOURCE
+         ;;
+     gnu)
++        add_cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
+         ;;
+     qnx)
+         add_cppflags -D_QNX_SOURCE
+-- 
+1.7.4.1
+

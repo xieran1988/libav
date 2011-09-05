@@ -1,0 +1,37 @@
+From 20ca827019a72bfacb38e73d0b8590e651818272 Mon Sep 17 00:00:00 2001
+From: Piotr Kaczuba <p.kaczuba@attika.ath.cx>
+Date: Mon, 30 May 2011 13:19:35 +0200
+Subject: [PATCH 5/6] postprocess.c: filter name needs to be double 0 terminated
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+(cherry picked from commit f4f3300c09bb13eb7922e60888b55e3e0fb325e7)
+---
+ libpostproc/postprocess.c |    5 +++--
+ 1 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/libpostproc/postprocess.c b/libpostproc/postprocess.c
+index dd50daf..eacf262 100644
+--- a/libpostproc/postprocess.c
++++ b/libpostproc/postprocess.c
+@@ -763,7 +763,8 @@ pp_mode *pp_get_mode_by_name_and_quality(const char *name, int quality)
+     ppMode->maxClippedThreshold= 0.01;
+     ppMode->error=0;
+ 
+-    av_strlcpy(temp, name, GET_MODE_BUFFER_SIZE);
++    memset(temp, 0, GET_MODE_BUFFER_SIZE);
++    av_strlcpy(temp, name, GET_MODE_BUFFER_SIZE - 1);
+ 
+     av_log(NULL, AV_LOG_DEBUG, "pp: %s\n", name);
+ 
+@@ -819,7 +820,7 @@ pp_mode *pp_get_mode_by_name_and_quality(const char *name, int quality)
+ 
+                 plen= strlen(p);
+                 spaceLeft= p - temp + plen;
+-                if(spaceLeft + newlen  >= GET_MODE_BUFFER_SIZE){
++                if(spaceLeft + newlen  >= GET_MODE_BUFFER_SIZE - 1){
+                     ppMode->error++;
+                     break;
+                 }
+-- 
+1.7.4.1
+

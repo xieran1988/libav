@@ -1,7 +1,9 @@
-01-Tweak-doxygen-config.patch
-02-make-MAP_ANONYMOUS_AVAILABLE.patch
-03-filter-name-needs-to-be-double-0-terminated.patch
-
 post-0.7.1/0001-riff-Add-mpgv-MPEG-2-fourcc.patch
 post-0.7.1/0002-jpegdec-actually-search-for-and-parse-RSTn.patch
 post-0.7.1/0003-cavs-fix-some-crashes-with-invalid-bitstreams.patch
+post-0.7.1/0004-configure-add-missing-CFLAGS-to-fix-building-on-the-.patch
+post-0.7.1/0005-postprocess.c-filter-name-needs-to-be-double-0-termi.patch
+
+01-Tweak-doxygen-config.patch
+02-make-MAP_ANONYMOUS_AVAILABLE.patch
+
