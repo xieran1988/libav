@@ -1,1 +1,1 @@
-usr/lib/{,*/,*/*/}libavcodec.so.*
+usr/lib/*/{,*/,*/*/}libavcodec.so.*

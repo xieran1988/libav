@@ -1,3 +1,9 @@
+libav (4:0.7.1-6) unstable; urgency=low
+
+  * Convert package to include multiarch support.
+
+ -- Andres Mejia <amejia@debian.org>  Fri, 23 Sep 2011 22:03:39 -0400
+
 libav (4:0.7.1-5) unstable; urgency=low
 
   * sync patches with upstream release branch

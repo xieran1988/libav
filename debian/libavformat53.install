@@ -1,1 +1,1 @@
-usr/lib/{,*/,*/*/}libavformat.so.*
+usr/lib/*/{,*/,*/*/}libavformat.so.*

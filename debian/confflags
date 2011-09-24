@@ -7,6 +7,7 @@ FLAVORS := static
 # shared is generic, i.e. without arch specific opcodes
 FLAVORS += shared
 
+export DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 export DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 export DEB_HOST_ARCH_CPU  ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU)
@@ -95,6 +96,7 @@ gpl_confflags += --enable-x11grab
 confflags += --extra-version='$(DEB_VERSION)'
 confflags += --arch='$(DEB_HOST_ARCH_CPU)'
 confflags += --prefix=/usr
+confflags += --libdir=/usr/lib/$(DEB_HOST_MULTIARCH)
 confflags += --enable-vdpau
 confflags += --enable-bzlib
 confflags += --enable-libgsm
@@ -162,7 +164,7 @@ endif
 static_build_confflags += $(confflags)
 
 # Configuration flags for the non-optimized shared libraries
-shared_build_confflags += $(confflags)
+shared_build_confflags += $(confflags) --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)
 # amd64 has no problems with optimized shared libs. i386 and arm do.
 ifneq      ($(DEB_HOST_ARCH),amd64)
 shared_build_confflags += $(nooptflags)
@@ -173,7 +175,7 @@ shared_build_confflags += --disable-static
 ## specific to arm architectures
 # Configuration flags for the optimised shared libraries
 vfp_build_confflags += $(confflags)
-vfp_build_confflags += --shlibdir=/usr/lib/vfp
+vfp_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/vfp
 vfp_build_confflags += --enable-shared
 vfp_build_confflags += --disable-static
 vfp_build_confflags += --extra-cflags="-mfpu=vfp $(float_abi)"
@@ -181,7 +183,7 @@ vfp_build_confflags += --disable-ffmpeg
 vfp_build_confflags += --disable-ffplay
 # NB: NEON always implies v7+ and ffmpeg's NEON implementation requires VFP
 neon_build_confflags += $(confflags)
-neon_build_confflags += --shlibdir=/usr/lib/neon/vfp
+neon_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/neon/vfp
 # the NEON pass now requires ubfx which was introduced in armv6t2; we need to
 # enable at least armv6t2 for the NEON pass to build, but NEON implies armv7-a
 # so pass armv7-a if it's not already enabled
@@ -198,7 +200,7 @@ neon_build_confflags += --disable-ffplay
 # Configuration flags for the optimized shared libraries
 cmov_build_confflags += $(confflags)
 cmov_build_confflags += $(nooptflags)
-cmov_build_confflags += --shlibdir=/usr/lib/i686/cmov
+cmov_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/i686/cmov
 cmov_build_confflags += --cpu='i686'
 cmov_build_confflags += --enable-shared
 cmov_build_confflags += --disable-static
@@ -208,7 +210,7 @@ cmov_build_confflags += --disable-ffplay
 ## powerpc architecture specific
 # Configuration flags for the optimized shared libraries
 altivec_build_confflags += $(confflags)
-altivec_build_confflags += --shlibdir=/usr/lib/altivec
+altivec_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/altivec
 altivec_build_confflags += --cpu='g4'
 altivec_build_confflags += --enable-shared
 altivec_build_confflags += --disable-static
@@ -219,7 +221,7 @@ altivec_build_confflags += --disable-ffplay
 ## sparc architecture specific
 # Configuration flags for the optimized shared libraries
 vis_build_confflags += $(confflags)
-vis_build_confflags += --shlibdir=/usr/lib/v9
+vis_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/v9
 vis_build_confflags += --cpu='sparc64'
 vis_build_confflags += --enable-shared
 vis_build_confflags += --disable-static

@@ -1,1 +1,1 @@
-usr/lib/{,*/,*/*/}libswscale.so.*
+usr/lib/*/{,*/,*/*/}libswscale.so.*
