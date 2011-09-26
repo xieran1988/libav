@@ -1,3 +1,14 @@
+libav (4:0.7.1-7) unstable; urgency=medium
+
+  * Add 63 (!) additional post 0.7.1 patches
+    - all scheduled for next upstream point release
+    - Fix missing CAVS boundary checks, Closes: #641478, Fixes: CVE-2011-3362
+  * Medium urgency for fixing a security issue
+  * Drop debian/patches/03-fix-movrel.patch, better patch upstream
+  * prefer libtiff4 over libtiff5 for now
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 26 Sep 2011 22:24:47 +0200
+
 libav (4:0.7.1-6) unstable; urgency=low
 
   * Convert package to include multiarch support.
