@@ -1,0 +1,33 @@
+From 8ad6555f820cc8db5debd5f76d8779cd329def20 Mon Sep 17 00:00:00 2001
+From: Jeff Downs <heydowns@somuchpressure.net>
+Date: Tue, 5 Jul 2011 14:21:54 -0400
+Subject: [PATCH 34/70] h264: correct the check for invalid long term frame index in MMCO decode
+
+The current check on MMCO parameters prohibits a "max long term frame index
+plus 1" of 16 (frame idx of 15) for the "set max long term frame index" MMCO.
+Fix this off-by-one error to allow the full range of legal values.
+
+Signed-off-by: Diego Biurrun <diego@biurrun.de>
+(cherry picked from commit 29a09eae9a827f4dbc9c4517180d8fe2ecef321a)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/h264_refs.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/h264_refs.c b/libavcodec/h264_refs.c
+index a025f7d..b1c27ec 100644
+--- a/libavcodec/h264_refs.c
++++ b/libavcodec/h264_refs.c
+@@ -678,7 +678,7 @@ int ff_h264_decode_ref_pic_marking(H264Context *h, GetBitContext *gb){
+                 }
+                 if(opcode==MMCO_SHORT2LONG || opcode==MMCO_LONG2UNUSED || opcode==MMCO_LONG || opcode==MMCO_SET_MAX_LONG){
+                     unsigned int long_arg= get_ue_golomb_31(gb);
+-                    if(long_arg >= 32 || (long_arg >= 16 && !(opcode == MMCO_LONG2UNUSED && FIELD_PICTURE))){
++                    if(long_arg >= 32 || (long_arg >= 16 && !(opcode == MMCO_SET_MAX_LONG && long_arg == 16) && !(opcode == MMCO_LONG2UNUSED && FIELD_PICTURE))){
+                         av_log(h->s.avctx, AV_LOG_ERROR, "illegal long ref in memory management control operation %d\n", opcode);
+                         return -1;
+                     }
+-- 
+1.7.4.1
+

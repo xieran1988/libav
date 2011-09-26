@@ -1,0 +1,29 @@
+From c613a891433df18f5188efbab504942be8c809c0 Mon Sep 17 00:00:00 2001
+From: Alex Converse <alex.converse@gmail.com>
+Date: Fri, 29 Jul 2011 15:27:36 -0700
+Subject: [PATCH 25/70] mxfdec: Include FF_INPUT_BUFFER_PADDING_SIZE when allocating extradata.
+
+This prevents out of bounds reads when extradata is being decoded.
+(cherry picked from commit 1f6f58d5855288492fc2640a9f1035c01c75d356)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavformat/mxfdec.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/mxfdec.c b/libavformat/mxfdec.c
+index 82daa2a..fcee7a7 100644
+--- a/libavformat/mxfdec.c
++++ b/libavformat/mxfdec.c
+@@ -599,7 +599,7 @@ static int mxf_read_generic_descriptor(void *arg, AVIOContext *pb, int tag, int
+     default:
+         /* Private uid used by SONY C0023S01.mxf */
+         if (IS_KLV_KEY(uid, mxf_sony_mpeg4_extradata)) {
+-            descriptor->extradata = av_malloc(size);
++            descriptor->extradata = av_malloc(size + FF_INPUT_BUFFER_PADDING_SIZE);
+             if (!descriptor->extradata)
+                 return -1;
+             descriptor->extradata_size = size;
+-- 
+1.7.4.1
+

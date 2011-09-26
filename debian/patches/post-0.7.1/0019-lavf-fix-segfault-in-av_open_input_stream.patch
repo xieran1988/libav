@@ -1,0 +1,30 @@
+From 9c2a02466053dd4762d474d89d9be9a957eaaefe Mon Sep 17 00:00:00 2001
+From: Anton Khirnov <anton@khirnov.net>
+Date: Tue, 12 Jul 2011 22:42:18 +0200
+Subject: [PATCH 19/70] lavf: fix segfault in av_open_input_stream()
+
+ic is NULL in case of error.
+(cherry picked from commit 13551ad1e336573e3732fdeaf25607c47244bb80)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavformat/utils.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/utils.c b/libavformat/utils.c
+index 0e6b001..2cb096e 100644
+--- a/libavformat/utils.c
++++ b/libavformat/utils.c
+@@ -465,7 +465,8 @@ int av_open_input_stream(AVFormatContext **ic_ptr,
+     else
+         ic->pb = pb;
+ 
+-    err = avformat_open_input(&ic, filename, fmt, &opts);
++    if ((err = avformat_open_input(&ic, filename, fmt, &opts)) < 0)
++        goto fail;
+     ic->pb = ic->pb ? ic->pb : pb; // don't leak custom pb if it wasn't set above
+ 
+     *ic_ptr = ic;
+-- 
+1.7.4.1
+

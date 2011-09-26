@@ -1,0 +1,34 @@
+From f0bcba238a540793adc514fb84e74282b04d2418 Mon Sep 17 00:00:00 2001
+From: Laurent Aimar <fenrir@videolan.org>
+Date: Sat, 17 Sep 2011 23:43:58 +0200
+Subject: [PATCH 65/70] rv34: Avoid NULL dereference on corrupted bitstream
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+rv34_decode_slice() can return without allocating any pictures.
+
+Signed-off-by: Martin Storsjö <martin@martin.st>
+(cherry picked from commit d0f6ab0298f2309c6104626787ed73416298b019)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/rv34.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/rv34.c b/libavcodec/rv34.c
+index 910b933..2383903 100644
+--- a/libavcodec/rv34.c
++++ b/libavcodec/rv34.c
+@@ -1486,7 +1486,7 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
+             break;
+     }
+ 
+-    if(last){
++    if(last && s->current_picture_ptr){
+         if(r->loop_filter)
+             r->loop_filter(r, s->mb_height - 1);
+         ff_er_frame_end(s);
+-- 
+1.7.4.1
+

@@ -1,0 +1,37 @@
+From 28321b777f76528b061646a3555d08b94ff667bc Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Reimar=20D=C3=B6ffinger?= <Reimar.Doeffinger@gmx.de>
+Date: Sat, 13 Aug 2011 11:58:18 +0200
+Subject: [PATCH 30/70] VC-1: fix reading of custom PAR.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Custom PAR num/denum are in 1-256 range.
+
+Signed-off-by: Reimar Döffinger <Reimar.Doeffinger@gmx.de>
+Signed-off-by: Diego Biurrun <diego@biurrun.de>
+(cherry picked from commit 0e8696551414d4ea0aab2559f9475d1fe49d08f3)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/vc1.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/vc1.c b/libavcodec/vc1.c
+index 32869b9..5e53680 100644
+--- a/libavcodec/vc1.c
++++ b/libavcodec/vc1.c
+@@ -485,8 +485,8 @@ static int decode_sequence_header_adv(VC1Context *v, GetBitContext *gb)
+         if(ar && ar < 14){
+             v->s.avctx->sample_aspect_ratio = ff_vc1_pixel_aspect[ar];
+         }else if(ar == 15){
+-            w = get_bits(gb, 8);
+-            h = get_bits(gb, 8);
++            w = get_bits(gb, 8) + 1;
++            h = get_bits(gb, 8) + 1;
+             v->s.avctx->sample_aspect_ratio = (AVRational){w, h};
+         }
+         av_log(v->s.avctx, AV_LOG_DEBUG, "Aspect: %i:%i\n", v->s.avctx->sample_aspect_ratio.num, v->s.avctx->sample_aspect_ratio.den);
+-- 
+1.7.4.1
+

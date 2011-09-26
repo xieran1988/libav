@@ -1,0 +1,30 @@
+From 6ed533f56137f678ff8507012de14d277aded9cc Mon Sep 17 00:00:00 2001
+From: Justin Ruggles <justin.ruggles@gmail.com>
+Date: Wed, 22 Jun 2011 15:33:56 -0400
+Subject: [PATCH 15/70] alsa: fallback to buffer_size/4 for period_size.
+
+buffer_size/4 is the value used by aplay. This fixes output to null
+devices, e.g. writing ALSA output to a file.
+(cherry picked from commit 8bfd7f6a475225a0595bf657f8b99a8fffb461e4)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavdevice/alsa-audio-common.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/libavdevice/alsa-audio-common.c b/libavdevice/alsa-audio-common.c
+index baa6ac7..4c7c881 100644
+--- a/libavdevice/alsa-audio-common.c
++++ b/libavdevice/alsa-audio-common.c
+@@ -146,6 +146,8 @@ av_cold int ff_alsa_open(AVFormatContext *ctx, snd_pcm_stream_t mode,
+     }
+ 
+     snd_pcm_hw_params_get_period_size_min(hw_params, &period_size, NULL);
++    if (!period_size)
++        period_size = buffer_size / 4;
+     res = snd_pcm_hw_params_set_period_size_near(h, hw_params, &period_size, NULL);
+     if (res < 0) {
+         av_log(ctx, AV_LOG_ERROR, "cannot set ALSA period size (%s)\n",
+-- 
+1.7.4.1
+

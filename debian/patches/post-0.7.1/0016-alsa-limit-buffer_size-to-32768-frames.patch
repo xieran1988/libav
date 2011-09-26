@@ -1,0 +1,44 @@
+From 0c039db4d8aa0928d9b7466c635247e6439df015 Mon Sep 17 00:00:00 2001
+From: Justin Ruggles <justin.ruggles@gmail.com>
+Date: Wed, 22 Jun 2011 16:38:20 -0400
+Subject: [PATCH 16/70] alsa: limit buffer_size to 32768 frames.
+
+In testing, the file output plugin gave a max buffer size of about 20 million
+frames, which is way more than what is really needed and causes a memory
+allocation error on my system.
+(cherry picked from commit e35c674d13a7f180412cfe058530a2e7f1d49a90)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavdevice/alsa-audio-common.c |    1 +
+ libavdevice/alsa-audio.h        |    2 ++
+ 2 files changed, 3 insertions(+), 0 deletions(-)
+
+diff --git a/libavdevice/alsa-audio-common.c b/libavdevice/alsa-audio-common.c
+index 4c7c881..825fcb1 100644
+--- a/libavdevice/alsa-audio-common.c
++++ b/libavdevice/alsa-audio-common.c
+@@ -137,6 +137,7 @@ av_cold int ff_alsa_open(AVFormatContext *ctx, snd_pcm_stream_t mode,
+     }
+ 
+     snd_pcm_hw_params_get_buffer_size_max(hw_params, &buffer_size);
++    buffer_size = FFMIN(buffer_size, ALSA_BUFFER_SIZE_MAX);
+     /* TODO: maybe use ctx->max_picture_buffer somehow */
+     res = snd_pcm_hw_params_set_buffer_size_near(h, hw_params, &buffer_size);
+     if (res < 0) {
+diff --git a/libavdevice/alsa-audio.h b/libavdevice/alsa-audio.h
+index 32c0742..c8c6ea4 100644
+--- a/libavdevice/alsa-audio.h
++++ b/libavdevice/alsa-audio.h
+@@ -40,6 +40,8 @@
+         other formats */
+ #define DEFAULT_CODEC_ID AV_NE(CODEC_ID_PCM_S16BE, CODEC_ID_PCM_S16LE)
+ 
++#define ALSA_BUFFER_SIZE_MAX 32768
++
+ typedef struct {
+     AVClass *class;
+     snd_pcm_t *h;
+-- 
+1.7.4.1
+

@@ -1,0 +1,33 @@
+From 6107543d4e4f6bfa7810e3696ab57553f7257b4b Mon Sep 17 00:00:00 2001
+From: Alex Converse <alex.converse@gmail.com>
+Date: Wed, 29 Jun 2011 13:41:47 -0700
+Subject: [PATCH 12/70] adts: Fix PCE copying.
+
+Parse the extension flag bit when reading the MPEG4 AudioSpecificConfig.
+
+This has nothing to do with SBR/PS contradictory to what was noted when it was removed.
+(cherry picked from commit 7f01a4192cdf4565eadee457f76e6b5196e35e0b)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavformat/adtsenc.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+diff --git a/libavformat/adtsenc.c b/libavformat/adtsenc.c
+index e858a81..75649e2 100644
+--- a/libavformat/adtsenc.c
++++ b/libavformat/adtsenc.c
+@@ -59,6 +59,10 @@ int ff_adts_decode_extradata(AVFormatContext *s, ADTSContext *adts, uint8_t *buf
+         av_log(s, AV_LOG_ERROR, "Scalable configurations are not allowed in ADTS\n");
+         return -1;
+     }
++    if (get_bits(&gb, 1)) {
++        av_log(s, AV_LOG_ERROR, "Extension flag is not allowed in ADTS\n");
++        return -1;
++    }
+     if (!adts->channel_conf) {
+         init_put_bits(&pb, adts->pce_data, MAX_PCE_SIZE);
+ 
+-- 
+1.7.4.1
+

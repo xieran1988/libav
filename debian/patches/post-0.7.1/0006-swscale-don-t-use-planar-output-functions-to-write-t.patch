@@ -1,0 +1,31 @@
+From 47be9f5bd50e9c388adca6f8991cde7b4612db56 Mon Sep 17 00:00:00 2001
+From: Ronald S. Bultje <rsbultje@gmail.com>
+Date: Sun, 26 Jun 2011 15:52:00 -0700
+Subject: [PATCH 06/70] swscale: don't use planar output functions to write to NV12/21.
+
+This prevents a crash when converting to NV12/21 without the bitexact
+flags enabled.
+(cherry picked from commit 0d994b2f45c08794899057ee7ca54f48218c0a53)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libswscale/x86/swscale_template.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/libswscale/x86/swscale_template.c b/libswscale/x86/swscale_template.c
+index 8fad257..dc92cdd 100644
+--- a/libswscale/x86/swscale_template.c
++++ b/libswscale/x86/swscale_template.c
+@@ -2203,7 +2203,8 @@ static av_cold void RENAME(sws_init_swScale)(SwsContext *c)
+     enum PixelFormat srcFormat = c->srcFormat,
+                      dstFormat = c->dstFormat;
+ 
+-    if (!is16BPS(dstFormat) && !is9_OR_10BPS(dstFormat)) {
++    if (!is16BPS(dstFormat) && !is9_OR_10BPS(dstFormat) &&
++        dstFormat != PIX_FMT_NV12 && dstFormat != PIX_FMT_NV21) {
+         if (!(c->flags & SWS_BITEXACT)) {
+             if (c->flags & SWS_ACCURATE_RND) {
+                 c->yuv2yuv1 = RENAME(yuv2yuv1_ar    );
+-- 
+1.7.4.1
+

@@ -1,0 +1,31 @@
+From 9973ca992e8499848b8d5b0b536e709109dc65e2 Mon Sep 17 00:00:00 2001
+From: David Goldwich <david.goldwich@gmail.com>
+Date: Sat, 17 Sep 2011 13:50:35 +0200
+Subject: [PATCH 63/70] lavf: Fix context pointer in av_open_input_stream when avformat_open_input fails
+
+Signed-off-by: David Goldwich <david.goldwich@gmail.com>
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+(cherry picked from commit 63d64228a7f31d534e3bcae87cbd37f4a0ae2dd6)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavformat/utils.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/utils.c b/libavformat/utils.c
+index 2cb096e..d9d154e 100644
+--- a/libavformat/utils.c
++++ b/libavformat/utils.c
+@@ -469,8 +469,8 @@ int av_open_input_stream(AVFormatContext **ic_ptr,
+         goto fail;
+     ic->pb = ic->pb ? ic->pb : pb; // don't leak custom pb if it wasn't set above
+ 
+-    *ic_ptr = ic;
+ fail:
++    *ic_ptr = ic;
+     av_dict_free(&opts);
+     return err;
+ }
+-- 
+1.7.4.1
+

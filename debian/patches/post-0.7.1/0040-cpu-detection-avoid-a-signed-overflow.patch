@@ -1,0 +1,31 @@
+From 1cf3ba89711748b340c31fe018a3a72e8e9b75f1 Mon Sep 17 00:00:00 2001
+From: Sean McGovern <gseanmcg@gmail.com>
+Date: Mon, 25 Jul 2011 18:51:02 -0400
+Subject: [PATCH 40/70] cpu detection: avoid a signed overflow
+
+1<<31 overflows because 1 is signed, so force it to unsigned.
+
+Signed-off-by: Ronald S. Bultje <rsbultje@gmail.com>
+(cherry picked from commit 5938e02185430ca711106aaec9b5622dbf588af3)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavutil/x86/cpu.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavutil/x86/cpu.c b/libavutil/x86/cpu.c
+index 78aeadf..f747e4d 100644
+--- a/libavutil/x86/cpu.c
++++ b/libavutil/x86/cpu.c
+@@ -113,7 +113,7 @@ int ff_get_cpu_flags_x86(void)
+ 
+     if(max_ext_level >= 0x80000001){
+         cpuid(0x80000001, eax, ebx, ecx, ext_caps);
+-        if (ext_caps & (1<<31))
++        if (ext_caps & (1U<<31))
+             rval |= AV_CPU_FLAG_3DNOW;
+         if (ext_caps & (1<<30))
+             rval |= AV_CPU_FLAG_3DNOWEXT;
+-- 
+1.7.4.1
+

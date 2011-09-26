@@ -1,0 +1,27 @@
+From e9520db07e1e4a795523726329d448d168b188d5 Mon Sep 17 00:00:00 2001
+From: Ronald S. Bultje <rsbultje@gmail.com>
+Date: Tue, 5 Jul 2011 18:10:48 -0700
+Subject: [PATCH 11/70] eval: fix memleak.
+
+(cherry picked from commit fe277b16f0861a327e1f6c00c0dbb8b00806d60d)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavutil/eval.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/libavutil/eval.c b/libavutil/eval.c
+index a378821..8bcba36 100644
+--- a/libavutil/eval.c
++++ b/libavutil/eval.c
+@@ -488,6 +488,7 @@ int av_expr_parse(AVExpr **expr, const char *s,
+     if ((ret = parse_expr(&e, &p)) < 0)
+         goto end;
+     if (*p.s) {
++        av_expr_free(e);
+         av_log(&p, AV_LOG_ERROR, "Invalid chars '%s' at the end of expression '%s'\n", p.s, s0);
+         ret = AVERROR(EINVAL);
+         goto end;
+-- 
+1.7.4.1
+

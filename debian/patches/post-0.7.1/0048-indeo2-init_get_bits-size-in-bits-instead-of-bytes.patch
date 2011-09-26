@@ -1,0 +1,28 @@
+From af32fa929a81188c4c451f8648f2f650dcf5228a Mon Sep 17 00:00:00 2001
+From: Alex Converse <alex.converse@gmail.com>
+Date: Fri, 9 Sep 2011 13:24:19 -0700
+Subject: [PATCH 48/70] indeo2: init_get_bits size in bits instead of bytes
+
+(cherry picked from commit 68ca330cbd479111db9cb7649d7530ad59f04cc8)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/indeo2.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/indeo2.c b/libavcodec/indeo2.c
+index 0e588c3..6cf893b 100644
+--- a/libavcodec/indeo2.c
++++ b/libavcodec/indeo2.c
+@@ -165,7 +165,7 @@ static int ir2_decode_frame(AVCodecContext *avctx,
+ #endif
+     start = 48; /* hardcoded for now */
+ 
+-    init_get_bits(&s->gb, buf + start, buf_size - start);
++    init_get_bits(&s->gb, buf + start, (buf_size - start) * 8);
+ 
+     if (s->decode_delta) { /* intraframe */
+         ir2_decode_plane(s, avctx->width, avctx->height,
+-- 
+1.7.4.1
+

@@ -1,0 +1,50 @@
+From 685940da4c843beb9283a21718cbd2fa4fa5d796 Mon Sep 17 00:00:00 2001
+From: Laurent Aimar <fenrir@videolan.org>
+Date: Wed, 7 Sep 2011 22:17:39 +0200
+Subject: [PATCH 44/70] Fixed invalid writes in wavpack decoder on corrupted bitstreams.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Martin Storsjö <martin@martin.st>
+(cherry picked from commit 0aedab03405849962b469277afe047aa2c61a87f)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/wavpack.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libavcodec/wavpack.c b/libavcodec/wavpack.c
+index 64725c7..5bd677e 100644
+--- a/libavcodec/wavpack.c
++++ b/libavcodec/wavpack.c
+@@ -1113,7 +1113,7 @@ static int wavpack_decode_block(AVCodecContext *avctx, int block_no,
+             int16_t *dst = (int16_t*)samples + 1;
+             int16_t *src = (int16_t*)samples;
+             int cnt = samplecount;
+-            while(cnt--){
++            while(cnt-- > 0){
+                 *dst = *src;
+                 src += channel_stride;
+                 dst += channel_stride;
+@@ -1122,7 +1122,7 @@ static int wavpack_decode_block(AVCodecContext *avctx, int block_no,
+             int32_t *dst = (int32_t*)samples + 1;
+             int32_t *src = (int32_t*)samples;
+             int cnt = samplecount;
+-            while(cnt--){
++            while(cnt-- > 0){
+                 *dst = *src;
+                 src += channel_stride;
+                 dst += channel_stride;
+@@ -1131,7 +1131,7 @@ static int wavpack_decode_block(AVCodecContext *avctx, int block_no,
+             float *dst = (float*)samples + 1;
+             float *src = (float*)samples;
+             int cnt = samplecount;
+-            while(cnt--){
++            while(cnt-- > 0){
+                 *dst = *src;
+                 src += channel_stride;
+                 dst += channel_stride;
+-- 
+1.7.4.1
+

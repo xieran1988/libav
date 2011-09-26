@@ -1,0 +1,37 @@
+From 28d948ac44e38e8bec2f6268ccf4747ff4d992a9 Mon Sep 17 00:00:00 2001
+From: Laurent Aimar <fenrir@videolan.org>
+Date: Sun, 18 Sep 2011 00:03:08 +0200
+Subject: [PATCH 64/70] rv10: Reject slices that does not have the same type as the first one
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This prevents crashes with some corrupted bitstreams.
+
+Signed-off-by: Martin Storsjö <martin@martin.st>
+(cherry picked from commit 4a29b471869353c3077fb4b25b6518eb1047afb7)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/rv10.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
+
+diff --git a/libavcodec/rv10.c b/libavcodec/rv10.c
+index 78f97b1..223500c 100644
+--- a/libavcodec/rv10.c
++++ b/libavcodec/rv10.c
+@@ -543,6 +543,11 @@ static int rv10_decode_packet(AVCodecContext *avctx,
+         if(MPV_frame_start(s, avctx) < 0)
+             return -1;
+         ff_er_frame_start(s);
++    } else {
++        if (s->current_picture_ptr->pict_type != s->pict_type) {
++            av_log(s->avctx, AV_LOG_ERROR, "Slice type mismatch\n");
++            return -1;
++        }
+     }
+ 
+     av_dlog(avctx, "qscale=%d\n", s->qscale);
+-- 
+1.7.4.1
+

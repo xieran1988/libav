@@ -1,0 +1,102 @@
+From 54a178f28ff5caf8cac5493cc3f1c22ac2323fcf Mon Sep 17 00:00:00 2001
+From: Laurent Aimar <fenrir@videolan.org>
+Date: Fri, 9 Sep 2011 23:46:00 +0200
+Subject: [PATCH 61/70] Fixed size given to init_get_bits().
+
+init_get_bits() takes a number of bits and not a number of bytes as
+its size argument.
+
+Signed-off-by: Alex Converse <alex.converse@gmail.com>
+(cherry picked from commit b59efc94347ccf0cbc2ff14a5a9e99819c5bdc4d)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/aac_adtstoasc_bsf.c |    2 +-
+ libavcodec/avs.c               |    2 +-
+ libavcodec/jvdec.c             |    2 +-
+ libavcodec/rv34.c              |    2 +-
+ libavcodec/tta.c               |    2 +-
+ libavformat/movenc.c           |    2 +-
+ 6 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/libavcodec/aac_adtstoasc_bsf.c b/libavcodec/aac_adtstoasc_bsf.c
+index fbb86f8..d1310c4 100644
+--- a/libavcodec/aac_adtstoasc_bsf.c
++++ b/libavcodec/aac_adtstoasc_bsf.c
+@@ -72,7 +72,7 @@ static int aac_adtstoasc_filter(AVBitStreamFilterContext *bsfc,
+         int            pce_size = 0;
+         uint8_t        pce_data[MAX_PCE_SIZE];
+         if (!hdr.chan_config) {
+-            init_get_bits(&gb, buf, buf_size);
++            init_get_bits(&gb, buf, buf_size * 8);
+             if (get_bits(&gb, 3) != 5) {
+                 av_log_missing_feature(avctx, "PCE based channel configuration, where the PCE is not the first syntax element is", 0);
+                 return -1;
+diff --git a/libavcodec/avs.c b/libavcodec/avs.c
+index 1c2682b..1a5e444 100644
+--- a/libavcodec/avs.c
++++ b/libavcodec/avs.c
+@@ -117,7 +117,7 @@ avs_decode_frame(AVCodecContext * avctx,
+     table = buf + (256 * vect_w * vect_h);
+     if (sub_type != AVS_I_FRAME) {
+         int map_size = ((318 / vect_w + 7) / 8) * (198 / vect_h);
+-        init_get_bits(&change_map, table, map_size);
++        init_get_bits(&change_map, table, map_size * 8);
+         table += map_size;
+     }
+ 
+diff --git a/libavcodec/jvdec.c b/libavcodec/jvdec.c
+index 0c34648..5249764 100644
+--- a/libavcodec/jvdec.c
++++ b/libavcodec/jvdec.c
+@@ -150,7 +150,7 @@ static int decode_frame(AVCodecContext *avctx,
+ 
+         if (video_type == 0 || video_type == 1) {
+             GetBitContext gb;
+-            init_get_bits(&gb, buf, FFMIN(video_size, buf_end - buf));
++            init_get_bits(&gb, buf, FFMIN(video_size, (buf_end - buf) * 8));
+ 
+             for (j = 0; j < avctx->height; j += 8)
+                 for (i = 0; i < avctx->width; i += 8)
+diff --git a/libavcodec/rv34.c b/libavcodec/rv34.c
+index c5dcfdc..910b933 100644
+--- a/libavcodec/rv34.c
++++ b/libavcodec/rv34.c
+@@ -1444,7 +1444,7 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
+         av_log(avctx, AV_LOG_ERROR, "Slice offset is greater than frame size\n");
+         return -1;
+     }
+-    init_get_bits(&s->gb, buf+get_slice_offset(avctx, slices_hdr, 0), buf_size-get_slice_offset(avctx, slices_hdr, 0));
++    init_get_bits(&s->gb, buf+get_slice_offset(avctx, slices_hdr, 0), (buf_size-get_slice_offset(avctx, slices_hdr, 0))*8);
+     if(r->parse_slice_header(r, &r->s.gb, &si) < 0 || si.start){
+         av_log(avctx, AV_LOG_ERROR, "First slice header is incorrect\n");
+         return -1;
+diff --git a/libavcodec/tta.c b/libavcodec/tta.c
+index 57f5818..fd5aa46 100644
+--- a/libavcodec/tta.c
++++ b/libavcodec/tta.c
+@@ -216,7 +216,7 @@ static av_cold int tta_decode_init(AVCodecContext * avctx)
+     if (avctx->extradata_size < 30)
+         return -1;
+ 
+-    init_get_bits(&s->gb, avctx->extradata, avctx->extradata_size);
++    init_get_bits(&s->gb, avctx->extradata, avctx->extradata_size * 8);
+     if (show_bits_long(&s->gb, 32) == AV_RL32("TTA1"))
+     {
+         /* signature */
+diff --git a/libavformat/movenc.c b/libavformat/movenc.c
+index dcc5581..0cf837c 100644
+--- a/libavformat/movenc.c
++++ b/libavformat/movenc.c
+@@ -206,7 +206,7 @@ static int mov_write_ac3_tag(AVIOContext *pb, MOVTrack *track)
+     avio_wb32(pb, 11);
+     ffio_wfourcc(pb, "dac3");
+ 
+-    init_get_bits(&gbc, track->vosData+4, track->vosLen-4);
++    init_get_bits(&gbc, track->vosData+4, (track->vosLen-4) * 8);
+     fscod      = get_bits(&gbc, 2);
+     frmsizecod = get_bits(&gbc, 6);
+     bsid       = get_bits(&gbc, 5);
+-- 
+1.7.4.1
+

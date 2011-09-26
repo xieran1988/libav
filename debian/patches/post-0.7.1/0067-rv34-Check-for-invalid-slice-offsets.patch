@@ -1,0 +1,46 @@
+From 2bbb142a140173e1870017b66c439f4d430a6f67 Mon Sep 17 00:00:00 2001
+From: Laurent Aimar <fenrir@videolan.org>
+Date: Mon, 19 Sep 2011 22:48:53 +0200
+Subject: [PATCH 67/70] rv34: Check for invalid slice offsets
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Martin Storsjö <martin@martin.st>
+(cherry picked from commit 4cc7732386eb36661ed22d1200339b38a5fa60bc)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/rv34.c |    9 +++++----
+ 1 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/libavcodec/rv34.c b/libavcodec/rv34.c
+index 87fca5c..70c35ef 100644
+--- a/libavcodec/rv34.c
++++ b/libavcodec/rv34.c
+@@ -1441,8 +1441,9 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
+         slice_count = avctx->slice_count;
+ 
+     //parse first slice header to check whether this frame can be decoded
+-    if(get_slice_offset(avctx, slices_hdr, 0) > buf_size){
+-        av_log(avctx, AV_LOG_ERROR, "Slice offset is greater than frame size\n");
++    if(get_slice_offset(avctx, slices_hdr, 0) < 0 ||
++       get_slice_offset(avctx, slices_hdr, 0) > buf_size){
++        av_log(avctx, AV_LOG_ERROR, "Slice offset is invalid\n");
+         return -1;
+     }
+     init_get_bits(&s->gb, buf+get_slice_offset(avctx, slices_hdr, 0), (buf_size-get_slice_offset(avctx, slices_hdr, 0))*8);
+@@ -1465,8 +1466,8 @@ int ff_rv34_decode_frame(AVCodecContext *avctx,
+         else
+             size= get_slice_offset(avctx, slices_hdr, i+1) - offset;
+ 
+-        if(offset > buf_size){
+-            av_log(avctx, AV_LOG_ERROR, "Slice offset is greater than frame size\n");
++        if(offset < 0 || offset > buf_size || size < 0){
++            av_log(avctx, AV_LOG_ERROR, "Slice offset is invalid\n");
+             break;
+         }
+ 
+-- 
+1.7.4.1
+

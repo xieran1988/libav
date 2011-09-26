@@ -1,0 +1,51 @@
+From e6694dce1cbaa1ecd2cbe547c9bf45745986e2c1 Mon Sep 17 00:00:00 2001
+From: Laurent Aimar <fenrir@videolan.org>
+Date: Sat, 10 Sep 2011 00:32:12 +0200
+Subject: [PATCH 53/70] Fixed size given to init_get_bits() in xan decoder.
+
+(cherry picked from commit 393d5031c6aaaf8c2dda4eb5d676974c349fae85)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/xan.c |   10 ++++++----
+ 1 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/libavcodec/xan.c b/libavcodec/xan.c
+index 876a9a5..521764f 100644
+--- a/libavcodec/xan.c
++++ b/libavcodec/xan.c
+@@ -95,17 +95,18 @@ static av_cold int xan_decode_init(AVCodecContext *avctx)
+     return 0;
+ }
+ 
+-static int xan_huffman_decode(unsigned char *dest, const unsigned char *src,
+-    int dest_len)
++static int xan_huffman_decode(unsigned char *dest, int dest_len,
++                              const unsigned char *src, int src_len)
+ {
+     unsigned char byte = *src++;
+     unsigned char ival = byte + 0x16;
+     const unsigned char * ptr = src + byte*2;
++    int ptr_len = src_len - 1 - byte*2;
+     unsigned char val = ival;
+     unsigned char *dest_end = dest + dest_len;
+     GetBitContext gb;
+ 
+-    init_get_bits(&gb, ptr, 0); // FIXME: no src size available
++    init_get_bits(&gb, ptr, ptr_len * 8);
+ 
+     while ( val != 0x16 ) {
+         val = src[val - 0x17 + get_bits1(&gb) * byte];
+@@ -270,7 +271,8 @@ static void xan_wc3_decode_frame(XanContext *s) {
+     vector_segment =    s->buf + AV_RL16(&s->buf[4]);
+     imagedata_segment = s->buf + AV_RL16(&s->buf[6]);
+ 
+-    xan_huffman_decode(opcode_buffer, huffman_segment, opcode_buffer_size);
++    xan_huffman_decode(opcode_buffer, opcode_buffer_size,
++                       huffman_segment, s->size - (huffman_segment - s->buf) );
+ 
+     if (imagedata_segment[0] == 2)
+         xan_unpack(s->buffer2, &imagedata_segment[1], s->buffer2_size);
+-- 
+1.7.4.1
+

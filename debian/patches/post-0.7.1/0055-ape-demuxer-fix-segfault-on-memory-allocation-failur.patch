@@ -1,0 +1,29 @@
+From 4ee014309c377f7cfaa9578a393864ae500136f6 Mon Sep 17 00:00:00 2001
+From: Laurent Aimar <fenrir@videolan.org>
+Date: Sun, 11 Sep 2011 19:17:40 +0200
+Subject: [PATCH 55/70] ape demuxer: fix segfault on memory allocation failure.
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+(cherry picked from commit 273aab99bf7be2bcda95dd64101c2317ee0fcb99)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavformat/ape.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/libavformat/ape.c b/libavformat/ape.c
+index 90b0261..b084100 100644
+--- a/libavformat/ape.c
++++ b/libavformat/ape.c
+@@ -270,6 +270,8 @@ static int ape_read_header(AVFormatContext * s, AVFormatParameters * ap)
+ 
+     if (ape->seektablelength > 0) {
+         ape->seektable = av_malloc(ape->seektablelength);
++        if (!ape->seektable)
++            return AVERROR(ENOMEM);
+         for (i = 0; i < ape->seektablelength / sizeof(uint32_t); i++)
+             ape->seektable[i] = avio_rl32(pb);
+     }
+-- 
+1.7.4.1
+
