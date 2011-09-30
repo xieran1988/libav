@@ -1,3 +1,12 @@
+libav (4:0.7.2-1) unstable; urgency=low
+
+  * New upstream release: 0.7.2
+    - Security focused release
+    - Includes Matroska reallocation checks, Closes: #643859
+  * Drop all post 0.7.1 patches, included upstream.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 30 Sep 2011 21:01:25 +0200
+
 libav (4:0.7.1-7) unstable; urgency=medium
 
   * Add 63 (!) additional post 0.7.1 patches
