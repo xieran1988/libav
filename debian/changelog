@@ -1,8 +1,17 @@
-libav (4:0.7.3-1) UNRELEASED; urgency=low
+libav (4:0.7.3-1) unstable; urgency=high
 
-  * 
+  * New upstream version. Includes fixes for:
+     - VP3 decoder (CVE-2011-4352)
+     - svq1 decoder (CVE-2011-4579)
+     - DoS in the VP5/VP6 decoders (CVE-2011-4353)
+     - QDM2 decoder (CVE-2011-4351)
+     - Sierra VMD decoder (CVE-2011-4364)
+  * Bumped urgency.
+  * Enable drawtext filter (Closes: #647132)
+  * Imported Upstream version 0.7.3
+  * Bump shlibs for backported avcodec_open2() API
 
- -- Reinhard Tartler <siretart@tauware.de>  Tue, 08 Nov 2011 21:42:06 +0100
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 25 Dec 2011 22:04:54 +0100
 
 libav (4:0.7.2-1) unstable; urgency=low
 
