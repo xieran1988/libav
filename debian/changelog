@@ -1,3 +1,9 @@
+libav (4:0.7.3-2) unstable; urgency=low
+
+  * forcefully disable v4l on kfreebsd, fixes an FTBFS on kFreeBSD
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 26 Dec 2011 10:50:36 +0100
+
 libav (4:0.7.3-1) unstable; urgency=high
 
   * New upstream version. Includes fixes for:
