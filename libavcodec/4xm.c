@@ -132,8 +132,8 @@ typedef struct FourXContext{
     AVFrame current_picture, last_picture;
     GetBitContext pre_gb;          ///< ac/dc prefix
     GetBitContext gb;
-    const uint8_t *bytestream;
-    const uint16_t *wordstream;
+    GetByteContext g;
+    GetByteContext g2;
     int mv[256];
     VLC pre_vlc;
     int last_dc;
@@ -277,7 +277,7 @@ static void init_mv(FourXContext *f){
     }
 #endif
 
-static inline void mcdc(uint16_t *dst, uint16_t *src, int log2w, int h, int stride, int scale, int dc){
+static inline void mcdc(uint16_t *dst, uint16_t *src, int log2w, int h, int stride, int scale, unsigned dc){
    int i;
    dc*= 0x10001;
 
@@ -328,7 +328,7 @@ static void decode_p_block(FourXContext *f, uint16_t *dst, uint16_t *src, int lo
     assert(code>=0 && code<=6);
 
     if(code == 0){
-        src += f->mv[ *f->bytestream++ ];
+        src += f->mv[bytestream2_get_byte(&f->g)];
         if(start > src || src > end){
             av_log(f->avctx, AV_LOG_ERROR, "mv out of pic\n");
             return;
@@ -345,21 +345,21 @@ static void decode_p_block(FourXContext *f, uint16_t *dst, uint16_t *src, int lo
     }else if(code == 3 && f->version<2){
         mcdc(dst, src, log2w, h, stride, 1, 0);
     }else if(code == 4){
-        src += f->mv[ *f->bytestream++ ];
+        src += f->mv[bytestream2_get_byte(&f->g)];
         if(start > src || src > end){
             av_log(f->avctx, AV_LOG_ERROR, "mv out of pic\n");
             return;
         }
-        mcdc(dst, src, log2w, h, stride, 1, av_le2ne16(*f->wordstream++));
+        mcdc(dst, src, log2w, h, stride, 1, bytestream2_get_le16(&f->g2));
     }else if(code == 5){
-        mcdc(dst, src, log2w, h, stride, 0, av_le2ne16(*f->wordstream++));
+        mcdc(dst, src, log2w, h, stride, 0, bytestream2_get_le16(&f->g2));
     }else if(code == 6){
         if(log2w){
-            dst[0] = av_le2ne16(*f->wordstream++);
-            dst[1] = av_le2ne16(*f->wordstream++);
+            dst[0] = bytestream2_get_le16(&f->g2);
+            dst[1] = bytestream2_get_le16(&f->g2);
         }else{
-            dst[0     ] = av_le2ne16(*f->wordstream++);
-            dst[stride] = av_le2ne16(*f->wordstream++);
+            dst[0     ] = bytestream2_get_le16(&f->g2);
+            dst[stride] = bytestream2_get_le16(&f->g2);
         }
     }
 }
@@ -371,7 +371,7 @@ static int decode_p_frame(FourXContext *f, const uint8_t *buf, int length){
     uint16_t *src= (uint16_t*)f->last_picture.data[0];
     uint16_t *dst= (uint16_t*)f->current_picture.data[0];
     const int stride= f->current_picture.linesize[0]>>1;
-    unsigned int bitstream_size, bytestream_size, wordstream_size, extra;
+    unsigned int bitstream_size, bytestream_size, wordstream_size, extra, bytestream_offset, wordstream_offset;
 
     if(f->version>1){
         extra=20;
@@ -399,10 +399,13 @@ static int decode_p_frame(FourXContext *f, const uint8_t *buf, int length){
     if (!f->bitstream_buffer)
         return AVERROR(ENOMEM);
     f->dsp.bswap_buf(f->bitstream_buffer, (const uint32_t*)(buf + extra), bitstream_size/4);
+    memset((uint8_t*)f->bitstream_buffer + bitstream_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
     init_get_bits(&f->gb, f->bitstream_buffer, 8*bitstream_size);
 
-    f->wordstream= (const uint16_t*)(buf + extra + bitstream_size);
-    f->bytestream= buf + extra + bitstream_size + wordstream_size;
+    wordstream_offset = extra + bitstream_size;
+    bytestream_offset = extra + bitstream_size + wordstream_size;
+    bytestream2_init(&f->g2, buf + wordstream_offset, length - wordstream_offset);
+    bytestream2_init(&f->g,  buf + bytestream_offset, length - bytestream_offset);
 
     init_mv(f);
 
@@ -413,15 +416,6 @@ static int decode_p_frame(FourXContext *f, const uint8_t *buf, int length){
         src += 8*stride;
         dst += 8*stride;
     }
-
-    if(   bitstream_size != (get_bits_count(&f->gb)+31)/32*4
-       || (((const char*)f->wordstream - (const char*)buf + 2)&~2) != extra + bitstream_size + wordstream_size
-       || (((const char*)f->bytestream - (const char*)buf + 3)&~3) != extra + bitstream_size + wordstream_size + bytestream_size)
-        av_log(f->avctx, AV_LOG_ERROR, " %d %td %td bytes left\n",
-            bitstream_size - (get_bits_count(&f->gb)+31)/32*4,
-            -(((const char*)f->bytestream - (const char*)buf + 3)&~3) + (extra + bitstream_size + wordstream_size + bytestream_size),
-            -(((const char*)f->wordstream - (const char*)buf + 2)&~2) + (extra + bitstream_size + wordstream_size)
-        );
 
     return 0;
 }
@@ -601,9 +595,10 @@ static const uint8_t *read_huffman_tables(FourXContext *f, const uint8_t * const
         len_tab[j]= len;
     }
 
-    init_vlc(&f->pre_vlc, ACDC_VLC_BITS, 257,
-             len_tab , 1, 1,
-             bits_tab, 4, 4, 0);
+    if (init_vlc(&f->pre_vlc, ACDC_VLC_BITS, 257,
+                 len_tab , 1, 1,
+                 bits_tab, 4, 4, 0))
+        return NULL;
 
     return ptr;
 }
@@ -655,8 +650,6 @@ static int decode_i_frame(FourXContext *f, const uint8_t *buf, int length){
     int x, y;
     const int width= f->avctx->width;
     const int height= f->avctx->height;
-    uint16_t *dst= (uint16_t*)f->current_picture.data[0];
-    const int stride= f->current_picture.linesize[0]>>1;
     const unsigned int bitstream_size= AV_RL32(buf);
     int token_count av_unused;
     unsigned int prestream_size;
@@ -688,6 +681,7 @@ static int decode_i_frame(FourXContext *f, const uint8_t *buf, int length){
     if (!f->bitstream_buffer)
         return AVERROR(ENOMEM);
     f->dsp.bswap_buf(f->bitstream_buffer, (const uint32_t*)prestream, prestream_size/4);
+    memset((uint8_t*)f->bitstream_buffer + prestream_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
     init_get_bits(&f->pre_gb, f->bitstream_buffer, 8*prestream_size);
 
     f->last_dc= 0*128*8*8;
@@ -699,7 +693,6 @@ static int decode_i_frame(FourXContext *f, const uint8_t *buf, int length){
 
             idct_put(f, x, y);
         }
-        dst += 16*stride;
     }
 
     if(get_vlc2(&f->pre_gb, f->pre_vlc.table, ACDC_VLC_BITS, 3) != 256)
@@ -875,15 +868,14 @@ static av_cold int decode_end(AVCodecContext *avctx){
 }
 
 AVCodec ff_fourxm_decoder = {
-    "4xm",
-    AVMEDIA_TYPE_VIDEO,
-    CODEC_ID_4XM,
-    sizeof(FourXContext),
-    decode_init,
-    NULL,
-    decode_end,
-    decode_frame,
-    CODEC_CAP_DR1,
+    .name           = "4xm",
+    .type           = AVMEDIA_TYPE_VIDEO,
+    .id             = CODEC_ID_4XM,
+    .priv_data_size = sizeof(FourXContext),
+    .init           = decode_init,
+    .close          = decode_end,
+    .decode         = decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
     .long_name = NULL_IF_CONFIG_SMALL("4X Movie"),
 };
 

@@ -1,5 +1,5 @@
 /*
- * DVB subtitle encoding for ffmpeg
+ * DVB subtitle encoding
  * Copyright (c) 2005 Fabrice Bellard
  *
  * This file is part of Libav.
@@ -403,11 +403,10 @@ static int dvbsub_encode(AVCodecContext *avctx,
 }
 
 AVCodec ff_dvbsub_encoder = {
-    "dvbsub",
-    AVMEDIA_TYPE_SUBTITLE,
-    CODEC_ID_DVB_SUBTITLE,
-    sizeof(DVBSubtitleContext),
-    NULL,
-    dvbsub_encode,
+    .name           = "dvbsub",
+    .type           = AVMEDIA_TYPE_SUBTITLE,
+    .id             = CODEC_ID_DVB_SUBTITLE,
+    .priv_data_size = sizeof(DVBSubtitleContext),
+    .encode         = dvbsub_encode,
     .long_name = NULL_IF_CONFIG_SMALL("DVB subtitles"),
 };

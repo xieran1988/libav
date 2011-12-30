@@ -23,15 +23,17 @@
  */
 
 /**
- * SoX native format demuxer
  * @file
+ * SoX native format demuxer
  * @author Daniel Verkamp
- * @sa http://wiki.multimedia.cx/index.php?title=SoX_native_intermediate_format
+ * @see http://wiki.multimedia.cx/index.php?title=SoX_native_intermediate_format
  */
 
 #include "libavutil/intreadwrite.h"
+#include "libavutil/intfloat.h"
 #include "libavutil/dict.h"
 #include "avformat.h"
+#include "internal.h"
 #include "pcm.h"
 #include "sox.h"
 
@@ -50,7 +52,7 @@ static int sox_read_header(AVFormatContext *s,
     double sample_rate, sample_rate_frac;
     AVStream *st;
 
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
 
@@ -60,14 +62,14 @@ static int sox_read_header(AVFormatContext *s,
         st->codec->codec_id = CODEC_ID_PCM_S32LE;
         header_size         = avio_rl32(pb);
         avio_skip(pb, 8); /* sample count */
-        sample_rate         = av_int2dbl(avio_rl64(pb));
+        sample_rate         = av_int2double(avio_rl64(pb));
         st->codec->channels = avio_rl32(pb);
         comment_size        = avio_rl32(pb);
     } else {
         st->codec->codec_id = CODEC_ID_PCM_S32BE;
         header_size         = avio_rb32(pb);
         avio_skip(pb, 8); /* sample count */
-        sample_rate         = av_int2dbl(avio_rb64(pb));
+        sample_rate         = av_int2double(avio_rb64(pb));
         st->codec->channels = avio_rb32(pb);
         comment_size        = avio_rb32(pb);
     }
@@ -116,7 +118,7 @@ static int sox_read_header(AVFormatContext *s,
     st->codec->block_align           = st->codec->bits_per_coded_sample *
                                        st->codec->channels / 8;
 
-    av_set_pts_info(st, 64, 1, st->codec->sample_rate);
+    avpriv_set_pts_info(st, 64, 1, st->codec->sample_rate);
 
     return 0;
 }
@@ -142,12 +144,10 @@ static int sox_read_packet(AVFormatContext *s,
 }
 
 AVInputFormat ff_sox_demuxer = {
-    "sox",
-    NULL_IF_CONFIG_SMALL("SoX native format"),
-    0,
-    sox_probe,
-    sox_read_header,
-    sox_read_packet,
-    NULL,
-    pcm_read_seek,
+    .name           = "sox",
+    .long_name      = NULL_IF_CONFIG_SMALL("SoX native format"),
+    .read_probe     = sox_probe,
+    .read_header    = sox_read_header,
+    .read_packet    = sox_read_packet,
+    .read_seek      = pcm_read_seek,
 };

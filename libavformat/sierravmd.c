@@ -29,6 +29,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 #define VMD_HEADER_SIZE 0x0330
 #define BYTES_PER_FRAME_RECORD 16
@@ -104,10 +105,10 @@ static int vmd_read_header(AVFormatContext *s,
     else
         vmd->is_indeo3 = 0;
     /* start up the decoders */
-    vst = av_new_stream(s, 0);
+    vst = avformat_new_stream(s, NULL);
     if (!vst)
         return AVERROR(ENOMEM);
-    av_set_pts_info(vst, 33, 1, 10);
+    avpriv_set_pts_info(vst, 33, 1, 10);
     vmd->video_stream_index = vst->index;
     vst->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     vst->codec->codec_id = vmd->is_indeo3 ? CODEC_ID_INDEO3 : CODEC_ID_VMDVIDEO;
@@ -125,7 +126,7 @@ static int vmd_read_header(AVFormatContext *s,
     /* if sample rate is 0, assume no audio */
     vmd->sample_rate = AV_RL16(&vmd->vmd_header[804]);
     if (vmd->sample_rate) {
-        st = av_new_stream(s, 0);
+        st = avformat_new_stream(s, NULL);
         if (!st)
             return AVERROR(ENOMEM);
         vmd->audio_stream_index = st->index;
@@ -148,8 +149,8 @@ static int vmd_read_header(AVFormatContext *s,
         num = st->codec->block_align;
         den = st->codec->sample_rate * st->codec->channels;
         av_reduce(&den, &num, den, num, (1UL<<31)-1);
-        av_set_pts_info(vst, 33, num, den);
-        av_set_pts_info(st, 33, num, den);
+        avpriv_set_pts_info(vst, 33, num, den);
+        avpriv_set_pts_info(st, 33, num, den);
     }
 
     toc_offset = AV_RL32(&vmd->vmd_header[812]);
@@ -281,11 +282,11 @@ static int vmd_read_close(AVFormatContext *s)
 }
 
 AVInputFormat ff_vmd_demuxer = {
-    "vmd",
-    NULL_IF_CONFIG_SMALL("Sierra VMD format"),
-    sizeof(VmdDemuxContext),
-    vmd_probe,
-    vmd_read_header,
-    vmd_read_packet,
-    vmd_read_close,
+    .name           = "vmd",
+    .long_name      = NULL_IF_CONFIG_SMALL("Sierra VMD format"),
+    .priv_data_size = sizeof(VmdDemuxContext),
+    .read_probe     = vmd_probe,
+    .read_header    = vmd_read_header,
+    .read_packet    = vmd_read_packet,
+    .read_close     = vmd_read_close,
 };

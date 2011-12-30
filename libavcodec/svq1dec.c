@@ -195,7 +195,8 @@ static const uint8_t string_table[256] = {
 
 #define SVQ1_CALC_CODEBOOK_ENTRIES(cbook)\
       codebook = (const uint32_t *) cbook[level];\
-      bit_cache = get_bits (bitbuf, 4*stages);\
+      if (stages > 0)\
+        bit_cache = get_bits (bitbuf, 4*stages);\
       /* calculate codebook entries for this vector */\
       for (j=0; j < stages; j++) {\
         entries[j] = (((bit_cache >> (4*(stages - j - 1))) & 0xF) + 16*j) << (level + 1);\
@@ -317,9 +318,9 @@ static int svq1_decode_motion_vector (GetBitContext *bitbuf, svq1_pmv *mv, svq1_
 
     /* add median of motion vector predictors and clip result */
     if (i == 1)
-      mv->y = ((diff + mid_pred(pmv[0]->y, pmv[1]->y, pmv[2]->y)) << 26) >> 26;
+      mv->y = sign_extend(diff + mid_pred(pmv[0]->y, pmv[1]->y, pmv[2]->y), 6);
     else
-      mv->x = ((diff + mid_pred(pmv[0]->x, pmv[1]->x, pmv[2]->x)) << 26) >> 26;
+      mv->x = sign_extend(diff + mid_pred(pmv[0]->x, pmv[1]->x, pmv[2]->x), 6);
   }
 
   return 0;
@@ -690,12 +691,12 @@ static int svq1_decode_frame(AVCodecContext *avctx,
       linesize= s->uvlinesize;
     }
 
-    current  = s->current_picture.data[i];
+    current = s->current_picture.f.data[i];
 
     if(s->pict_type==AV_PICTURE_TYPE_B){
-        previous = s->next_picture.data[i];
+        previous = s->next_picture.f.data[i];
     }else{
-        previous = s->last_picture.data[i];
+        previous = s->last_picture.f.data[i];
     }
 
     if (s->pict_type == AV_PICTURE_TYPE_I) {
@@ -809,15 +810,14 @@ static av_cold int svq1_decode_end(AVCodecContext *avctx)
 
 
 AVCodec ff_svq1_decoder = {
-    "svq1",
-    AVMEDIA_TYPE_VIDEO,
-    CODEC_ID_SVQ1,
-    sizeof(MpegEncContext),
-    svq1_decode_init,
-    NULL,
-    svq1_decode_end,
-    svq1_decode_frame,
-    CODEC_CAP_DR1,
+    .name           = "svq1",
+    .type           = AVMEDIA_TYPE_VIDEO,
+    .id             = CODEC_ID_SVQ1,
+    .priv_data_size = sizeof(MpegEncContext),
+    .init           = svq1_decode_init,
+    .close          = svq1_decode_end,
+    .decode         = svq1_decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
     .flush= ff_mpeg_flush,
     .pix_fmts= (const enum PixelFormat[]){PIX_FMT_YUV410P, PIX_FMT_NONE},
     .long_name= NULL_IF_CONFIG_SMALL("Sorenson Vector Quantizer 1 / Sorenson Video 1 / SVQ1"),

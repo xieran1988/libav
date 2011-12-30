@@ -34,6 +34,7 @@
 #include <assert.h>
 
 #include "libavutil/imgutils.h"
+#include "libavutil/opt.h"
 #include "avcodec.h"
 #include "dsputil.h"
 #include "mjpeg.h"
@@ -96,21 +97,22 @@ av_cold int ff_mjpeg_decode_init(AVCodecContext *avctx)
 
     build_basic_mjpeg_vlc(s);
 
+#if FF_API_MJPEG_GLOBAL_OPTS
     if (avctx->flags & CODEC_FLAG_EXTERN_HUFF)
+        s->extern_huff = 1;
+#endif
+    if (s->extern_huff)
     {
         av_log(avctx, AV_LOG_INFO, "mjpeg: using external huffman table\n");
         init_get_bits(&s->gb, avctx->extradata, avctx->extradata_size*8);
         if (ff_mjpeg_decode_dht(s)) {
-            av_log(avctx, AV_LOG_ERROR, "mjpeg: error using external huffman table, switching back to internal\n");
-            build_basic_mjpeg_vlc(s);
+            av_log(avctx, AV_LOG_ERROR, "mjpeg: error using external huffman table\n");
+            return AVERROR_INVALIDDATA;
         }
     }
-    if (avctx->extradata_size > 9 &&
-        AV_RL32(avctx->extradata + 4) == MKTAG('f','i','e','l')) {
-        if (avctx->extradata[9] == 6) { /* quicktime icefloe 019 */
-            s->interlace_polarity = 1; /* bottom field first */
-            av_log(avctx, AV_LOG_DEBUG, "mjpeg bottom field first\n");
-        }
+    if (avctx->field_order == AV_FIELD_BB) { /* quicktime icefloe 019 */
+        s->interlace_polarity = 1; /* bottom field first */
+        av_log(avctx, AV_LOG_DEBUG, "mjpeg bottom field first\n");
     }
     if (avctx->codec->id == CODEC_ID_AMV)
         s->flipped = 1;
@@ -1104,9 +1106,9 @@ static int mjpeg_decode_app(MJpegDecodeContext *s)
         av_log(s->avctx, AV_LOG_DEBUG, "APPx %8X\n", id);
     }
 
-    /* buggy AVID, it puts EOI only at every 10th frame */
-    /* also this fourcc is used by non-avid files too, it holds some
-       informations, but it's always present in AVID creates files */
+    /* Buggy AVID, it puts EOI only at every 10th frame. */
+    /* Also, this fourcc is used by non-avid files too, it holds some
+       information, but it's always present in AVID-created files. */
     if (id == AV_RL32("AVI1"))
     {
         /* structure:
@@ -1271,29 +1273,6 @@ static int mjpeg_decode_com(MJpegDecodeContext *s)
 
     return 0;
 }
-
-#if 0
-static int valid_marker_list[] =
-{
-        /* 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f */
-/* 0 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 1 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 2 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 3 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 4 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 5 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 6 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 7 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 8 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 9 */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* a */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* b */    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* c */    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-/* d */    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-/* e */    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-/* f */    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-}
-#endif
 
 /* return the 8 bit start code value and update the search
    state. Return -1 if no start code found */
@@ -1523,35 +1502,34 @@ eoi_parser:
                         av_log(avctx, AV_LOG_WARNING, "Found EOI before any SOF, ignoring\n");
                         break;
                     }
-                    {
-                        if (s->interlaced) {
-                            s->bottom_field ^= 1;
-                            /* if not bottom field, do not output image yet */
-                            if (s->bottom_field == !s->interlace_polarity)
-                                goto not_the_end;
-                        }
-                        *picture = *s->picture_ptr;
-                        *data_size = sizeof(AVFrame);
-
-                        if(!s->lossless){
-                            picture->quality= FFMAX3(s->qscale[0], s->qscale[1], s->qscale[2]);
-                            picture->qstride= 0;
-                            picture->qscale_table= s->qscale_table;
-                            memset(picture->qscale_table, picture->quality, (s->width+15)/16);
-                            if(avctx->debug & FF_DEBUG_QP)
-                                av_log(avctx, AV_LOG_DEBUG, "QP: %d\n", picture->quality);
-                            picture->quality*= FF_QP2LAMBDA;
-                        }
-
-                        goto the_end;
+                    if (s->interlaced) {
+                        s->bottom_field ^= 1;
+                        /* if not bottom field, do not output image yet */
+                        if (s->bottom_field == !s->interlace_polarity)
+                            goto not_the_end;
                     }
-                    break;
+                    *picture = *s->picture_ptr;
+                    *data_size = sizeof(AVFrame);
+
+                    if(!s->lossless){
+                        picture->quality= FFMAX3(s->qscale[0], s->qscale[1], s->qscale[2]);
+                        picture->qstride= 0;
+                        picture->qscale_table= s->qscale_table;
+                        memset(picture->qscale_table, picture->quality, (s->width+15)/16);
+                        if(avctx->debug & FF_DEBUG_QP)
+                            av_log(avctx, AV_LOG_DEBUG, "QP: %d\n", picture->quality);
+                        picture->quality*= FF_QP2LAMBDA;
+                    }
+
+                    goto the_end;
                 case SOS:
                     if (!s->got_picture) {
                         av_log(avctx, AV_LOG_WARNING, "Can not process SOS before SOF, skipping\n");
                         break;
                     }
-                    ff_mjpeg_decode_sos(s, NULL, NULL);
+                    if (ff_mjpeg_decode_sos(s, NULL, NULL) < 0 &&
+                        (avctx->err_recognition & AV_EF_EXPLODE))
+                      return AVERROR_INVALIDDATA;
                     /* buggy avid puts EOI every 10-20th frame */
                     /* if restart period is over process EOI */
                     if ((s->buggy_avid && !s->interlaced) || s->restart_interval)
@@ -1621,32 +1599,43 @@ av_cold int ff_mjpeg_decode_end(AVCodecContext *avctx)
     return 0;
 }
 
+#define OFFSET(x) offsetof(MJpegDecodeContext, x)
+#define VD AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_DECODING_PARAM
+static const AVOption options[] = {
+    { "extern_huff",        "Use external huffman table.",  OFFSET(extern_huff), AV_OPT_TYPE_INT, { 0 }, 0, 1, VD },
+    { NULL },
+};
+
+static const AVClass mjpegdec_class = {
+    .class_name = "MJPEG decoder",
+    .item_name  = av_default_item_name,
+    .option     = options,
+    .version    = LIBAVUTIL_VERSION_INT,
+};
+
 AVCodec ff_mjpeg_decoder = {
-    "mjpeg",
-    AVMEDIA_TYPE_VIDEO,
-    CODEC_ID_MJPEG,
-    sizeof(MJpegDecodeContext),
-    ff_mjpeg_decode_init,
-    NULL,
-    ff_mjpeg_decode_end,
-    ff_mjpeg_decode_frame,
-    CODEC_CAP_DR1,
-    NULL,
+    .name           = "mjpeg",
+    .type           = AVMEDIA_TYPE_VIDEO,
+    .id             = CODEC_ID_MJPEG,
+    .priv_data_size = sizeof(MJpegDecodeContext),
+    .init           = ff_mjpeg_decode_init,
+    .close          = ff_mjpeg_decode_end,
+    .decode         = ff_mjpeg_decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
     .max_lowres = 3,
     .long_name = NULL_IF_CONFIG_SMALL("MJPEG (Motion JPEG)"),
+    .priv_class     = &mjpegdec_class,
 };
 
 AVCodec ff_thp_decoder = {
-    "thp",
-    AVMEDIA_TYPE_VIDEO,
-    CODEC_ID_THP,
-    sizeof(MJpegDecodeContext),
-    ff_mjpeg_decode_init,
-    NULL,
-    ff_mjpeg_decode_end,
-    ff_mjpeg_decode_frame,
-    CODEC_CAP_DR1,
-    NULL,
+    .name           = "thp",
+    .type           = AVMEDIA_TYPE_VIDEO,
+    .id             = CODEC_ID_THP,
+    .priv_data_size = sizeof(MJpegDecodeContext),
+    .init           = ff_mjpeg_decode_init,
+    .close          = ff_mjpeg_decode_end,
+    .decode         = ff_mjpeg_decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
     .max_lowres = 3,
     .long_name = NULL_IF_CONFIG_SMALL("Nintendo Gamecube THP video"),
 };

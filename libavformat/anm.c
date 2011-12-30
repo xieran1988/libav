@@ -26,6 +26,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 typedef struct {
     int base_record;
@@ -97,7 +98,7 @@ static int read_header(AVFormatContext *s,
         return AVERROR_INVALIDDATA;
 
     /* video stream */
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
     st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
@@ -128,7 +129,7 @@ static int read_header(AVFormatContext *s,
 
     avio_skip(pb, 32); /* record_types */
     st->nb_frames = avio_rl32(pb);
-    av_set_pts_info(st, 64, 1, avio_rl16(pb));
+    avpriv_set_pts_info(st, 64, 1, avio_rl16(pb));
     avio_skip(pb, 58);
 
     /* color cycling and palette data */
@@ -136,16 +137,16 @@ static int read_header(AVFormatContext *s,
     st->codec->extradata      = av_mallocz(st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
     if (!st->codec->extradata) {
         ret = AVERROR(ENOMEM);
-        goto close_and_return;
+        goto fail;
     }
     ret = avio_read(pb, st->codec->extradata, st->codec->extradata_size);
     if (ret < 0)
-        goto close_and_return;
+        goto fail;
 
     /* read page table */
     ret = avio_seek(pb, anm->page_table_offset, SEEK_SET);
     if (ret < 0)
-        goto close_and_return;
+        goto fail;
 
     for (i = 0; i < MAX_PAGES; i++) {
         Page *p = &anm->pt[i];
@@ -158,7 +159,7 @@ static int read_header(AVFormatContext *s,
     anm->page = find_record(anm, 0);
     if (anm->page < 0) {
         ret = anm->page;
-        goto close_and_return;
+        goto fail;
     }
 
     anm->record = -1;
@@ -168,8 +169,7 @@ invalid:
     av_log_ask_for_sample(s, NULL);
     ret = AVERROR_INVALIDDATA;
 
-close_and_return:
-    av_close_input_stream(s);
+fail:
     return ret;
 }
 
@@ -226,10 +226,10 @@ repeat:
 }
 
 AVInputFormat ff_anm_demuxer = {
-    "anm",
-    NULL_IF_CONFIG_SMALL("Deluxe Paint Animation"),
-    sizeof(AnmDemuxContext),
-    probe,
-    read_header,
-    read_packet,
+    .name           = "anm",
+    .long_name      = NULL_IF_CONFIG_SMALL("Deluxe Paint Animation"),
+    .priv_data_size = sizeof(AnmDemuxContext),
+    .read_probe     = probe,
+    .read_header    = read_header,
+    .read_packet    = read_packet,
 };

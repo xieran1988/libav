@@ -1,5 +1,4 @@
-/**
- * @file
+/*
  * Psygnosis YOP demuxer
  *
  * Copyright (C) 2010 Mohamed Naufal Basheer <naufal11@gmail.com>
@@ -25,6 +24,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 typedef struct yop_dec_context {
     AVPacket video_packet;
@@ -57,8 +57,8 @@ static int yop_read_header(AVFormatContext *s, AVFormatParameters *ap)
 
     int frame_rate, ret;
 
-    audio_stream = av_new_stream(s, 0);
-    video_stream = av_new_stream(s, 1);
+    audio_stream = avformat_new_stream(s, NULL);
+    video_stream = avformat_new_stream(s, NULL);
 
     // Extra data that will be passed to the decoder
     video_stream->codec->extradata_size = 8;
@@ -106,7 +106,7 @@ static int yop_read_header(AVFormatContext *s, AVFormatParameters *ap)
 
     avio_seek(pb, 2048, SEEK_SET);
 
-    av_set_pts_info(video_stream, 32, 1, frame_rate);
+    avpriv_set_pts_info(video_stream, 32, 1, frame_rate);
 
     return 0;
 }
@@ -203,14 +203,14 @@ static int yop_read_seek(AVFormatContext *s, int stream_index,
 }
 
 AVInputFormat ff_yop_demuxer = {
-    "yop",
-    NULL_IF_CONFIG_SMALL("Psygnosis YOP Format"),
-    sizeof(YopDecContext),
-    yop_probe,
-    yop_read_header,
-    yop_read_packet,
-    yop_read_close,
-    yop_read_seek,
+    .name           = "yop",
+    .long_name      = NULL_IF_CONFIG_SMALL("Psygnosis YOP Format"),
+    .priv_data_size = sizeof(YopDecContext),
+    .read_probe     = yop_probe,
+    .read_header    = yop_read_header,
+    .read_packet    = yop_read_packet,
+    .read_close     = yop_read_close,
+    .read_seek      = yop_read_seek,
     .extensions = "yop",
     .flags = AVFMT_GENERIC_INDEX,
 };

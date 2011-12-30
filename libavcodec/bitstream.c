@@ -41,13 +41,9 @@ const uint8_t ff_log2_run[41]={
 24,
 };
 
-void align_put_bits(PutBitContext *s)
+void avpriv_align_put_bits(PutBitContext *s)
 {
-#ifdef ALT_BITSTREAM_WRITER
-    put_bits(s,(  - s->index) & 7,0);
-#else
     put_bits(s,s->bit_left & 7,0);
-#endif
 }
 
 void ff_put_string(PutBitContext *pb, const char *string, int terminate_string)
@@ -60,7 +56,7 @@ void ff_put_string(PutBitContext *pb, const char *string, int terminate_string)
         put_bits(pb, 8, 0);
 }
 
-void ff_copy_bits(PutBitContext *pb, const uint8_t *src, int length)
+void avpriv_copy_bits(PutBitContext *pb, const uint8_t *src, int length)
 {
     int words= length>>4;
     int bits= length&15;
@@ -107,7 +103,7 @@ static int alloc_table(VLC *vlc, int size, int use_static)
     vlc->table_size += size;
     if (vlc->table_size > vlc->table_allocated) {
         if(use_static)
-            abort(); //cant do anything, init_vlc() is used with too little memory
+            abort(); // cannot do anything, init_vlc() is used with too little memory
         vlc->table_allocated += (1 << vlc->bits);
         vlc->table = av_realloc(vlc->table,
                                 sizeof(VLC_TYPE) * 2 * vlc->table_allocated);

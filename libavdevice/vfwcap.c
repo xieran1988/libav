@@ -20,6 +20,7 @@
  */
 
 #include "libavformat/avformat.h"
+#include "libavformat/internal.h"
 #include "libavutil/log.h"
 #include "libavutil/opt.h"
 #include "libavutil/parseutils.h"
@@ -249,7 +250,7 @@ static int vfw_read_header(AVFormatContext *s, AVFormatParameters *ap)
     DWORD biCompression;
     WORD biBitCount;
     int ret;
-    AVRational fps;
+    AVRational framerate_q;
 
     if (!strcmp(s->filename, "list")) {
         for (devnum = 0; devnum <= 9; devnum++) {
@@ -266,11 +267,6 @@ static int vfw_read_header(AVFormatContext *s, AVFormatParameters *ap)
         }
         return AVERROR(EIO);
     }
-
-#if FF_API_FORMAT_PARAMETERS
-    if (ap->time_base.num)
-        fps = (AVRational){ap->time_base.den, ap->time_base.num};
-#endif
 
     ctx->hwnd = capCreateCaptureWindow(NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0);
     if(!ctx->hwnd) {
@@ -300,7 +296,7 @@ static int vfw_read_header(AVFormatContext *s, AVFormatParameters *ap)
 
     SetWindowLongPtr(ctx->hwnd, GWLP_USERDATA, (LONG_PTR) s);
 
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if(!st) {
         vfw_read_close(s);
         return AVERROR(ENOMEM);
@@ -329,12 +325,6 @@ static int vfw_read_header(AVFormatContext *s, AVFormatParameters *ap)
             goto fail_bi;
         }
     }
-#if FF_API_FORMAT_PARAMETERS
-    if (ap->width > 0)
-        bi->bmiHeader.biWidth = ap->width;
-    if (ap->height > 0)
-        bi->bmiHeader.biHeight = ap->height;
-#endif
 
     if (0) {
         /* For testing yet unsupported compressions
@@ -369,7 +359,7 @@ static int vfw_read_header(AVFormatContext *s, AVFormatParameters *ap)
 
     cparms.fYield = 1; // Spawn a background thread
     cparms.dwRequestMicroSecPerFrame =
-                               (fps.den*1000000) / fps.num;
+                               (framerate_q.den*1000000) / framerate_q.num;
     cparms.fAbortLeftMouse = 0;
     cparms.fAbortRightMouse = 0;
     cparms.fCaptureAudio = 0;
@@ -381,7 +371,7 @@ static int vfw_read_header(AVFormatContext *s, AVFormatParameters *ap)
         goto fail_io;
 
     codec = st->codec;
-    codec->time_base = (AVRational){fps.den, fps.num};
+    codec->time_base = (AVRational){framerate_q.den, framerate_q.num};
     codec->codec_type = AVMEDIA_TYPE_VIDEO;
     codec->width  = bi->bmiHeader.biWidth;
     codec->height = bi->bmiHeader.biHeight;
@@ -407,7 +397,7 @@ static int vfw_read_header(AVFormatContext *s, AVFormatParameters *ap)
         }
     }
 
-    av_set_pts_info(st, 32, 1, 1000);
+    avpriv_set_pts_info(st, 32, 1, 1000);
 
     ctx->mutex = CreateMutex(NULL, 0, NULL);
     if(!ctx->mutex) {
@@ -468,8 +458,8 @@ static int vfw_read_packet(AVFormatContext *s, AVPacket *pkt)
 #define OFFSET(x) offsetof(struct vfw_ctx, x)
 #define DEC AV_OPT_FLAG_DECODING_PARAM
 static const AVOption options[] = {
-    { "video_size", "A string describing frame size, such as 640x480 or hd720.", OFFSET(video_size), FF_OPT_TYPE_STRING, {.str = NULL}, 0, 0, DEC },
-    { "framerate", "", OFFSET(framerate), FF_OPT_TYPE_STRING, {.str = "ntsc"}, 0, 0, DEC },
+    { "video_size", "A string describing frame size, such as 640x480 or hd720.", OFFSET(video_size), AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, DEC },
+    { "framerate", "", OFFSET(framerate), AV_OPT_TYPE_STRING, {.str = "ntsc"}, 0, 0, DEC },
     { NULL },
 };
 
@@ -481,13 +471,12 @@ static const AVClass vfw_class = {
 };
 
 AVInputFormat ff_vfwcap_demuxer = {
-    "vfwcap",
-    NULL_IF_CONFIG_SMALL("VFW video capture"),
-    sizeof(struct vfw_ctx),
-    NULL,
-    vfw_read_header,
-    vfw_read_packet,
-    vfw_read_close,
-    .flags = AVFMT_NOFILE,
-    .priv_class = &vfw_class,
+    .name           = "vfwcap",
+    .long_name      = NULL_IF_CONFIG_SMALL("VfW video capture"),
+    .priv_data_size = sizeof(struct vfw_ctx),
+    .read_header    = vfw_read_header,
+    .read_packet    = vfw_read_packet,
+    .read_close     = vfw_read_close,
+    .flags          = AVFMT_NOFILE,
+    .priv_class     = &vfw_class,
 };

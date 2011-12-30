@@ -39,6 +39,7 @@
 #include "libavcodec/bytestream.h"
 #include "audiointerleave.h"
 #include "avformat.h"
+#include "internal.h"
 #include "mxf.h"
 
 static const int NTSC_samples_per_frame[] = { 1602, 1601, 1602, 1601, 1602, 0 };
@@ -67,7 +68,7 @@ typedef struct {
     int index;               ///< index in mxf_essence_container_uls table
     const UID *codec_ul;
     int order;               ///< interleaving order if dts are equal
-    int interlaced;          ///< wether picture is interlaced
+    int interlaced;          ///< whether picture is interlaced
     int temporal_reordering;
     AVRational aspect_ratio; ///< display aspect ratio
     int closed_gop;          ///< gop is closed, used in mpeg-2 frame parsing
@@ -1284,6 +1285,8 @@ static const UID mxf_mpeg2_codec_uls[] = {
     { 0x06,0x0E,0x2B,0x34,0x04,0x01,0x01,0x03,0x04,0x01,0x02,0x02,0x01,0x03,0x03,0x00 }, // MP-HL Long GOP
     { 0x06,0x0E,0x2B,0x34,0x04,0x01,0x01,0x03,0x04,0x01,0x02,0x02,0x01,0x04,0x02,0x00 }, // 422P-HL I-Frame
     { 0x06,0x0E,0x2B,0x34,0x04,0x01,0x01,0x03,0x04,0x01,0x02,0x02,0x01,0x04,0x03,0x00 }, // 422P-HL Long GOP
+    { 0x06,0x0E,0x2B,0x34,0x04,0x01,0x01,0x03,0x04,0x01,0x02,0x02,0x01,0x05,0x02,0x00 }, // MP@H-14 I-Frame
+    { 0x06,0x0E,0x2B,0x34,0x04,0x01,0x01,0x03,0x04,0x01,0x02,0x02,0x01,0x05,0x03,0x00 }, // MP@H-14 Long GOP
 };
 
 static const UID *mxf_get_mpeg2_codec_ul(AVCodecContext *avctx)
@@ -1295,6 +1298,8 @@ static const UID *mxf_get_mpeg2_codec_ul(AVCodecContext *avctx)
             return &mxf_mpeg2_codec_uls[0+long_gop];
         else if (avctx->level == 4) // High
             return &mxf_mpeg2_codec_uls[4+long_gop];
+        else if (avctx->level == 6) // High 14
+            return &mxf_mpeg2_codec_uls[8+long_gop];
     } else if (avctx->profile == 0) { // 422
         if (avctx->level == 5) // Main
             return &mxf_mpeg2_codec_uls[2+long_gop];
@@ -1407,6 +1412,8 @@ static int mxf_write_header(AVFormatContext *s)
     int i;
     uint8_t present[FF_ARRAY_ELEMS(mxf_essence_container_uls)] = {0};
     const int *samples_per_frame = NULL;
+    AVDictionaryEntry *t;
+    int64_t timestamp = 0;
 
     if (!s->nb_streams)
         return -1;
@@ -1435,7 +1442,7 @@ static int mxf_write_header(AVFormatContext *s)
                 av_log(s, AV_LOG_ERROR, "unsupported video frame rate\n");
                 return -1;
             }
-            av_set_pts_info(st, 64, mxf->time_base.num, mxf->time_base.den);
+            avpriv_set_pts_info(st, 64, mxf->time_base.num, mxf->time_base.den);
             if (s->oformat == &ff_mxf_d10_muxer) {
                 if (st->codec->bit_rate == 50000000)
                     if (mxf->time_base.den == 25) sc->index = 3;
@@ -1463,7 +1470,7 @@ static int mxf_write_header(AVFormatContext *s)
                 av_log(s, AV_LOG_ERROR, "only 48khz is implemented\n");
                 return -1;
             }
-            av_set_pts_info(st, 64, 1, st->codec->sample_rate);
+            avpriv_set_pts_info(st, 64, 1, st->codec->sample_rate);
             if (s->oformat == &ff_mxf_d10_muxer) {
                 if (st->index != 1) {
                     av_log(s, AV_LOG_ERROR, "MXF D-10 only support one audio track\n");
@@ -1512,8 +1519,15 @@ static int mxf_write_header(AVFormatContext *s)
         sc->order = AV_RB32(sc->track_essence_element_key+12);
     }
 
+#if FF_API_TIMESTAMP
     if (s->timestamp)
-        mxf->timestamp = mxf_parse_timestamp(s->timestamp);
+        timestamp = s->timestamp;
+    else
+#endif
+    if (t = av_dict_get(s->metadata, "creation_time", NULL, 0))
+        timestamp = ff_iso8601_to_unix_time(t->value);
+    if (timestamp)
+        mxf->timestamp = mxf_parse_timestamp(timestamp);
     mxf->duration = -1;
 
     mxf->timecode_track = av_mallocz(sizeof(*mxf->timecode_track));
@@ -1549,7 +1563,7 @@ static uint32_t ff_framenum_to_12m_time_code(unsigned frame, int drop, int fps)
            ((((frame / (fps * 60)) % 60) / 10)   << 12) | // tens  of minutes
            ((((frame / (fps * 60)) % 60) % 10)   <<  8) | // units of minutes
            (0                                    <<  7) | // b1
-           (0                                    <<  6) | // b2 (NSC), field phase (PAL)
+           (0                                    <<  6) | // b2 (NTSC), field phase (PAL)
            ((((frame / (fps * 3600) % 24)) / 10) <<  4) | // tens  of hours
            (  (frame / (fps * 3600) % 24)) % 10;          // units of hours
 }
@@ -1880,33 +1894,30 @@ static int mxf_interleave(AVFormatContext *s, AVPacket *out, AVPacket *pkt, int 
 }
 
 AVOutputFormat ff_mxf_muxer = {
-    "mxf",
-    NULL_IF_CONFIG_SMALL("Material eXchange Format"),
-    "application/mxf",
-    "mxf",
-    sizeof(MXFContext),
-    CODEC_ID_PCM_S16LE,
-    CODEC_ID_MPEG2VIDEO,
-    mxf_write_header,
-    mxf_write_packet,
-    mxf_write_footer,
-    AVFMT_NOTIMESTAMPS,
-    NULL,
-    mxf_interleave,
+    .name              = "mxf",
+    .long_name         = NULL_IF_CONFIG_SMALL("Material eXchange Format"),
+    .mime_type         = "application/mxf",
+    .extensions        = "mxf",
+    .priv_data_size    = sizeof(MXFContext),
+    .audio_codec       = CODEC_ID_PCM_S16LE,
+    .video_codec       = CODEC_ID_MPEG2VIDEO,
+    .write_header      = mxf_write_header,
+    .write_packet      = mxf_write_packet,
+    .write_trailer     = mxf_write_footer,
+    .flags             = AVFMT_NOTIMESTAMPS,
+    .interleave_packet = mxf_interleave,
 };
 
 AVOutputFormat ff_mxf_d10_muxer = {
-    "mxf_d10",
-    NULL_IF_CONFIG_SMALL("Material eXchange Format, D-10 Mapping"),
-    "application/mxf",
-    NULL,
-    sizeof(MXFContext),
-    CODEC_ID_PCM_S16LE,
-    CODEC_ID_MPEG2VIDEO,
-    mxf_write_header,
-    mxf_write_packet,
-    mxf_write_footer,
-    AVFMT_NOTIMESTAMPS,
-    NULL,
-    mxf_interleave,
+    .name              = "mxf_d10",
+    .long_name         = NULL_IF_CONFIG_SMALL("Material eXchange Format, D-10 Mapping"),
+    .mime_type         = "application/mxf",
+    .priv_data_size    = sizeof(MXFContext),
+    .audio_codec       = CODEC_ID_PCM_S16LE,
+    .video_codec       = CODEC_ID_MPEG2VIDEO,
+    .write_header      = mxf_write_header,
+    .write_packet      = mxf_write_packet,
+    .write_trailer     = mxf_write_footer,
+    .flags             = AVFMT_NOTIMESTAMPS,
+    .interleave_packet = mxf_interleave,
 };

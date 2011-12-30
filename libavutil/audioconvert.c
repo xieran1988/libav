@@ -28,11 +28,26 @@
 #include "audioconvert.h"
 
 static const char * const channel_names[] = {
-    "FL", "FR", "FC", "LFE", "BL",  "BR",  "FLC", "FRC",
-    "BC", "SL", "SR", "TC",  "TFL", "TFC", "TFR", "TBL",
-    "TBC", "TBR",
-    [29] = "DL",
-    [30] = "DR",
+    [0]  = "FL",        /* front left */
+    [1]  = "FR",        /* front right */
+    [2]  = "FC",        /* front center */
+    [3]  = "LFE",       /* low frequency */
+    [4]  = "BL",        /* back left */
+    [5]  = "BR",        /* back right */
+    [6]  = "FLC",       /* front left-of-center  */
+    [7]  = "FRC",       /* front right-of-center */
+    [8]  = "BC",        /* back-center */
+    [9]  = "SL",        /* side left */
+    [10] = "SR",        /* side right */
+    [11] = "TC",        /* top center */
+    [12] = "TFL",       /* top front left */
+    [13] = "TFC",       /* top front center */
+    [14] = "TFR",       /* top front right */
+    [15] = "TBL",       /* top back left */
+    [16] = "TBC",       /* top back center */
+    [17] = "TBR",       /* top back right */
+    [29] = "DL",        /* downmix left */
+    [30] = "DR",        /* downmix right */
 };
 
 static const char *get_channel_name(int channel_id)
@@ -45,7 +60,7 @@ static const char *get_channel_name(int channel_id)
 static const struct {
     const char *name;
     int         nb_channels;
-    int64_t     layout;
+    uint64_t     layout;
 } channel_layout_map[] = {
     { "mono",        1,  AV_CH_LAYOUT_MONO },
     { "stereo",      2,  AV_CH_LAYOUT_STEREO },
@@ -62,7 +77,7 @@ static const struct {
     { 0 }
 };
 
-int64_t av_get_channel_layout(const char *name)
+uint64_t av_get_channel_layout(const char *name)
 {
     int i = 0;
     do {
@@ -75,7 +90,7 @@ int64_t av_get_channel_layout(const char *name)
 }
 
 void av_get_channel_layout_string(char *buf, int buf_size,
-                                  int nb_channels, int64_t channel_layout)
+                                  int nb_channels, uint64_t channel_layout)
 {
     int i;
 
@@ -91,13 +106,14 @@ void av_get_channel_layout_string(char *buf, int buf_size,
 
     snprintf(buf, buf_size, "%d channels", nb_channels);
     if (channel_layout) {
-        int i,ch;
+        int i, ch;
         av_strlcat(buf, " (", buf_size);
-        for(i=0,ch=0; i<64; i++) {
-            if ((channel_layout & (1L<<i))) {
+        for (i = 0, ch = 0; i < 64; i++) {
+            if ((channel_layout & (UINT64_C(1) << i))) {
                 const char *name = get_channel_name(i);
                 if (name) {
-                    if (ch>0) av_strlcat(buf, "|", buf_size);
+                    if (ch > 0)
+                        av_strlcat(buf, "|", buf_size);
                     av_strlcat(buf, name, buf_size);
                 }
                 ch++;
@@ -107,7 +123,7 @@ void av_get_channel_layout_string(char *buf, int buf_size,
     }
 }
 
-int av_get_channel_layout_nb_channels(int64_t channel_layout)
+int av_get_channel_layout_nb_channels(uint64_t channel_layout)
 {
     int count;
     uint64_t x = channel_layout;

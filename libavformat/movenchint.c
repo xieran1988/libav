@@ -36,7 +36,7 @@ int ff_mov_init_hinting(AVFormatContext *s, int index, int src_index)
     track->tag = MKTAG('r','t','p',' ');
     track->src_track = src_index;
 
-    track->enc = avcodec_alloc_context();
+    track->enc = avcodec_alloc_context3(NULL);
     if (!track->enc)
         goto fail;
     track->enc->codec_type = AVMEDIA_TYPE_DATA;
@@ -95,11 +95,12 @@ static void sample_queue_free(HintSampleQueue *queue)
  * not copied. sample_queue_retain should be called before pkt->data
  * is reused/freed.
  */
-static void sample_queue_push(HintSampleQueue *queue, AVPacket *pkt, int sample)
+static void sample_queue_push(HintSampleQueue *queue, uint8_t *data, int size,
+                              int sample)
 {
     /* No need to keep track of smaller samples, since describing them
      * with immediates is more efficient. */
-    if (pkt->size <= 14)
+    if (size <= 14)
         return;
     if (!queue->samples || queue->len >= queue->size) {
         HintSample* samples;
@@ -109,8 +110,8 @@ static void sample_queue_push(HintSampleQueue *queue, AVPacket *pkt, int sample)
             return;
         queue->samples = samples;
     }
-    queue->samples[queue->len].data = pkt->data;
-    queue->samples[queue->len].size = pkt->size;
+    queue->samples[queue->len].data = data;
+    queue->samples[queue->len].size = size;
     queue->samples[queue->len].sample_number = sample;
     queue->samples[queue->len].offset = 0;
     queue->samples[queue->len].own_data = 0;
@@ -386,7 +387,8 @@ static int write_hint_packets(AVIOContext *out, const uint8_t *data,
 }
 
 int ff_mov_add_hinted_packet(AVFormatContext *s, AVPacket *pkt,
-                             int track_index, int sample)
+                             int track_index, int sample,
+                             uint8_t *sample_data, int sample_size)
 {
     MOVMuxContext *mov = s->priv_data;
     MOVTrack *trk = &mov->tracks[track_index];
@@ -402,7 +404,10 @@ int ff_mov_add_hinted_packet(AVFormatContext *s, AVPacket *pkt,
     if (!rtp_ctx->pb)
         return AVERROR(ENOMEM);
 
-    sample_queue_push(&trk->sample_queue, pkt, sample);
+    if (sample_data)
+        sample_queue_push(&trk->sample_queue, sample_data, sample_size, sample);
+    else
+        sample_queue_push(&trk->sample_queue, pkt->data, pkt->size, sample);
 
     /* Feed the packet to the RTP muxer */
     ff_write_chained(rtp_ctx, 0, pkt, s);

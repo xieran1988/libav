@@ -21,6 +21,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 enum SIFFTags{
     TAG_SIFF = MKTAG('S', 'I', 'F', 'F'),
@@ -71,7 +72,7 @@ static int siff_probe(AVProbeData *p)
 static int create_audio_stream(AVFormatContext *s, SIFFContext *c)
 {
     AVStream *ast;
-    ast = av_new_stream(s, 0);
+    ast = avformat_new_stream(s, NULL);
     if (!ast)
         return -1;
     ast->codec->codec_type      = AVMEDIA_TYPE_AUDIO;
@@ -80,7 +81,7 @@ static int create_audio_stream(AVFormatContext *s, SIFFContext *c)
     ast->codec->bits_per_coded_sample = c->bits;
     ast->codec->sample_rate     = c->rate;
     ast->codec->frame_size      = c->block_align;
-    av_set_pts_info(ast, 16, 1, c->rate);
+    avpriv_set_pts_info(ast, 16, 1, c->rate);
     return 0;
 }
 
@@ -115,7 +116,7 @@ static int siff_parse_vbv1(AVFormatContext *s, SIFFContext *c, AVIOContext *pb)
 
     avio_skip(pb, 16); //zeroes
 
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return -1;
     st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
@@ -124,7 +125,7 @@ static int siff_parse_vbv1(AVFormatContext *s, SIFFContext *c, AVIOContext *pb)
     st->codec->width      = width;
     st->codec->height     = height;
     st->codec->pix_fmt    = PIX_FMT_PAL8;
-    av_set_pts_info(st, 16, 1, 12);
+    avpriv_set_pts_info(st, 16, 1, 12);
 
     c->cur_frame = 0;
     c->has_video = 1;
@@ -228,11 +229,11 @@ static int siff_read_packet(AVFormatContext *s, AVPacket *pkt)
 }
 
 AVInputFormat ff_siff_demuxer = {
-    "siff",
-    NULL_IF_CONFIG_SMALL("Beam Software SIFF"),
-    sizeof(SIFFContext),
-    siff_probe,
-    siff_read_header,
-    siff_read_packet,
+    .name           = "siff",
+    .long_name      = NULL_IF_CONFIG_SMALL("Beam Software SIFF"),
+    .priv_data_size = sizeof(SIFFContext),
+    .read_probe     = siff_probe,
+    .read_header    = siff_read_header,
+    .read_packet    = siff_read_packet,
     .extensions = "vb,son"
 };

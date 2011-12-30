@@ -70,6 +70,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 #define HUFFMAN_TABLE_SIZE (64 * 1024)
 #define IDCIN_FPS 14
@@ -153,10 +154,10 @@ static int idcin_read_header(AVFormatContext *s,
     bytes_per_sample = avio_rl32(pb);
     channels = avio_rl32(pb);
 
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
-    av_set_pts_info(st, 33, 1, IDCIN_FPS);
+    avpriv_set_pts_info(st, 33, 1, IDCIN_FPS);
     idcin->video_stream_index = st->index;
     st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     st->codec->codec_id = CODEC_ID_IDCIN;
@@ -174,10 +175,10 @@ static int idcin_read_header(AVFormatContext *s,
     /* if sample rate is 0, assume no audio */
     if (sample_rate) {
         idcin->audio_present = 1;
-        st = av_new_stream(s, 0);
+        st = avformat_new_stream(s, NULL);
         if (!st)
             return AVERROR(ENOMEM);
-        av_set_pts_info(st, 33, 1, IDCIN_FPS);
+        avpriv_set_pts_info(st, 33, 1, IDCIN_FPS);
         idcin->audio_stream_index = st->index;
         st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
         st->codec->codec_tag = 1;
@@ -292,10 +293,10 @@ static int idcin_read_packet(AVFormatContext *s,
 }
 
 AVInputFormat ff_idcin_demuxer = {
-    "idcin",
-    NULL_IF_CONFIG_SMALL("id Cinematic format"),
-    sizeof(IdcinDemuxContext),
-    idcin_probe,
-    idcin_read_header,
-    idcin_read_packet,
+    .name           = "idcin",
+    .long_name      = NULL_IF_CONFIG_SMALL("id Cinematic format"),
+    .priv_data_size = sizeof(IdcinDemuxContext),
+    .read_probe     = idcin_probe,
+    .read_header    = idcin_read_header,
+    .read_packet    = idcin_read_packet,
 };

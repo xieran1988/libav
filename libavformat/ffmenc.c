@@ -1,5 +1,5 @@
 /*
- * FFM (ffserver live feed) muxer
+ * FFM (avserver live feed) muxer
  * Copyright (c) 2001 Fabrice Bellard
  *
  * This file is part of Libav.
@@ -20,7 +20,9 @@
  */
 
 #include "libavutil/intreadwrite.h"
+#include "libavutil/intfloat.h"
 #include "avformat.h"
+#include "internal.h"
 #include "ffm.h"
 
 static void flush_packet(AVFormatContext *s)
@@ -106,14 +108,13 @@ static int ffm_write_header(AVFormatContext *s)
     /* list of streams */
     for(i=0;i<s->nb_streams;i++) {
         st = s->streams[i];
-        av_set_pts_info(st, 64, 1, 1000000);
+        avpriv_set_pts_info(st, 64, 1, 1000000);
 
         codec = st->codec;
         /* generic info */
         avio_wb32(pb, codec->codec_id);
         avio_w8(pb, codec->codec_type);
         avio_wb32(pb, codec->bit_rate);
-        avio_wb32(pb, st->quality);
         avio_wb32(pb, codec->flags);
         avio_wb32(pb, codec->flags2);
         avio_wb32(pb, codec->debug);
@@ -136,10 +137,10 @@ static int ffm_write_header(AVFormatContext *s)
             avio_wb32(pb, codec->rc_max_rate);
             avio_wb32(pb, codec->rc_min_rate);
             avio_wb32(pb, codec->rc_buffer_size);
-            avio_wb64(pb, av_dbl2int(codec->i_quant_factor));
-            avio_wb64(pb, av_dbl2int(codec->b_quant_factor));
-            avio_wb64(pb, av_dbl2int(codec->i_quant_offset));
-            avio_wb64(pb, av_dbl2int(codec->b_quant_offset));
+            avio_wb64(pb, av_double2int(codec->i_quant_factor));
+            avio_wb64(pb, av_double2int(codec->b_quant_factor));
+            avio_wb64(pb, av_double2int(codec->i_quant_offset));
+            avio_wb64(pb, av_double2int(codec->b_quant_offset));
             avio_wb32(pb, codec->dct_algo);
             avio_wb32(pb, codec->strict_std_compliance);
             avio_wb32(pb, codec->max_b_frames);
@@ -151,22 +152,20 @@ static int ffm_write_header(AVFormatContext *s)
             avio_wb32(pb, codec->mb_decision);
             avio_wb32(pb, codec->nsse_weight);
             avio_wb32(pb, codec->frame_skip_cmp);
-            avio_wb64(pb, av_dbl2int(codec->rc_buffer_aggressivity));
+            avio_wb64(pb, av_double2int(codec->rc_buffer_aggressivity));
             avio_wb32(pb, codec->codec_tag);
             avio_w8(pb, codec->thread_count);
             avio_wb32(pb, codec->coder_type);
             avio_wb32(pb, codec->me_cmp);
-            avio_wb32(pb, codec->partitions);
             avio_wb32(pb, codec->me_subpel_quality);
             avio_wb32(pb, codec->me_range);
             avio_wb32(pb, codec->keyint_min);
             avio_wb32(pb, codec->scenechange_threshold);
             avio_wb32(pb, codec->b_frame_strategy);
-            avio_wb64(pb, av_dbl2int(codec->qcompress));
-            avio_wb64(pb, av_dbl2int(codec->qblur));
+            avio_wb64(pb, av_double2int(codec->qcompress));
+            avio_wb64(pb, av_double2int(codec->qblur));
             avio_wb32(pb, codec->max_qdiff);
             avio_wb32(pb, codec->refs);
-            avio_wb32(pb, codec->directpred);
             break;
         case AVMEDIA_TYPE_AUDIO:
             avio_wb32(pb, codec->sample_rate);
@@ -241,15 +240,14 @@ static int ffm_write_trailer(AVFormatContext *s)
 }
 
 AVOutputFormat ff_ffm_muxer = {
-    "ffm",
-    NULL_IF_CONFIG_SMALL("FFM (FFserver live feed) format"),
-    "",
-    "ffm",
-    sizeof(FFMContext),
-    /* not really used */
-    CODEC_ID_MP2,
-    CODEC_ID_MPEG1VIDEO,
-    ffm_write_header,
-    ffm_write_packet,
-    ffm_write_trailer,
+    .name              = "ffm",
+    .long_name         = NULL_IF_CONFIG_SMALL("FFM (AVserver live feed) format"),
+    .mime_type         = "",
+    .extensions        = "ffm",
+    .priv_data_size    = sizeof(FFMContext),
+    .audio_codec       = CODEC_ID_MP2,
+    .video_codec       = CODEC_ID_MPEG1VIDEO,
+    .write_header      = ffm_write_header,
+    .write_packet      = ffm_write_packet,
+    .write_trailer     = ffm_write_trailer,
 };

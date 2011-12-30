@@ -228,12 +228,15 @@ static av_cold int mpc8_decode_init(AVCodecContext * avctx)
                  &mpc8_q8_codes[i], 1, 1, INIT_VLC_USE_NEW_STATIC);
     }
     vlc_initialized = 1;
+
+    avcodec_get_frame_defaults(&c->frame);
+    avctx->coded_frame = &c->frame;
+
     return 0;
 }
 
-static int mpc8_decode_frame(AVCodecContext * avctx,
-                            void *data, int *data_size,
-                            AVPacket *avpkt)
+static int mpc8_decode_frame(AVCodecContext * avctx, void *data,
+                             int *got_frame_ptr, AVPacket *avpkt)
 {
     const uint8_t *buf = avpkt->data;
     int buf_size = avpkt->size;
@@ -244,6 +247,13 @@ static int mpc8_decode_frame(AVCodecContext * avctx,
     int off;
     int maxband, keyframe;
     int last[2];
+
+    /* get output buffer */
+    c->frame.nb_samples = MPC_FRAME_SIZE;
+    if ((res = avctx->get_buffer(avctx, &c->frame)) < 0) {
+        av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
+        return res;
+    }
 
     keyframe = c->cur_frame == 0;
 
@@ -260,6 +270,8 @@ static int mpc8_decode_frame(AVCodecContext * avctx,
         maxband = c->last_max_band + get_vlc2(gb, band_vlc.table, MPC8_BANDS_BITS, 2);
         if(maxband > 32) maxband -= 33;
     }
+    if(maxband > c->maxbands)
+        return AVERROR_INVALIDDATA;
     c->last_max_band = maxband;
 
     /* read subband indexes */
@@ -393,26 +405,27 @@ static int mpc8_decode_frame(AVCodecContext * avctx,
         }
     }
 
-    ff_mpc_dequantize_and_synth(c, maxband, data, avctx->channels);
+    ff_mpc_dequantize_and_synth(c, maxband, c->frame.data[0], avctx->channels);
 
     c->cur_frame++;
 
     c->last_bits_used = get_bits_count(gb);
     if(c->cur_frame >= c->frames)
         c->cur_frame = 0;
-    *data_size =  MPC_FRAME_SIZE * 2 * avctx->channels;
+
+    *got_frame_ptr   = 1;
+    *(AVFrame *)data = c->frame;
 
     return c->cur_frame ? c->last_bits_used >> 3 : buf_size;
 }
 
 AVCodec ff_mpc8_decoder = {
-    "mpc8",
-    AVMEDIA_TYPE_AUDIO,
-    CODEC_ID_MUSEPACK8,
-    sizeof(MPCContext),
-    mpc8_decode_init,
-    NULL,
-    NULL,
-    mpc8_decode_frame,
+    .name           = "mpc8",
+    .type           = AVMEDIA_TYPE_AUDIO,
+    .id             = CODEC_ID_MUSEPACK8,
+    .priv_data_size = sizeof(MPCContext),
+    .init           = mpc8_decode_init,
+    .decode         = mpc8_decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
     .long_name = NULL_IF_CONFIG_SMALL("Musepack SV8"),
 };

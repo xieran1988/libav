@@ -23,8 +23,9 @@
  * Based on documents from Game Audio Player and own research
  */
 
-#include "libavutil/bswap.h"
+#include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 #include "pcm.h"
 
 /* if we don't know the size in advance */
@@ -33,8 +34,7 @@
 static int sol_probe(AVProbeData *p)
 {
     /* check file header */
-    uint16_t magic;
-    magic=av_le2ne16(*((uint16_t*)p->buf));
+    uint16_t magic = AV_RL32(p->buf);
     if ((magic == 0x0B8D || magic == 0x0C0D || magic == 0x0C8D) &&
         p->buf[2] == 'S' && p->buf[3] == 'O' &&
         p->buf[4] == 'L' && p->buf[5] == 0)
@@ -110,7 +110,7 @@ static int sol_read_header(AVFormatContext *s,
     else id = 0;
 
     /* now we are ready: build format streams */
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return -1;
     st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
@@ -118,7 +118,7 @@ static int sol_read_header(AVFormatContext *s,
     st->codec->codec_id = codec;
     st->codec->channels = channels;
     st->codec->sample_rate = rate;
-    av_set_pts_info(st, 64, 1, rate);
+    avpriv_set_pts_info(st, 64, 1, rate);
     return 0;
 }
 
@@ -132,6 +132,8 @@ static int sol_read_packet(AVFormatContext *s,
     if (s->pb->eof_reached)
         return AVERROR(EIO);
     ret= av_get_packet(s->pb, pkt, MAX_SIZE);
+    if (ret < 0)
+        return ret;
     pkt->stream_index = 0;
 
     /* note: we need to modify the packet size here to handle the last
@@ -141,12 +143,10 @@ static int sol_read_packet(AVFormatContext *s,
 }
 
 AVInputFormat ff_sol_demuxer = {
-    "sol",
-    NULL_IF_CONFIG_SMALL("Sierra SOL format"),
-    0,
-    sol_probe,
-    sol_read_header,
-    sol_read_packet,
-    NULL,
-    pcm_read_seek,
+    .name           = "sol",
+    .long_name      = NULL_IF_CONFIG_SMALL("Sierra SOL format"),
+    .read_probe     = sol_probe,
+    .read_header    = sol_read_header,
+    .read_packet    = sol_read_packet,
+    .read_seek      = pcm_read_seek,
 };

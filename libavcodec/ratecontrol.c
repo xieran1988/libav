@@ -44,9 +44,9 @@ static double get_qscale(MpegEncContext *s, RateControlEntry *rce, double rate_f
 
 void ff_write_pass1_stats(MpegEncContext *s){
     snprintf(s->avctx->stats_out, 256, "in:%d out:%d type:%d q:%d itex:%d ptex:%d mv:%d misc:%d fcode:%d bcode:%d mc-var:%d var:%d icount:%d skipcount:%d hbits:%d;\n",
-            s->current_picture_ptr->display_picture_number, s->current_picture_ptr->coded_picture_number, s->pict_type,
-            s->current_picture.quality, s->i_tex_bits, s->p_tex_bits, s->mv_bits, s->misc_bits,
-            s->f_code, s->b_code, s->current_picture.mc_mb_var_sum, s->current_picture.mb_var_sum, s->i_count, s->skip_count, s->header_bits);
+             s->current_picture_ptr->f.display_picture_number, s->current_picture_ptr->f.coded_picture_number, s->pict_type,
+             s->current_picture.f.quality, s->i_tex_bits, s->p_tex_bits, s->mv_bits, s->misc_bits,
+             s->f_code, s->b_code, s->current_picture.mc_mb_var_sum, s->current_picture.mb_var_sum, s->i_count, s->skip_count, s->header_bits);
 }
 
 static inline double qp2bits(RateControlEntry *rce, double qp){
@@ -300,7 +300,7 @@ int ff_vbv_update(MpegEncContext *s, int frame_size){
 }
 
 /**
- * modifies the bitrate curve from pass1 for one frame
+ * Modify the bitrate curve from pass1 for one frame.
  */
 static double get_qscale(MpegEncContext *s, RateControlEntry *rce, double rate_factor, int frame_num){
     RateControlContext *rcc= &s->rc_context;
@@ -404,7 +404,7 @@ static double get_diff_limited_q(MpegEncContext *s, RateControlEntry *rce, doubl
 }
 
 /**
- * gets the qmin & qmax for pict_type
+ * Get the qmin & qmax for pict_type.
  */
 static void get_qminmax(int *qmin_ret, int *qmax_ret, MpegEncContext *s, int pict_type){
     int qmin= s->avctx->lmin;
@@ -707,10 +707,10 @@ float ff_rate_estimate_qscale(MpegEncContext *s, int dry_run)
 //if(dts_pic)
 //            av_log(NULL, AV_LOG_ERROR, "%Ld %Ld %Ld %d\n", s->current_picture_ptr->pts, s->user_specified_pts, dts_pic->pts, picture_number);
 
-        if(!dts_pic || dts_pic->pts == AV_NOPTS_VALUE)
+        if (!dts_pic || dts_pic->f.pts == AV_NOPTS_VALUE)
             wanted_bits= (uint64_t)(s->bit_rate*(double)picture_number/fps);
         else
-            wanted_bits= (uint64_t)(s->bit_rate*(double)dts_pic->pts/fps);
+            wanted_bits = (uint64_t)(s->bit_rate*(double)dts_pic->f.pts / fps);
     }
 
     diff= s->total_bits - wanted_bits;
@@ -861,7 +861,9 @@ static int init_pass2(MpegEncContext *s)
 
         /* find qscale */
         for(i=0; i<rcc->num_entries; i++){
+            RateControlEntry *rce= &rcc->entry[i];
             qscale[i]= get_qscale(s, &rcc->entry[i], rate_factor, i);
+            rcc->last_qscale_for[rce->pict_type] = qscale[i];
         }
         assert(filter_size%2==1);
 

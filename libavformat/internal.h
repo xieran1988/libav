@@ -108,7 +108,7 @@ uint64_t ff_ntp_time(void);
  */
 int ff_url_join(char *str, int size, const char *proto,
                 const char *authorization, const char *hostname,
-                int port, const char *fmt, ...);
+                int port, const char *fmt, ...) av_printf_format(7, 8);
 
 /**
  * Append the media-specific SDP fragment for the media stream c
@@ -225,8 +225,8 @@ int ff_add_index_entry(AVIndexEntry **index_entries,
  *
  * @return AVChapter or NULL on error
  */
-AVChapter *ff_new_chapter(AVFormatContext *s, int id, AVRational time_base,
-                          int64_t start, int64_t end, const char *title);
+AVChapter *avpriv_new_chapter(AVFormatContext *s, int id, AVRational time_base,
+                              int64_t start, int64_t end, const char *title);
 
 /**
  * Ensure the index uses less memory than the maximum specified in
@@ -247,5 +247,64 @@ void ff_make_absolute_url(char *buf, int size, const char *base,
                           const char *rel);
 
 enum CodecID ff_guess_image2_codec(const char *filename);
+
+/**
+ * Convert a date string in ISO8601 format to Unix timestamp.
+ */
+int64_t ff_iso8601_to_unix_time(const char *datestr);
+
+/**
+ * Perform a binary search using av_index_search_timestamp() and
+ * AVInputFormat.read_timestamp().
+ *
+ * @param target_ts target timestamp in the time base of the given stream
+ * @param stream_index stream number
+ */
+int ff_seek_frame_binary(AVFormatContext *s, int stream_index,
+                         int64_t target_ts, int flags);
+
+/**
+ * Update cur_dts of all streams based on the given timestamp and AVStream.
+ *
+ * Stream ref_st unchanged, others set cur_dts in their native time base.
+ * Only needed for timestamp wrapping or if (dts not set and pts!=dts).
+ * @param timestamp new dts expressed in time_base of param ref_st
+ * @param ref_st reference stream giving time_base of param timestamp
+ */
+void ff_update_cur_dts(AVFormatContext *s, AVStream *ref_st, int64_t timestamp);
+
+/**
+ * Perform a binary search using read_timestamp().
+ *
+ * @param target_ts target timestamp in the time base of the given stream
+ * @param stream_index stream number
+ */
+int64_t ff_gen_search(AVFormatContext *s, int stream_index,
+                      int64_t target_ts, int64_t pos_min,
+                      int64_t pos_max, int64_t pos_limit,
+                      int64_t ts_min, int64_t ts_max,
+                      int flags, int64_t *ts_ret,
+                      int64_t (*read_timestamp)(struct AVFormatContext *, int , int64_t *, int64_t ));
+
+/**
+ * Set the pts for a given stream. If the new values would be invalid
+ * (<= 0), it leaves the AVStream unchanged.
+ *
+ * @param s stream
+ * @param pts_wrap_bits number of bits effectively used by the pts
+ *        (used for wrap control, 33 is the value for MPEG)
+ * @param pts_num numerator to convert to seconds (MPEG: 1)
+ * @param pts_den denominator to convert to seconds (MPEG: 90000)
+ */
+void avpriv_set_pts_info(AVStream *s, int pts_wrap_bits,
+                         unsigned int pts_num, unsigned int pts_den);
+
+/**
+ * Add side data to a packet for changing parameters to the given values.
+ * Parameters set to 0 aren't included in the change.
+ */
+int ff_add_param_change(AVPacket *pkt, int32_t channels,
+                        uint64_t channel_layout, int32_t sample_rate,
+                        int32_t width, int32_t height);
 
 #endif /* AVFORMAT_INTERNAL_H */

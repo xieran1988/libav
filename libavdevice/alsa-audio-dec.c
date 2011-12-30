@@ -47,6 +47,7 @@
 
 #include <alsa/asoundlib.h>
 #include "libavformat/avformat.h"
+#include "libavformat/internal.h"
 #include "libavutil/opt.h"
 
 #include "alsa-audio.h"
@@ -60,15 +61,7 @@ static av_cold int audio_read_header(AVFormatContext *s1,
     enum CodecID codec_id;
     snd_pcm_sw_params_t *sw_params;
 
-#if FF_API_FORMAT_PARAMETERS
-    if (ap->sample_rate > 0)
-        s->sample_rate = ap->sample_rate;
-
-    if (ap->channels > 0)
-        s->channels = ap->channels;
-#endif
-
-    st = av_new_stream(s1, 0);
+    st = avformat_new_stream(s1, NULL);
     if (!st) {
         av_log(s1, AV_LOG_ERROR, "Cannot add stream\n");
 
@@ -110,7 +103,7 @@ static av_cold int audio_read_header(AVFormatContext *s1,
     st->codec->codec_id    = codec_id;
     st->codec->sample_rate = s->sample_rate;
     st->codec->channels    = s->channels;
-    av_set_pts_info(st, 64, 1, 1000000);  /* 64 bits pts in us */
+    avpriv_set_pts_info(st, 64, 1, 1000000);  /* 64 bits pts in us */
 
     return 0;
 
@@ -159,8 +152,8 @@ static int audio_read_packet(AVFormatContext *s1, AVPacket *pkt)
 }
 
 static const AVOption options[] = {
-    { "sample_rate", "", offsetof(AlsaData, sample_rate), FF_OPT_TYPE_INT, {.dbl = 48000}, 1, INT_MAX, AV_OPT_FLAG_DECODING_PARAM },
-    { "channels",    "", offsetof(AlsaData, channels),    FF_OPT_TYPE_INT, {.dbl = 2},     1, INT_MAX, AV_OPT_FLAG_DECODING_PARAM },
+    { "sample_rate", "", offsetof(AlsaData, sample_rate), AV_OPT_TYPE_INT, {.dbl = 48000}, 1, INT_MAX, AV_OPT_FLAG_DECODING_PARAM },
+    { "channels",    "", offsetof(AlsaData, channels),    AV_OPT_TYPE_INT, {.dbl = 2},     1, INT_MAX, AV_OPT_FLAG_DECODING_PARAM },
     { NULL },
 };
 
@@ -172,13 +165,12 @@ static const AVClass alsa_demuxer_class = {
 };
 
 AVInputFormat ff_alsa_demuxer = {
-    "alsa",
-    NULL_IF_CONFIG_SMALL("ALSA audio input"),
-    sizeof(AlsaData),
-    NULL,
-    audio_read_header,
-    audio_read_packet,
-    ff_alsa_close,
-    .flags = AVFMT_NOFILE,
-    .priv_class = &alsa_demuxer_class,
+    .name           = "alsa",
+    .long_name      = NULL_IF_CONFIG_SMALL("ALSA audio input"),
+    .priv_data_size = sizeof(AlsaData),
+    .read_header    = audio_read_header,
+    .read_packet    = audio_read_packet,
+    .read_close     = ff_alsa_close,
+    .flags          = AVFMT_NOFILE,
+    .priv_class     = &alsa_demuxer_class,
 };

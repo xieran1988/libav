@@ -1,7 +1,4 @@
 /*
- * Libavformat API example: Output a media file in any supported
- * libavformat format. The default codecs are used.
- *
  * Copyright (c) 2003 Fabrice Bellard
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,11 +19,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+/**
+ * @file
+ * libavformat API example.
+ *
+ * @example libavformat/output-example.c
+ * Output a media file in any supported libavformat format.
+ * The default codecs are used.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 
+#include "libavutil/mathematics.h"
 #include "libavformat/avformat.h"
 #include "libswscale/swscale.h"
 
@@ -43,11 +51,11 @@ static int sws_flags = SWS_BICUBIC;
 /**************************************************************/
 /* audio output */
 
-float t, tincr, tincr2;
-int16_t *samples;
-uint8_t *audio_outbuf;
-int audio_outbuf_size;
-int audio_input_frame_size;
+static float t, tincr, tincr2;
+static int16_t *samples;
+static uint8_t *audio_outbuf;
+static int audio_outbuf_size;
+static int audio_input_frame_size;
 
 /*
  * add an audio output stream
@@ -182,9 +190,9 @@ static void close_audio(AVFormatContext *oc, AVStream *st)
 /**************************************************************/
 /* video output */
 
-AVFrame *picture, *tmp_picture;
-uint8_t *video_outbuf;
-int frame_count, video_outbuf_size;
+static AVFrame *picture, *tmp_picture;
+static uint8_t *video_outbuf;
+static int frame_count, video_outbuf_size;
 
 /* add a video output stream */
 static AVStream *add_video_stream(AVFormatContext *oc, enum CodecID codec_id)
@@ -192,7 +200,7 @@ static AVStream *add_video_stream(AVFormatContext *oc, enum CodecID codec_id)
     AVCodecContext *c;
     AVStream *st;
 
-    st = av_new_stream(oc, 0);
+    st = avformat_new_stream(oc, NULL);
     if (!st) {
         fprintf(stderr, "Could not alloc stream\n");
         exit(1);
@@ -437,7 +445,7 @@ int main(int argc, char **argv)
                "The output format is automatically guessed according to the file extension.\n"
                "Raw images can also be output by using '%%d' in the filename\n"
                "\n", argv[0]);
-        exit(1);
+        return 1;
     }
 
     filename = argv[1];
@@ -451,14 +459,14 @@ int main(int argc, char **argv)
     }
     if (!fmt) {
         fprintf(stderr, "Could not find suitable output format\n");
-        exit(1);
+        return 1;
     }
 
     /* allocate the output media context */
     oc = avformat_alloc_context();
     if (!oc) {
         fprintf(stderr, "Memory error\n");
-        exit(1);
+        return 1;
     }
     oc->oformat = fmt;
     snprintf(oc->filename, sizeof(oc->filename), "%s", filename);
@@ -478,7 +486,7 @@ int main(int argc, char **argv)
        parameters). */
     if (av_set_parameters(oc, NULL) < 0) {
         fprintf(stderr, "Invalid output format parameters\n");
-        exit(1);
+        return 1;
     }
 
     av_dump_format(oc, 0, filename, 1);
@@ -494,7 +502,7 @@ int main(int argc, char **argv)
     if (!(fmt->flags & AVFMT_NOFILE)) {
         if (avio_open(&oc->pb, filename, AVIO_FLAG_WRITE) < 0) {
             fprintf(stderr, "Could not open '%s'\n", filename);
-            exit(1);
+            return 1;
         }
     }
 

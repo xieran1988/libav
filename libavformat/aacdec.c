@@ -22,6 +22,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 #include "rawdec.h"
 #include "id3v1.h"
 
@@ -65,7 +66,7 @@ static int adts_aac_read_header(AVFormatContext *s,
 {
     AVStream *st;
 
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
 
@@ -76,18 +77,17 @@ static int adts_aac_read_header(AVFormatContext *s,
     ff_id3v1_read(s);
 
     //LCM of all possible ADTS sample rates
-    av_set_pts_info(st, 64, 1, 28224000);
+    avpriv_set_pts_info(st, 64, 1, 28224000);
 
     return 0;
 }
 
 AVInputFormat ff_aac_demuxer = {
-    "aac",
-    NULL_IF_CONFIG_SMALL("raw ADTS AAC"),
-    0,
-    adts_aac_probe,
-    adts_aac_read_header,
-    ff_raw_read_partial_packet,
+    .name           = "aac",
+    .long_name      = NULL_IF_CONFIG_SMALL("raw ADTS AAC"),
+    .read_probe     = adts_aac_probe,
+    .read_header    = adts_aac_read_header,
+    .read_packet    = ff_raw_read_partial_packet,
     .flags= AVFMT_GENERIC_INDEX,
     .extensions = "aac",
     .value = CODEC_ID_AAC,

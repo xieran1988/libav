@@ -79,7 +79,7 @@ static int get_bitrate_mode(int bitrate, void *log_ctx)
 
 typedef struct AMRContext {
     AVClass *av_class;
-    int   frame_count;
+    AVFrame frame;
     void *dec_state;
     void *enc_state;
     int   enc_bitrate;
@@ -88,7 +88,7 @@ typedef struct AMRContext {
 } AMRContext;
 
 static const AVOption options[] = {
-    { "dtx", "Allow DTX (generate comfort noise)", offsetof(AMRContext, enc_dtx), FF_OPT_TYPE_INT, 0, 0, 1, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM },
+    { "dtx", "Allow DTX (generate comfort noise)", offsetof(AMRContext, enc_dtx), AV_OPT_TYPE_INT, { 0 }, 0, 1, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM },
     { NULL }
 };
 
@@ -100,7 +100,6 @@ static av_cold int amr_nb_decode_init(AVCodecContext *avctx)
 {
     AMRContext *s  = avctx->priv_data;
 
-    s->frame_count = 0;
     s->dec_state   = Decoder_Interface_init();
     if (!s->dec_state) {
         av_log(avctx, AV_LOG_ERROR, "Decoder_Interface_init error\n");
@@ -114,6 +113,9 @@ static av_cold int amr_nb_decode_init(AVCodecContext *avctx)
         return AVERROR(ENOSYS);
     }
 
+    avcodec_get_frame_defaults(&s->frame);
+    avctx->coded_frame = &s->frame;
+
     return 0;
 }
 
@@ -122,21 +124,29 @@ static av_cold int amr_nb_decode_close(AVCodecContext *avctx)
     AMRContext *s = avctx->priv_data;
 
     Decoder_Interface_exit(s->dec_state);
+
     return 0;
 }
 
 static int amr_nb_decode_frame(AVCodecContext *avctx, void *data,
-                               int *data_size, AVPacket *avpkt)
+                               int *got_frame_ptr, AVPacket *avpkt)
 {
     const uint8_t *buf = avpkt->data;
     int buf_size       = avpkt->size;
     AMRContext *s      = avctx->priv_data;
     static const uint8_t block_size[16] = { 12, 13, 15, 17, 19, 20, 26, 31, 5, 0, 0, 0, 0, 0, 0, 0 };
     enum Mode dec_mode;
-    int packet_size;
+    int packet_size, ret;
 
     av_dlog(avctx, "amr_decode_frame buf=%p buf_size=%d frame_count=%d!!\n",
-            buf, buf_size, s->frame_count);
+            buf, buf_size, avctx->frame_number);
+
+    /* get output buffer */
+    s->frame.nb_samples = 160;
+    if ((ret = avctx->get_buffer(avctx, &s->frame)) < 0) {
+        av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
+        return ret;
+    }
 
     dec_mode    = (buf[0] >> 3) & 0x000F;
     packet_size = block_size[dec_mode] + 1;
@@ -147,33 +157,32 @@ static int amr_nb_decode_frame(AVCodecContext *avctx, void *data,
         return AVERROR_INVALIDDATA;
     }
 
-    s->frame_count++;
     av_dlog(avctx, "packet_size=%d buf= 0x%X %X %X %X\n",
               packet_size, buf[0], buf[1], buf[2], buf[3]);
     /* call decoder */
-    Decoder_Interface_Decode(s->dec_state, buf, data, 0);
-    *data_size = 160 * 2;
+    Decoder_Interface_Decode(s->dec_state, buf, (short *)s->frame.data[0], 0);
+
+    *got_frame_ptr   = 1;
+    *(AVFrame *)data = s->frame;
 
     return packet_size;
 }
 
 AVCodec ff_libopencore_amrnb_decoder = {
-    "libopencore_amrnb",
-    AVMEDIA_TYPE_AUDIO,
-    CODEC_ID_AMR_NB,
-    sizeof(AMRContext),
-    amr_nb_decode_init,
-    NULL,
-    amr_nb_decode_close,
-    amr_nb_decode_frame,
+    .name           = "libopencore_amrnb",
+    .type           = AVMEDIA_TYPE_AUDIO,
+    .id             = CODEC_ID_AMR_NB,
+    .priv_data_size = sizeof(AMRContext),
+    .init           = amr_nb_decode_init,
+    .close          = amr_nb_decode_close,
+    .decode         = amr_nb_decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
     .long_name = NULL_IF_CONFIG_SMALL("OpenCORE Adaptive Multi-Rate (AMR) Narrow-Band"),
 };
 
 static av_cold int amr_nb_encode_init(AVCodecContext *avctx)
 {
     AMRContext *s = avctx->priv_data;
-
-    s->frame_count = 0;
 
     if (avctx->sample_rate != 8000) {
         av_log(avctx, AV_LOG_ERROR, "Only 8000Hz sample rate supported\n");
@@ -230,14 +239,13 @@ static int amr_nb_encode_frame(AVCodecContext *avctx,
 }
 
 AVCodec ff_libopencore_amrnb_encoder = {
-    "libopencore_amrnb",
-    AVMEDIA_TYPE_AUDIO,
-    CODEC_ID_AMR_NB,
-    sizeof(AMRContext),
-    amr_nb_encode_init,
-    amr_nb_encode_frame,
-    amr_nb_encode_close,
-    NULL,
+    .name           = "libopencore_amrnb",
+    .type           = AVMEDIA_TYPE_AUDIO,
+    .id             = CODEC_ID_AMR_NB,
+    .priv_data_size = sizeof(AMRContext),
+    .init           = amr_nb_encode_init,
+    .encode         = amr_nb_encode_frame,
+    .close          = amr_nb_encode_close,
     .sample_fmts = (const enum AVSampleFormat[]){AV_SAMPLE_FMT_S16,AV_SAMPLE_FMT_NONE},
     .long_name = NULL_IF_CONFIG_SMALL("OpenCORE Adaptive Multi-Rate (AMR) Narrow-Band"),
     .priv_class = &class,
@@ -252,6 +260,7 @@ AVCodec ff_libopencore_amrnb_encoder = {
 #include <opencore-amrwb/if_rom.h>
 
 typedef struct AMRWBContext {
+    AVFrame frame;
     void  *state;
 } AMRWBContext;
 
@@ -268,22 +277,28 @@ static av_cold int amr_wb_decode_init(AVCodecContext *avctx)
         return AVERROR(ENOSYS);
     }
 
+    avcodec_get_frame_defaults(&s->frame);
+    avctx->coded_frame = &s->frame;
+
     return 0;
 }
 
 static int amr_wb_decode_frame(AVCodecContext *avctx, void *data,
-                               int *data_size, AVPacket *avpkt)
+                               int *got_frame_ptr, AVPacket *avpkt)
 {
     const uint8_t *buf = avpkt->data;
     int buf_size       = avpkt->size;
     AMRWBContext *s    = avctx->priv_data;
-    int mode;
+    int mode, ret;
     int packet_size;
     static const uint8_t block_size[16] = {18, 24, 33, 37, 41, 47, 51, 59, 61, 6, 6, 0, 0, 0, 1, 1};
 
-    if (!buf_size)
-        /* nothing to do */
-        return 0;
+    /* get output buffer */
+    s->frame.nb_samples = 320;
+    if ((ret = avctx->get_buffer(avctx, &s->frame)) < 0) {
+        av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
+        return ret;
+    }
 
     mode        = (buf[0] >> 3) & 0x000F;
     packet_size = block_size[mode];
@@ -294,8 +309,11 @@ static int amr_wb_decode_frame(AVCodecContext *avctx, void *data,
         return AVERROR_INVALIDDATA;
     }
 
-    D_IF_decode(s->state, buf, data, _good_frame);
-    *data_size = 320 * 2;
+    D_IF_decode(s->state, buf, (short *)s->frame.data[0], _good_frame);
+
+    *got_frame_ptr   = 1;
+    *(AVFrame *)data = s->frame;
+
     return packet_size;
 }
 
@@ -308,14 +326,14 @@ static int amr_wb_decode_close(AVCodecContext *avctx)
 }
 
 AVCodec ff_libopencore_amrwb_decoder = {
-    "libopencore_amrwb",
-    AVMEDIA_TYPE_AUDIO,
-    CODEC_ID_AMR_WB,
-    sizeof(AMRWBContext),
-    amr_wb_decode_init,
-    NULL,
-    amr_wb_decode_close,
-    amr_wb_decode_frame,
+    .name           = "libopencore_amrwb",
+    .type           = AVMEDIA_TYPE_AUDIO,
+    .id             = CODEC_ID_AMR_WB,
+    .priv_data_size = sizeof(AMRWBContext),
+    .init           = amr_wb_decode_init,
+    .close          = amr_wb_decode_close,
+    .decode         = amr_wb_decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
     .long_name = NULL_IF_CONFIG_SMALL("OpenCORE Adaptive Multi-Rate (AMR) Wide-Band"),
 };
 

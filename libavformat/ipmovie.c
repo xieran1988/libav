@@ -34,6 +34,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 #define CHUNK_PREAMBLE_SIZE 4
 #define OPCODE_PREAMBLE_SIZE 4
@@ -559,10 +560,10 @@ static int ipmovie_read_header(AVFormatContext *s,
         return AVERROR_INVALIDDATA;
 
     /* initialize the stream decoders */
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
-    av_set_pts_info(st, 63, 1, 1000000);
+    avpriv_set_pts_info(st, 63, 1, 1000000);
     ipmovie->video_stream_index = st->index;
     st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     st->codec->codec_id = CODEC_ID_INTERPLAY_VIDEO;
@@ -572,10 +573,10 @@ static int ipmovie_read_header(AVFormatContext *s,
     st->codec->bits_per_coded_sample = ipmovie->video_bpp;
 
     if (ipmovie->audio_type) {
-        st = av_new_stream(s, 0);
+        st = avformat_new_stream(s, NULL);
         if (!st)
             return AVERROR(ENOMEM);
-        av_set_pts_info(st, 32, 1, ipmovie->audio_sample_rate);
+        avpriv_set_pts_info(st, 32, 1, ipmovie->audio_sample_rate);
         ipmovie->audio_stream_index = st->index;
         st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
         st->codec->codec_id = ipmovie->audio_type;
@@ -616,10 +617,10 @@ static int ipmovie_read_packet(AVFormatContext *s,
 }
 
 AVInputFormat ff_ipmovie_demuxer = {
-    "ipmovie",
-    NULL_IF_CONFIG_SMALL("Interplay MVE format"),
-    sizeof(IPMVEContext),
-    ipmovie_probe,
-    ipmovie_read_header,
-    ipmovie_read_packet,
+    .name           = "ipmovie",
+    .long_name      = NULL_IF_CONFIG_SMALL("Interplay MVE format"),
+    .priv_data_size = sizeof(IPMVEContext),
+    .read_probe     = ipmovie_probe,
+    .read_header    = ipmovie_read_header,
+    .read_packet    = ipmovie_read_packet,
 };

@@ -25,6 +25,7 @@
  */
 
 #include "avformat.h"
+#include "internal.h"
 
 #define SEQ_FRAME_SIZE         6144
 #define SEQ_FRAME_W            256
@@ -206,11 +207,11 @@ static int seq_read_header(AVFormatContext *s, AVFormatParameters *ap)
     seq->audio_buffer_full = 0;
 
     /* initialize the video decoder stream */
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
 
-    av_set_pts_info(st, 32, 1, SEQ_FRAME_RATE);
+    avpriv_set_pts_info(st, 32, 1, SEQ_FRAME_RATE);
     seq->video_stream_index = st->index;
     st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     st->codec->codec_id = CODEC_ID_TIERTEXSEQVIDEO;
@@ -219,11 +220,11 @@ static int seq_read_header(AVFormatContext *s, AVFormatParameters *ap)
     st->codec->height = SEQ_FRAME_H;
 
     /* initialize the audio decoder stream */
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
 
-    av_set_pts_info(st, 32, 1, SEQ_SAMPLE_RATE);
+    avpriv_set_pts_info(st, 32, 1, SEQ_SAMPLE_RATE);
     seq->audio_stream_index = st->index;
     st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
     st->codec->codec_id = CODEC_ID_PCM_S16BE;
@@ -303,11 +304,11 @@ static int seq_read_close(AVFormatContext *s)
 }
 
 AVInputFormat ff_tiertexseq_demuxer = {
-    "tiertexseq",
-    NULL_IF_CONFIG_SMALL("Tiertex Limited SEQ format"),
-    sizeof(SeqDemuxContext),
-    seq_probe,
-    seq_read_header,
-    seq_read_packet,
-    seq_read_close,
+    .name           = "tiertexseq",
+    .long_name      = NULL_IF_CONFIG_SMALL("Tiertex Limited SEQ format"),
+    .priv_data_size = sizeof(SeqDemuxContext),
+    .read_probe     = seq_probe,
+    .read_header    = seq_read_header,
+    .read_packet    = seq_read_packet,
+    .read_close     = seq_read_close,
 };

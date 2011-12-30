@@ -22,6 +22,12 @@
 #define AVUTIL_AVSTRING_H
 
 #include <stddef.h>
+#include "attributes.h"
+
+/**
+ * @addtogroup lavu_string
+ * @{
+ */
 
 /**
  * Return non-zero if pfx is a prefix of str. If it is, *ptr is set to
@@ -71,7 +77,7 @@ char *av_stristr(const char *haystack, const char *needle);
  * @param size size of destination buffer
  * @return the length of src
  *
- * WARNING: since the return value is the length of src, src absolutely
+ * @warning since the return value is the length of src, src absolutely
  * _must_ be a properly 0-terminated string, otherwise this will read beyond
  * the end of the buffer and possibly crash.
  */
@@ -89,9 +95,9 @@ size_t av_strlcpy(char *dst, const char *src, size_t size);
  * @param size size of destination buffer
  * @return the total length of src and dst
  *
- * WARNING: since the return value use the length of src and dst, these absolutely
- * _must_ be a properly 0-terminated strings, otherwise this will read beyond
- * the end of the buffer and possibly crash.
+ * @warning since the return value use the length of src and dst, these
+ * absolutely _must_ be a properly 0-terminated strings, otherwise this
+ * will read beyond the end of the buffer and possibly crash.
  */
 size_t av_strlcat(char *dst, const char *src, size_t size);
 
@@ -107,7 +113,7 @@ size_t av_strlcat(char *dst, const char *src, size_t size);
  * @return the length of the string that would have been generated
  *  if enough space had been available
  */
-size_t av_strlcatf(char *dst, size_t size, const char *fmt, ...);
+size_t av_strlcatf(char *dst, size_t size, const char *fmt, ...) av_printf_format(3, 4);
 
 /**
  * Convert a number to a av_malloced string.
@@ -129,5 +135,41 @@ char *av_d2str(double d);
  * the user, NULL in case of allocation failure
  */
 char *av_get_token(const char **buf, const char *term);
+
+/**
+ * Locale-independent conversion of ASCII characters to uppercase.
+ */
+static inline int av_toupper(int c)
+{
+    if (c >= 'a' && c <= 'z')
+        c ^= 0x20;
+    return c;
+}
+
+/**
+ * Locale-independent conversion of ASCII characters to lowercase.
+ */
+static inline int av_tolower(int c)
+{
+    if (c >= 'A' && c <= 'Z')
+        c ^= 0x20;
+    return c;
+}
+
+/*
+ * Locale-independent case-insensitive compare.
+ * @note This means only ASCII-range characters are case-insensitive
+ */
+int av_strcasecmp(const char *a, const char *b);
+
+/**
+ * Locale-independent case-insensitive compare.
+ * @note This means only ASCII-range characters are case-insensitive
+ */
+int av_strncasecmp(const char *a, const char *b, size_t n);
+
+/**
+ * @}
+ */
 
 #endif /* AVUTIL_AVSTRING_H */

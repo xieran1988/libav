@@ -35,6 +35,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 #define AUD_HEADER_SIZE 12
 #define AUD_CHUNK_PREAMBLE_SIZE 8
@@ -144,10 +145,10 @@ static int wsaud_read_header(AVFormatContext *s,
     wsaud->audio_bits = (((header[10] & 0x2) >> 1) + 1) * 8;
 
     /* initialize the audio decoder stream */
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
-    av_set_pts_info(st, 33, 1, wsaud->audio_samplerate);
+    avpriv_set_pts_info(st, 33, 1, wsaud->audio_samplerate);
     st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
     st->codec->codec_id = wsaud->audio_type;
     st->codec->codec_tag = 0;  /* no tag */
@@ -221,10 +222,10 @@ static int wsvqa_read_header(AVFormatContext *s,
     unsigned int chunk_size;
 
     /* initialize the video decoder stream */
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
-    av_set_pts_info(st, 33, 1, VQA_FRAMERATE);
+    avpriv_set_pts_info(st, 33, 1, VQA_FRAMERATE);
     wsvqa->video_stream_index = st->index;
     st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     st->codec->codec_id = CODEC_ID_WS_VQA;
@@ -247,10 +248,10 @@ static int wsvqa_read_header(AVFormatContext *s,
 
     /* initialize the audio decoder stream for VQA v1 or nonzero samplerate */
     if (AV_RL16(&header[24]) || (AV_RL16(&header[0]) == 1 && AV_RL16(&header[2]) == 1)) {
-        st = av_new_stream(s, 0);
+        st = avformat_new_stream(s, NULL);
         if (!st)
             return AVERROR(ENOMEM);
-        av_set_pts_info(st, 33, 1, VQA_FRAMERATE);
+        avpriv_set_pts_info(st, 33, 1, VQA_FRAMERATE);
         st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
         if (AV_RL16(&header[0]) == 1)
             st->codec->codec_id = CODEC_ID_WESTWOOD_SND1;
@@ -325,6 +326,11 @@ static int wsvqa_read_packet(AVFormatContext *s,
         chunk_size = AV_RB32(&preamble[4]);
         skip_byte = chunk_size & 0x01;
 
+        if ((chunk_type == SND2_TAG || chunk_type == SND1_TAG) && wsvqa->audio_channels == 0) {
+            av_log(s, AV_LOG_ERROR, "audio chunk without any audio header information found\n");
+            return AVERROR_INVALIDDATA;
+        }
+
         if ((chunk_type == SND1_TAG) || (chunk_type == SND2_TAG) || (chunk_type == VQFR_TAG)) {
 
             if (av_new_packet(pkt, chunk_size))
@@ -368,21 +374,21 @@ static int wsvqa_read_packet(AVFormatContext *s,
 
 #if CONFIG_WSAUD_DEMUXER
 AVInputFormat ff_wsaud_demuxer = {
-    "wsaud",
-    NULL_IF_CONFIG_SMALL("Westwood Studios audio format"),
-    sizeof(WsAudDemuxContext),
-    wsaud_probe,
-    wsaud_read_header,
-    wsaud_read_packet,
+    .name           = "wsaud",
+    .long_name      = NULL_IF_CONFIG_SMALL("Westwood Studios audio format"),
+    .priv_data_size = sizeof(WsAudDemuxContext),
+    .read_probe     = wsaud_probe,
+    .read_header    = wsaud_read_header,
+    .read_packet    = wsaud_read_packet,
 };
 #endif
 #if CONFIG_WSVQA_DEMUXER
 AVInputFormat ff_wsvqa_demuxer = {
-    "wsvqa",
-    NULL_IF_CONFIG_SMALL("Westwood Studios VQA format"),
-    sizeof(WsVqaDemuxContext),
-    wsvqa_probe,
-    wsvqa_read_header,
-    wsvqa_read_packet,
+    .name           = "wsvqa",
+    .long_name      = NULL_IF_CONFIG_SMALL("Westwood Studios VQA format"),
+    .priv_data_size = sizeof(WsVqaDemuxContext),
+    .read_probe     = wsvqa_probe,
+    .read_header    = wsvqa_read_header,
+    .read_packet    = wsvqa_read_packet,
 };
 #endif

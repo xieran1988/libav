@@ -27,6 +27,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 #define SCHl_TAG MKTAG('S', 'C', 'H', 'l')
 #define SEAD_TAG MKTAG('S', 'E', 'A', 'D')    /* Sxxx header */
@@ -410,7 +411,7 @@ static int ea_read_header(AVFormatContext *s,
 
     if (ea->video_codec) {
         /* initialize the video decoder stream */
-        st = av_new_stream(s, 0);
+        st = avformat_new_stream(s, NULL);
         if (!st)
             return AVERROR(ENOMEM);
         ea->video_stream_index = st->index;
@@ -435,10 +436,10 @@ static int ea_read_header(AVFormatContext *s,
         }
 
         /* initialize the audio decoder stream */
-        st = av_new_stream(s, 0);
+        st = avformat_new_stream(s, NULL);
         if (!st)
             return AVERROR(ENOMEM);
-        av_set_pts_info(st, 33, 1, ea->sample_rate);
+        avpriv_set_pts_info(st, 33, 1, ea->sample_rate);
         st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
         st->codec->codec_id = ea->audio_codec;
         st->codec->codec_tag = 0;  /* no tag */
@@ -569,10 +570,10 @@ get_video_packet:
 }
 
 AVInputFormat ff_ea_demuxer = {
-    "ea",
-    NULL_IF_CONFIG_SMALL("Electronic Arts Multimedia Format"),
-    sizeof(EaDemuxContext),
-    ea_probe,
-    ea_read_header,
-    ea_read_packet,
+    .name           = "ea",
+    .long_name      = NULL_IF_CONFIG_SMALL("Electronic Arts Multimedia Format"),
+    .priv_data_size = sizeof(EaDemuxContext),
+    .read_probe     = ea_probe,
+    .read_header    = ea_read_header,
+    .read_packet    = ea_read_packet,
 };

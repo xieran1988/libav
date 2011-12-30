@@ -1,5 +1,5 @@
 /*
- * FFM (ffserver live feed) demuxer
+ * FFM (avserver live feed) demuxer
  * Copyright (c) 2001 Fabrice Bellard
  *
  * This file is part of Libav.
@@ -20,9 +20,11 @@
  */
 
 #include "libavutil/intreadwrite.h"
+#include "libavutil/intfloat.h"
 #include "avformat.h"
+#include "internal.h"
 #include "ffm.h"
-#if CONFIG_FFSERVER
+#if CONFIG_AVSERVER
 #include <unistd.h>
 
 int64_t ffm_read_write_index(int fd)
@@ -54,7 +56,7 @@ void ffm_set_write_index(AVFormatContext *s, int64_t pos, int64_t file_size)
     ffm->write_index = pos;
     ffm->file_size = file_size;
 }
-#endif // CONFIG_FFSERVER
+#endif // CONFIG_AVSERVER
 
 static int ffm_is_avail_data(AVFormatContext *s, int size)
 {
@@ -289,18 +291,17 @@ static int ffm_read_header(AVFormatContext *s, AVFormatParameters *ap)
     for(i=0;i<nb_streams;i++) {
         char rc_eq_buf[128];
 
-        st = av_new_stream(s, 0);
+        st = avformat_new_stream(s, NULL);
         if (!st)
             goto fail;
 
-        av_set_pts_info(st, 64, 1, 1000000);
+        avpriv_set_pts_info(st, 64, 1, 1000000);
 
         codec = st->codec;
         /* generic info */
         codec->codec_id = avio_rb32(pb);
         codec->codec_type = avio_r8(pb); /* codec_type */
         codec->bit_rate = avio_rb32(pb);
-        st->quality = avio_rb32(pb);
         codec->flags = avio_rb32(pb);
         codec->flags2 = avio_rb32(pb);
         codec->debug = avio_rb32(pb);
@@ -324,10 +325,10 @@ static int ffm_read_header(AVFormatContext *s, AVFormatParameters *ap)
             codec->rc_max_rate = avio_rb32(pb);
             codec->rc_min_rate = avio_rb32(pb);
             codec->rc_buffer_size = avio_rb32(pb);
-            codec->i_quant_factor = av_int2dbl(avio_rb64(pb));
-            codec->b_quant_factor = av_int2dbl(avio_rb64(pb));
-            codec->i_quant_offset = av_int2dbl(avio_rb64(pb));
-            codec->b_quant_offset = av_int2dbl(avio_rb64(pb));
+            codec->i_quant_factor = av_int2double(avio_rb64(pb));
+            codec->b_quant_factor = av_int2double(avio_rb64(pb));
+            codec->i_quant_offset = av_int2double(avio_rb64(pb));
+            codec->b_quant_offset = av_int2double(avio_rb64(pb));
             codec->dct_algo = avio_rb32(pb);
             codec->strict_std_compliance = avio_rb32(pb);
             codec->max_b_frames = avio_rb32(pb);
@@ -339,22 +340,20 @@ static int ffm_read_header(AVFormatContext *s, AVFormatParameters *ap)
             codec->mb_decision = avio_rb32(pb);
             codec->nsse_weight = avio_rb32(pb);
             codec->frame_skip_cmp = avio_rb32(pb);
-            codec->rc_buffer_aggressivity = av_int2dbl(avio_rb64(pb));
+            codec->rc_buffer_aggressivity = av_int2double(avio_rb64(pb));
             codec->codec_tag = avio_rb32(pb);
             codec->thread_count = avio_r8(pb);
             codec->coder_type = avio_rb32(pb);
             codec->me_cmp = avio_rb32(pb);
-            codec->partitions = avio_rb32(pb);
             codec->me_subpel_quality = avio_rb32(pb);
             codec->me_range = avio_rb32(pb);
             codec->keyint_min = avio_rb32(pb);
             codec->scenechange_threshold = avio_rb32(pb);
             codec->b_frame_strategy = avio_rb32(pb);
-            codec->qcompress = av_int2dbl(avio_rb64(pb));
-            codec->qblur = av_int2dbl(avio_rb64(pb));
+            codec->qcompress = av_int2double(avio_rb64(pb));
+            codec->qblur = av_int2double(avio_rb64(pb));
             codec->max_qdiff = avio_rb32(pb);
             codec->refs = avio_rb32(pb);
-            codec->directpred = avio_rb32(pb);
             break;
         case AVMEDIA_TYPE_AUDIO:
             codec->sample_rate = avio_rb32(pb);
@@ -509,12 +508,12 @@ static int ffm_probe(AVProbeData *p)
 }
 
 AVInputFormat ff_ffm_demuxer = {
-    "ffm",
-    NULL_IF_CONFIG_SMALL("FFM (FFserver live feed) format"),
-    sizeof(FFMContext),
-    ffm_probe,
-    ffm_read_header,
-    ffm_read_packet,
-    ffm_close,
-    ffm_seek,
+    .name           = "ffm",
+    .long_name      = NULL_IF_CONFIG_SMALL("FFM (AVserver live feed) format"),
+    .priv_data_size = sizeof(FFMContext),
+    .read_probe     = ffm_probe,
+    .read_header    = ffm_read_header,
+    .read_packet    = ffm_read_packet,
+    .read_close     = ffm_close,
+    .read_seek      = ffm_seek,
 };

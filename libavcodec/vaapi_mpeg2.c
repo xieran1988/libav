@@ -109,14 +109,14 @@ static int vaapi_mpeg2_decode_slice(AVCodecContext *avctx, const uint8_t *buffer
     MpegEncContext * const s = avctx->priv_data;
     VASliceParameterBufferMPEG2 *slice_param;
     GetBitContext gb;
-    uint32_t start_code, quantiser_scale_code, intra_slice_flag, macroblock_offset;
+    uint32_t quantiser_scale_code, intra_slice_flag, macroblock_offset;
 
     av_dlog(avctx, "vaapi_mpeg2_decode_slice(): buffer %p, size %d\n", buffer, size);
 
     /* Determine macroblock_offset */
     init_get_bits(&gb, buffer, 8 * size);
-    start_code = get_bits(&gb, 32);
-    assert((start_code & 0xffffff00) == 0x00000100);
+    if (get_bits_long(&gb, 32) >> 8 != 1) /* start code */
+        return AVERROR_INVALIDDATA;
     quantiser_scale_code = get_bits(&gb, 5);
     intra_slice_flag = get_bits1(&gb);
     if (intra_slice_flag) {
@@ -143,9 +143,7 @@ AVHWAccel ff_mpeg2_vaapi_hwaccel = {
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = CODEC_ID_MPEG2VIDEO,
     .pix_fmt        = PIX_FMT_VAAPI_VLD,
-    .capabilities   = 0,
     .start_frame    = vaapi_mpeg2_start_frame,
     .end_frame      = vaapi_mpeg2_end_frame,
     .decode_slice   = vaapi_mpeg2_decode_slice,
-    .priv_data_size = 0,
 };
