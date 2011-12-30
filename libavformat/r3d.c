@@ -23,7 +23,9 @@
 
 #include "libavutil/intreadwrite.h"
 #include "libavutil/dict.h"
+#include "libavutil/mathematics.h"
 #include "avformat.h"
+#include "internal.h"
 
 typedef struct {
     unsigned video_offsets_count;
@@ -51,7 +53,7 @@ static int read_atom(AVFormatContext *s, Atom *atom)
 
 static int r3d_read_red1(AVFormatContext *s)
 {
-    AVStream *st = av_new_stream(s, 0);
+    AVStream *st = avformat_new_stream(s, NULL);
     char filename[258];
     int tmp;
     int av_unused tmp2;
@@ -69,7 +71,7 @@ static int r3d_read_red1(AVFormatContext *s)
     av_dlog(s, "unknown1 %d\n", tmp);
 
     tmp = avio_rb32(s->pb);
-    av_set_pts_info(st, 32, 1, tmp);
+    avpriv_set_pts_info(st, 32, 1, tmp);
 
     tmp = avio_rb32(s->pb); // filenum
     av_dlog(s, "filenum %d\n", tmp);
@@ -88,13 +90,13 @@ static int r3d_read_red1(AVFormatContext *s)
     tmp = avio_r8(s->pb); // audio channels
     av_dlog(s, "audio channels %d\n", tmp);
     if (tmp > 0) {
-        AVStream *ast = av_new_stream(s, 1);
+        AVStream *ast = avformat_new_stream(s, NULL);
         if (!ast)
             return AVERROR(ENOMEM);
         ast->codec->codec_type = AVMEDIA_TYPE_AUDIO;
         ast->codec->codec_id = CODEC_ID_PCM_S32BE;
         ast->codec->channels = tmp;
-        av_set_pts_info(ast, 32, 1, st->time_base.den);
+        avpriv_set_pts_info(ast, 32, 1, st->time_base.den);
     }
 
     avio_read(s->pb, filename, 257);
@@ -383,12 +385,12 @@ static int r3d_close(AVFormatContext *s)
 }
 
 AVInputFormat ff_r3d_demuxer = {
-    "r3d",
-    NULL_IF_CONFIG_SMALL("REDCODE R3D format"),
-    sizeof(R3DContext),
-    r3d_probe,
-    r3d_read_header,
-    r3d_read_packet,
-    r3d_close,
-    r3d_seek,
+    .name           = "r3d",
+    .long_name      = NULL_IF_CONFIG_SMALL("REDCODE R3D format"),
+    .priv_data_size = sizeof(R3DContext),
+    .read_probe     = r3d_probe,
+    .read_header    = r3d_read_header,
+    .read_packet    = r3d_read_packet,
+    .read_close     = r3d_close,
+    .read_seek      = r3d_seek,
 };

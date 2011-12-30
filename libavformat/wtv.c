@@ -26,14 +26,13 @@
  */
 
 #include "libavutil/intreadwrite.h"
-#include "libavutil/intfloat_readwrite.h"
+#include "libavutil/intfloat.h"
 #include "libavutil/dict.h"
 #include "avformat.h"
 #include "internal.h"
 #include "riff.h"
 #include "asf.h"
 #include "mpegts.h"
-#include <strings.h>
 
 /* Macros for formating GUIDs */
 #define PRI_GUID \
@@ -459,7 +458,7 @@ static void crazytime_to_iso8601(char *buf, int buf_size, int64_t value)
  */
 static void oledate_to_iso8601(char *buf, int buf_size, int64_t value)
 {
-    time_t t = 631112400LL + 86400*av_int2dbl(value);
+    time_t t = 631112400LL + 86400*av_int2double(value);
     strftime(buf, buf_size, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 }
 
@@ -481,7 +480,7 @@ static void get_attachment(AVFormatContext *s, AVIOContext *pb, int length)
     if (!filesize)
         goto done;
 
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         goto done;
     av_dict_set(&st->metadata, "title", description, 0);
@@ -524,7 +523,7 @@ static void get_tag(AVFormatContext *s, AVIOContext *pb, const char *key, int ty
         else if (!strcmp(key, "WM/WMRVExpirationDate"))
             oledate_to_iso8601(buf, buf_size, num);
         else if (!strcmp(key, "WM/WMRVBitrate"))
-            snprintf(buf, buf_size, "%f", av_int2dbl(num));
+            snprintf(buf, buf_size, "%f", av_int2double(num));
         else
             snprintf(buf, buf_size, "%"PRIi64, num);
     } else if (type == 5 && length == 2) {
@@ -626,14 +625,15 @@ static AVStream * new_stream(AVFormatContext *s, AVStream *st, int sid, int code
         WtvStream *wst = av_mallocz(sizeof(WtvStream));
         if (!wst)
             return NULL;
-        st = av_new_stream(s, sid);
+        st = avformat_new_stream(s, NULL);
         if (!st)
             return NULL;
+        st->id = sid;
         st->priv_data = wst;
     }
     st->codec->codec_type = codec_type;
     st->need_parsing      = AVSTREAM_PARSE_FULL;
-    av_set_pts_info(st, 64, 1, 10000000);
+    avpriv_set_pts_info(st, 64, 1, 10000000);
     return st;
 }
 
@@ -766,7 +766,7 @@ enum {
  * Parse WTV chunks
  * @param mode SEEK_TO_DATA or SEEK_TO_PTS
  * @param seekts timestamp
- * @param[out] len Length of data chunk
+ * @param[out] len_ptr Length of data chunk
  * @return stream index of data chunk, or <0 on error
  */
 static int parse_chunks(AVFormatContext *s, int mode, int64_t seekts, int *len_ptr)
@@ -836,7 +836,7 @@ static int parse_chunks(AVFormatContext *s, int mode, int64_t seekts, int *len_p
                 buf_size = FFMIN(len - consumed, sizeof(buf));
                 avio_read(pb, buf, buf_size);
                 consumed += buf_size;
-                ff_parse_mpeg2_descriptor(s, st, 0, &pbuf, buf + buf_size, 0, 0, 0, 0);
+                ff_parse_mpeg2_descriptor(s, st, 0, &pbuf, buf + buf_size, NULL, 0, 0, NULL);
             }
         } else if (!ff_guidcmp(g, EVENTID_AudioTypeSpanningEvent)) {
             int stream_index = ff_find_stream_index(s, sid);

@@ -1,8 +1,4 @@
-/**
- * @file
- * Common code for Vorbis I encoder and decoder
- * @author Denes Balatoni  ( dbalatoni programozo hu )
- *
+/*
  * This file is part of Libav.
  *
  * Libav is free software; you can redistribute it and/or
@@ -20,7 +16,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#define ALT_BITSTREAM_READER_LE
+/**
+ * @file
+ * Common code for Vorbis I encoder and decoder
+ * @author Denes Balatoni  ( dbalatoni programozo hu )
+ */
+
+#define BITSTREAM_READER_LE
 #include "avcodec.h"
 #include "get_bits.h"
 

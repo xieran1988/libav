@@ -30,8 +30,8 @@
  * Note that this decoder reads big endian RGB555 pixel values from the
  * bytestream, arranges them in the host's endian order, and outputs
  * them to the final rendered map in the same host endian order. This is
- * intended behavior as the ffmpeg documentation states that RGB555 pixels
- * shall be stored in native CPU endianness.
+ * intended behavior as the libavcodec documentation states that RGB555
+ * pixels shall be stored in native CPU endianness.
  */
 
 #include <stdio.h>
@@ -276,14 +276,13 @@ static av_cold int rpza_decode_end(AVCodecContext *avctx)
 }
 
 AVCodec ff_rpza_decoder = {
-    "rpza",
-    AVMEDIA_TYPE_VIDEO,
-    CODEC_ID_RPZA,
-    sizeof(RpzaContext),
-    rpza_decode_init,
-    NULL,
-    rpza_decode_end,
-    rpza_decode_frame,
-    CODEC_CAP_DR1,
+    .name           = "rpza",
+    .type           = AVMEDIA_TYPE_VIDEO,
+    .id             = CODEC_ID_RPZA,
+    .priv_data_size = sizeof(RpzaContext),
+    .init           = rpza_decode_init,
+    .close          = rpza_decode_end,
+    .decode         = rpza_decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
     .long_name = NULL_IF_CONFIG_SMALL("QuickTime video (RPZA)"),
 };

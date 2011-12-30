@@ -104,11 +104,11 @@ enum CouplingPoint {
  * Output configuration status
  */
 enum OCStatus {
-    OC_NONE,        //< Output unconfigured
-    OC_TRIAL_PCE,   //< Output configuration under trial specified by an inband PCE
-    OC_TRIAL_FRAME, //< Output configuration under trial specified by a frame header
-    OC_GLOBAL_HDR,  //< Output configuration set in a global header but not yet locked
-    OC_LOCKED,      //< Output configuration locked in place
+    OC_NONE,        ///< Output unconfigured
+    OC_TRIAL_PCE,   ///< Output configuration under trial specified by an inband PCE
+    OC_TRIAL_FRAME, ///< Output configuration under trial specified by a frame header
+    OC_GLOBAL_HDR,  ///< Output configuration set in a global header but not yet locked
+    OC_LOCKED,      ///< Output configuration locked in place
 };
 
 /**
@@ -251,6 +251,7 @@ typedef struct {
  */
 typedef struct {
     AVCodecContext *avctx;
+    AVFrame frame;
 
     MPEG4AudioConfig m4ac;
 

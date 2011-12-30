@@ -18,6 +18,8 @@
  * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+#include "libavutil/intfloat.h"
 #include "avformat.h"
 #include "flv.h"
 #include "internal.h"
@@ -55,9 +57,12 @@ typedef struct FLVContext {
     int64_t duration_offset;
     int64_t filesize_offset;
     int64_t duration;
-    int delay; ///< first dts delay for AVC
-    int64_t last_video_ts;
+    int64_t delay;      ///< first dts delay (needed for AVC & Speex)
 } FLVContext;
+
+typedef struct FLVStreamContext {
+    int64_t last_ts;    ///< last timestamp for each stream
+} FLVStreamContext;
 
 static int get_audio_flags(AVCodecContext *enc){
     int flags = (enc->bits_per_coded_sample == 16) ? FLV_SAMPLESSIZE_16BIT : FLV_SAMPLESSIZE_8BIT;
@@ -73,11 +78,6 @@ static int get_audio_flags(AVCodecContext *enc){
             av_log(enc, AV_LOG_ERROR, "flv only supports mono Speex audio\n");
             return -1;
         }
-        if (enc->frame_size / 320 > 8) {
-            av_log(enc, AV_LOG_WARNING, "Warning: Speex stream has more than "
-                                        "8 frames per packet. Adobe Flash "
-                                        "Player cannot handle this!\n");
-        }
         return FLV_CODECID_SPEEX | FLV_SAMPLERATE_11025HZ | FLV_SAMPLESSIZE_16BIT;
     } else {
     switch (enc->sample_rate) {
@@ -90,6 +90,7 @@ static int get_audio_flags(AVCodecContext *enc){
         case    11025:
             flags |= FLV_SAMPLERATE_11025HZ;
             break;
+        case    16000: //nellymoser only
         case     8000: //nellymoser only
         case     5512: //not mp3
             if(enc->codec_id != CODEC_ID_MP3){
@@ -125,6 +126,8 @@ static int get_audio_flags(AVCodecContext *enc){
     case CODEC_ID_NELLYMOSER:
         if (enc->sample_rate == 8000) {
             flags |= FLV_CODECID_NELLYMOSER_8KHZ_MONO | FLV_SAMPLESSIZE_16BIT;
+        } else if (enc->sample_rate == 16000) {
+            flags |= FLV_CODECID_NELLYMOSER_16KHZ_MONO | FLV_SAMPLESSIZE_16BIT;
         } else {
             flags |= FLV_CODECID_NELLYMOSER | FLV_SAMPLESSIZE_16BIT;
         }
@@ -162,7 +165,7 @@ static void put_avc_eos_tag(AVIOContext *pb, unsigned ts) {
 static void put_amf_double(AVIOContext *pb, double d)
 {
     avio_w8(pb, AMF_DATA_TYPE_NUMBER);
-    avio_wb64(pb, av_dbl2int(d));
+    avio_wb64(pb, av_double2int(d));
 }
 
 static void put_amf_bool(AVIOContext *pb, int b) {
@@ -175,13 +178,14 @@ static int flv_write_header(AVFormatContext *s)
     AVIOContext *pb = s->pb;
     FLVContext *flv = s->priv_data;
     AVCodecContext *audio_enc = NULL, *video_enc = NULL;
-    int i;
+    int i, metadata_count = 0;
     double framerate = 0.0;
-    int64_t metadata_size_pos, data_size;
+    int64_t metadata_size_pos, data_size, metadata_count_pos;
     AVDictionaryEntry *tag = NULL;
 
     for(i=0; i<s->nb_streams; i++){
         AVCodecContext *enc = s->streams[i]->codec;
+        FLVStreamContext *sc;
         if (enc->codec_type == AVMEDIA_TYPE_VIDEO) {
             if (s->streams[i]->r_frame_rate.den && s->streams[i]->r_frame_rate.num) {
                 framerate = av_q2d(s->streams[i]->r_frame_rate);
@@ -198,8 +202,16 @@ static int flv_write_header(AVFormatContext *s)
             if(get_audio_flags(enc)<0)
                 return -1;
         }
-        av_set_pts_info(s->streams[i], 32, 1, 1000); /* 32 bit pts in ms */
+        avpriv_set_pts_info(s->streams[i], 32, 1, 1000); /* 32 bit pts in ms */
+
+        sc = av_mallocz(sizeof(FLVStreamContext));
+        if (!sc)
+            return AVERROR(ENOMEM);
+        s->streams[i]->priv_data = sc;
+        sc->last_ts = -1;
     }
+    flv->delay = AV_NOPTS_VALUE;
+
     avio_write(pb, "FLV", 3);
     avio_w8(pb,1);
     avio_w8(pb,   FLV_HEADER_FLAG_HASAUDIO * !!audio_enc
@@ -218,8 +230,6 @@ static int flv_write_header(AVFormatContext *s)
         }
     }
 
-    flv->last_video_ts = -1;
-
     /* write meta_tag */
     avio_w8(pb, 18);         // tag type META
     metadata_size_pos= avio_tell(pb);
@@ -235,7 +245,9 @@ static int flv_write_header(AVFormatContext *s)
 
     /* mixed array (hash) with size and string/type/data tuples */
     avio_w8(pb, AMF_DATA_TYPE_MIXEDARRAY);
-    avio_wb32(pb, 5*!!video_enc + 5*!!audio_enc + 2); // +2 for duration and file size
+    metadata_count_pos = avio_tell(pb);
+    metadata_count = 5*!!video_enc + 5*!!audio_enc + 2; // +2 for duration and file size
+    avio_wb32(pb, metadata_count);
 
     put_amf_string(pb, "duration");
     flv->duration_offset= avio_tell(pb);
@@ -279,6 +291,7 @@ static int flv_write_header(AVFormatContext *s)
         put_amf_string(pb, tag->key);
         avio_w8(pb, AMF_DATA_TYPE_STRING);
         put_amf_string(pb, tag->value);
+        metadata_count++;
     }
 
     put_amf_string(pb, "filesize");
@@ -290,6 +303,10 @@ static int flv_write_header(AVFormatContext *s)
 
     /* write total size of tag */
     data_size= avio_tell(pb) - metadata_size_pos - 10;
+
+    avio_seek(pb, metadata_count_pos, SEEK_SET);
+    avio_wb32(pb, metadata_count);
+
     avio_seek(pb, metadata_size_pos, SEEK_SET);
     avio_wb24(pb, data_size);
     avio_skip(pb, data_size + 10 - 3);
@@ -338,15 +355,16 @@ static int flv_write_trailer(AVFormatContext *s)
     /* Add EOS tag */
     for (i = 0; i < s->nb_streams; i++) {
         AVCodecContext *enc = s->streams[i]->codec;
+        FLVStreamContext *sc = s->streams[i]->priv_data;
         if (enc->codec_type == AVMEDIA_TYPE_VIDEO &&
                 enc->codec_id == CODEC_ID_H264) {
-            put_avc_eos_tag(pb, flv->last_video_ts);
+            put_avc_eos_tag(pb, sc->last_ts);
         }
     }
 
     file_size = avio_tell(pb);
 
-    /* update informations */
+    /* update information */
     avio_seek(pb, flv->duration_offset, SEEK_SET);
     put_amf_double(pb, flv->duration / (double)1000);
     avio_seek(pb, flv->filesize_offset, SEEK_SET);
@@ -361,6 +379,7 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
     AVIOContext *pb = s->pb;
     AVCodecContext *enc = s->streams[pkt->stream_index]->codec;
     FLVContext *flv = s->priv_data;
+    FLVStreamContext *sc = s->streams[pkt->stream_index]->priv_data;
     unsigned ts;
     int size= pkt->size;
     uint8_t *data= NULL;
@@ -396,20 +415,32 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
     }
 
     if (enc->codec_id == CODEC_ID_H264) {
-        /* check if extradata looks like mp4 formated */
+        /* check if extradata looks like MP4 */
         if (enc->extradata_size > 0 && *(uint8_t*)enc->extradata != 1) {
             if (ff_avc_parse_nal_units_buf(pkt->data, &data, &size) < 0)
                 return -1;
         }
-        if (!flv->delay && pkt->dts < 0)
-            flv->delay = -pkt->dts;
+    }
+    if (flv->delay == AV_NOPTS_VALUE)
+        flv->delay = -pkt->dts;
+    if (pkt->dts < -flv->delay) {
+        av_log(s, AV_LOG_WARNING, "Packets are not in the proper order with "
+                                  "respect to DTS\n");
+        return AVERROR(EINVAL);
     }
 
     ts = pkt->dts + flv->delay; // add delay to force positive dts
-    if (enc->codec_type == AVMEDIA_TYPE_VIDEO) {
-        if (flv->last_video_ts < ts)
-            flv->last_video_ts = ts;
+
+    /* check Speex packet duration */
+    if (enc->codec_id == CODEC_ID_SPEEX && ts - sc->last_ts > 160) {
+        av_log(s, AV_LOG_WARNING, "Warning: Speex stream has more than "
+                                  "8 frames per packet. Adobe Flash "
+                                  "Player cannot handle this!\n");
     }
+
+    if (sc->last_ts < ts)
+        sc->last_ts = ts;
+
     avio_wb24(pb,size + flags_size);
     avio_wb24(pb,ts);
     avio_w8(pb,(ts >> 24) & 0x7F); // timestamps are 32bits _signed_
@@ -439,20 +470,20 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
 }
 
 AVOutputFormat ff_flv_muxer = {
-    "flv",
-    NULL_IF_CONFIG_SMALL("FLV format"),
-    "video/x-flv",
-    "flv",
-    sizeof(FLVContext),
+    .name           = "flv",
+    .long_name      = NULL_IF_CONFIG_SMALL("FLV format"),
+    .mime_type      = "video/x-flv",
+    .extensions     = "flv",
+    .priv_data_size = sizeof(FLVContext),
 #if CONFIG_LIBMP3LAME
-    CODEC_ID_MP3,
+    .audio_codec    = CODEC_ID_MP3,
 #else // CONFIG_LIBMP3LAME
-    CODEC_ID_ADPCM_SWF,
+    .audio_codec    = CODEC_ID_ADPCM_SWF,
 #endif // CONFIG_LIBMP3LAME
-    CODEC_ID_FLV1,
-    flv_write_header,
-    flv_write_packet,
-    flv_write_trailer,
+    .video_codec    = CODEC_ID_FLV1,
+    .write_header   = flv_write_header,
+    .write_packet   = flv_write_packet,
+    .write_trailer  = flv_write_trailer,
     .codec_tag= (const AVCodecTag* const []){flv_video_codec_ids, flv_audio_codec_ids, 0},
     .flags= AVFMT_GLOBALHEADER | AVFMT_VARIABLE_FPS,
 };

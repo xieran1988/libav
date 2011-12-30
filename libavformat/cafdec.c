@@ -26,9 +26,11 @@
  */
 
 #include "avformat.h"
+#include "internal.h"
 #include "riff.h"
 #include "isom.h"
 #include "libavutil/intreadwrite.h"
+#include "libavutil/intfloat.h"
 #include "libavutil/dict.h"
 #include "caf.h"
 
@@ -60,13 +62,13 @@ static int read_desc_chunk(AVFormatContext *s)
     int flags;
 
     /* new audio stream */
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
 
     /* parse format description */
     st->codec->codec_type  = AVMEDIA_TYPE_AUDIO;
-    st->codec->sample_rate = av_int2dbl(avio_rb64(pb));
+    st->codec->sample_rate = av_int2double(avio_rb64(pb));
     st->codec->codec_tag   = avio_rb32(pb);
     flags = avio_rb32(pb);
     caf->bytes_per_packet  = avio_rb32(pb);
@@ -285,10 +287,8 @@ static int read_header(AVFormatContext *s,
                                 "block size or frame size are variable.\n");
         return AVERROR_INVALIDDATA;
     }
-    s->file_size = avio_size(pb);
-    s->file_size = FFMAX(0, s->file_size);
 
-    av_set_pts_info(st, 64, 1, st->codec->sample_rate);
+    avpriv_set_pts_info(st, 64, 1, st->codec->sample_rate);
     st->start_time = 0;
 
     /* position the stream at the start of data */
@@ -383,13 +383,12 @@ static int read_seek(AVFormatContext *s, int stream_index,
 }
 
 AVInputFormat ff_caf_demuxer = {
-    "caf",
-    NULL_IF_CONFIG_SMALL("Apple Core Audio Format"),
-    sizeof(CaffContext),
-    probe,
-    read_header,
-    read_packet,
-    NULL,
-    read_seek,
+    .name           = "caf",
+    .long_name      = NULL_IF_CONFIG_SMALL("Apple Core Audio Format"),
+    .priv_data_size = sizeof(CaffContext),
+    .read_probe     = probe,
+    .read_header    = read_header,
+    .read_packet    = read_packet,
+    .read_seek      = read_seek,
     .codec_tag = (const AVCodecTag*[]){ff_codec_caf_tags, 0},
 };

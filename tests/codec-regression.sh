@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# automatic regression test for ffmpeg
+# automatic regression test for avconv
 #
 #
 #set -x
@@ -11,14 +11,17 @@ set -e
 
 eval do_$test=y
 
-rm -f "$logfile"
-
 # generate reference for quality check
 if [ -n "$do_vref" ]; then
-do_ffmpeg $raw_ref -f image2 -vcodec pgmyuv -i $raw_src -an -f rawvideo
+do_avconv $raw_ref -f image2 -vcodec pgmyuv -i $raw_src -an -f rawvideo
 fi
 if [ -n "$do_aref" ]; then
-do_ffmpeg $pcm_ref -ab 128k -ac 2 -ar 44100 -f s16le -i $pcm_src -f wav
+do_avconv $pcm_ref -b 128k -ac 2 -ar 44100 -f s16le -i $pcm_src -f wav
+fi
+
+if [ -n "$do_cljr" ] ; then
+do_video_encoding cljr.avi "-an -vcodec cljr"
+do_video_decoding
 fi
 
 if [ -n "$do_mpeg" ] ; then
@@ -31,19 +34,27 @@ if [ -n "$do_mpeg2" ] ; then
 # mpeg2
 do_video_encoding mpeg2.mpg "-qscale 10 -vcodec mpeg2video -f mpeg1video"
 do_video_decoding
+fi
 
+if [ -n "$do_mpeg2_ivlc_qprd" ]; then
 # mpeg2 encoding intra vlc qprd
 do_video_encoding mpeg2ivlc-qprd.mpg "-vb 500k -bf 2 -trellis 1 -flags +qprd+mv0 -flags2 +ivlc -cmp 2 -subcmp 2 -mbd rd -vcodec mpeg2video -f mpeg2video"
 do_video_decoding
+fi
 
+if [ -n "$do_mpeg2_422" ]; then
 #mpeg2 4:2:2 encoding
 do_video_encoding mpeg2_422.mpg "-vb 1000k -bf 2 -trellis 1 -flags +qprd+mv0+ildct+ilme -flags2 +ivlc -mbd rd -vcodec mpeg2video -pix_fmt yuv422p -f mpeg2video"
 do_video_decoding
+fi
 
+if [ -n "$do_mpeg2_idct_int" ]; then
 # mpeg2
-do_video_encoding mpeg2.mpg "-qscale 10 -vcodec mpeg2video -idct int -dct int -f mpeg1video"
+do_video_encoding mpeg2_idct_int.mpg "-qscale 10 -vcodec mpeg2video -idct int -dct int -f mpeg1video"
 do_video_decoding "-idct int"
+fi
 
+if [ -n "$do_mpeg2_ilace" ]; then
 # mpeg2 encoding interlaced
 do_video_encoding mpeg2i.mpg "-qscale 10 -vcodec mpeg2video -f mpeg1video -flags +ildct+ilme"
 do_video_decoding
@@ -53,14 +64,11 @@ if [ -n "$do_mpeg2thread" ] ; then
 # mpeg2 encoding interlaced
 do_video_encoding mpeg2thread.mpg "-qscale 10 -vcodec mpeg2video -f mpeg1video -bf 2 -flags +ildct+ilme -threads 2"
 do_video_decoding
+fi
 
+if [ -n "$do_mpeg2thread_ilace" ]; then
 # mpeg2 encoding interlaced using intra vlc
 do_video_encoding mpeg2threadivlc.mpg "-qscale 10 -vcodec mpeg2video -f mpeg1video -bf 2 -flags +ildct+ilme -flags2 +ivlc -threads 2"
-do_video_decoding
-
-# mpeg2 encoding interlaced
-file=${outfile}mpeg2reuse.mpg
-do_ffmpeg $file $DEC_OPTS -me_threshold 256 -i ${target_path}/${outfile}mpeg2thread.mpg $ENC_OPTS -sameq -me_threshold 256 -mb_threshold 1024 -vcodec mpeg2video -f mpeg1video -bf 2 -flags +ildct+ilme -threads 4
 do_video_decoding
 fi
 
@@ -117,13 +125,19 @@ fi
 if [ -n "$do_mpeg4adv" ] ; then
 do_video_encoding mpeg4-adv.avi "-qscale 9 -flags +mv4+part+aic -trellis 1 -mbd bits -ps 200 -an -vcodec mpeg4"
 do_video_decoding
+fi
 
+if [ -n "$do_mpeg4_qprd" ]; then
 do_video_encoding mpeg4-qprd.avi "-b 450k -bf 2 -trellis 1 -flags +mv4+qprd+mv0 -cmp 2 -subcmp 2 -mbd rd -an -vcodec mpeg4"
 do_video_decoding
+fi
 
+if [ -n "$do_mpeg4_adap" ]; then
 do_video_encoding mpeg4-adap.avi "-b 550k -bf 2 -flags +mv4+mv0 -trellis 1 -cmp 1 -subcmp 2 -mbd rd -scplx_mask 0.3 -an -vcodec mpeg4"
 do_video_decoding
+fi
 
+if [ -n "$do_mpeg4_qpel" ]; then
 do_video_encoding mpeg4-Q.avi "-qscale 7 -flags +mv4+qpel -mbd 2 -bf 2 -cmp 1 -subcmp 2 -an -vcodec mpeg4"
 do_video_decoding
 fi
@@ -206,7 +220,9 @@ fi
 if [ -n "$do_dv" ] ; then
 do_video_encoding dv.dv "-dct int -s pal -an"
 do_video_decoding "" "-s cif"
+fi
 
+if [ -n "$do_dv_411" ]; then
 do_video_encoding dv411.dv "-dct int -s pal -an -pix_fmt yuv411p -sws_flags area+accurate_rnd+bitexact"
 do_video_decoding "" "-s cif -sws_flags area+accurate_rnd+bitexact"
 fi
@@ -229,6 +245,11 @@ fi
 
 if [ -n "$do_dnxhd_720p_rd" ] ; then
 do_video_encoding dnxhd-720p-rd.dnxhd "-threads 4 -mbd rd -s hd720 -b 90M -pix_fmt yuv422p -vframes 5 -an"
+do_video_decoding "" "-s cif -pix_fmt yuv420p"
+fi
+
+if [ -n "$do_dnxhd_720p_10bit" ] ; then
+do_video_encoding dnxhd-720p-10bit.dnxhd "-s hd720 -b 90M -pix_fmt yuv422p10 -vframes 5 -an"
 do_video_decoding "" "-s cif -pix_fmt yuv420p"
 fi
 
@@ -257,6 +278,11 @@ do_video_encoding rgb.avi "-an -vcodec rawvideo -pix_fmt bgr24"
 do_video_decoding "" "-pix_fmt yuv420p"
 fi
 
+if [ -n "$do_v210" ] ; then
+do_video_encoding v210.avi "-an -c:v v210"
+do_video_decoding "" "-pix_fmt yuv420p"
+fi
+
 if [ -n "$do_yuv" ] ; then
 do_video_encoding yuv.avi "-an -vcodec rawvideo -pix_fmt yuv420p"
 do_video_decoding "" "-pix_fmt yuv420p"
@@ -265,18 +291,23 @@ fi
 if [ -n "$do_mp2" ] ; then
 do_audio_encoding mp2.mp2
 do_audio_decoding
-$tiny_psnr $pcm_dst $pcm_ref 2 1924 >> $logfile
+$tiny_psnr $pcm_dst $pcm_ref 2 1924
 fi
 
 if [ -n "$do_ac3_fixed" ] ; then
 do_audio_encoding ac3.rm "-vn -acodec ac3_fixed"
 # binaries configured with --disable-sse decode ac3 differently
 #do_audio_decoding
-#$tiny_psnr $pcm_dst $pcm_ref 2 1024 >> $logfile
+#$tiny_psnr $pcm_dst $pcm_ref 2 1024
+fi
+
+if [ -n "$do_g722" ] ; then
+do_audio_encoding g722.wav "-b 64k -ac 1 -ar 16000 -acodec g722"
+do_audio_decoding
 fi
 
 if [ -n "$do_g726" ] ; then
-do_audio_encoding g726.wav "-ab 32k -ac 1 -ar 8000 -acodec g726"
+do_audio_encoding g726.wav "-b 32k -ac 1 -ar 8000 -acodec g726"
 do_audio_decoding
 fi
 
@@ -317,13 +348,13 @@ fi
 
 if [ -n "$do_wmav1" ] ; then
 do_audio_encoding wmav1.asf "-acodec wmav1"
-do_ffmpeg_nomd5 $pcm_dst $DEC_OPTS -i $target_path/$file -f wav
-$tiny_psnr $pcm_dst $pcm_ref 2 8192 >> $logfile
+do_avconv_nomd5 $pcm_dst $DEC_OPTS -i $target_path/$file -f wav
+$tiny_psnr $pcm_dst $pcm_ref 2 8192
 fi
 if [ -n "$do_wmav2" ] ; then
 do_audio_encoding wmav2.asf "-acodec wmav2"
-do_ffmpeg_nomd5 $pcm_dst $DEC_OPTS -i $target_path/$file -f wav
-$tiny_psnr $pcm_dst $pcm_ref 2 8192 >> $logfile
+do_avconv_nomd5 $pcm_dst $DEC_OPTS -i $target_path/$file -f wav
+$tiny_psnr $pcm_dst $pcm_ref 2 8192
 fi
 
 #if [ -n "$do_vorbis" ] ; then
@@ -338,27 +369,62 @@ do_audio_enc_dec() {
     do_audio_decoding
 }
 
-if [ -n "$do_pcm" ] ; then
+if [ -n "$do_pcm_alaw" ] ; then
 do_audio_enc_dec wav s16 pcm_alaw
+fi
+if [ -n "$do_pcm_mulaw" ] ; then
 do_audio_enc_dec wav s16 pcm_mulaw
+fi
+if [ -n "$do_pcm_s8" ] ; then
 do_audio_enc_dec mov u8 pcm_s8
+fi
+if [ -n "$do_pcm_u8" ] ; then
 do_audio_enc_dec wav u8 pcm_u8
+fi
+if [ -n "$do_pcm_s16be" ] ; then
 do_audio_enc_dec mov s16 pcm_s16be
+fi
+if [ -n "$do_pcm_s16le" ] ; then
 do_audio_enc_dec wav s16 pcm_s16le
-do_audio_enc_dec mkv s16 pcm_s16be
-do_audio_enc_dec mkv s16 pcm_s16le
+fi
+if [ -n "$do_pcm_s24be" ] ; then
 do_audio_enc_dec mov s32 pcm_s24be
+fi
+if [ -n "$do_pcm_s24le" ] ; then
 do_audio_enc_dec wav s32 pcm_s24le
-#do_audio_enc_dec ??? s32 pcm_u24be #no compatible muxer or demuxer
-#do_audio_enc_dec ??? s32 pcm_u24le #no compatible muxer or demuxer
+fi
+# no compatible muxer or demuxer
+# if [ -n "$do_pcm_u24be" ] ; then
+# do_audio_enc_dec ??? u32 pcm_u24be
+# fi
+# if [ -n "$do_pcm_u24le" ] ; then
+# do_audio_enc_dec ??? u32 pcm_u24le
+# fi
+if [ -n "$do_pcm_s32be" ] ; then
 do_audio_enc_dec mov s32 pcm_s32be
+fi
+if [ -n "$do_pcm_s32le" ] ; then
 do_audio_enc_dec wav s32 pcm_s32le
-#do_audio_enc_dec ??? s32 pcm_u32be #no compatible muxer or demuxer
-#do_audio_enc_dec ??? s32 pcm_u32le #no compatible muxer or demuxer
+fi
+# no compatible muxer or demuxer
+# if [ -n "$do_pcm_u32be" ] ; then
+# do_audio_enc_dec ??? u32 pcm_u32be
+# fi
+# if [ -n "$do_pcm_u32le" ] ; then
+# do_audio_enc_dec ??? u32 pcm_u32le
+# fi
+if [ -n "$do_pcm_f32be" ] ; then
 do_audio_enc_dec au  flt pcm_f32be
+fi
+if [ -n "$do_pcm_f32le" ] ; then
 do_audio_enc_dec wav flt pcm_f32le
+fi
+if [ -n "$do_pcm_f64be" ] ; then
 do_audio_enc_dec au  dbl pcm_f64be
+fi
+if [ -n "$do_pcm_f64le" ] ; then
 do_audio_enc_dec wav dbl pcm_f64le
-do_audio_enc_dec wav s16 pcm_zork
+fi
+if [ -n "$do_pcm_s24daud" ] ; then
 do_audio_enc_dec 302 s16 pcm_s24daud "-ac 6 -ar 96000"
 fi

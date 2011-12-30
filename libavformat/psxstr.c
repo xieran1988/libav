@@ -31,6 +31,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 #define RIFF_TAG MKTAG('R', 'I', 'F', 'F')
 #define CDXA_TAG MKTAG('C', 'D', 'X', 'A')
@@ -162,10 +163,10 @@ static int str_read_packet(AVFormatContext *s,
 
                 if(str->channels[channel].video_stream_index < 0){
                     /* allocate a new AVStream */
-                    st = av_new_stream(s, 0);
+                    st = avformat_new_stream(s, NULL);
                     if (!st)
                         return AVERROR(ENOMEM);
-                    av_set_pts_info(st, 64, 1, 15);
+                    avpriv_set_pts_info(st, 64, 1, 15);
 
                     str->channels[channel].video_stream_index = st->index;
 
@@ -210,7 +211,7 @@ static int str_read_packet(AVFormatContext *s,
             if(str->channels[channel].audio_stream_index < 0){
                 int fmt = sector[0x13];
                 /* allocate a new AVStream */
-                st = av_new_stream(s, 0);
+                st = avformat_new_stream(s, NULL);
                 if (!st)
                     return AVERROR(ENOMEM);
 
@@ -224,7 +225,7 @@ static int str_read_packet(AVFormatContext *s,
             //    st->codec->bit_rate = 0; //FIXME;
                 st->codec->block_align = 128;
 
-                av_set_pts_info(st, 64, 128, st->codec->sample_rate);
+                avpriv_set_pts_info(st, 64, 128, st->codec->sample_rate);
             }
             pkt = ret_pkt;
             if (av_new_packet(pkt, 2304))
@@ -234,7 +235,6 @@ static int str_read_packet(AVFormatContext *s,
             pkt->stream_index =
                 str->channels[channel].audio_stream_index;
             return 0;
-            break;
         default:
             av_log(s, AV_LOG_WARNING, "Unknown sector type %02X\n", sector[0x12]);
             /* drop the sector and move on */
@@ -259,11 +259,11 @@ static int str_read_close(AVFormatContext *s)
 }
 
 AVInputFormat ff_str_demuxer = {
-    "psxstr",
-    NULL_IF_CONFIG_SMALL("Sony Playstation STR format"),
-    sizeof(StrDemuxContext),
-    str_probe,
-    str_read_header,
-    str_read_packet,
-    str_read_close,
+    .name           = "psxstr",
+    .long_name      = NULL_IF_CONFIG_SMALL("Sony Playstation STR format"),
+    .priv_data_size = sizeof(StrDemuxContext),
+    .read_probe     = str_probe,
+    .read_header    = str_read_header,
+    .read_packet    = str_read_packet,
+    .read_close     = str_read_close,
 };

@@ -1,7 +1,4 @@
-/**
- * @file
- * high precision timer, useful to profile code
- *
+/*
  * copyright (c) 2006 Michael Niedermayer <michaelni@gmx.at>
  *
  * This file is part of Libav.
@@ -19,6 +16,11 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+
+/**
+ * @file
+ * high precision timer, useful to profile code
  */
 
 #ifndef AVUTIL_TIMER_H
@@ -59,7 +61,7 @@ tend= AV_READ_TIME();\
     }else\
         tskip_count++;\
     if(((tcount+tskip_count)&(tcount+tskip_count-1))==0){\
-        av_log(NULL, AV_LOG_ERROR, "%"PRIu64" dezicycles in %s, %d runs, %d skips\n",\
+        av_log(NULL, AV_LOG_ERROR, "%"PRIu64" decicycles in %s, %d runs, %d skips\n",\
                tsum*10/tcount, id, tcount, tskip_count);\
     }\
 }

@@ -52,7 +52,7 @@ static int voc_read_header(AVFormatContext *s, AVFormatParameters *ap)
         return AVERROR(ENOSYS);
     }
     avio_skip(pb, header_size);
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
     st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
@@ -157,11 +157,11 @@ static int voc_read_packet(AVFormatContext *s, AVPacket *pkt)
 }
 
 AVInputFormat ff_voc_demuxer = {
-    "voc",
-    NULL_IF_CONFIG_SMALL("Creative Voice file format"),
-    sizeof(VocDecContext),
-    voc_probe,
-    voc_read_header,
-    voc_read_packet,
+    .name           = "voc",
+    .long_name      = NULL_IF_CONFIG_SMALL("Creative Voice file format"),
+    .priv_data_size = sizeof(VocDecContext),
+    .read_probe     = voc_probe,
+    .read_header    = voc_read_header,
+    .read_packet    = voc_read_packet,
     .codec_tag=(const AVCodecTag* const []){ff_voc_codec_tags, 0},
 };

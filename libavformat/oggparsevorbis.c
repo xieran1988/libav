@@ -45,7 +45,7 @@ static int ogm_chapter(AVFormatContext *as, uint8_t *key, uint8_t *val)
         if (sscanf(val, "%02d:%02d:%02d.%03d", &h, &m, &s, &ms) < 4)
             return 0;
 
-        ff_new_chapter(as, cnum, (AVRational){1,1000},
+        avpriv_new_chapter(as, cnum, (AVRational){1,1000},
                        ms + 1000*(s + 60*(m + 60*h)),
                        AV_NOPTS_VALUE, NULL);
         av_free(val);
@@ -254,7 +254,7 @@ vorbis_header (AVFormatContext * s, int idx)
 
         if (srate > 0) {
             st->codec->sample_rate = srate;
-            av_set_pts_info(st, 64, 1, srate);
+            avpriv_set_pts_info(st, 64, 1, srate);
         }
     } else if (os->buf[os->pstart] == 3) {
         if (os->psize > 8 &&

@@ -26,6 +26,7 @@
 
 #include "libavutil/intreadwrite.h"
 #include "avformat.h"
+#include "internal.h"
 
 #define RAND_TAG MKBETAG('R','a','n','d')
 
@@ -49,7 +50,7 @@ static int read_header(AVFormatContext *s,
         return AVERROR_INVALIDDATA;
     }
 
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
 
@@ -67,7 +68,7 @@ static int read_header(AVFormatContext *s,
     st->codec->width      = avio_rb16(pb);
     st->codec->height     = avio_rb16(pb);
     film->leading         = avio_rb16(pb);
-    av_set_pts_info(st, 64, 1, avio_rb16(pb));
+    avpriv_set_pts_info(st, 64, 1, avio_rb16(pb));
 
     avio_seek(pb, 0, SEEK_SET);
 
@@ -99,13 +100,11 @@ static int read_seek(AVFormatContext *s, int stream_index, int64_t timestamp, in
 }
 
 AVInputFormat ff_filmstrip_demuxer = {
-    "filmstrip",
-    NULL_IF_CONFIG_SMALL("Adobe Filmstrip"),
-    sizeof(FilmstripDemuxContext),
-    NULL,
-    read_header,
-    read_packet,
-    NULL,
-    read_seek,
+    .name           = "filmstrip",
+    .long_name      = NULL_IF_CONFIG_SMALL("Adobe Filmstrip"),
+    .priv_data_size = sizeof(FilmstripDemuxContext),
+    .read_header    = read_header,
+    .read_packet    = read_packet,
+    .read_seek      = read_seek,
     .extensions = "flm",
 };

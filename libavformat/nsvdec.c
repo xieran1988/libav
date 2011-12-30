@@ -18,7 +18,10 @@
  * License along with Libav; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+#include "libavutil/mathematics.h"
 #include "avformat.h"
+#include "internal.h"
 #include "riff.h"
 #include "libavutil/dict.h"
 
@@ -69,7 +72,11 @@
  * so the header seems to not be mandatory. (for streaming).
  *
  * index slice duration check (excepts nsvtrailer.nsv):
- * for f in [^n]*.nsv; do DUR="$(ffmpeg -i "$f" 2>/dev/null | grep 'NSVf duration' | cut -d ' ' -f 4)"; IC="$(ffmpeg -i "$f" 2>/dev/null | grep 'INDEX ENTRIES' | cut -d ' ' -f 2)"; echo "duration $DUR, slite time $(($DUR/$IC))"; done
+ * for f in [^n]*.nsv; do
+ *     DUR="$(avconv -i "$f" 2> /dev/null | grep 'NSVf duration' | cut -d ' ' -f 4)"
+ *     IC="$(avconv -i "$f" 2> /dev/null | grep 'INDEX ENTRIES' | cut -d ' ' -f 2)"
+ *     echo "duration $DUR, slite time $(($DUR/$IC))"
+ * done
  */
 
 /*
@@ -435,10 +442,11 @@ static int nsv_parse_NSVs_header(AVFormatContext *s, AVFormatParameters *ap)
         nsv->vheight = vwidth;
         if (vtag != T_NONE) {
             int i;
-            st = av_new_stream(s, NSV_ST_VIDEO);
+            st = avformat_new_stream(s, NULL);
             if (!st)
                 goto fail;
 
+            st->id = NSV_ST_VIDEO;
             nst = av_mallocz(sizeof(NSVStream));
             if (!nst)
                 goto fail;
@@ -450,7 +458,7 @@ static int nsv_parse_NSVs_header(AVFormatContext *s, AVFormatParameters *ap)
             st->codec->height = vheight;
             st->codec->bits_per_coded_sample = 24; /* depth XXX */
 
-            av_set_pts_info(st, 64, framerate.den, framerate.num);
+            avpriv_set_pts_info(st, 64, framerate.den, framerate.num);
             st->start_time = 0;
             st->duration = av_rescale(nsv->duration, framerate.num, 1000*framerate.den);
 
@@ -466,10 +474,11 @@ static int nsv_parse_NSVs_header(AVFormatContext *s, AVFormatParameters *ap)
         }
         if (atag != T_NONE) {
 #ifndef DISABLE_AUDIO
-            st = av_new_stream(s, NSV_ST_AUDIO);
+            st = avformat_new_stream(s, NULL);
             if (!st)
                 goto fail;
 
+            st->id = NSV_ST_AUDIO;
             nst = av_mallocz(sizeof(NSVStream));
             if (!nst)
                 goto fail;
@@ -481,7 +490,7 @@ static int nsv_parse_NSVs_header(AVFormatContext *s, AVFormatParameters *ap)
             st->need_parsing = AVSTREAM_PARSE_FULL; /* for PCM we will read a chunk later and put correct info */
 
             /* set timebase to common denominator of ms and framerate */
-            av_set_pts_info(st, 64, 1, framerate.num*1000);
+            avpriv_set_pts_info(st, 64, 1, framerate.num*1000);
             st->start_time = 0;
             st->duration = (int64_t)nsv->duration * framerate.num;
 #endif
@@ -531,7 +540,7 @@ static int nsv_read_header(AVFormatContext *s, AVFormatParameters *ap)
     err = nsv_read_chunk(s, 1);
 
     av_dlog(s, "parsed header\n");
-    return 0;
+    return err;
 }
 
 static int nsv_read_chunk(AVFormatContext *s, int fill_header)
@@ -774,12 +783,12 @@ static int nsv_probe(AVProbeData *p)
 }
 
 AVInputFormat ff_nsv_demuxer = {
-    "nsv",
-    NULL_IF_CONFIG_SMALL("Nullsoft Streaming Video"),
-    sizeof(NSVContext),
-    nsv_probe,
-    nsv_read_header,
-    nsv_read_packet,
-    nsv_read_close,
-    nsv_read_seek,
+    .name           = "nsv",
+    .long_name      = NULL_IF_CONFIG_SMALL("Nullsoft Streaming Video"),
+    .priv_data_size = sizeof(NSVContext),
+    .read_probe     = nsv_probe,
+    .read_header    = nsv_read_header,
+    .read_packet    = nsv_read_packet,
+    .read_close     = nsv_read_close,
+    .read_seek      = nsv_read_seek,
 };

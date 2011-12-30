@@ -29,6 +29,12 @@
 #include "attributes.h"
 #include "avutil.h"
 
+/**
+ * @addtogroup lavu_mem
+ * @{
+ */
+
+
 #if defined(__ICC) && _ICC < 1200 || defined(__SUNPRO_C)
     #define DECLARE_ALIGNED(n,t,v)      t __attribute__ ((aligned (n))) v
     #define DECLARE_ASM_CONST(n,t,v)    const t __attribute__ ((aligned (n))) v
@@ -76,10 +82,10 @@ void *av_malloc(size_t size) av_malloc_attrib av_alloc_size(1);
  * Allocate or reallocate a block of memory.
  * If ptr is NULL and size > 0, allocate a new block. If
  * size is zero, free the memory block pointed to by ptr.
- * @param size Size in bytes for the memory block to be allocated or
- * reallocated.
  * @param ptr Pointer to a memory block already allocated with
  * av_malloc(z)() or av_realloc() or NULL.
+ * @param size Size in bytes for the memory block to be allocated or
+ * reallocated.
  * @return Pointer to a newly reallocated block or NULL if the block
  * cannot be reallocated or the function is used to free the memory block.
  * @see av_fast_realloc()
@@ -122,5 +128,9 @@ char *av_strdup(const char *s) av_malloc_attrib;
  * @see av_free()
  */
 void av_freep(void *ptr);
+
+/**
+ * @}
+ */
 
 #endif /* AVUTIL_MEM_H */

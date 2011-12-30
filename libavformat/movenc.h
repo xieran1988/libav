@@ -35,7 +35,7 @@
 #define MODE_MOV  0x02
 #define MODE_3GP  0x04
 #define MODE_PSP  0x08 // example working PSP command line:
-// ffmpeg -i testinput.avi  -f psp -r 14.985 -s 320x240 -b 768 -ar 24000 -ab 32 M4V00001.MP4
+// avconv -i testinput.avi  -f psp -r 14.985 -s 320x240 -b 768 -ar 24000 -ab 32 M4V00001.MP4
 #define MODE_3G2  0x10
 #define MODE_IPOD 0x20
 
@@ -112,6 +112,9 @@ typedef struct MOVMuxContext {
 
     int flags;
     int rtp_flags;
+    int iods_skip;
+    int iods_video_profile;
+    int iods_audio_profile;
 } MOVMuxContext;
 
 #define FF_MOV_FLAG_RTP_HINT 1
@@ -120,7 +123,8 @@ int ff_mov_write_packet(AVFormatContext *s, AVPacket *pkt);
 
 int ff_mov_init_hinting(AVFormatContext *s, int index, int src_index);
 int ff_mov_add_hinted_packet(AVFormatContext *s, AVPacket *pkt,
-                             int track_index, int sample);
+                             int track_index, int sample,
+                             uint8_t *sample_data, int sample_size);
 void ff_mov_close_hinting(MOVTrack *track);
 
 #endif /* AVFORMAT_MOVENC_H */

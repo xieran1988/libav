@@ -29,7 +29,7 @@
  */
 
 #include "avcodec.h"
-#define ALT_BITSTREAM_READER_LE
+#define BITSTREAM_READER_LE
 #include "get_bits.h"
 #include "bytestream.h"
 #include "dsputil.h"
@@ -244,14 +244,13 @@ static av_cold int tgq_decode_end(AVCodecContext *avctx){
 }
 
 AVCodec ff_eatgq_decoder = {
-    "eatgq",
-    AVMEDIA_TYPE_VIDEO,
-    CODEC_ID_TGQ,
-    sizeof(TgqContext),
-    tgq_decode_init,
-    NULL,
-    tgq_decode_end,
-    tgq_decode_frame,
-    CODEC_CAP_DR1,
+    .name           = "eatgq",
+    .type           = AVMEDIA_TYPE_VIDEO,
+    .id             = CODEC_ID_TGQ,
+    .priv_data_size = sizeof(TgqContext),
+    .init           = tgq_decode_init,
+    .close          = tgq_decode_end,
+    .decode         = tgq_decode_frame,
+    .capabilities   = CODEC_CAP_DR1,
     .long_name = NULL_IF_CONFIG_SMALL("Electronic Arts TGQ video"),
 };

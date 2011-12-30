@@ -22,7 +22,9 @@
 
 #include "config.h"
 #include "libavformat/avformat.h"
+#include "libavformat/internal.h"
 #include "libavutil/log.h"
+#include "libavutil/mathematics.h"
 #include "libavutil/opt.h"
 #include "libavutil/parseutils.h"
 #include "libavutil/pixdesc.h"
@@ -99,11 +101,11 @@ struct dc1394_frame_rate {
 #define DEC AV_OPT_FLAG_DECODING_PARAM
 static const AVOption options[] = {
 #if HAVE_LIBDC1394_1
-    { "channel", "", offsetof(dc1394_data, channel), FF_OPT_TYPE_INT, {.dbl = 0}, 0, INT_MAX, AV_OPT_FLAG_DECODING_PARAM },
+    { "channel", "", offsetof(dc1394_data, channel), AV_OPT_TYPE_INT, {.dbl = 0}, 0, INT_MAX, AV_OPT_FLAG_DECODING_PARAM },
 #endif
-    { "video_size", "A string describing frame size, such as 640x480 or hd720.", OFFSET(video_size), FF_OPT_TYPE_STRING, {.str = "qvga"}, 0, 0, DEC },
-    { "pixel_format", "", OFFSET(pixel_format), FF_OPT_TYPE_STRING, {.str = "uyvy422"}, 0, 0, DEC },
-    { "framerate", "", OFFSET(framerate), FF_OPT_TYPE_STRING, {.str = "ntsc"}, 0, 0, DEC },
+    { "video_size", "A string describing frame size, such as 640x480 or hd720.", OFFSET(video_size), AV_OPT_TYPE_STRING, {.str = "qvga"}, 0, 0, DEC },
+    { "pixel_format", "", OFFSET(pixel_format), AV_OPT_TYPE_STRING, {.str = "uyvy422"}, 0, 0, DEC },
+    { "framerate", "", OFFSET(framerate), AV_OPT_TYPE_STRING, {.str = "ntsc"}, 0, 0, DEC },
     { NULL },
 };
 
@@ -134,23 +136,13 @@ static inline int dc1394_read_common(AVFormatContext *c, AVFormatParameters *ap,
     }
 
     if ((ret = av_parse_video_size(&width, &height, dc1394->video_size)) < 0) {
-        av_log(c, AV_LOG_ERROR, "Couldn't parse video size.\n");
+        av_log(c, AV_LOG_ERROR, "Could not parse video size '%s'.\n", dc1394->video_size);
         goto out;
     }
     if ((ret = av_parse_video_rate(&framerate, dc1394->framerate)) < 0) {
-        av_log(c, AV_LOG_ERROR, "Couldn't parse framerate.\n");
+        av_log(c, AV_LOG_ERROR, "Could not parse framerate '%s'.\n", dc1394->framerate);
         goto out;
     }
-#if FF_API_FORMAT_PARAMETERS
-    if (ap->width > 0)
-        width = ap->width;
-    if (ap->height > 0)
-        height = ap->height;
-    if (ap->pix_fmt)
-        pix_fmt = ap->pix_fmt;
-    if (ap->time_base.num)
-        framerate = (AVRational){ap->time_base.den, ap->time_base.num};
-#endif
     dc1394->frame_rate = av_rescale(1000, framerate.num, framerate.den);
 
     for (fmt = dc1394_frame_formats; fmt->width; fmt++)
@@ -169,12 +161,12 @@ static inline int dc1394_read_common(AVFormatContext *c, AVFormatParameters *ap,
     }
 
     /* create a video stream */
-    vst = av_new_stream(c, 0);
+    vst = avformat_new_stream(c, NULL);
     if (!vst) {
         ret = AVERROR(ENOMEM);
         goto out;
     }
-    av_set_pts_info(vst, 64, 1, 1000);
+    avpriv_set_pts_info(vst, 64, 1, 1000);
     vst->codec->codec_type = AVMEDIA_TYPE_VIDEO;
     vst->codec->codec_id = CODEC_ID_RAWVIDEO;
     vst->codec->time_base.den = framerate.num;
@@ -210,11 +202,6 @@ static int dc1394_v1_read_header(AVFormatContext *c, AVFormatParameters * ap)
 
     if (dc1394_read_common(c,ap,&fmt,&fps) != 0)
         return -1;
-
-#if FF_API_FORMAT_PARAMETERS
-    if (ap->channel)
-        dc1394->channel = ap->channel;
-#endif
 
     /* Now let us prep the hardware. */
     dc1394->handle = dc1394_create_handle(0); /* FIXME: gotta have ap->port */
@@ -384,8 +371,8 @@ static int dc1394_v2_read_packet(AVFormatContext *c, AVPacket *pkt)
 
     res = dc1394_capture_dequeue(dc1394->camera, DC1394_CAPTURE_POLICY_WAIT, &dc1394->frame);
     if (res == DC1394_SUCCESS) {
-        dc1394->packet.data = (uint8_t *)(dc1394->frame->image);
-        dc1394->packet.pts = (dc1394->current_frame  * 1000000) / (dc1394->frame_rate);
+        dc1394->packet.data = (uint8_t *) dc1394->frame->image;
+        dc1394->packet.pts  = dc1394->current_frame * 1000000 / dc1394->frame_rate;
         res = dc1394->frame->image_bytes;
     } else {
         av_log(c, AV_LOG_ERROR, "DMA capture failed\n");

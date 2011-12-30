@@ -22,6 +22,7 @@
 #include "libavutil/avstring.h"
 #include "libavutil/dict.h"
 #include "avformat.h"
+#include "internal.h"
 #include <stdlib.h>
 
 #define RPL_SIGNATURE "ARMovie\x0A"
@@ -139,7 +140,7 @@ static int rpl_read_header(AVFormatContext *s, AVFormatParameters *ap)
     av_dict_set(&s->metadata, "author"   , line, 0);
 
     // video headers
-    vst = av_new_stream(s, 0);
+    vst = avformat_new_stream(s, NULL);
     if (!vst)
         return AVERROR(ENOMEM);
     vst->codec->codec_type      = AVMEDIA_TYPE_VIDEO;
@@ -149,7 +150,7 @@ static int rpl_read_header(AVFormatContext *s, AVFormatParameters *ap)
     vst->codec->bits_per_coded_sample = read_line_and_int(pb, &error);  // video bits per sample
     error |= read_line(pb, line, sizeof(line));                   // video frames per second
     fps = read_fps(line, &error);
-    av_set_pts_info(vst, 32, fps.den, fps.num);
+    avpriv_set_pts_info(vst, 32, fps.den, fps.num);
 
     // Figure out the video codec
     switch (vst->codec->codec_tag) {
@@ -181,7 +182,7 @@ static int rpl_read_header(AVFormatContext *s, AVFormatParameters *ap)
     // samples, though. This code will ignore additional tracks.
     audio_format = read_line_and_int(pb, &error);  // audio format ID
     if (audio_format) {
-        ast = av_new_stream(s, 0);
+        ast = avformat_new_stream(s, NULL);
         if (!ast)
             return AVERROR(ENOMEM);
         ast->codec->codec_type      = AVMEDIA_TYPE_AUDIO;
@@ -226,7 +227,7 @@ static int rpl_read_header(AVFormatContext *s, AVFormatParameters *ap)
                    "RPL audio format %i not supported yet!\n",
                    audio_format);
         }
-        av_set_pts_info(ast, 32, 1, ast->codec->bit_rate);
+        avpriv_set_pts_info(ast, 32, 1, ast->codec->bit_rate);
     } else {
         for (i = 0; i < 3; i++)
             error |= read_line(pb, line, sizeof(line));
@@ -351,10 +352,10 @@ static int rpl_read_packet(AVFormatContext *s, AVPacket *pkt)
 }
 
 AVInputFormat ff_rpl_demuxer = {
-    "rpl",
-    NULL_IF_CONFIG_SMALL("RPL/ARMovie format"),
-    sizeof(RPLContext),
-    rpl_probe,
-    rpl_read_header,
-    rpl_read_packet,
+    .name           = "rpl",
+    .long_name      = NULL_IF_CONFIG_SMALL("RPL/ARMovie format"),
+    .priv_data_size = sizeof(RPLContext),
+    .read_probe     = rpl_probe,
+    .read_header    = rpl_read_header,
+    .read_packet    = rpl_read_packet,
 };

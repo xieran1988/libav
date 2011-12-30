@@ -477,7 +477,10 @@ static int ra144_encode_frame(AVCodecContext *avctx, uint8_t *frame,
          * The filter is unstable: use the coefficients of the previous frame.
          */
         ff_int_to_int16(block_coefs[NBLOCKS - 1], ractx->lpc_coef[1]);
-        ff_eval_refl(lpc_refl, block_coefs[NBLOCKS - 1], avctx);
+        if (ff_eval_refl(lpc_refl, block_coefs[NBLOCKS - 1], avctx)) {
+            /* the filter is still unstable. set reflection coeffs to zero. */
+            memset(lpc_refl, 0, sizeof(lpc_refl));
+        }
     }
     init_put_bits(&pb, frame, buf_size);
     for (i = 0; i < LPC_ORDER; i++) {
@@ -508,14 +511,15 @@ static int ra144_encode_frame(AVCodecContext *avctx, uint8_t *frame,
 }
 
 
-AVCodec ff_ra_144_encoder =
-{
-    "real_144",
-    AVMEDIA_TYPE_AUDIO,
-    CODEC_ID_RA_144,
-    sizeof(RA144Context),
-    ra144_encode_init,
-    ra144_encode_frame,
-    ra144_encode_close,
-    .long_name = NULL_IF_CONFIG_SMALL("RealAudio 1.0 (14.4K) encoder"),
+AVCodec ff_ra_144_encoder = {
+    .name           = "real_144",
+    .type           = AVMEDIA_TYPE_AUDIO,
+    .id             = CODEC_ID_RA_144,
+    .priv_data_size = sizeof(RA144Context),
+    .init           = ra144_encode_init,
+    .encode         = ra144_encode_frame,
+    .close          = ra144_encode_close,
+    .sample_fmts    = (const enum AVSampleFormat[]){ AV_SAMPLE_FMT_S16,
+                                                     AV_SAMPLE_FMT_NONE },
+    .long_name      = NULL_IF_CONFIG_SMALL("RealAudio 1.0 (14.4K) encoder"),
 };

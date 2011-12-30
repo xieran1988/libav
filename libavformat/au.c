@@ -28,6 +28,7 @@
  */
 
 #include "avformat.h"
+#include "internal.h"
 #include "avio_internal.h"
 #include "pcm.h"
 #include "riff.h"
@@ -35,7 +36,7 @@
 /* if we don't know the size in advance */
 #define AU_UNKNOWN_SIZE ((uint32_t)(~0))
 
-/* The ffmpeg codecs we support, and the IDs they have in the file */
+/* The libavcodec codecs we support, and the IDs they have in the file */
 static const AVCodecTag codec_au_tags[] = {
     { CODEC_ID_PCM_MULAW, 1 },
     { CODEC_ID_PCM_S8, 2 },
@@ -151,7 +152,7 @@ static int au_read_header(AVFormatContext *s,
     }
 
     /* now we are ready: build format streams */
-    st = av_new_stream(s, 0);
+    st = avformat_new_stream(s, NULL);
     if (!st)
         return -1;
     st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
@@ -159,7 +160,7 @@ static int au_read_header(AVFormatContext *s,
     st->codec->codec_id = codec;
     st->codec->channels = channels;
     st->codec->sample_rate = rate;
-    av_set_pts_info(st, 64, 1, rate);
+    avpriv_set_pts_info(st, 64, 1, rate);
     return 0;
 }
 
@@ -185,30 +186,27 @@ static int au_read_packet(AVFormatContext *s,
 
 #if CONFIG_AU_DEMUXER
 AVInputFormat ff_au_demuxer = {
-    "au",
-    NULL_IF_CONFIG_SMALL("SUN AU format"),
-    0,
-    au_probe,
-    au_read_header,
-    au_read_packet,
-    NULL,
-    pcm_read_seek,
+    .name           = "au",
+    .long_name      = NULL_IF_CONFIG_SMALL("SUN AU format"),
+    .read_probe     = au_probe,
+    .read_header    = au_read_header,
+    .read_packet    = au_read_packet,
+    .read_seek      = pcm_read_seek,
     .codec_tag= (const AVCodecTag* const []){codec_au_tags, 0},
 };
 #endif
 
 #if CONFIG_AU_MUXER
 AVOutputFormat ff_au_muxer = {
-    "au",
-    NULL_IF_CONFIG_SMALL("SUN AU format"),
-    "audio/basic",
-    "au",
-    0,
-    CODEC_ID_PCM_S16BE,
-    CODEC_ID_NONE,
-    au_write_header,
-    au_write_packet,
-    au_write_trailer,
+    .name              = "au",
+    .long_name         = NULL_IF_CONFIG_SMALL("SUN AU format"),
+    .mime_type         = "audio/basic",
+    .extensions        = "au",
+    .audio_codec       = CODEC_ID_PCM_S16BE,
+    .video_codec       = CODEC_ID_NONE,
+    .write_header      = au_write_header,
+    .write_packet      = au_write_packet,
+    .write_trailer     = au_write_trailer,
     .codec_tag= (const AVCodecTag* const []){codec_au_tags, 0},
 };
 #endif //CONFIG_AU_MUXER

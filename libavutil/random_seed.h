@@ -22,10 +22,23 @@
 #define AVUTIL_RANDOM_SEED_H
 
 #include <stdint.h>
+/**
+ * @addtogroup lavu_crypto
+ * @{
+ */
 
 /**
- * Get a seed to use in conjunction with random functions.
+ * Get random data.
+ *
+ * This function can be called repeatedly to generate more random bits
+ * as needed. It is generally quite slow, and usually used to seed a
+ * PRNG.  As it uses /dev/urandom and /dev/random, the quality of the
+ * returned random data depends on the platform.
  */
 uint32_t av_get_random_seed(void);
+
+/**
+ * @}
+ */
 
 #endif /* AVUTIL_RANDOM_SEED_H */

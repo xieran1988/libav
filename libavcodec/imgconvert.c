@@ -42,9 +42,6 @@
 #include "x86/dsputil_mmx.h"
 #endif
 
-#define xglue(x, y) x ## y
-#define glue(x, y) xglue(x, y)
-
 #define FF_COLOR_RGB      0 /**< RGB color space */
 #define FF_COLOR_GRAY     1 /**< gray color space */
 #define FF_COLOR_YUV      2 /**< YUV color space. 16 <= Y <= 235, 16 <= U, V <= 240 */
@@ -865,6 +862,7 @@ int av_picture_pad(AVPicture *dst, const AVPicture *src, int height, int width,
     return 0;
 }
 
+#if FF_API_GET_ALPHA_INFO
 /* NOTE: we scan all the pixels to have an exact information */
 static int get_alpha_info_pal8(const AVPicture *src, int width, int height)
 {
@@ -911,6 +909,7 @@ int img_get_alpha_info(const AVPicture *src,
     }
     return ret;
 }
+#endif
 
 #if !(HAVE_MMX && HAVE_YASM)
 /* filter parameters: [-1 4 2 4 -1] // 8 */
