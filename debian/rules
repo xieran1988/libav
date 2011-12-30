@@ -81,33 +81,32 @@ install: build
 	tar czvf debian/tmp/usr/src/libav-source.tar.gz . \
 		 --exclude 'debian*' --exclude .git  --exclude .pc --exclude '*-stamp' \
 		 --transform 's,^./,libav/,'
-	dh_installdirs -ptmp usr/share/doc/ffmpeg/html etc
+	dh_installdirs -ptmp usr/share/doc/libav/html etc
 	dh_installdirs -ptmp usr/share/doc/libav-doc/html
 	$(foreach flavor,$(FLAVORS),$(call install_flavor,$(flavor)))
 	# don't fail on binary-indep only builds.
 	[ ! -d doxy ] || cp -af doxy/html debian/tmp/usr/share/doc/libav-doc
-	install -m 644 -D debian-shared/doc/*.html debian/tmp/usr/share/doc/ffmpeg/html/
-	install -m 644 -D doc/ffserver.conf debian/tmp/etc/
+	install -m 644 -D debian-shared/doc/*.html debian/tmp/usr/share/doc/libav/html/
+	install -m 644 -D doc/avserver.conf debian/tmp/etc/
 	install -m 644 -D debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
-	dh_install -Xusr/share/doc/libav-doc -Xusr/share/doc/ffmpeg \
+	dh_install -Xusr/share/doc/libav-doc -Xusr/share/doc/libav \
 		--fail-missing --sourcedir=debian/tmp
 
 formats.txt: install
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)" \
-	debian/tmp/usr/bin/ffmpeg -formats | tee $@
+	debian/tmp/usr/bin/avconv -formats | tee $@
 
 codecs.txt: install
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)" \
-	debian/tmp/usr/bin/ffmpeg -codecs | tee $@
+	debian/tmp/usr/bin/avconv -codecs | tee $@
 
 binary-indep: build-doxy install
 
 binary-arch: build install codecs.txt formats.txt
 	dh_testdir
 	dh_testroot
-	dh_installman -pffmpeg debian/qt-faststart.1
+	dh_installman -plibav debian/qt-faststart.1
 	dh_installdocs doc/optimization.txt
-	dh_installdocs -A CREDITS doc/TODO
 	dh_installdocs -A debian/README.Debian
 	dh_installdocs -p libavcodec53 codecs.txt
 	dh_installdocs -p libavformat53 formats.txt
@@ -115,8 +114,8 @@ binary-arch: build install codecs.txt formats.txt
 		-plibavformat-dev -plibavfilter-dev -plibpostproc-dev \
 		-plibswscale-dev -plibavutil-dev -plibav-doc \
 		doc/APIchanges
-	dh_installexamples -pffmpeg doc/ffserver.conf debian/recordshow.sh
-	dh_installexamples -plibavcodec-dev libavcodec/api-example.c
+	dh_installexamples -p libav doc/avserver.conf debian/recordshow.sh
+	dh_installexamples -p libavcodec-dev libavcodec/api-example.c
 	dh_installchangelogs Changelog
 	dh_lintian
 	dh_link

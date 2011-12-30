@@ -46,7 +46,7 @@ Build-Depends: debhelper (>= 8.1.3~),
  yasm,
  zlib1g-dev
 
-Package: ffmpeg
+Package: libav
 Section: video
 Architecture: any
 Replaces: libavcodec53 (<< ${source:Version}),
@@ -55,10 +55,21 @@ Depends: ${shlibs:Depends},
  ${misc:Depends}
 Conflicts: ffprobe
 Description: Multimedia player, server, encoder and transcoder
- This package contains the ffplay multimedia player, the ffserver streaming
- server and the ffmpeg audio and video encoder. They support most existing
- file formats (AVI, MPEG, OGG, Matroska, ASF...) and encoding formats (MPEG,
- DivX, MPEG4, AC3, DV...).
+ This package contains the avplay multimedia player, the avserver
+ streaming server, the avconv audio and video encoder, and the avprobe
+ stream analyzer.  They support most existing file formats (AVI, MPEG,
+ OGG, Matroska, ASF...) and encoding formats (MPEG, DivX, MPEG4, AC3,
+ DV...).
+
+Package: ffmpeg
+Section: video
+Architecture: all
+Depends: ${shlibs:Depends},
+ ${misc:Depends},
+ libav
+Description: Multimedia player, server, encoder and transcoder (transitional package)
+ This package is only used for transitional purposes and can be safely
+ removed when no other packages depend on this package.
 
 Package: ffmpeg-dbg
 Section: debug
@@ -85,7 +96,7 @@ Depends: libavutil51 (= ${binary:Version}),
  libpostproc52 (= ${binary:Version}),
  libavformat53 (= ${binary:Version}),
  libswscale2 (= ${binary:Version}),
- ffmpeg (= ${binary:Version}),
+ libav (= ${binary:Version}),
  ${misc:Depends}
 Description: Debug symbols for Libav related packages
  This package contains debug data of the Libav related shared libraries.
