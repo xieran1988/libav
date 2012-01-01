@@ -1,3 +1,9 @@
+libav (4:0.8~beta1-2) experimental; urgency=low
+
+  * fix build failures by dropping unnecessary configure flags
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 01 Jan 2012 08:48:06 +0100
+
 libav (4:0.8~beta1-1) experimental; urgency=low
 
   * New upstream release.
