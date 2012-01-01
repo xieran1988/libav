@@ -180,8 +180,6 @@ vfp_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/vfp
 vfp_build_confflags += --enable-shared
 vfp_build_confflags += --disable-static
 vfp_build_confflags += --extra-cflags="-mfpu=vfp $(float_abi)"
-vfp_build_confflags += --disable-ffmpeg
-vfp_build_confflags += --disable-ffplay
 # NB: NEON always implies v7+ and ffmpeg's NEON implementation requires VFP
 neon_build_confflags += $(confflags)
 neon_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/neon/vfp
@@ -194,8 +192,6 @@ endif
 neon_build_confflags += --extra-cflags="-mfpu=neon $(float_abi) -fPIC -DPIC"
 neon_build_confflags += --enable-shared
 neon_build_confflags += --disable-static
-neon_build_confflags += --disable-ffmpeg
-neon_build_confflags += --disable-ffplay
 
 ## i386 architecture specific
 # Configuration flags for the optimized shared libraries
@@ -205,8 +201,6 @@ cmov_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/i686/cmov
 cmov_build_confflags += --cpu='i686'
 cmov_build_confflags += --enable-shared
 cmov_build_confflags += --disable-static
-cmov_build_confflags += --disable-ffmpeg
-cmov_build_confflags += --disable-ffplay
 
 ## powerpc architecture specific
 # Configuration flags for the optimized shared libraries
@@ -216,8 +210,6 @@ altivec_build_confflags += --cpu='g4'
 altivec_build_confflags += --enable-shared
 altivec_build_confflags += --disable-static
 altivec_build_confflags += --enable-altivec
-altivec_build_confflags += --disable-ffmpeg
-altivec_build_confflags += --disable-ffplay
 
 ## sparc architecture specific
 # Configuration flags for the optimized shared libraries
@@ -227,5 +219,3 @@ vis_build_confflags += --cpu='sparc64'
 vis_build_confflags += --enable-shared
 vis_build_confflags += --disable-static
 vis_build_confflags += --extra-cflags="-fPIC -DPIC"
-vis_build_confflags += --disable-ffmpeg
-vis_build_confflags += --disable-ffplay
