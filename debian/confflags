@@ -1,7 +1,7 @@
 # -*- mode: makefile -*-
 # vim:syntax=make
 
-# build a static version on every architecture in the 'debian' ffmpeg package
+# build a static version on every architecture in the 'debian' Libav package
 FLAVORS := static
 
 # shared is generic, i.e. without arch specific opcodes
@@ -110,7 +110,7 @@ confflags += --enable-libvpx
 confflags += --enable-runtime-cpudetect
 confflags += --enable-libfreetype
 ifeq      ($(DEB_HOST_ARCH),armel)
-# this is required on Ubuntu lucid as it defaults to thumb2 and ffmpeg has
+# this is required on Ubuntu lucid as it defaults to thumb2 and Libav has
 # plenty of incompatible assembly; not sure how to detect that properly
 confflags += --extra-cflags="-marm -fPIC -DPIC"
 endif
@@ -124,7 +124,7 @@ confflags += $(extra_common_confflags)
 # vaapi is not available on s390 and on the hurd
 confflags += $(call cond_enable,/usr/include/va/va.h,vaapi)
 
-# this part below is intended for the 'ffmpeg' package in ubuntu/multiverse
+# this part below is intended for the 'Libav' package in ubuntu/multiverse
 gpl_confflags += $(call cond_enable,/usr/include/dirac/libdirac_decoder/dirac_parser.h,libdirac)
 gpl_confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
 gpl_confflags += $(call cond_enable,/usr/include/librtmp/http.h,librtmp)
@@ -155,7 +155,7 @@ CFLAGS :=
 LDFLAGS :=
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-# Various parts of ffmpeg (and swscale) FTBFS when compiling with -fPIC
+# Various parts of Libav (and swscale) FTBFS when compiling with -fPIC
 # and with mmx code enabled.
   confflags += --disable-optimizations
   confflags += --disable-mmx
@@ -180,7 +180,7 @@ vfp_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/vfp
 vfp_build_confflags += --enable-shared
 vfp_build_confflags += --disable-static
 vfp_build_confflags += --extra-cflags="-mfpu=vfp $(float_abi)"
-# NB: NEON always implies v7+ and ffmpeg's NEON implementation requires VFP
+# NB: NEON always implies v7+ and Libav's NEON implementation requires VFP
 neon_build_confflags += $(confflags)
 neon_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/neon/vfp
 # the NEON pass now requires ubfx which was introduced in armv6t2; we need to
