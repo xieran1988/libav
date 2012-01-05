@@ -1,2 +1,3 @@
 01-Tweak-doxygen-config.patch
 02-swscale-fix-crash-in-fast_bilinear-code-when-compile.patch
+03-disable-configuration-warnings.patch
