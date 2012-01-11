@@ -4,11 +4,9 @@ Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=619530
 Bug-Ubuntu: https://launchpad.net/bugs/765357
 Forwarded: not-needed
 
-diff --git a/cmdutils.c b/cmdutils.c
-index c5c2c1c..118b152 100644
 --- a/cmdutils.c
 +++ b/cmdutils.c
-@@ -443,7 +443,9 @@ void print_error(const char *filename, int err)
+@@ -457,7 +457,9 @@ void print_error(const char *filename, i
      av_log(NULL, AV_LOG_ERROR, "%s: %s\n", filename, errbuf_ptr);
  }
  
