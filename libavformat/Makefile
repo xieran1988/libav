@@ -22,6 +22,7 @@ OBJS-$(CONFIG_AAC_DEMUXER)               += aacdec.o rawdec.o
 OBJS-$(CONFIG_AC3_DEMUXER)               += ac3dec.o rawdec.o
 OBJS-$(CONFIG_AC3_MUXER)                 += rawenc.o
 OBJS-$(CONFIG_ADX_DEMUXER)               += adxdec.o
+OBJS-$(CONFIG_ADX_MUXER)                 += rawenc.o
 OBJS-$(CONFIG_ADTS_MUXER)                += adtsenc.o
 OBJS-$(CONFIG_AEA_DEMUXER)               += aea.o pcm.o
 OBJS-$(CONFIG_AIFF_DEMUXER)              += aiffdec.o riff.o pcm.o
@@ -347,6 +348,8 @@ OBJS-$(CONFIG_RTP_PROTOCOL)              += rtpproto.o
 OBJS-$(CONFIG_TCP_PROTOCOL)              += tcp.o
 OBJS-$(CONFIG_TLS_PROTOCOL)              += tls.o
 OBJS-$(CONFIG_UDP_PROTOCOL)              += udp.o
+
+SKIPHEADERS-$(CONFIG_NETWORK)            += network.h rtsp.h
 
 EXAMPLES  = metadata output
 TESTPROGS = seek

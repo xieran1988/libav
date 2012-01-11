@@ -1280,7 +1280,6 @@ int ff_h264_frame_start(H264Context *h){
     MpegEncContext * const s = &h->s;
     int i;
     const int pixel_shift = h->pixel_shift;
-    int thread_count = (s->avctx->active_thread_type & FF_THREAD_SLICE) ? s->avctx->thread_count : 1;
 
     if(MPV_frame_start(s, s->avctx) < 0)
         return -1;
@@ -1309,7 +1308,7 @@ int ff_h264_frame_start(H264Context *h){
 
     /* can't be in alloc_tables because linesize isn't known there.
      * FIXME: redo bipred weight to not require extra buffer? */
-    for(i = 0; i < thread_count; i++)
+    for(i = 0; i < s->slice_context_count; i++)
         if(h->thread_context[i] && !h->thread_context[i]->s.obmc_scratchpad)
             h->thread_context[i]->s.obmc_scratchpad = av_malloc(16*6*s->linesize);
 
@@ -1818,7 +1817,7 @@ static av_always_inline void hl_decode_mb_predict_luma(H264Context *h, int mb_ty
                                     idct_dc_add(ptr, h->mb + (i*16+p*256 << pixel_shift), linesize);
                                 else
                                     idct_add   (ptr, h->mb + (i*16+p*256 << pixel_shift), linesize);
-                            }else
+                            } else if (CONFIG_SVQ3_DECODER)
                                 ff_svq3_add_idct_c(ptr, h->mb + i*16+p*256, linesize, qscale, 0);
                         }
                     }
@@ -1838,7 +1837,7 @@ static av_always_inline void hl_decode_mb_predict_luma(H264Context *h, int mb_ty
                         dctcoef_set(h->mb+(p*256 << pixel_shift), pixel_shift, dc_mapping[i], dctcoef_get(h->mb_luma_dc[p], pixel_shift, i));
                 }
             }
-        }else
+        } else if (CONFIG_SVQ3_DECODER)
             ff_svq3_luma_dc_dequant_idct_c(h->mb+p*256, h->mb_luma_dc[p], qscale);
     }
 }
@@ -1882,7 +1881,7 @@ static av_always_inline void hl_decode_mb_idct_luma(H264Context *h, int mb_type,
                     }
                 }
             }
-        }else{
+        } else if (CONFIG_SVQ3_DECODER) {
             for(i=0; i<16; i++){
                 if(h->non_zero_count_cache[ scan8[i+p*16] ] || h->mb[i*16+p*256]){ //FIXME benchmark weird rule, & below
                     uint8_t * const ptr= dest_y + block_offset[i];
@@ -2081,7 +2080,7 @@ static av_always_inline void hl_decode_mb_internal(H264Context *h, int simple, i
                     h->h264dsp.h264_idct_add8(dest, block_offset,
                                               h->mb, uvlinesize,
                                               h->non_zero_count_cache);
-                }else{
+                } else if (CONFIG_SVQ3_DECODER) {
                     h->h264dsp.h264_chroma_dc_dequant_idct(h->mb + 16*16*1, h->dequant4_coeff[IS_INTRA(mb_type) ? 1:4][h->chroma_qp[0]][0]);
                     h->h264dsp.h264_chroma_dc_dequant_idct(h->mb + 16*16*2, h->dequant4_coeff[IS_INTRA(mb_type) ? 2:5][h->chroma_qp[1]][0]);
                     for(j=1; j<3; j++){
@@ -2826,7 +2825,7 @@ static int decode_slice_header(H264Context *h, H264Context *h0){
                 return -1;
             }
         } else {
-            for(i = 1; i < s->avctx->thread_count; i++) {
+            for(i = 1; i < s->slice_context_count; i++) {
                 H264Context *c;
                 c = h->thread_context[i] = av_malloc(sizeof(H264Context));
                 memcpy(c, h->s.thread_context[i], sizeof(MpegEncContext));
@@ -2839,7 +2838,7 @@ static int decode_slice_header(H264Context *h, H264Context *h0){
                 clone_tables(c, h, i);
             }
 
-            for(i = 0; i < s->avctx->thread_count; i++)
+            for(i = 0; i < s->slice_context_count; i++)
                 if (context_init(h->thread_context[i]) < 0) {
                     av_log(h->s.avctx, AV_LOG_ERROR, "context_init() failed.\n");
                     return -1;
@@ -3742,7 +3741,7 @@ static int decode_nal_units(H264Context *h, const uint8_t *buf, int buf_size){
     int nals_needed=0; ///< number of NALs that need decoding before the next frame thread starts
     int nal_index;
 
-    h->max_contexts = (HAVE_THREADS && (s->avctx->active_thread_type&FF_THREAD_SLICE)) ? avctx->thread_count : 1;
+    h->max_contexts = s->slice_context_count;
     if(!(s->flags2 & CODEC_FLAG2_CHUNKS)){
         h->current_slice = 0;
         if (!s->first_field)
@@ -4009,7 +4008,7 @@ static int decode_frame(AVCodecContext *avctx,
     H264Context *h = avctx->priv_data;
     MpegEncContext *s = &h->s;
     AVFrame *pict = data;
-    int buf_index;
+    int buf_index = 0;
 
     s->flags= avctx->flags;
     s->flags2= avctx->flags2;
@@ -4039,7 +4038,7 @@ static int decode_frame(AVCodecContext *avctx,
             *pict= *(AVFrame*)out;
         }
 
-        return 0;
+        return buf_index;
     }
 
     buf_index=decode_nal_units(h, buf, buf_size);
@@ -4110,10 +4109,10 @@ int main(void){
     uint8_t temp[SIZE];
     PutBitContext pb;
     GetBitContext gb;
-//    int int_temp[10000];
     DSPContext dsp;
     AVCodecContext avctx;
 
+    avctx.av_class = avcodec_get_class();
     dsputil_init(&dsp, &avctx);
 
     init_put_bits(&pb, temp, SIZE);
@@ -4127,9 +4126,7 @@ int main(void){
 
     init_get_bits(&gb, temp, 8*SIZE);
     for(i=0; i<COUNT; i++){
-        int j, s;
-
-        s= show_bits(&gb, 24);
+        int j, s = show_bits(&gb, 24);
 
         START_TIMER
         j= get_ue_golomb(&gb);
@@ -4152,9 +4149,7 @@ int main(void){
 
     init_get_bits(&gb, temp, 8*SIZE);
     for(i=0; i<COUNT; i++){
-        int j, s;
-
-        s= show_bits(&gb, 24);
+        int j, s = show_bits(&gb, 24);
 
         START_TIMER
         j= get_se_golomb(&gb);

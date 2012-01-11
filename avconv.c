@@ -76,6 +76,11 @@
 
 #include "libavutil/avassert.h"
 
+#define VSYNC_AUTO       -1
+#define VSYNC_PASSTHROUGH 0
+#define VSYNC_CFR         1
+#define VSYNC_VFR         2
+
 const char program_name[] = "avconv";
 const int program_birth_year = 2000;
 
@@ -111,7 +116,7 @@ static int do_hex_dump = 0;
 static int do_pkt_dump = 0;
 static int do_pass = 0;
 static char *pass_logfilename_prefix = NULL;
-static int video_sync_method = -1;
+static int video_sync_method = VSYNC_AUTO;
 static int audio_sync_method = 0;
 static float audio_drift_threshold = 0.1;
 static int copy_ts = 0;
@@ -603,7 +608,6 @@ static int configure_video_filters(InputStream *ist, OutputStream *ost)
 
         if ((ret = avfilter_graph_parse(ost->graph, ost->avfilter, inputs, outputs, NULL)) < 0)
             return ret;
-        av_freep(&ost->avfilter);
     } else {
         if ((ret = avfilter_link(last_filter, 0, ost->output_video_filter, 0)) < 0)
             return ret;
@@ -666,6 +670,19 @@ void exit_program(int ret)
             avio_close(s->pb);
         avformat_free_context(s);
         av_dict_free(&output_files[i].opts);
+    }
+    for (i = 0; i < nb_output_streams; i++) {
+        AVBitStreamFilterContext *bsfc = output_streams[i].bitstream_filters;
+        while (bsfc) {
+            AVBitStreamFilterContext *next = bsfc->next;
+            av_bitstream_filter_close(bsfc);
+            bsfc = next;
+        }
+        output_streams[i].bitstream_filters = NULL;
+
+#if CONFIG_AVFILTER
+        av_freep(&output_streams[i].avfilter);
+#endif
     }
     for (i = 0; i < nb_input_files; i++) {
         avformat_close_input(&input_files[i].ctx);
@@ -846,8 +863,10 @@ get_sync_ipts(const OutputStream *ost)
     return (double)(ist->pts - of->start_time) / AV_TIME_BASE;
 }
 
-static void write_frame(AVFormatContext *s, AVPacket *pkt, AVCodecContext *avctx, AVBitStreamFilterContext *bsfc)
+static void write_frame(AVFormatContext *s, AVPacket *pkt, OutputStream *ost)
 {
+    AVBitStreamFilterContext *bsfc = ost->bitstream_filters;
+    AVCodecContext          *avctx = ost->st->codec;
     int ret;
 
     while (bsfc) {
@@ -877,6 +896,7 @@ static void write_frame(AVFormatContext *s, AVPacket *pkt, AVCodecContext *avctx
         print_error("av_interleaved_write_frame()", ret);
         exit_program(1);
     }
+    ost->frame_number++;
 }
 
 static void generate_silence(uint8_t* buf, enum AVSampleFormat sample_fmt, size_t size)
@@ -1091,7 +1111,7 @@ need_realloc:
             if (enc->coded_frame && enc->coded_frame->pts != AV_NOPTS_VALUE)
                 pkt.pts = av_rescale_q(enc->coded_frame->pts, enc->time_base, ost->st->time_base);
             pkt.flags |= AV_PKT_FLAG_KEY;
-            write_frame(s, &pkt, enc, ost->bitstream_filters);
+            write_frame(s, &pkt, ost);
 
             ost->sync_opts += enc->frame_size;
         }
@@ -1126,7 +1146,7 @@ need_realloc:
         if (enc->coded_frame && enc->coded_frame->pts != AV_NOPTS_VALUE)
             pkt.pts = av_rescale_q(enc->coded_frame->pts, enc->time_base, ost->st->time_base);
         pkt.flags |= AV_PKT_FLAG_KEY;
-        write_frame(s, &pkt, enc, ost->bitstream_filters);
+        write_frame(s, &pkt, ost);
     }
 }
 
@@ -1228,13 +1248,14 @@ static void do_subtitle_out(AVFormatContext *s,
             else
                 pkt.pts += 90 * sub->end_display_time;
         }
-        write_frame(s, &pkt, ost->st->codec, ost->bitstream_filters);
+        write_frame(s, &pkt, ost);
     }
 }
 
 static int bit_buffer_size = 1024 * 256;
 static uint8_t *bit_buffer = NULL;
 
+#if !CONFIG_AVFILTER
 static void do_video_resample(OutputStream *ost,
                               InputStream *ist,
                               AVFrame *in_picture,
@@ -1258,7 +1279,6 @@ static void do_video_resample(OutputStream *ost,
             ost->video_resample = 1;
     }
 
-#if !CONFIG_AVFILTER
     if (ost->video_resample) {
         *out_picture = &ost->pict_tmp;
         if (resample_changed) {
@@ -1280,21 +1300,13 @@ static void do_video_resample(OutputStream *ost,
         sws_scale(ost->img_resample_ctx, in_picture->data, in_picture->linesize,
               0, ost->resample_height, (*out_picture)->data, (*out_picture)->linesize);
     }
-#else
-    if (resample_changed) {
-        avfilter_graph_free(&ost->graph);
-        if (configure_video_filters(ist, ost)) {
-            av_log(NULL, AV_LOG_FATAL, "Error reinitializing filters!\n");
-            exit_program(1);
-        }
-    }
-#endif
     if (resample_changed) {
         ost->resample_width   = dec->width;
         ost->resample_height  = dec->height;
         ost->resample_pix_fmt = dec->pix_fmt;
     }
 }
+#endif
 
 
 static void do_video_out(AVFormatContext *s,
@@ -1318,16 +1330,16 @@ static void do_video_out(AVFormatContext *s,
     *frame_size = 0;
 
     format_video_sync = video_sync_method;
-    if (format_video_sync < 0)
-        format_video_sync = (s->oformat->flags & AVFMT_NOTIMESTAMPS) ? 0 :
-                            (s->oformat->flags & AVFMT_VARIABLE_FPS) ? 2 : 1;
+    if (format_video_sync == VSYNC_AUTO)
+        format_video_sync = (s->oformat->flags & AVFMT_NOTIMESTAMPS) ? VSYNC_PASSTHROUGH :
+                            (s->oformat->flags & AVFMT_VARIABLE_FPS) ? VSYNC_VFR : VSYNC_CFR;
 
-    if (format_video_sync) {
+    if (format_video_sync != VSYNC_PASSTHROUGH) {
         double vdelta = sync_ipts - ost->sync_opts;
         // FIXME set to 0.5 after we fix some dts/pts bugs like in avidec.c
         if (vdelta < -1.1)
             nb_frames = 0;
-        else if (format_video_sync == 2) {
+        else if (format_video_sync == VSYNC_VFR) {
             if (vdelta <= -0.6) {
                 nb_frames = 0;
             } else if (vdelta > 0.6)
@@ -1349,7 +1361,11 @@ static void do_video_out(AVFormatContext *s,
     if (nb_frames <= 0)
         return;
 
+#if !CONFIG_AVFILTER
     do_video_resample(ost, ist, in_picture, &final_picture);
+#else
+    final_picture = in_picture;
+#endif
 
     /* duplicates frame if needed */
     for (i = 0; i < nb_frames; i++) {
@@ -1369,7 +1385,7 @@ static void do_video_out(AVFormatContext *s,
             pkt.pts    = av_rescale_q(ost->sync_opts, enc->time_base, ost->st->time_base);
             pkt.flags |= AV_PKT_FLAG_KEY;
 
-            write_frame(s, &pkt, ost->st->codec, ost->bitstream_filters);
+            write_frame(s, &pkt, ost);
         } else {
             AVFrame big_picture;
 
@@ -1417,7 +1433,7 @@ static void do_video_out(AVFormatContext *s,
 
                 if (enc->coded_frame->key_frame)
                     pkt.flags |= AV_PKT_FLAG_KEY;
-                write_frame(s, &pkt, ost->st->codec, ost->bitstream_filters);
+                write_frame(s, &pkt, ost);
                 *frame_size = ret;
                 video_size += ret;
                 // fprintf(stderr,"\nFrame: %3d size: %5d type: %d",
@@ -1429,7 +1445,6 @@ static void do_video_out(AVFormatContext *s,
             }
         }
         ost->sync_opts++;
-        ost->frame_number++;
     }
 }
 
@@ -1678,7 +1693,7 @@ static void flush_encoders(OutputStream *ost_table, int nb_ostreams)
             pkt.size = ret;
             if (enc->coded_frame && enc->coded_frame->pts != AV_NOPTS_VALUE)
                 pkt.pts = av_rescale_q(enc->coded_frame->pts, enc->time_base, ost->st->time_base);
-            write_frame(os, &pkt, ost->st->codec, ost->bitstream_filters);
+            write_frame(os, &pkt, ost);
         }
     }
 }
@@ -1754,9 +1769,8 @@ static void do_streamcopy(InputStream *ist, OutputStream *ost, const AVPacket *p
         opkt.size = pkt->size;
     }
 
-    write_frame(of->ctx, &opkt, ost->st->codec, ost->bitstream_filters);
+    write_frame(of->ctx, &opkt, ost);
     ost->st->codec->frame_number++;
-    ost->frame_number++;
     av_free_packet(&opkt);
 }
 
@@ -1921,12 +1935,33 @@ static int transcode_video(InputStream *ist, AVPacket *pkt, int *got_output, int
 
     for (i = 0; i < nb_output_streams; i++) {
         OutputStream *ost = &output_streams[i];
-        int frame_size;
+        int frame_size, resample_changed;
 
         if (!check_output_constraints(ist, ost) || !ost->encoding_needed)
             continue;
 
 #if CONFIG_AVFILTER
+        resample_changed = ost->resample_width   != decoded_frame->width  ||
+                           ost->resample_height  != decoded_frame->height ||
+                           ost->resample_pix_fmt != decoded_frame->format;
+        if (resample_changed) {
+            av_log(NULL, AV_LOG_INFO,
+                    "Input stream #%d:%d frame changed from size:%dx%d fmt:%s to size:%dx%d fmt:%s\n",
+                    ist->file_index, ist->st->index,
+                    ost->resample_width,  ost->resample_height,  av_get_pix_fmt_name(ost->resample_pix_fmt),
+                    decoded_frame->width, decoded_frame->height, av_get_pix_fmt_name(decoded_frame->format));
+
+            avfilter_graph_free(&ost->graph);
+            if (configure_video_filters(ist, ost)) {
+                av_log(NULL, AV_LOG_FATAL, "Error reinitializing filters!\n");
+                exit_program(1);
+            }
+
+            ost->resample_width   = decoded_frame->width;
+            ost->resample_height  = decoded_frame->height;
+            ost->resample_pix_fmt = decoded_frame->format;
+        }
+
         if (ist->st->sample_aspect_ratio.num)
             decoded_frame->sample_aspect_ratio = ist->st->sample_aspect_ratio;
         if (ist->st->codec->codec->capabilities & CODEC_CAP_DR1) {
@@ -3072,7 +3107,7 @@ static AVCodec *choose_decoder(OptionsContext *o, AVFormatContext *s, AVStream *
  */
 static void add_input_streams(OptionsContext *o, AVFormatContext *ic)
 {
-    int i, rfps, rfps_base;
+    int i;
 
     for (i = 0; i < ic->nb_streams; i++) {
         AVStream *st = ic->streams[i];
@@ -3097,19 +3132,10 @@ static void add_input_streams(OptionsContext *o, AVFormatContext *ic)
                 st->discard = AVDISCARD_ALL;
             break;
         case AVMEDIA_TYPE_VIDEO:
-            rfps      = ic->streams[i]->r_frame_rate.num;
-            rfps_base = ic->streams[i]->r_frame_rate.den;
             if (dec->lowres) {
                 dec->flags |= CODEC_FLAG_EMU_EDGE;
                 dec->height >>= dec->lowres;
                 dec->width  >>= dec->lowres;
-            }
-
-            if (dec->time_base.den != rfps * dec->ticks_per_frame || dec->time_base.num != rfps_base) {
-
-                av_log(NULL, AV_LOG_INFO,"\nSeems stream %d codec frame rate differs from container frame rate: %2.2f (%d/%d) -> %2.2f (%d/%d)\n",
-                       i, (float)dec->time_base.den / dec->time_base.num, dec->time_base.den, dec->time_base.num,
-                       (float)rfps / rfps_base, rfps, rfps_base);
             }
 
             if (o->video_disable)
@@ -3612,13 +3638,13 @@ static OutputStream *new_video_stream(OptionsContext *o, AVFormatContext *oc)
         ost->top_field_first = -1;
         MATCH_PER_STREAM_OPT(top_field_first, i, ost->top_field_first, oc, st);
 
-        MATCH_PER_STREAM_OPT(copy_initial_nonkeyframes, i, ost->copy_initial_nonkeyframes, oc ,st);
-
 #if CONFIG_AVFILTER
         MATCH_PER_STREAM_OPT(filters, str, filters, oc, st);
         if (filters)
             ost->avfilter = av_strdup(filters);
 #endif
+    } else {
+        MATCH_PER_STREAM_OPT(copy_initial_nonkeyframes, i, ost->copy_initial_nonkeyframes, oc ,st);
     }
 
     return ost;
@@ -4308,6 +4334,17 @@ static int opt_video_filters(OptionsContext *o, const char *opt, const char *arg
     return parse_option(o, "filter:v", arg, options);
 }
 
+static int opt_vsync(const char *opt, const char *arg)
+{
+    if      (!av_strcasecmp(arg, "cfr"))         video_sync_method = VSYNC_CFR;
+    else if (!av_strcasecmp(arg, "vfr"))         video_sync_method = VSYNC_VFR;
+    else if (!av_strcasecmp(arg, "passthrough")) video_sync_method = VSYNC_PASSTHROUGH;
+
+    if (video_sync_method == VSYNC_AUTO)
+        video_sync_method = parse_number_or_die("vsync", arg, OPT_INT, VSYNC_AUTO, VSYNC_VFR);
+    return 0;
+}
+
 #define OFFSET(x) offsetof(OptionsContext, x)
 static const OptionDef options[] = {
     /* main options */
@@ -4338,7 +4375,7 @@ static const OptionDef options[] = {
       "when dumping packets, also dump the payload" },
     { "re", OPT_BOOL | OPT_EXPERT | OPT_OFFSET, {.off = OFFSET(rate_emu)}, "read input at native frame rate", "" },
     { "target", HAS_ARG | OPT_FUNC2, {(void*)opt_target}, "specify target file type (\"vcd\", \"svcd\", \"dvd\", \"dv\", \"dv50\", \"pal-vcd\", \"ntsc-svcd\", ...)", "type" },
-    { "vsync", HAS_ARG | OPT_INT | OPT_EXPERT, {(void*)&video_sync_method}, "video sync method", "" },
+    { "vsync", HAS_ARG | OPT_EXPERT, {(void*)opt_vsync}, "video sync method", "" },
     { "async", HAS_ARG | OPT_INT | OPT_EXPERT, {(void*)&audio_sync_method}, "audio sync method", "" },
     { "adrift_threshold", HAS_ARG | OPT_FLOAT | OPT_EXPERT, {(void*)&audio_drift_threshold}, "audio drift threshold", "threshold" },
     { "copyts", OPT_BOOL | OPT_EXPERT, {(void*)&copy_ts}, "copy timestamps" },

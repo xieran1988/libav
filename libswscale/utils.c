@@ -120,10 +120,10 @@ const static FormatEntry format_entries[PIX_FMT_NB] = {
     [PIX_FMT_YUV422P16BE] = { 1 , 1 },
     [PIX_FMT_YUV444P16LE] = { 1 , 1 },
     [PIX_FMT_YUV444P16BE] = { 1 , 1 },
-    [PIX_FMT_RGB444LE]    = { 0 , 1 },
-    [PIX_FMT_RGB444BE]    = { 0 , 1 },
-    [PIX_FMT_BGR444LE]    = { 0 , 1 },
-    [PIX_FMT_BGR444BE]    = { 0 , 1 },
+    [PIX_FMT_RGB444LE]    = { 1 , 1 },
+    [PIX_FMT_RGB444BE]    = { 1 , 1 },
+    [PIX_FMT_BGR444LE]    = { 1 , 1 },
+    [PIX_FMT_BGR444BE]    = { 1 , 1 },
     [PIX_FMT_Y400A]       = { 1 , 0 },
     [PIX_FMT_BGR48BE]     = { 1 , 1 },
     [PIX_FMT_BGR48LE]     = { 1 , 1 },
@@ -829,6 +829,7 @@ int sws_init_context(SwsContext *c, SwsFilter *srcFilter, SwsFilter *dstFilter)
 
     // reuse chroma for 2 pixels RGB/BGR unless user wants full chroma interpolation
     if (flags & SWS_FULL_CHR_H_INT &&
+        isAnyRGB(dstFormat)       &&
         dstFormat != PIX_FMT_RGBA &&
         dstFormat != PIX_FMT_ARGB &&
         dstFormat != PIX_FMT_BGRA &&

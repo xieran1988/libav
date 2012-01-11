@@ -89,7 +89,7 @@ Configuration options:
   --disable-avcodec        disable libavcodec build
   --disable-avformat       disable libavformat build
   --disable-swscale        disable libswscale build
-  --disable-postproc       disable libpostproc build
+  --enable-postproc        enable libpostproc build (deprecated) [no]
   --disable-avfilter       disable video filter support [no]
   --disable-pthreads       disable pthreads [auto]
   --disable-w32threads     disable Win32 threads [auto]
@@ -1084,9 +1084,9 @@ HAVE_LIST="
     fork
     getaddrinfo
     gethrtime
+    GetProcessAffinityMask
     GetProcessMemoryInfo
     GetProcessTimes
-    GetSystemInfo
     getrusage
     gnu_as
     ibm_asm
@@ -1135,9 +1135,11 @@ HAVE_LIST="
     struct_sockaddr_in6
     struct_sockaddr_sa_len
     struct_sockaddr_storage
+    struct_v4l2_frmivalenum_discrete
     symver
     symver_asm_label
     symver_gnu_asm
+    sysconf
     sysctl
     sys_mman_h
     sys_param_h
@@ -1678,7 +1680,6 @@ enable avdevice
 enable avfilter
 enable avformat
 enable avutil
-enable postproc
 enable swscale
 
 enable asm
@@ -2858,12 +2859,13 @@ check_func  strerror_r
 check_func  strptime
 check_func  strtok_r
 check_func  sched_getaffinity
+check_func  sysconf
 check_func  sysctl
 check_func_headers io.h setmode
 check_func_headers lzo/lzo1x.h lzo1x_999_compress
 check_lib2 "windows.h psapi.h" GetProcessMemoryInfo -lpsapi
+check_func_headers windows.h GetProcessAffinityMask
 check_func_headers windows.h GetProcessTimes
-check_func_headers windows.h GetSystemInfo
 check_func_headers windows.h MapViewOfFile
 check_func_headers windows.h VirtualAlloc
 
@@ -2991,6 +2993,8 @@ texi2html -version > /dev/null 2>&1 && enable texi2html || disable texi2html
 check_header linux/fb.h
 check_header linux/videodev.h
 check_header linux/videodev2.h
+check_struct linux/videodev2.h "struct v4l2_frmivalenum" discrete
+
 check_header sys/videoio.h
 
 check_func_headers "windows.h vfw.h" capCreateCaptureWindow "$vfwcap_indev_extralibs"

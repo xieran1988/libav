@@ -2,6 +2,15 @@ Entries are sorted chronologically from oldest to youngest within each release,
 releases are sorted from youngest to oldest.
 
 
+version 0.8_beta2:
+
+- Automatic thread count based on detection number of (available) CPU cores
+- Deprecate libpostproc. If desired, the switch --enable-postproc will
+  enable it but it may be removed in a later Libav release.
+- rv34: frame-level multi-threading
+- optimized iMDCT transform on x86 using SSE for for mpegaudiodec
+
+
 version 0.8_beta1:
 
 - BWF muxer
@@ -103,7 +112,7 @@ easier to use. The changes are:
 - Discworld II BMV decoding support
 - VBLE Decoder
 - OS X Video Decoder Acceleration (VDA) support
-- CRI ADX audio format demuxer
+- CRI ADX audio format muxer and demuxer
 - Playstation Portable PMP format demuxer
 - PCM format support in OMA demuxer
 - CLJR encoder
