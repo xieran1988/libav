@@ -96,7 +96,7 @@ Depends: libavutil51 (= ${binary:Version}),
  libpostproc52 (= ${binary:Version}),
  libavformat53 (= ${binary:Version}),
  libswscale2 (= ${binary:Version}),
- libav (= ${binary:Version}),
+ libav-tools (= ${binary:Version}),
  ${misc:Depends}
 Description: Debug symbols for Libav related packages
  This package contains debug data of the Libav related shared libraries.
