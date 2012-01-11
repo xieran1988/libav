@@ -637,6 +637,8 @@ void MPV_common_defaults(MpegEncContext *s)
 
     s->picture_range_start   = 0;
     s->picture_range_end     = MAX_PICTURE_COUNT;
+
+    s->slice_context_count   = 1;
 }
 
 /**
@@ -655,11 +657,13 @@ void MPV_decode_defaults(MpegEncContext *s)
  */
 av_cold int MPV_common_init(MpegEncContext *s)
 {
-    int y_size, c_size, yc_size, i, mb_array_size, mv_table_size, x, y,
-        threads = (s->encoding ||
-                   (HAVE_THREADS &&
-                    s->avctx->active_thread_type & FF_THREAD_SLICE)) ?
-                  s->avctx->thread_count : 1;
+    int y_size, c_size, yc_size, i, mb_array_size, mv_table_size, x, y;
+    int nb_slices = (HAVE_THREADS &&
+                     s->avctx->active_thread_type & FF_THREAD_SLICE) ?
+                    s->avctx->thread_count : 1;
+
+    if (s->encoding && s->avctx->slices)
+        nb_slices = s->avctx->slices;
 
     if (s->codec_id == CODEC_ID_MPEG2VIDEO && !s->progressive_sequence)
         s->mb_height = (s->height + 31) / 32 * 2;
@@ -672,14 +676,15 @@ av_cold int MPV_common_init(MpegEncContext *s)
         return -1;
     }
 
-    if ((s->encoding || (s->avctx->active_thread_type & FF_THREAD_SLICE)) &&
-        (s->avctx->thread_count > MAX_THREADS ||
-         (s->avctx->thread_count > s->mb_height && s->mb_height))) {
-        int max_threads = FFMIN(MAX_THREADS, s->mb_height);
-        av_log(s->avctx, AV_LOG_WARNING,
-               "too many threads (%d), reducing to %d\n",
-               s->avctx->thread_count, max_threads);
-        threads = max_threads;
+    if (nb_slices > MAX_THREADS || (nb_slices > s->mb_height && s->mb_height)) {
+        int max_slices;
+        if (s->mb_height)
+            max_slices = FFMIN(MAX_THREADS, s->mb_height);
+        else
+            max_slices = MAX_THREADS;
+        av_log(s->avctx, AV_LOG_WARNING, "too many threads/slices (%d),"
+               " reducing to %d\n", nb_slices, max_slices);
+        nb_slices = max_slices;
     }
 
     if ((s->width || s->height) &&
@@ -700,8 +705,8 @@ av_cold int MPV_common_init(MpegEncContext *s)
         mv_table_size = (s->mb_height + 2) * s->mb_stride + 1;
 
         /* set chroma shifts */
-        avcodec_get_chroma_sub_sample(s->avctx->pix_fmt,&(s->chroma_x_shift),
-                                      &(s->chroma_y_shift) );
+        avcodec_get_chroma_sub_sample(s->avctx->pix_fmt, &s->chroma_x_shift,
+                                      &s->chroma_y_shift);
 
         /* set default edge pos, will be overriden
          * in decode_header if needed */
@@ -885,22 +890,19 @@ av_cold int MPV_common_init(MpegEncContext *s)
     s->thread_context[0]   = s;
 
     if (s->width && s->height) {
-        if (s->encoding || (HAVE_THREADS &&
-                            s->avctx->active_thread_type&FF_THREAD_SLICE)) {
-            for (i = 1; i < threads; i++) {
+        if (nb_slices > 1) {
+            for (i = 1; i < nb_slices; i++) {
                 s->thread_context[i] = av_malloc(sizeof(MpegEncContext));
                 memcpy(s->thread_context[i], s, sizeof(MpegEncContext));
             }
 
-            for (i = 0; i < threads; i++) {
+            for (i = 0; i < nb_slices; i++) {
                 if (init_duplicate_context(s->thread_context[i], s) < 0)
                     goto fail;
                     s->thread_context[i]->start_mb_y =
-                        (s->mb_height * (i) + s->avctx->thread_count / 2) /
-                        s->avctx->thread_count;
+                        (s->mb_height * (i) + nb_slices / 2) / nb_slices;
                     s->thread_context[i]->end_mb_y   =
-                        (s->mb_height * (i + 1) + s->avctx->thread_count / 2) /
-                        s->avctx->thread_count;
+                        (s->mb_height * (i + 1) + nb_slices / 2) / nb_slices;
             }
         } else {
             if (init_duplicate_context(s, s) < 0)
@@ -908,6 +910,7 @@ av_cold int MPV_common_init(MpegEncContext *s)
             s->start_mb_y = 0;
             s->end_mb_y   = s->mb_height;
         }
+        s->slice_context_count = nb_slices;
     }
 
     return 0;
@@ -921,14 +924,14 @@ void MPV_common_end(MpegEncContext *s)
 {
     int i, j, k;
 
-    if (s->encoding || (HAVE_THREADS &&
-        s->avctx->active_thread_type & FF_THREAD_SLICE)) {
-        for (i = 0; i < s->avctx->thread_count; i++) {
+    if (s->slice_context_count > 1) {
+        for (i = 0; i < s->slice_context_count; i++) {
             free_duplicate_context(s->thread_context[i]);
         }
-        for (i = 1; i < s->avctx->thread_count; i++) {
+        for (i = 1; i < s->slice_context_count; i++) {
             av_freep(&s->thread_context[i]);
         }
+        s->slice_context_count = 1;
     } else free_duplicate_context(s);
 
     av_freep(&s->parse_context.buffer);
@@ -1167,25 +1170,26 @@ int MPV_frame_start(MpegEncContext *s, AVCodecContext *avctx)
            s->codec_id == CODEC_ID_SVQ3);
 
     /* mark & release old frames */
-    if (s->pict_type != AV_PICTURE_TYPE_B && s->last_picture_ptr &&
-        s->last_picture_ptr != s->next_picture_ptr &&
-        s->last_picture_ptr->f.data[0]) {
-        if (s->out_format != FMT_H264 || s->codec_id == CODEC_ID_SVQ3) {
+    if (s->out_format != FMT_H264 || s->codec_id == CODEC_ID_SVQ3) {
+        if (s->pict_type != AV_PICTURE_TYPE_B && s->last_picture_ptr &&
+            s->last_picture_ptr != s->next_picture_ptr &&
+            s->last_picture_ptr->f.data[0]) {
             if (s->last_picture_ptr->owner2 == s)
                 free_frame_buffer(s, s->last_picture_ptr);
+        }
 
-            /* release forgotten pictures */
-            /* if (mpeg124/h263) */
-            if (!s->encoding) {
-                for (i = 0; i < s->picture_count; i++) {
-                    if (s->picture[i].owner2 == s && s->picture[i].f.data[0] &&
-                        &s->picture[i] != s->next_picture_ptr &&
-                        s->picture[i].f.reference) {
-                        if (!(avctx->active_thread_type & FF_THREAD_FRAME))
-                            av_log(avctx, AV_LOG_ERROR,
-                                   "releasing zombie picture\n");
-                        free_frame_buffer(s, &s->picture[i]);
-                    }
+        /* release forgotten pictures */
+        /* if (mpeg124/h263) */
+        if (!s->encoding) {
+            for (i = 0; i < s->picture_count; i++) {
+                if (s->picture[i].owner2 == s && s->picture[i].f.data[0] &&
+                    &s->picture[i] != s->last_picture_ptr &&
+                    &s->picture[i] != s->next_picture_ptr &&
+                    s->picture[i].f.reference) {
+                    if (!(avctx->active_thread_type & FF_THREAD_FRAME))
+                        av_log(avctx, AV_LOG_ERROR,
+                               "releasing zombie picture\n");
+                    free_frame_buffer(s, &s->picture[i]);
                 }
             }
         }
@@ -1291,6 +1295,14 @@ int MPV_frame_start(MpegEncContext *s, AVCodecContext *avctx)
         ff_copy_picture(&s->last_picture, s->last_picture_ptr);
     if (s->next_picture_ptr)
         ff_copy_picture(&s->next_picture, s->next_picture_ptr);
+
+    if (HAVE_THREADS && (avctx->active_thread_type & FF_THREAD_FRAME) &&
+        (s->out_format != FMT_H264 || s->codec_id == CODEC_ID_SVQ3)) {
+        if (s->next_picture_ptr)
+            s->next_picture_ptr->owner2 = s;
+        if (s->last_picture_ptr)
+            s->last_picture_ptr->owner2 = s;
+    }
 
     assert(s->pict_type == AV_PICTURE_TYPE_I || (s->last_picture_ptr &&
                                                  s->last_picture_ptr->f.data[0]));
@@ -2336,7 +2348,7 @@ void MPV_decode_mb_internal(MpegEncContext *s, DCTELEM block[12][64],
         }
 
         dct_linesize = linesize << s->interlaced_dct;
-        dct_offset =(s->interlaced_dct)? linesize : linesize*block_size;
+        dct_offset   = s->interlaced_dct ? linesize : linesize * block_size;
 
         if(readable){
             dest_y=  s->dest[0];
@@ -2432,7 +2444,7 @@ void MPV_decode_mb_internal(MpegEncContext *s, DCTELEM block[12][64],
                     }else{
                         //chroma422
                         dct_linesize = uvlinesize << s->interlaced_dct;
-                        dct_offset =(s->interlaced_dct)? uvlinesize : uvlinesize*8;
+                        dct_offset   = s->interlaced_dct ? uvlinesize : uvlinesize * 8;
 
                         add_dct(s, block[4], 4, dest_cb, dct_linesize);
                         add_dct(s, block[5], 5, dest_cr, dct_linesize);
@@ -2484,7 +2496,7 @@ void MPV_decode_mb_internal(MpegEncContext *s, DCTELEM block[12][64],
                     }else{
 
                         dct_linesize = uvlinesize << s->interlaced_dct;
-                        dct_offset =(s->interlaced_dct)? uvlinesize : uvlinesize*8;
+                        dct_offset   = s->interlaced_dct ? uvlinesize : uvlinesize * 8;
 
                         s->dsp.idct_put(dest_cb,              dct_linesize, block[4]);
                         s->dsp.idct_put(dest_cr,              dct_linesize, block[5]);
