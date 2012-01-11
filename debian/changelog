@@ -1,3 +1,26 @@
+libav (4:0.8~beta2-1) unstable; urgency=low
+
+  * New Upstream version 0.8~beta2:
+    - Confirm that this release does not inhibit the following security issues:
+      - DoS in MKV demuxer,
+        - CVE-2011-3893, Closes: #654572
+      - Double free vuln in the Theora decoder,
+        - CVE-2011-3892, Closes: #654571
+      - heap-based buffer overflow in vorbis decoder:
+        - CVE-2011-3895, Closes: #654573
+      - Closes: #654534
+    - Bug fix: "libswscale crashes when upscaling pictures using
+      hyscale_fast2, MMX variant on amd64 with gcc-4.6 and later",
+      thanks to Harald Dunkel (Closes: #647824).
+    - Clarify that libavutil/avutil.h doesn't include mathematics.h any more in
+      APIchanges documentation. Thanks: Jonathan Nieder <jrnieder@gmail.com>,
+      Closes: #654303
+  * Disable configuration mismatch warnings (Closes: #619530)
+  * Rename package libav to libav-tools (Closes: #654984)
+  * Refresh patches
+
+ -- Reinhard Tartler <siretart@tauware.de>  Wed, 11 Jan 2012 16:45:28 +0100
+
 libav (4:0.8~beta1-2) experimental; urgency=low
 
   * fix build failures by dropping unnecessary configure flags
