@@ -175,14 +175,16 @@ shared_build_confflags += --disable-static
 
 ## specific to arm architectures
 # Configuration flags for the optimised shared libraries
+vfp_shlibdir := vfp
 vfp_build_confflags += $(confflags)
-vfp_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/vfp
+vfp_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/$(vfp_shlibdir)
 vfp_build_confflags += --enable-shared
 vfp_build_confflags += --disable-static
 vfp_build_confflags += --extra-cflags="-mfpu=vfp $(float_abi)"
 # NB: NEON always implies v7+ and Libav's NEON implementation requires VFP
+neon_shlibdir := neon/vfp
 neon_build_confflags += $(confflags)
-neon_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/neon/vfp
+neon_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/$(neon_shlibdir)
 # the NEON pass now requires ubfx which was introduced in armv6t2; we need to
 # enable at least armv6t2 for the NEON pass to build, but NEON implies armv7-a
 # so pass armv7-a if it's not already enabled
@@ -195,17 +197,19 @@ neon_build_confflags += --disable-static
 
 ## i386 architecture specific
 # Configuration flags for the optimized shared libraries
+cmov_shlibdir := i686/cmov
 cmov_build_confflags += $(confflags)
 cmov_build_confflags += $(nooptflags)
-cmov_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/i686/cmov
+cmov_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/$(cmov_shlibdir)
 cmov_build_confflags += --cpu='i686'
 cmov_build_confflags += --enable-shared
 cmov_build_confflags += --disable-static
 
 ## powerpc architecture specific
 # Configuration flags for the optimized shared libraries
+altivec_shlibdir := altivec
 altivec_build_confflags += $(confflags)
-altivec_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/altivec
+altivec_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/$(altivec_shlibdir)
 altivec_build_confflags += --cpu='g4'
 altivec_build_confflags += --enable-shared
 altivec_build_confflags += --disable-static
@@ -213,8 +217,9 @@ altivec_build_confflags += --enable-altivec
 
 ## sparc architecture specific
 # Configuration flags for the optimized shared libraries
+vis_shlibdir := v9
 vis_build_confflags += $(confflags)
-vis_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/v9
+vis_build_confflags += --shlibdir=/usr/lib/$(DEB_HOST_MULTIARCH)/$(vis_shlibdir)
 vis_build_confflags += --cpu='sparc64'
 vis_build_confflags += --enable-shared
 vis_build_confflags += --disable-static

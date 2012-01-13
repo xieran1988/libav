@@ -7,6 +7,7 @@ UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$
 SHLIBS_VERSION := 4:0.8~beta1~
 
 LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-extra-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
+DEV_PKGS := $(shell echo $(LIB_PKGS) | sed 's/[0-9]\+\>/-dev/g')
 
 # Support multiple makes at once
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
@@ -21,11 +22,20 @@ endif
 endif
 
 include debian/confflags
+OPT_FLAVOR := $(filter-out static shared, $(FLAVORS))
 
 $(info FLAVORS = $(FLAVORS))
 $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
 $(info CFLAGS = $(CFLAGS))
 $(info LDFLAGS = $(LDFLAGS))
+
+DH_INSTALL_FILES := $(foreach pkg, $(LIB_PKGS) $(DEV_PKGS), debian/$(pkg).install)
+$(DH_INSTALL_FILES):
+	sed 's/@DEB_HOST_MULTIARCH\(_OPT\)\?@/$(DEB_HOST_MULTIARCH)/g' $@.in > $@
+ifneq (,$(OPT_FLAVOR))
+	grep @DEB_HOST_MULTIARCH_OPT@ < $@.in | \
+	sed 's:@DEB_HOST_MULTIARCH_OPT@:$(DEB_HOST_MULTIARCH)/$($(OPT_FLAVOR)_shlibdir):g' >> $@
+endif
 
 configure-%: configure-stamp-%
 configure-stamp-%: $(QUILT_STAMPFN)
@@ -60,7 +70,7 @@ clean:
 	    $(addprefix configure-stamp-, $(FLAVORS)) \
 	    build-doxy-stamp
 	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
-	dh_clean
+	dh_clean $(DH_INSTALL_FILES)
 
 get-orig-source:
 	dh_testdir
@@ -73,7 +83,7 @@ define install_flavor
 
 endef
 
-install: build
+install: build $(DH_INSTALL_FILES)
 	dh_testdir
 	dh_testroot
 	dh_prep
