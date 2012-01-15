@@ -53,11 +53,14 @@ Package: libav-tools
 Section: video
 Architecture: any
 Replaces:
+ ffmpeg (<< 4:0.8~),
  libavcodec-extra-53 (<< 4:0.6~),
  libavcodec53 (<< ${source:Version})
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
+Breaks:
+ ffmpeg (<< 4:0.8~)
 Conflicts:
  ffprobe
 Description: Multimedia player, server, encoder and transcoder
