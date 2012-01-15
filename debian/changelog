@@ -1,3 +1,9 @@
+libav (4:0.8~beta2-2) unstable; urgency=low
+
+  *
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 15 Jan 2012 16:19:41 +0100
+
 libav (4:0.8~beta2-1) unstable; urgency=low
 
   * New Upstream version 0.8~beta2:
