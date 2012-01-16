@@ -1,0 +1,36 @@
+From 6b9e4eea839b9f75dc4cad628c923d5c70d704d1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Martin=20Storsj=C3=B6?= <martin@martin.st>
+Date: Thu, 12 Jan 2012 17:06:04 +0200
+Subject: [PATCH 27/63] avio: Fix the value of the deprecated
+ URL_FLAG_NONBLOCK
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This isn't used in practice anywhere within libav at the moment,
+but change it for consistency until it is removed.
+URL_RDONLY/WRONLY were fixed in commit 5b81e295931 (after the
+values that actually were used were changed at the major bump,
+in commit cbea3ac8), but this flag was unintentionally left unfixed.
+
+Signed-off-by: Martin Storsjö <martin@martin.st>
+---
+ libavformat/avio.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/avio.h b/libavformat/avio.h
+index e73264f..78935d9 100644
+--- a/libavformat/avio.h
++++ b/libavformat/avio.h
+@@ -204,7 +204,7 @@ attribute_deprecated int url_poll(URLPollEntry *poll_table, int n, int timeout);
+  * Warning: non-blocking protocols is work-in-progress; this flag may be
+  * silently ignored.
+  */
+-#define URL_FLAG_NONBLOCK 4
++#define URL_FLAG_NONBLOCK 8
+ 
+ typedef int URLInterruptCB(void);
+ extern URLInterruptCB *url_interrupt_cb;
+-- 
+1.7.5.4
+

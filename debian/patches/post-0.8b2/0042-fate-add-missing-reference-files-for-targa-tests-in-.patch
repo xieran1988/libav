@@ -1,0 +1,31 @@
+From 502bf3b462e40ae64d088c3246ef48fa618e4572 Mon Sep 17 00:00:00 2001
+From: Janne Grunau <janne-libav@jannau.net>
+Date: Fri, 13 Jan 2012 23:52:59 +0100
+Subject: [PATCH 42/63] fate: add missing reference files for targa tests in
+ 9c2f9b0e2
+
+Fixes fate-targa-conformance-CCM8 and fate-targa-conformance-UCM8.
+---
+ tests/ref/fate/targa-conformance-CCM8 |    1 +
+ tests/ref/fate/targa-conformance-UCM8 |    1 +
+ 2 files changed, 2 insertions(+), 0 deletions(-)
+ create mode 100644 tests/ref/fate/targa-conformance-CCM8
+ create mode 100644 tests/ref/fate/targa-conformance-UCM8
+
+diff --git a/tests/ref/fate/targa-conformance-CCM8 b/tests/ref/fate/targa-conformance-CCM8
+new file mode 100644
+index 0000000..3f6be24
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-CCM8
+@@ -0,0 +1 @@
++0, 0, 17408, 0x2bc2e306
+diff --git a/tests/ref/fate/targa-conformance-UCM8 b/tests/ref/fate/targa-conformance-UCM8
+new file mode 100644
+index 0000000..3f6be24
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-UCM8
+@@ -0,0 +1 @@
++0, 0, 17408, 0x2bc2e306
+-- 
+1.7.5.4
+

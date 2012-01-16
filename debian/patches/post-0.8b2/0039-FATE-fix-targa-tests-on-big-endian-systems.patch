@@ -1,0 +1,34 @@
+From e1a7af6f290489812ed47359eaff0edac2f5df95 Mon Sep 17 00:00:00 2001
+From: Justin Ruggles <justin.ruggles@gmail.com>
+Date: Fri, 13 Jan 2012 16:14:48 -0500
+Subject: [PATCH 39/63] FATE: fix targa tests on big-endian systems
+
+---
+ tests/fate/image.mak |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/tests/fate/image.mak b/tests/fate/image.mak
+index 153a4f3..7fdbdc4 100644
+--- a/tests/fate/image.mak
++++ b/tests/fate/image.mak
+@@ -48,13 +48,13 @@ fate-targa: $(FATE_TARGA)
+ 
+ fate-targa-conformance-CBW8:  CMD = framecrc -i $(SAMPLES)/targa-conformance/CBW8.TGA
+ # fate-targa-conformance-CCM8:  CMD = framecrc -i $(SAMPLES)/targa-conformance/CCM8.TGA
+-fate-targa-conformance-CTC16: CMD = framecrc -i $(SAMPLES)/targa-conformance/CTC16.TGA
++fate-targa-conformance-CTC16: CMD = framecrc -i $(SAMPLES)/targa-conformance/CTC16.TGA -pix_fmt rgb555le
+ fate-targa-conformance-CTC24: CMD = framecrc -i $(SAMPLES)/targa-conformance/CTC24.TGA
+-fate-targa-conformance-CTC32: CMD = framecrc -i $(SAMPLES)/targa-conformance/CTC32.TGA
++fate-targa-conformance-CTC32: CMD = framecrc -i $(SAMPLES)/targa-conformance/CTC32.TGA -pix_fmt bgra
+ fate-targa-conformance-UBW8:  CMD = framecrc -i $(SAMPLES)/targa-conformance/UBW8.TGA
+ # fate-targa-conformance-UCM8:  CMD = framecrc -i $(SAMPLES)/targa-conformance/UCM8.TGA
+-fate-targa-conformance-UTC16: CMD = framecrc -i $(SAMPLES)/targa-conformance/UTC16.TGA
++fate-targa-conformance-UTC16: CMD = framecrc -i $(SAMPLES)/targa-conformance/UTC16.TGA -pix_fmt rgb555le
+ fate-targa-conformance-UTC24: CMD = framecrc -i $(SAMPLES)/targa-conformance/UTC24.TGA
+-fate-targa-conformance-UTC32: CMD = framecrc -i $(SAMPLES)/targa-conformance/UTC32.TGA
++fate-targa-conformance-UTC32: CMD = framecrc -i $(SAMPLES)/targa-conformance/UTC32.TGA -pix_fmt bgra
+ 
+ fate-targa-top-to-bottom: CMD = framecrc -i $(SAMPLES)/targa/lena-top-to-bottom.tga
+-- 
+1.7.5.4
+

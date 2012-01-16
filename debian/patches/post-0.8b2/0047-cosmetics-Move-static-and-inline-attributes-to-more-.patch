@@ -1,0 +1,163 @@
+From e44c11e9fa505da3c54738ae2d21123338a28ca6 Mon Sep 17 00:00:00 2001
+From: Diego Biurrun <diego@biurrun.de>
+Date: Fri, 13 Jan 2012 16:35:54 +0100
+Subject: [PATCH 47/63] cosmetics: Move static and inline attributes to more
+ standard places.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Fixes several "‘static’ is not at beginning of declaration" warnings.
+---
+ libavcodec/g722.c            |    2 +-
+ libavcodec/h264_loopfilter.c |   51 +++++++++++++++++++++++++++++++++++------
+ libavfilter/vf_fade.c        |    2 +-
+ libswscale/utils.c           |    2 +-
+ 4 files changed, 46 insertions(+), 11 deletions(-)
+
+diff --git a/libavcodec/g722.c b/libavcodec/g722.c
+index 7b9ff72..a911bc7 100644
+--- a/libavcodec/g722.c
++++ b/libavcodec/g722.c
+@@ -129,7 +129,7 @@ static void do_adaptive_prediction(struct G722Band *band, const int cur_diff)
+     band->prev_qtzd_reconst = cur_qtzd_reconst;
+ }
+ 
+-static int inline linear_scale_factor(const int log_factor)
++static inline int linear_scale_factor(const int log_factor)
+ {
+     const int wd1 = inv_log2_table[(log_factor >> 6) & 31];
+     const int shift = log_factor >> 11;
+diff --git a/libavcodec/h264_loopfilter.c b/libavcodec/h264_loopfilter.c
+index 64b07e9..be750ca 100644
+--- a/libavcodec/h264_loopfilter.c
++++ b/libavcodec/h264_loopfilter.c
+@@ -101,7 +101,11 @@ static const uint8_t tc0_table[52*3][4] = {
+ };
+ 
+ /* intra: 0 if this loopfilter call is guaranteed to be inter (bS < 4), 1 if it might be intra (bS == 4) */
+-static void av_always_inline filter_mb_edgev( uint8_t *pix, int stride, const int16_t bS[4], unsigned int qp, int a, int b, H264Context *h, int intra ) {
++static av_always_inline void filter_mb_edgev(uint8_t *pix, int stride,
++                                             const int16_t bS[4],
++                                             unsigned int qp, int a, int b,
++                                             H264Context *h, int intra)
++{
+     const unsigned int index_a = qp + a;
+     const int alpha = alpha_table[index_a];
+     const int beta  = beta_table[qp + b];
+@@ -118,7 +122,12 @@ static void av_always_inline filter_mb_edgev( uint8_t *pix, int stride, const in
+         h->h264dsp.h264_h_loop_filter_luma_intra(pix, stride, alpha, beta);
+     }
+ }
+-static void av_always_inline filter_mb_edgecv( uint8_t *pix, int stride, const int16_t bS[4], unsigned int qp, int a, int b, H264Context *h, int intra ) {
++
++static av_always_inline void filter_mb_edgecv(uint8_t *pix, int stride,
++                                              const int16_t bS[4],
++                                              unsigned int qp, int a, int b,
++                                              H264Context *h, int intra)
++{
+     const unsigned int index_a = qp + a;
+     const int alpha = alpha_table[index_a];
+     const int beta  = beta_table[qp + b];
+@@ -136,7 +145,12 @@ static void av_always_inline filter_mb_edgecv( uint8_t *pix, int stride, const i
+     }
+ }
+ 
+-static void av_always_inline filter_mb_mbaff_edgev( H264Context *h, uint8_t *pix, int stride, const int16_t bS[7], int bsi, int qp, int a, int b, int intra ) {
++static av_always_inline void filter_mb_mbaff_edgev(H264Context *h, uint8_t *pix,
++                                                   int stride,
++                                                   const int16_t bS[7], int bsi,
++                                                   int qp, int a, int b,
++                                                   int intra)
++{
+     const unsigned int index_a = qp + a;
+     const int alpha = alpha_table[index_a];
+     const int beta  = beta_table[qp + b];
+@@ -153,7 +167,13 @@ static void av_always_inline filter_mb_mbaff_edgev( H264Context *h, uint8_t *pix
+         h->h264dsp.h264_h_loop_filter_luma_mbaff_intra(pix, stride, alpha, beta);
+     }
+ }
+-static void av_always_inline filter_mb_mbaff_edgecv( H264Context *h, uint8_t *pix, int stride, const int16_t bS[7], int bsi, int qp, int a, int b, int intra ) {
++
++static av_always_inline void filter_mb_mbaff_edgecv(H264Context *h,
++                                                    uint8_t *pix, int stride,
++                                                    const int16_t bS[7],
++                                                    int bsi, int qp, int a,
++                                                    int b, int intra)
++{
+     const unsigned int index_a = qp + a;
+     const int alpha = alpha_table[index_a];
+     const int beta  = beta_table[qp + b];
+@@ -171,7 +191,11 @@ static void av_always_inline filter_mb_mbaff_edgecv( H264Context *h, uint8_t *pi
+     }
+ }
+ 
+-static void av_always_inline filter_mb_edgeh( uint8_t *pix, int stride, const int16_t bS[4], unsigned int qp, int a, int b, H264Context *h, int intra ) {
++static av_always_inline void filter_mb_edgeh(uint8_t *pix, int stride,
++                                             const int16_t bS[4],
++                                             unsigned int qp, int a, int b,
++                                             H264Context *h, int intra)
++{
+     const unsigned int index_a = qp + a;
+     const int alpha = alpha_table[index_a];
+     const int beta  = beta_table[qp + b];
+@@ -189,7 +213,11 @@ static void av_always_inline filter_mb_edgeh( uint8_t *pix, int stride, const in
+     }
+ }
+ 
+-static void av_always_inline filter_mb_edgech( uint8_t *pix, int stride, const int16_t bS[4], unsigned int qp, int a, int b, H264Context *h, int intra ) {
++static av_always_inline void filter_mb_edgech(uint8_t *pix, int stride,
++                                              const int16_t bS[4],
++                                              unsigned int qp, int a, int b,
++                                              H264Context *h, int intra)
++{
+     const unsigned int index_a = qp + a;
+     const int alpha = alpha_table[index_a];
+     const int beta  = beta_table[qp + b];
+@@ -207,8 +235,15 @@ static void av_always_inline filter_mb_edgech( uint8_t *pix, int stride, const i
+     }
+ }
+ 
+-static void av_always_inline h264_filter_mb_fast_internal( H264Context *h, int mb_x, int mb_y, uint8_t *img_y, uint8_t *img_cb, uint8_t *img_cr,
+-                                                           unsigned int linesize, unsigned int uvlinesize, int pixel_shift) {
++static av_always_inline void h264_filter_mb_fast_internal(H264Context *h,
++                                                          int mb_x, int mb_y,
++                                                          uint8_t *img_y,
++                                                          uint8_t *img_cb,
++                                                          uint8_t *img_cr,
++                                                          unsigned int linesize,
++                                                          unsigned int uvlinesize,
++                                                          int pixel_shift)
++{
+     MpegEncContext * const s = &h->s;
+     int chroma = !(CONFIG_GRAY && (s->flags&CODEC_FLAG_GRAY));
+     int chroma444 = CHROMA444;
+diff --git a/libavfilter/vf_fade.c b/libavfilter/vf_fade.c
+index 0c8668c..9f748b8 100644
+--- a/libavfilter/vf_fade.c
++++ b/libavfilter/vf_fade.c
+@@ -69,7 +69,7 @@ static av_cold int init(AVFilterContext *ctx, const char *args, void *opaque)
+ 
+ static int query_formats(AVFilterContext *ctx)
+ {
+-    const static enum PixelFormat pix_fmts[] = {
++    static const enum PixelFormat pix_fmts[] = {
+         PIX_FMT_YUV444P,  PIX_FMT_YUV422P,  PIX_FMT_YUV420P,
+         PIX_FMT_YUV411P,  PIX_FMT_YUV410P,
+         PIX_FMT_YUVJ444P, PIX_FMT_YUVJ422P, PIX_FMT_YUVJ420P,
+diff --git a/libswscale/utils.c b/libswscale/utils.c
+index d252f2e..b49f924 100644
+--- a/libswscale/utils.c
++++ b/libswscale/utils.c
+@@ -69,7 +69,7 @@ typedef struct FormatEntry {
+     int is_supported_in, is_supported_out;
+ } FormatEntry;
+ 
+-const static FormatEntry format_entries[PIX_FMT_NB] = {
++static const FormatEntry format_entries[PIX_FMT_NB] = {
+     [PIX_FMT_YUV420P]     = { 1 , 1 },
+     [PIX_FMT_YUYV422]     = { 1 , 1 },
+     [PIX_FMT_RGB24]       = { 1 , 1 },
+-- 
+1.7.5.4
+
