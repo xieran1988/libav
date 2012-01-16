@@ -74,7 +74,8 @@ Description: Multimedia player, server, encoder and transcoder
  DV...).
 
 Package: ffmpeg
-Section: video
+Section: oldlibs
+Priority: extra
 Architecture: all
 Depends:
  libav-tools,
@@ -88,7 +89,7 @@ Description: Multimedia player, server, encoder and transcoder (transitional pac
  removed when no other packages depend on this package.
 
 Package: ffmpeg-dbg
-Section: debug
+Section: oldlibs
 Priority: extra
 Architecture: any
 Depends:
@@ -144,7 +145,8 @@ Description: Patched Libav sources
  the "extra" variants of libav.
 
 Package: ffmpeg-doc
-Section: doc
+Section: oldlibs
+Priority: extra
 Architecture: all
 Depends:
  libav-doc,
