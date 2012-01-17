@@ -1,7 +1,7 @@
 From 64d779f2f7607070a87b0a70edeba5e51834ce85 Mon Sep 17 00:00:00 2001
 From: Diego Biurrun <diego@biurrun.de>
 Date: Thu, 12 Jan 2012 21:11:27 +0100
-Subject: [PATCH 30/63] cabac: Remove ff_h264_lps_state array.
+Subject: [PATCH 30/67] cabac: Remove ff_h264_lps_state array.
 
 It was only ever used in the cabac test program, but never initialized.
 ---

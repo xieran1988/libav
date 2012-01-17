@@ -1,7 +1,7 @@
 From e5c708151e3dbf09c9564051c432b1b83a1674d0 Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Thu, 12 Jan 2012 09:36:11 +0100
-Subject: [PATCH 22/63] lavf: undeprecate read_seek().
+Subject: [PATCH 22/67] lavf: undeprecate read_seek().
 
 The "new seeking API" was never finished and nobody is working on it.
 ---

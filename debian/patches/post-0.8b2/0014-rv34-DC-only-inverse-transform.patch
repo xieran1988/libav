@@ -1,7 +1,7 @@
 From 3faa303a47e0c3b59a53988e0f76018930c6cb1a Mon Sep 17 00:00:00 2001
 From: Christophe GISQUET <christophe.gisquet@gmail.com>
 Date: Sun, 1 Jan 2012 18:33:22 +0100
-Subject: [PATCH 14/63] rv34: DC-only inverse transform
+Subject: [PATCH 14/67] rv34: DC-only inverse transform
 
 When decoding coefficients, detect whether the block is DC-only, and take
 advantage of this knowledge to perform DC-only inverse transform.

@@ -1,7 +1,7 @@
 From b5c2b5af6a2f5baade1d0688703b3e46fa2f6cf2 Mon Sep 17 00:00:00 2001
 From: Stefano Sabatini <stefasab@gmail.com>
 Date: Fri, 13 Jan 2012 16:23:55 +0100
-Subject: [PATCH 46/63] configure: provide libavfilter/version.h header to
+Subject: [PATCH 46/67] configure: provide libavfilter/version.h header to
  get_version()
 
 Fix libavfilter library version numbers generation, which was broken in

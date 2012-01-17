@@ -1,7 +1,7 @@
 From 57facb73ab940b1117c22ef9b70a6e5ec237112d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Martin=20Storsj=C3=B6?= <martin@martin.st>
 Date: Fri, 13 Jan 2012 23:41:16 +0200
-Subject: [PATCH 44/63] libx264: Don't leave max_b_frames as -1 if the user
+Subject: [PATCH 44/67] libx264: Don't leave max_b_frames as -1 if the user
  didn't set it
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

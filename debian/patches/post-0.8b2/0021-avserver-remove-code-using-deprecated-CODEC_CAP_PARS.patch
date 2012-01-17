@@ -1,7 +1,7 @@
 From e01a29a461ec15aad745fa89e510a92918d872aa Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Thu, 12 Jan 2012 09:33:16 +0100
-Subject: [PATCH 21/63] avserver: remove code using deprecated
+Subject: [PATCH 21/67] avserver: remove code using deprecated
  CODEC_CAP_PARSE_ONLY.
 
 ---

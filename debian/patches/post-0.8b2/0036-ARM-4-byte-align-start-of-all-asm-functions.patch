@@ -1,7 +1,7 @@
 From 5c5e1ea3cdccc5af0b2d3de15a9c3739c30ec88c Mon Sep 17 00:00:00 2001
 From: Mans Rullgard <mans@mansr.com>
 Date: Fri, 13 Jan 2012 18:56:36 +0000
-Subject: [PATCH 36/63] ARM: 4-byte align start of all asm functions
+Subject: [PATCH 36/67] ARM: 4-byte align start of all asm functions
 
 Due to apprent bugs in the GNU assembler and/or linker, relocations
 can be incorrectly processed if the alignment of a Thumb instruction

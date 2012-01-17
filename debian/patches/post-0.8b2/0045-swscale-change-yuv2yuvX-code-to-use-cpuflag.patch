@@ -1,7 +1,7 @@
 From 3c172a41065dd3fe1d11af9f0eb16d789d08daf2 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 13 Jan 2012 11:21:15 -0800
-Subject: [PATCH 45/63] swscale: change yuv2yuvX code to use cpuflag().
+Subject: [PATCH 45/67] swscale: change yuv2yuvX code to use cpuflag().
 
 ---
  libswscale/x86/output.asm |  117 ++++++++++++++++++++++-----------------------

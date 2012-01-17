@@ -1,7 +1,7 @@
 From 05f95443cac79eba959d7a1a919d77e8f401ea6f Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Sun, 8 Jan 2012 17:37:16 -0500
-Subject: [PATCH 59/63] pcmenc: use AVCodec.encode2()
+Subject: [PATCH 59/67] pcmenc: use AVCodec.encode2()
 
 ---
  libavcodec/pcm.c |   27 +++++++++++++++++----------

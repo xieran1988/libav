@@ -1,7 +1,7 @@
 From 55b9ef18e4a139fc24a3b695cb3c176f3ced09b8 Mon Sep 17 00:00:00 2001
 From: Diego Biurrun <diego@biurrun.de>
 Date: Thu, 12 Jan 2012 21:56:02 +0100
-Subject: [PATCH 32/63] cabac: split cabac.h into declarations and function
+Subject: [PATCH 32/67] cabac: split cabac.h into declarations and function
  definitions
 
 This fixes standalone compilation of some decoders with --disable-optimizations.

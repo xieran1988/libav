@@ -1,0 +1,698 @@
+From 9ba9c3402499d90e54f8aa111b62c278206d11af Mon Sep 17 00:00:00 2001
+From: Christophe GISQUET <christophe.gisquet@gmail.com>
+Date: Tue, 3 Jan 2012 20:38:29 +0100
+Subject: [PATCH 64/67] rv34: 1-pass inter MB reconstruction
+
+Implement 1-pass inverse transform and reconstruction for inter blocks.
+---
+ libavcodec/arm/rv34dsp_init_neon.c |    8 +-
+ libavcodec/arm/rv34dsp_neon.S      |   59 ++--------
+ libavcodec/rv34.c                  |  227 +++++++++++++++---------------------
+ libavcodec/rv34dsp.c               |   62 +++--------
+ libavcodec/rv34dsp.h               |    7 +-
+ libavcodec/x86/rv34dsp.asm         |    4 +-
+ libavcodec/x86/rv34dsp_init.c      |    3 +-
+ 7 files changed, 130 insertions(+), 240 deletions(-)
+
+diff --git a/libavcodec/arm/rv34dsp_init_neon.c b/libavcodec/arm/rv34dsp_init_neon.c
+index 16bda46..3984d43 100644
+--- a/libavcodec/arm/rv34dsp_init_neon.c
++++ b/libavcodec/arm/rv34dsp_init_neon.c
+@@ -23,16 +23,12 @@
+ #include "libavcodec/avcodec.h"
+ #include "libavcodec/rv34dsp.h"
+ 
+-void ff_rv34_inv_transform_neon(DCTELEM *block);
+ void ff_rv34_inv_transform_noround_neon(DCTELEM *block);
+ 
+-void ff_rv34_inv_transform_dc_neon(DCTELEM *block);
+ void ff_rv34_inv_transform_noround_dc_neon(DCTELEM *block);
+ 
+ void ff_rv34dsp_init_neon(RV34DSPContext *c, DSPContext* dsp)
+ {
+-    c->rv34_inv_transform_tab[0]    = ff_rv34_inv_transform_neon;
+-    c->rv34_inv_transform_tab[1]    = ff_rv34_inv_transform_noround_neon;
+-    c->rv34_inv_transform_dc_tab[0] = ff_rv34_inv_transform_dc_neon;
+-    c->rv34_inv_transform_dc_tab[1] = ff_rv34_inv_transform_noround_dc_neon;
++    c->rv34_inv_transform    = ff_rv34_inv_transform_noround_neon;
++    c->rv34_inv_transform_dc = ff_rv34_inv_transform_noround_dc_neon;
+ }
+diff --git a/libavcodec/arm/rv34dsp_neon.S b/libavcodec/arm/rv34dsp_neon.S
+index 1e8d4b4..a156412 100644
+--- a/libavcodec/arm/rv34dsp_neon.S
++++ b/libavcodec/arm/rv34dsp_neon.S
+@@ -21,11 +21,7 @@
+ #include "asm.S"
+ 
+ .macro rv34_inv_transform
+-        mov             r1,  #16
+-        vld1.16         {d28}, [r0,:64], r1     @ block[i+8*0]
+-        vld1.16         {d29}, [r0,:64], r1     @ block[i+8*1]
+-        vld1.16         {d30}, [r0,:64], r1     @ block[i+8*2]
+-        vld1.16         {d31}, [r0,:64], r1     @ block[i+8*3]
++        vld1.16         {q14-q15}, [r0,:128]
+         vmov.s16        d0,  #13
+         vshll.s16       q12, d29, #3
+         vshll.s16       q13, d29, #4
+@@ -35,12 +31,12 @@
+         vmlal.s16       q10, d30, d0
+         vmull.s16       q11, d28, d0
+         vmlsl.s16       q11, d30, d0
+-        vsubw.s16       q12, q12, d29   @ z2 = block[i+8*1]*7
+-        vaddw.s16       q13, q13, d29   @ z3 = block[i+8*1]*17
++        vsubw.s16       q12, q12, d29   @ z2 = block[i+4*1]*7
++        vaddw.s16       q13, q13, d29   @ z3 = block[i+4*1]*17
+         vsubw.s16       q9,  q9,  d31
+         vaddw.s16       q1,  q1,  d31
+-        vadd.s32        q13, q13, q9    @ z3 = 17*block[i+8*1] +  7*block[i+8*3]
+-        vsub.s32        q12, q12, q1    @ z2 = 7*block[i+8*1]  - 17*block[i+8*3]
++        vadd.s32        q13, q13, q9    @ z3 = 17*block[i+4*1] +  7*block[i+4*3]
++        vsub.s32        q12, q12, q1    @ z2 = 7*block[i+4*1]  - 17*block[i+4*3]
+         vadd.s32        q1,  q10, q13   @ z0 + z3
+         vadd.s32        q2,  q11, q12   @ z1 + z2
+         vsub.s32        q8,  q10, q13   @ z0 - z3
+@@ -70,24 +66,8 @@
+         vsub.s32        q15, q14, q9    @ z0 - z3
+ .endm
+ 
+-/* void ff_rv34_inv_transform_neon(DCTELEM *block); */
+-function ff_rv34_inv_transform_neon, export=1
+-        mov             r2,  r0
+-        rv34_inv_transform
+-        vrshrn.s32      d1,  q2,  #10   @ (z1 + z2) >> 10
+-        vrshrn.s32      d0,  q1,  #10   @ (z0 + z3) >> 10
+-        vrshrn.s32      d2,  q3,  #10   @ (z1 - z2) >> 10
+-        vrshrn.s32      d3,  q15, #10   @ (z0 - z3) >> 10
+-        vst4.16         {d0[0], d1[0], d2[0], d3[0]}, [r2,:64], r1
+-        vst4.16         {d0[1], d1[1], d2[1], d3[1]}, [r2,:64], r1
+-        vst4.16         {d0[2], d1[2], d2[2], d3[2]}, [r2,:64], r1
+-        vst4.16         {d0[3], d1[3], d2[3], d3[3]}, [r2,:64], r1
+-        bx              lr
+-endfunc
+-
+ /* void rv34_inv_transform_noround_neon(DCTELEM *block); */
+ function ff_rv34_inv_transform_noround_neon, export=1
+-        mov             r2,  r0
+         rv34_inv_transform
+         vshl.s32        q11, q2,  #1
+         vshl.s32        q10, q1,  #1
+@@ -101,38 +81,23 @@ function ff_rv34_inv_transform_noround_neon, export=1
+         vshrn.s32       d1,  q11, #11   @ (z1 + z2)*3 >> 11
+         vshrn.s32       d2,  q12, #11   @ (z1 - z2)*3 >> 11
+         vshrn.s32       d3,  q13, #11   @ (z0 - z3)*3 >> 11
+-        vst4.16         {d0[0], d1[0], d2[0], d3[0]}, [r2,:64], r1
+-        vst4.16         {d0[1], d1[1], d2[1], d3[1]}, [r2,:64], r1
+-        vst4.16         {d0[2], d1[2], d2[2], d3[2]}, [r2,:64], r1
+-        vst4.16         {d0[3], d1[3], d2[3], d3[3]}, [r2,:64], r1
++        vst4.16         {d0[0], d1[0], d2[0], d3[0]}, [r0,:64]!
++        vst4.16         {d0[1], d1[1], d2[1], d3[1]}, [r0,:64]!
++        vst4.16         {d0[2], d1[2], d2[2], d3[2]}, [r0,:64]!
++        vst4.16         {d0[3], d1[3], d2[3], d3[3]}, [r0,:64]!
+         bx              lr
+ endfunc
+ 
+-/* void rv34_inv_transform_dc_c(DCTELEM *block) */
+-function ff_rv34_inv_transform_dc_neon, export=1
+-        vld1.16         {d28[]}, [r0,:16]       @ block[0]
+-        vmov.i16        d4,  #169
+-        mov             r1,  #16
+-        vmull.s16       q3,  d28, d4
+-        vrshrn.s32      d0,  q3,  #10
+-        vst1.16         {d0}, [r0,:64], r1
+-        vst1.16         {d0}, [r0,:64], r1
+-        vst1.16         {d0}, [r0,:64], r1
+-        vst1.16         {d0}, [r0,:64], r1
+-        bx              lr
+-endfunc
+ 
+ /* void rv34_inv_transform_dc_noround_c(DCTELEM *block) */
+ function ff_rv34_inv_transform_noround_dc_neon, export=1
+         vld1.16         {d28[]}, [r0,:16]       @ block[0]
+         vmov.i16        d4,  #251
+         vorr.s16        d4,  #256               @ 13^2 * 3
+-        mov             r1,  #16
+         vmull.s16       q3,  d28, d4
+         vshrn.s32       d0,  q3,  #11
+-        vst1.64         {d0}, [r0,:64], r1
+-        vst1.64         {d0}, [r0,:64], r1
+-        vst1.64         {d0}, [r0,:64], r1
+-        vst1.64         {d0}, [r0,:64], r1
++        vmov.i16        d1,  d0
++        vst1.64         {q0}, [r0,:128]!
++        vst1.64         {q0}, [r0,:128]!
+         bx              lr
+ endfunc
+diff --git a/libavcodec/rv34.c b/libavcodec/rv34.c
+index 478c93a..e6af079 100644
+--- a/libavcodec/rv34.c
++++ b/libavcodec/rv34.c
+@@ -240,15 +240,15 @@ static inline void decode_subblock(DCTELEM *dst, int code, const int is_block2,
+ {
+     int flags = modulo_three_table[code];
+ 
+-    decode_coeff(    dst+0, (flags >> 6)    , 3, gb, vlc, q);
++    decode_coeff(    dst+0*4+0, (flags >> 6)    , 3, gb, vlc, q);
+     if(is_block2){
+-        decode_coeff(dst+8, (flags >> 4) & 3, 2, gb, vlc, q);
+-        decode_coeff(dst+1, (flags >> 2) & 3, 2, gb, vlc, q);
++        decode_coeff(dst+1*4+0, (flags >> 4) & 3, 2, gb, vlc, q);
++        decode_coeff(dst+0*4+1, (flags >> 2) & 3, 2, gb, vlc, q);
+     }else{
+-        decode_coeff(dst+1, (flags >> 4) & 3, 2, gb, vlc, q);
+-        decode_coeff(dst+8, (flags >> 2) & 3, 2, gb, vlc, q);
++        decode_coeff(dst+0*4+1, (flags >> 4) & 3, 2, gb, vlc, q);
++        decode_coeff(dst+1*4+0, (flags >> 2) & 3, 2, gb, vlc, q);
+     }
+-    decode_coeff(    dst+9, (flags >> 0) & 3, 2, gb, vlc, q);
++    decode_coeff(    dst+1*4+1, (flags >> 0) & 3, 2, gb, vlc, q);
+ }
+ 
+ /**
+@@ -265,15 +265,15 @@ static inline void decode_subblock3(DCTELEM *dst, int code, const int is_block2,
+ {
+     int flags = modulo_three_table[code];
+ 
+-    decode_coeff(    dst+0, (flags >> 6)    , 3, gb, vlc, q_dc);
++    decode_coeff(    dst+0*4+0, (flags >> 6)    , 3, gb, vlc, q_dc);
+     if(is_block2){
+-        decode_coeff(dst+8, (flags >> 4) & 3, 2, gb, vlc, q_ac1);
+-        decode_coeff(dst+1, (flags >> 2) & 3, 2, gb, vlc, q_ac1);
++        decode_coeff(dst+1*4+0, (flags >> 4) & 3, 2, gb, vlc, q_ac1);
++        decode_coeff(dst+0*4+1, (flags >> 2) & 3, 2, gb, vlc, q_ac1);
+     }else{
+-        decode_coeff(dst+1, (flags >> 4) & 3, 2, gb, vlc, q_ac1);
+-        decode_coeff(dst+8, (flags >> 2) & 3, 2, gb, vlc, q_ac1);
++        decode_coeff(dst+0*4+1, (flags >> 4) & 3, 2, gb, vlc, q_ac1);
++        decode_coeff(dst+1*4+0, (flags >> 2) & 3, 2, gb, vlc, q_ac1);
+     }
+-    decode_coeff(    dst+9, (flags >> 0) & 3, 2, gb, vlc, q_ac2);
++    decode_coeff(    dst+1*4+1, (flags >> 0) & 3, 2, gb, vlc, q_ac2);
+ }
+ 
+ /**
+@@ -308,15 +308,15 @@ static inline int rv34_decode_block(DCTELEM *dst, GetBitContext *gb, RV34VLC *rv
+ 
+     if(pattern & 4){
+         code = get_vlc2(gb, rvlc->second_pattern[sc].table, 9, 2);
+-        decode_subblock(dst + 2, code, 0, gb, &rvlc->coefficient, q_ac2);
++        decode_subblock(dst + 4*0+2, code, 0, gb, &rvlc->coefficient, q_ac2);
+     }
+     if(pattern & 2){ // Looks like coefficients 1 and 2 are swapped for this block
+         code = get_vlc2(gb, rvlc->second_pattern[sc].table, 9, 2);
+-        decode_subblock(dst + 8*2, code, 1, gb, &rvlc->coefficient, q_ac2);
++        decode_subblock(dst + 4*2+0, code, 1, gb, &rvlc->coefficient, q_ac2);
+     }
+     if(pattern & 1){
+         code = get_vlc2(gb, rvlc->third_pattern[sc].table, 9, 2);
+-        decode_subblock(dst + 8*2+2, code, 0, gb, &rvlc->coefficient, q_ac2);
++        decode_subblock(dst + 4*2+2, code, 0, gb, &rvlc->coefficient, q_ac2);
+     }
+     return has_ac || pattern;
+ }
+@@ -998,11 +998,26 @@ static inline int adjust_pred16(int itype, int up, int left)
+     return itype;
+ }
+ 
++static inline void rv34_process_block(RV34DecContext *r,
++                                      uint8_t *pdst, int stride,
++                                      int fc, int sc, int q_dc, int q_ac)
++{
++    MpegEncContext *s = &r->s;
++    DCTELEM *ptr = s->block[0];
++    int has_ac = rv34_decode_block(ptr, &s->gb, r->cur_vlcs,
++                                   fc, sc, q_dc, q_ac, q_ac);
++    if(has_ac){
++        r->rdsp.rv34_idct_add(pdst, stride, ptr);
++    }else{
++        r->rdsp.rv34_idct_dc_add(pdst, stride, ptr[0]);
++        ptr[0] = 0;
++    }
++}
++
+ static void rv34_output_i16x16(RV34DecContext *r, int8_t *intra_types, int cbp)
+ {
+-    LOCAL_ALIGNED_16(DCTELEM, block16, [64]);
++    LOCAL_ALIGNED_16(DCTELEM, block16, [16]);
+     MpegEncContext *s    = &r->s;
+-    DSPContext     *dsp  = &s->dsp;
+     GetBitContext  *gb   = &s->gb;
+     int             q_dc = rv34_qscale_tab[ r->luma_dc_quant_i[s->qscale] ],
+                     q_ac = rv34_qscale_tab[s->qscale];
+@@ -1011,7 +1026,7 @@ static void rv34_output_i16x16(RV34DecContext *r, int8_t *intra_types, int cbp)
+     int       avail[6*8] = {0};
+     int i, j, itype, has_ac;
+ 
+-    memset(block16, 0, 64 * sizeof(*block16));
++    memset(block16, 0, 16 * sizeof(*block16));
+ 
+     // Set neighbour information.
+     if(r->avail_cache[1])
+@@ -1029,18 +1044,17 @@ static void rv34_output_i16x16(RV34DecContext *r, int8_t *intra_types, int cbp)
+ 
+     has_ac = rv34_decode_block(block16, gb, r->cur_vlcs, 3, 0, q_dc, q_dc, q_ac);
+     if(has_ac)
+-        r->rdsp.rv34_inv_transform_tab[1](block16);
++        r->rdsp.rv34_inv_transform(block16);
+     else
+-        r->rdsp.rv34_inv_transform_dc_tab[1](block16);
++        r->rdsp.rv34_inv_transform_dc(block16);
+ 
+     itype = ittrans16[intra_types[0]];
+     itype = adjust_pred16(itype, r->avail_cache[6-4], r->avail_cache[6-1]);
+     r->h.pred16x16[itype](dst, s->linesize);
+ 
+-    dsp->clear_block(ptr);
+     for(j = 0; j < 4; j++){
+         for(i = 0; i < 4; i++, cbp >>= 1){
+-            int dc = block16[i + j*8];
++            int dc = block16[i + j*4];
+ 
+             if(cbp & 1){
+                 has_ac = rv34_decode_block(ptr, gb, r->cur_vlcs, r->luma_vlc, 0, q_ac, q_ac, q_ac);
+@@ -1050,7 +1064,6 @@ static void rv34_output_i16x16(RV34DecContext *r, int8_t *intra_types, int cbp)
+             if(has_ac){
+                 ptr[0] = dc;
+                 r->rdsp.rv34_idct_add(dst+4*i, s->linesize, ptr);
+-                dsp->clear_block(ptr);
+             }else
+                 r->rdsp.rv34_idct_dc_add(dst+4*i, s->linesize, dc);
+         }
+@@ -1073,14 +1086,8 @@ static void rv34_output_i16x16(RV34DecContext *r, int8_t *intra_types, int cbp)
+             if(!(cbp & 1)) continue;
+             pdst   = dst + (i&1)*4 + (i&2)*2*s->uvlinesize;
+ 
+-            has_ac = rv34_decode_block(ptr, gb, r->cur_vlcs, r->chroma_vlc, 1, q_dc, q_ac, q_ac);
+-            if(has_ac){
+-                r->rdsp.rv34_idct_add(pdst, s->uvlinesize, ptr);
+-                dsp->clear_block(ptr);
+-            }else{
+-                r->rdsp.rv34_idct_dc_add(pdst, s->uvlinesize, ptr[0]);
+-                ptr[0] = 0;
+-            }
++            rv34_process_block(r, pdst, s->uvlinesize,
++                               r->chroma_vlc, 1, q_dc, q_ac);
+         }
+     }
+ }
+@@ -1088,14 +1095,10 @@ static void rv34_output_i16x16(RV34DecContext *r, int8_t *intra_types, int cbp)
+ static void rv34_output_intra(RV34DecContext *r, int8_t *intra_types, int cbp)
+ {
+     MpegEncContext *s   = &r->s;
+-    DSPContext     *dsp = &s->dsp;
+-    GetBitContext  *gb  = &s->gb;
+-    DCTELEM        *ptr = s->block[0];
+     uint8_t        *dst = s->dest[0];
+     int      avail[6*8] = {0};
+     int i, j, k;
+-    int idx, has_ac;
+-    int q_ac, q_dc;
++    int idx, q_ac, q_dc;
+ 
+     // Set neighbour information.
+     if(r->avail_cache[1])
+@@ -1119,14 +1122,8 @@ static void rv34_output_intra(RV34DecContext *r, int8_t *intra_types, int cbp)
+             avail[idx] = 1;
+             if(!(cbp & 1)) continue;
+ 
+-            has_ac = rv34_decode_block(ptr, gb, r->cur_vlcs, r->luma_vlc, 0, q_ac, q_ac, q_ac);
+-            if(has_ac){
+-                r->rdsp.rv34_idct_add(dst, s->linesize, ptr);
+-                dsp->clear_block(ptr);
+-            }else{
+-                r->rdsp.rv34_idct_dc_add(dst, s->linesize, ptr[0]);
+-                ptr[0] = 0;
+-            }
++            rv34_process_block(r, dst, s->linesize,
++                               r->luma_vlc, 0, q_ac, q_ac);
+         }
+         dst += s->linesize * 4 - 4*4;
+         intra_types += r->intra_types_stride;
+@@ -1150,15 +1147,8 @@ static void rv34_output_intra(RV34DecContext *r, int8_t *intra_types, int cbp)
+ 
+                 if(!(cbp&1)) continue;
+ 
+-                has_ac = rv34_decode_block(ptr, gb, r->cur_vlcs, r->chroma_vlc, 1, q_dc, q_ac, q_ac);
+-                if(has_ac){
+-                    r->rdsp.rv34_idct_add(dst + 4*i, s->uvlinesize, ptr);
+-                    dsp->clear_block(ptr);
+-                }
+-                else {
+-                    r->rdsp.rv34_idct_dc_add(dst + 4*i, s->uvlinesize, ptr[0]);
+-                    ptr[0] = 0;
+-                }
++                rv34_process_block(r, dst + 4*i, s->uvlinesize,
++                                   r->chroma_vlc, 1, q_dc, q_ac);
+             }
+ 
+             dst += 4*s->uvlinesize;
+@@ -1166,33 +1156,6 @@ static void rv34_output_intra(RV34DecContext *r, int8_t *intra_types, int cbp)
+     }
+ }
+ 
+-/**
+- * mask for retrieving all bits in coded block pattern
+- * corresponding to one 8x8 block
+- */
+-#define LUMA_CBP_BLOCK_MASK 0x33
+-
+-#define U_CBP_MASK 0x0F0000
+-#define V_CBP_MASK 0xF00000
+-
+-/** @} */ // recons group
+-
+-
+-static void rv34_apply_differences(RV34DecContext *r, int cbp)
+-{
+-    static const int shifts[4] = { 0, 2, 8, 10 };
+-    MpegEncContext *s = &r->s;
+-    int i;
+-
+-    for(i = 0; i < 4; i++)
+-        if((cbp & (LUMA_CBP_BLOCK_MASK << shifts[i])) || r->block_type == RV34_MB_P_MIX16x16)
+-            s->dsp.add_pixels_clamped(s->block[i], s->dest[0] + (i & 1)*8 + (i&2)*4*s->linesize, s->linesize);
+-    if(cbp & U_CBP_MASK)
+-        s->dsp.add_pixels_clamped(s->block[4], s->dest[1], s->uvlinesize);
+-    if(cbp & V_CBP_MASK)
+-        s->dsp.add_pixels_clamped(s->block[5], s->dest[2], s->uvlinesize);
+-}
+-
+ static int is_mv_diff_gt_3(int16_t (*motion_val)[2], int step)
+ {
+     int d;
+@@ -1237,14 +1200,15 @@ static int rv34_set_deblock_coef(RV34DecContext *r)
+ 
+ static int rv34_decode_inter_macroblock(RV34DecContext *r, int8_t *intra_types)
+ {
+-    MpegEncContext *s = &r->s;
+-    GetBitContext *gb = &s->gb;
++    MpegEncContext *s   = &r->s;
++    GetBitContext  *gb  = &s->gb;
++    uint8_t        *dst = s->dest[0];
++    DCTELEM        *ptr = s->block[0];
++    int          mb_pos = s->mb_x + s->mb_y * s->mb_stride;
+     int cbp, cbp2;
+     int q_dc, q_ac, has_ac;
+-    int i, blknum, blkoff;
+-    LOCAL_ALIGNED_16(DCTELEM, block16, [64]);
++    int i, j;
+     int dist;
+-    int mb_pos = s->mb_x + s->mb_y * s->mb_stride;
+ 
+     // Calculate which neighbours are available. Maybe it's worth optimizing too.
+     memset(r->avail_cache, 0, sizeof(r->avail_cache));
+@@ -1278,64 +1242,66 @@ static int rv34_decode_inter_macroblock(RV34DecContext *r, int8_t *intra_types)
+     }
+ 
+     if(r->is16){
+-        int luma_dc_quant = r->block_type == RV34_MB_P_MIX16x16
+-                          ? r->luma_dc_quant_p[s->qscale]
+-                          : r->luma_dc_quant_i[s->qscale];
+-        q_dc = rv34_qscale_tab[luma_dc_quant];
++        // Only for RV34_MB_P_MIX16x16
++        LOCAL_ALIGNED_16(DCTELEM, block16, [16]);
++        memset(block16, 0, 16 * sizeof(*block16));
++        q_dc = rv34_qscale_tab[ r->luma_dc_quant_p[s->qscale] ];
+         q_ac = rv34_qscale_tab[s->qscale];
+-        s->dsp.clear_block(block16);
+         if (rv34_decode_block(block16, gb, r->cur_vlcs, 3, 0, q_dc, q_dc, q_ac))
+-            r->rdsp.rv34_inv_transform_tab[1](block16);
++            r->rdsp.rv34_inv_transform(block16);
+         else
+-            r->rdsp.rv34_inv_transform_dc_tab[1](block16);
++            r->rdsp.rv34_inv_transform_dc(block16);
+ 
+         q_ac = rv34_qscale_tab[s->qscale];
+-        for(i = 0; i < 16; i++, cbp >>= 1){
+-            DCTELEM *ptr;
+-            blknum = ((i & 2) >> 1) + ((i & 8) >> 2);
+-            blkoff = ((i & 1) << 2) + ((i & 4) << 3);
+-            ptr    = s->block[blknum] + blkoff;
+-            if(cbp & 1)
+-                has_ac = rv34_decode_block(ptr, gb, r->cur_vlcs, r->luma_vlc, 0, q_ac, q_ac, q_ac);
+-            else
+-                has_ac = 0;
+-            ptr[0] = block16[(i & 3) | ((i & 0xC) << 1)];
+-            if(has_ac)
+-                r->rdsp.rv34_inv_transform_tab[0](ptr);
+-            else
+-                r->rdsp.rv34_inv_transform_dc_tab[0](ptr);
++
++        for(j = 0; j < 4; j++){
++            for(i = 0; i < 4; i++, cbp >>= 1){
++                int      dc   = block16[i + j*4];
++
++                if(cbp & 1){
++                    has_ac = rv34_decode_block(ptr, gb, r->cur_vlcs, r->luma_vlc, 0, q_ac, q_ac, q_ac);
++                }else
++                    has_ac = 0;
++
++                if(has_ac){
++                    ptr[0] = dc;
++                    r->rdsp.rv34_idct_add(dst+4*i, s->linesize, ptr);
++                }else
++                    r->rdsp.rv34_idct_dc_add(dst+4*i, s->linesize, dc);
++            }
++
++            dst += 4*s->linesize;
+         }
++
++        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 1);
+     }else{
+         q_ac = rv34_qscale_tab[s->qscale];
+-        for(i = 0; i < 16; i++, cbp >>= 1){
+-            DCTELEM *ptr;
+-            if(!(cbp & 1)) continue;
+-            blknum = ((i & 2) >> 1) + ((i & 8) >> 2);
+-            blkoff = ((i & 1) << 2) + ((i & 4) << 3);
+-            ptr    = s->block[blknum] + blkoff;
+-            has_ac = rv34_decode_block(ptr, gb, r->cur_vlcs, r->luma_vlc, 0, q_ac, q_ac, q_ac);
+-            if(has_ac)
+-                r->rdsp.rv34_inv_transform_tab[0](ptr);
+-            else
+-                r->rdsp.rv34_inv_transform_dc_tab[0](ptr);
++
++        for(j = 0; j < 4; j++){
++            for(i = 0; i < 4; i++, cbp >>= 1){
++                if(!(cbp & 1)) continue;
++
++                rv34_process_block(r, dst + 4*i, s->linesize,
++                                   r->luma_vlc, 0, q_ac, q_ac);
++            }
++            dst += 4*s->linesize;
+         }
+     }
+-    if(r->block_type == RV34_MB_P_MIX16x16)
+-        r->cur_vlcs = choose_vlc_set(r->si.quant, r->si.vlc_set, 1);
++
+     q_dc = rv34_qscale_tab[rv34_chroma_quant[1][s->qscale]];
+     q_ac = rv34_qscale_tab[rv34_chroma_quant[0][s->qscale]];
+-    for(; i < 24; i++, cbp >>= 1){
+-        DCTELEM *ptr;
+-        if(!(cbp & 1)) continue;
+-        blknum = ((i & 4) >> 2) + 4;
+-        blkoff = ((i & 1) << 2) + ((i & 2) << 4);
+-        ptr    = s->block[blknum] + blkoff;
+-        if (rv34_decode_block(ptr, gb, r->cur_vlcs, r->chroma_vlc, 1, q_dc, q_ac, q_ac))
+-            r->rdsp.rv34_inv_transform_tab[0](ptr);
+-        else
+-            r->rdsp.rv34_inv_transform_dc_tab[0](ptr);
++
++    for(j = 1; j < 3; j++){
++        dst = s->dest[j];
++        for(i = 0; i < 4; i++, cbp >>= 1){
++            uint8_t *pdst;
++            if(!(cbp & 1)) continue;
++            pdst = dst + (i&1)*4 + (i&2)*2*s->uvlinesize;
++
++            rv34_process_block(r, pdst, s->uvlinesize,
++                               r->chroma_vlc, 1, q_dc, q_ac);
++        }
+     }
+-    rv34_apply_differences(r, cbp2);
+ 
+     return 0;
+ }
+@@ -1487,7 +1453,6 @@ static int rv34_decode_slice(RV34DecContext *r, int end, const uint8_t* buf, int
+     ff_init_block_index(s);
+     while(!check_slice_end(r, s)) {
+         ff_update_block_index(s);
+-        s->dsp.clear_blocks(s->block[0]);
+ 
+         if(r->si.type)
+             res = rv34_decode_inter_macroblock(r, r->intra_types + s->mb_x * 4 + 4);
+diff --git a/libavcodec/rv34dsp.c b/libavcodec/rv34dsp.c
+index 91c455a..e225177 100644
+--- a/libavcodec/rv34dsp.c
++++ b/libavcodec/rv34dsp.c
+@@ -32,15 +32,15 @@
+  * @{
+  */
+ 
+-static av_always_inline void rv34_row_transform(int temp[16], const DCTELEM *block)
++static av_always_inline void rv34_row_transform(int temp[16], DCTELEM *block)
+ {
+     int i;
+ 
+     for(i = 0; i < 4; i++){
+-        const int z0 = 13*(block[i+8*0] +    block[i+8*2]);
+-        const int z1 = 13*(block[i+8*0] -    block[i+8*2]);
+-        const int z2 =  7* block[i+8*1] - 17*block[i+8*3];
+-        const int z3 = 17* block[i+8*1] +  7*block[i+8*3];
++        const int z0 = 13*(block[i+4*0] +    block[i+4*2]);
++        const int z1 = 13*(block[i+4*0] -    block[i+4*2]);
++        const int z2 =  7* block[i+4*1] - 17*block[i+4*3];
++        const int z3 = 17* block[i+4*1] +  7*block[i+4*3];
+ 
+         temp[4*i+0] = z0 + z3;
+         temp[4*i+1] = z1 + z2;
+@@ -50,38 +50,16 @@ static av_always_inline void rv34_row_transform(int temp[16], const DCTELEM *blo
+ }
+ 
+ /**
+- * Real Video 3.0/4.0 inverse transform
+- * Code is almost the same as in SVQ3, only scaling is different.
+- */
+-static void rv34_inv_transform_c(DCTELEM *block){
+-    int temp[16];
+-    int i;
+-
+-    rv34_row_transform(temp, block);
+-
+-    for(i = 0; i < 4; i++){
+-        const int z0 = 13*(temp[4*0+i] +    temp[4*2+i]) + 0x200;
+-        const int z1 = 13*(temp[4*0+i] -    temp[4*2+i]) + 0x200;
+-        const int z2 =  7* temp[4*1+i] - 17*temp[4*3+i];
+-        const int z3 = 17* temp[4*1+i] +  7*temp[4*3+i];
+-
+-        block[i*8+0] = (z0 + z3) >> 10;
+-        block[i*8+1] = (z1 + z2) >> 10;
+-        block[i*8+2] = (z1 - z2) >> 10;
+-        block[i*8+3] = (z0 - z3) >> 10;
+-    }
+-}
+-
+-/**
+  * Real Video 3.0/4.0 inverse transform + sample reconstruction
+  * Code is almost the same as in SVQ3, only scaling is different.
+  */
+-static void rv34_idct_add_c(uint8_t *dst, int stride, const DCTELEM *block){
++static void rv34_idct_add_c(uint8_t *dst, int stride, DCTELEM *block){
+     int      temp[16];
+     uint8_t *cm = ff_cropTbl + MAX_NEG_CROP;
+     int      i;
+ 
+     rv34_row_transform(temp, block);
++    memset(block, 0, 16*sizeof(DCTELEM));
+ 
+     for(i = 0; i < 4; i++){
+         const int z0 = 13*(temp[4*0+i] +    temp[4*2+i]) + 0x200;
+@@ -116,10 +94,10 @@ static void rv34_inv_transform_noround_c(DCTELEM *block){
+         const int z2 =  7* temp[4*1+i] - 17*temp[4*3+i];
+         const int z3 = 17* temp[4*1+i] +  7*temp[4*3+i];
+ 
+-        block[i*8+0] = ((z0 + z3) * 3) >> 11;
+-        block[i*8+1] = ((z1 + z2) * 3) >> 11;
+-        block[i*8+2] = ((z1 - z2) * 3) >> 11;
+-        block[i*8+3] = ((z0 - z3) * 3) >> 11;
++        block[i*4+0] = ((z0 + z3) * 3) >> 11;
++        block[i*4+1] = ((z1 + z2) * 3) >> 11;
++        block[i*4+2] = ((z1 - z2) * 3) >> 11;
++        block[i*4+3] = ((z0 - z3) * 3) >> 11;
+     }
+ }
+ 
+@@ -139,22 +117,12 @@ static void rv34_idct_dc_add_c(uint8_t *dst, int stride, int dc)
+     }
+ }
+ 
+-static void rv34_inv_transform_dc_c(DCTELEM *block)
+-{
+-    DCTELEM dc = (13 * 13 * block[0] + 0x200) >> 10;
+-    int i, j;
+-
+-    for (i = 0; i < 4; i++, block += 8)
+-        for (j = 0; j < 4; j++)
+-            block[j] = dc;
+-}
+-
+ static void rv34_inv_transform_dc_noround_c(DCTELEM *block)
+ {
+     DCTELEM dc = (13 * 13 * 3 * block[0]) >> 11;
+     int i, j;
+ 
+-    for (i = 0; i < 4; i++, block += 8)
++    for (i = 0; i < 4; i++, block += 4)
+         for (j = 0; j < 4; j++)
+             block[j] = dc;
+ }
+@@ -163,10 +131,8 @@ static void rv34_inv_transform_dc_noround_c(DCTELEM *block)
+ 
+ 
+ av_cold void ff_rv34dsp_init(RV34DSPContext *c, DSPContext* dsp) {
+-    c->rv34_inv_transform_tab[0] = rv34_inv_transform_c;
+-    c->rv34_inv_transform_tab[1] = rv34_inv_transform_noround_c;
+-    c->rv34_inv_transform_dc_tab[0]  = rv34_inv_transform_dc_c;
+-    c->rv34_inv_transform_dc_tab[1]  = rv34_inv_transform_dc_noround_c;
++    c->rv34_inv_transform    = rv34_inv_transform_noround_c;
++    c->rv34_inv_transform_dc = rv34_inv_transform_dc_noround_c;
+ 
+     c->rv34_idct_add    = rv34_idct_add_c;
+     c->rv34_idct_dc_add = rv34_idct_dc_add_c;
+diff --git a/libavcodec/rv34dsp.h b/libavcodec/rv34dsp.h
+index 2e9e58e..fe8fcaa 100644
+--- a/libavcodec/rv34dsp.h
++++ b/libavcodec/rv34dsp.h
+@@ -36,8 +36,7 @@ typedef void (*rv40_weight_func)(uint8_t *dst/*align width (8 or 16)*/,
+ 
+ typedef void (*rv34_inv_transform_func)(DCTELEM *block);
+ 
+-typedef void (*rv34_idct_add_func)(uint8_t *dst, int stride,
+-                                   const DCTELEM *block);
++typedef void (*rv34_idct_add_func)(uint8_t *dst, int stride, DCTELEM *block);
+ typedef void (*rv34_idct_dc_add_func)(uint8_t *dst, int stride,
+                                       int   dc);
+ 
+@@ -60,8 +59,8 @@ typedef struct RV34DSPContext {
+     h264_chroma_mc_func put_chroma_pixels_tab[3];
+     h264_chroma_mc_func avg_chroma_pixels_tab[3];
+     rv40_weight_func rv40_weight_pixels_tab[2];
+-    rv34_inv_transform_func rv34_inv_transform_tab[2];
+-    void (*rv34_inv_transform_dc_tab[2])(DCTELEM *block);
++    rv34_inv_transform_func rv34_inv_transform;
++    rv34_inv_transform_func rv34_inv_transform_dc;
+     rv34_idct_add_func rv34_idct_add;
+     rv34_idct_dc_add_func rv34_idct_dc_add;
+     rv40_weak_loop_filter_func rv40_weak_loop_filter[2];
+diff --git a/libavcodec/x86/rv34dsp.asm b/libavcodec/x86/rv34dsp.asm
+index c8eeebb..2d2f6e1 100644
+--- a/libavcodec/x86/rv34dsp.asm
++++ b/libavcodec/x86/rv34dsp.asm
+@@ -42,9 +42,9 @@ cglobal rv34_idct_%1_mmx2, 1, 2, 0
+     movd    m0, r1
+     pshufw  m0, m0, 0
+     movq    [r0+ 0], m0
++    movq    [r0+ 8], m0
+     movq    [r0+16], m0
+-    movq    [r0+32], m0
+-    movq    [r0+48], m0
++    movq    [r0+24], m0
+     REP_RET
+ %endmacro
+ 
+diff --git a/libavcodec/x86/rv34dsp_init.c b/libavcodec/x86/rv34dsp_init.c
+index c10ae4e..f3d2e17 100644
+--- a/libavcodec/x86/rv34dsp_init.c
++++ b/libavcodec/x86/rv34dsp_init.c
+@@ -37,8 +37,7 @@ av_cold void ff_rv34dsp_init_x86(RV34DSPContext* c, DSPContext *dsp)
+     if (mm_flags & AV_CPU_FLAG_MMX)
+         c->rv34_idct_dc_add = ff_rv34_idct_dc_add_mmx;
+     if (mm_flags & AV_CPU_FLAG_MMX2) {
+-        c->rv34_inv_transform_dc_tab[0] = ff_rv34_idct_dc_mmx2;
+-        c->rv34_inv_transform_dc_tab[1] = ff_rv34_idct_dc_noround_mmx2;
++        c->rv34_inv_transform_dc = ff_rv34_idct_dc_noround_mmx2;
+     }
+     if (mm_flags & AV_CPU_FLAG_SSE4)
+         c->rv34_idct_dc_add = ff_rv34_idct_dc_add_sse4;
+-- 
+1.7.5.4
+

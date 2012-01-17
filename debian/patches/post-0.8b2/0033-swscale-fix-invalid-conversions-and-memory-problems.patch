@@ -1,7 +1,7 @@
 From e7843db3df0224cafcc1af9da103a3a7286ae2ba Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 12 Jan 2012 15:37:58 -0800
-Subject: [PATCH 33/63] swscale: fix invalid conversions and memory problems.
+Subject: [PATCH 33/67] swscale: fix invalid conversions and memory problems.
 
 Fixes problems where rgbToRgbWrapper() is called even though it doesn't
 support this particular conversion (e.g. converting from RGB444 to

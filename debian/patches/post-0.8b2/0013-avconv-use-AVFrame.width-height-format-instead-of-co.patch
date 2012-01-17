@@ -1,7 +1,7 @@
 From b2ce3b998b90c9ec8dcefe4b2c45fcf5b2f0a903 Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Sat, 31 Dec 2011 17:15:50 +0100
-Subject: [PATCH 13/63] avconv: use AVFrame.width/height/format instead of
+Subject: [PATCH 13/67] avconv: use AVFrame.width/height/format instead of
  corresponding AVCodecContext fields
 
 ---

@@ -1,7 +1,7 @@
 From 06b0246da07e7c9d95476b35275a63cd6dbc300c Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 12 Jan 2012 15:38:37 -0800
-Subject: [PATCH 34/63] swscale-test: fix stack overread.
+Subject: [PATCH 34/67] swscale-test: fix stack overread.
 
 Fixes problems in swscale-test where it gives a 3-member array to a
 function expecting a 4-member array.

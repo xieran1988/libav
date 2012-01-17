@@ -1,7 +1,7 @@
 From 136ee32da3c728fb4e3490393efb947cc7c4e898 Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Thu, 12 Jan 2012 09:45:13 +0100
-Subject: [PATCH 24/63] avprobe: use avio_size() instead of deprecated
+Subject: [PATCH 24/67] avprobe: use avio_size() instead of deprecated
  AVFormatContext.file_size.
 
 ---

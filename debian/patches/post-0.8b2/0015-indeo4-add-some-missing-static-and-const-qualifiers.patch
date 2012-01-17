@@ -1,7 +1,7 @@
 From 08bab32cf1dff7dc25dab4f010c42c13ba9627c7 Mon Sep 17 00:00:00 2001
 From: Kostya Shishkov <kostya.shishkov@gmail.com>
 Date: Thu, 12 Jan 2012 10:01:33 +0100
-Subject: [PATCH 15/63] indeo4: add some missing static and const qualifiers
+Subject: [PATCH 15/67] indeo4: add some missing static and const qualifiers
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

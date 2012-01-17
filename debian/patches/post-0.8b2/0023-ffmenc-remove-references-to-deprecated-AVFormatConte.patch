@@ -1,7 +1,7 @@
 From 44bcab5883fcfdc9e9b1cc5315e994fd33391deb Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Thu, 12 Jan 2012 09:38:13 +0100
-Subject: [PATCH 23/63] ffmenc: remove references to deprecated
+Subject: [PATCH 23/67] ffmenc: remove references to deprecated
  AVFormatContext.timestamp.
 
 ---

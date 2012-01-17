@@ -1,7 +1,7 @@
 From ee458cb1fa3faa006785d725fb3e386174793000 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Sat, 31 Dec 2011 09:36:25 -0500
-Subject: [PATCH 60/63] avconv: use avcodec_encode_audio2()
+Subject: [PATCH 60/67] avconv: use avcodec_encode_audio2()
 
 ---
  avconv.c |  205 ++++++++++++++++++++++++++++++++------------------------------

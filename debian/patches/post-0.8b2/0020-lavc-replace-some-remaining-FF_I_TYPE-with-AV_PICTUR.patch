@@ -1,7 +1,7 @@
 From f3d02a8b280e189bb59db0f194d224bffd4db573 Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Thu, 12 Jan 2012 09:29:43 +0100
-Subject: [PATCH 20/63] lavc: replace some remaining FF_I_TYPE with
+Subject: [PATCH 20/67] lavc: replace some remaining FF_I_TYPE with
  AV_PICTURE_TYPE_I
 
 ---

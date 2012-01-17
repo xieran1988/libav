@@ -1,7 +1,7 @@
 From faaebcdf6bd67880f50e7ec180f24870e7bd8cef Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Mon, 2 Jan 2012 15:17:12 -0500
-Subject: [PATCH 40/63] targa: add support for rgb555 palette
+Subject: [PATCH 40/67] targa: add support for rgb555 palette
 
 ---
  libavcodec/targa.c |   39 +++++++++++++++++++++++++++++----------

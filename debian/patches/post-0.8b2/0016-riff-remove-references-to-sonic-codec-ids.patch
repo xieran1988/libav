@@ -1,7 +1,7 @@
 From 0fd88d398896353074fee153259dbf3530ca423f Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Thu, 12 Jan 2012 09:12:59 +0100
-Subject: [PATCH 16/63] riff: remove references to sonic codec ids
+Subject: [PATCH 16/67] riff: remove references to sonic codec ids
 
 They are deprecated and will be purged on next major bump.
 ---

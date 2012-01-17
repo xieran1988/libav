@@ -1,7 +1,7 @@
 From 9c2f9b0e2dd5bd570e571890bdfb6e77190c4c55 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Fri, 13 Jan 2012 16:41:15 -0500
-Subject: [PATCH 41/63] FATE: enable the 2 remaining targa conformance suite
+Subject: [PATCH 41/67] FATE: enable the 2 remaining targa conformance suite
  tests
 
 ---

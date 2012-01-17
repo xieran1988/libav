@@ -1,7 +1,7 @@
 From 4fccc7c46c52e6ba6801ef90b9ac386330876655 Mon Sep 17 00:00:00 2001
 From: Laurentiu Ion <ionlaurentiucristian@gmail.com>
 Date: Sat, 14 Jan 2012 21:04:59 +0200
-Subject: [PATCH 49/63] vb: Use bytestream2 functions
+Subject: [PATCH 49/67] vb: Use bytestream2 functions
 
 Signed-off-by: Justin Ruggles <justin.ruggles@gmail.com>
 ---

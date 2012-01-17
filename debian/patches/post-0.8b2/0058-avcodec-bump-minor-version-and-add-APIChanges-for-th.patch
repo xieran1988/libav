@@ -1,7 +1,7 @@
 From a6ccae3f4c17831d1e158c6cfeecbcf92f750b03 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Sun, 18 Dec 2011 19:47:38 -0500
-Subject: [PATCH 58/63] avcodec: bump minor version and add APIChanges for the
+Subject: [PATCH 58/67] avcodec: bump minor version and add APIChanges for the
  new audio encoding API
 
 ---

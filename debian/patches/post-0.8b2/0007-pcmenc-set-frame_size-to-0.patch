@@ -1,7 +1,7 @@
 From 56f22b7e16006a4201ed4cf9d21e5ec26faea638 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Tue, 10 Jan 2012 15:17:39 -0500
-Subject: [PATCH 07/63] pcmenc: set frame_size to 0.
+Subject: [PATCH 07/67] pcmenc: set frame_size to 0.
 
 This indicates that the actual frame size is based on the buf_size passed to
 avcodec_encode_audio().

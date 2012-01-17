@@ -1,7 +1,7 @@
 From bcd5d979aa377a16d7fa6b9993e269003281af5c Mon Sep 17 00:00:00 2001
 From: Daniel Huang <dtvrij74@gmail.com>
 Date: Sat, 14 Jan 2012 15:25:12 -0600
-Subject: [PATCH 52/63] mov, mxfdec: Employ more meaningful return values.
+Subject: [PATCH 52/67] mov, mxfdec: Employ more meaningful return values.
 
 Signed-off-by: Diego Biurrun <diego@biurrun.de>
 ---

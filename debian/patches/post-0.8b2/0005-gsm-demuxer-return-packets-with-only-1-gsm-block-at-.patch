@@ -1,7 +1,7 @@
 From 467879eb54526d187847bbbd32723500ab0ab330 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Mon, 9 Jan 2012 13:48:46 -0500
-Subject: [PATCH 05/63] gsm demuxer: return packets with only 1 gsm block at a
+Subject: [PATCH 05/67] gsm demuxer: return packets with only 1 gsm block at a
  time.
 
 fixes stream copy of raw gsm to mov.

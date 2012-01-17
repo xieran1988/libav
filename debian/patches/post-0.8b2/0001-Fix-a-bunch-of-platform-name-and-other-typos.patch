@@ -1,7 +1,7 @@
 From 5ea20630b4cc96a6538a6a11b08698debe3a303a Mon Sep 17 00:00:00 2001
 From: Diego Biurrun <diego@biurrun.de>
 Date: Mon, 12 Dec 2011 21:21:24 +0100
-Subject: [PATCH 01/63] Fix a bunch of platform name and other typos.
+Subject: [PATCH 01/67] Fix a bunch of platform name and other typos.
 
 ---
  Doxyfile                      |    2 +-

@@ -1,7 +1,7 @@
 From e1e369049e3d2f88eed6ed38eb3dd704681c7f1a Mon Sep 17 00:00:00 2001
 From: Janne Grunau <janne-libav@jannau.net>
 Date: Thu, 12 Jan 2012 17:21:48 +0100
-Subject: [PATCH 25/63] rv34: NEON optimised dc only inverse transform
+Subject: [PATCH 25/67] rv34: NEON optimised dc only inverse transform
 
 30-50% faster than the C implementation, 0.5% overall speedup on
 bourne.rmvb.

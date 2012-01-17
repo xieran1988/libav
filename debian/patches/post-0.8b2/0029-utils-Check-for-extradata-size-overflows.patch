@@ -1,7 +1,7 @@
 From 4df30f71147b7bedd4457bcfa0e4efe01085af9f Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Thu, 12 Jan 2012 11:12:24 -0800
-Subject: [PATCH 29/63] utils: Check for extradata size overflows.
+Subject: [PATCH 29/67] utils: Check for extradata size overflows.
 
 ---
  libavcodec/internal.h |    7 +++++++

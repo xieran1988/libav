@@ -1,7 +1,7 @@
 From 5ee5fa021f32e0506bed6ebd183c807d5162bc72 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Thu, 15 Dec 2011 17:56:06 -0500
-Subject: [PATCH 56/63] avcodec: add a public function,
+Subject: [PATCH 56/67] avcodec: add a public function,
  avcodec_fill_audio_frame().
 
 This is a convenience function for the user to fill audio AVFrame information.

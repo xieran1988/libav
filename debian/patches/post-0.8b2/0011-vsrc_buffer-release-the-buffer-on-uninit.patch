@@ -1,7 +1,7 @@
 From 43fe6a29050fc34848731aa220292587f7ace5bd Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Fri, 30 Dec 2011 20:56:06 +0100
-Subject: [PATCH 11/63] vsrc_buffer: release the buffer on uninit.
+Subject: [PATCH 11/67] vsrc_buffer: release the buffer on uninit.
 
 ---
  libavfilter/vsrc_buffer.c |    9 +++++++++

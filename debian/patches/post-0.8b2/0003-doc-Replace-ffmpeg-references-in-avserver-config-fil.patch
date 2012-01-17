@@ -1,7 +1,7 @@
 From f1355dfcd6cf0a4d413d7b04c2c166b825d559ce Mon Sep 17 00:00:00 2001
 From: Diego Biurrun <diego@biurrun.de>
 Date: Wed, 11 Jan 2012 10:50:35 +0100
-Subject: [PATCH 03/63] doc: Replace ffmpeg references in avserver config file
+Subject: [PATCH 03/67] doc: Replace ffmpeg references in avserver config file
  by avconv.
 
 ---

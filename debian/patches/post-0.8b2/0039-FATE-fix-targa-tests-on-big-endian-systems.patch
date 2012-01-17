@@ -1,7 +1,7 @@
 From e1a7af6f290489812ed47359eaff0edac2f5df95 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Fri, 13 Jan 2012 16:14:48 -0500
-Subject: [PATCH 39/63] FATE: fix targa tests on big-endian systems
+Subject: [PATCH 39/67] FATE: fix targa tests on big-endian systems
 
 ---
  tests/fate/image.mak |    8 ++++----

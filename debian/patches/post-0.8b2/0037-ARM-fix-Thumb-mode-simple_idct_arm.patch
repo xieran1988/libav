@@ -1,7 +1,7 @@
 From 71b3a63e9c87057a1cc1431ac1edd6854e1e4e44 Mon Sep 17 00:00:00 2001
 From: Mans Rullgard <mans@mansr.com>
 Date: Fri, 13 Jan 2012 19:03:14 +0000
-Subject: [PATCH 37/63] ARM: fix Thumb-mode simple_idct_arm
+Subject: [PATCH 37/67] ARM: fix Thumb-mode simple_idct_arm
 
 The alignment directive must obviously precede the label.
 This was never noticed in ARM mode since the location is

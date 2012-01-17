@@ -1,7 +1,7 @@
 From 3167dc9515810bbdd86d99d773bcf84657d2e72a Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Sat, 31 Dec 2011 16:20:10 +0100
-Subject: [PATCH 12/63] lavfi: move version macros to a new installed header
+Subject: [PATCH 12/67] lavfi: move version macros to a new installed header
  version.h
 
 ---

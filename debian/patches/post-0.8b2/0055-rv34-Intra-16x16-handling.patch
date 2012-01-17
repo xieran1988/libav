@@ -1,7 +1,7 @@
 From d78062386e425deafe9a08d109cff70b7a2de22c Mon Sep 17 00:00:00 2001
 From: Christophe GISQUET <christophe.gisquet@gmail.com>
 Date: Tue, 3 Jan 2012 00:22:11 +0100
-Subject: [PATCH 55/63] rv34: Intra 16x16 handling
+Subject: [PATCH 55/67] rv34: Intra 16x16 handling
 
 Extract processing of intra 16x16 blocks from intra macroblock
 processing.

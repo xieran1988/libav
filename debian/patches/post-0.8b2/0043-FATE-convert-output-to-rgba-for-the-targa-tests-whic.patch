@@ -1,7 +1,7 @@
 From 4c82c6d9932bfdb1a9eb288d566ded9d40ca5e24 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Fri, 13 Jan 2012 18:40:12 -0500
-Subject: [PATCH 43/63] FATE: convert output to rgba for the targa tests which
+Subject: [PATCH 43/67] FATE: convert output to rgba for the targa tests which
  currently output pal8
 
 fixes the tests on big-endian systems

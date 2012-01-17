@@ -1,7 +1,7 @@
 From f7f3563214a4deb4bf664057a4cce0c4bf0bdb02 Mon Sep 17 00:00:00 2001
 From: Paul B Mahol <onemda@gmail.com>
 Date: Wed, 11 Jan 2012 19:19:00 +0000
-Subject: [PATCH 10/63] rgb2rgb: rgb12tobgr12()
+Subject: [PATCH 10/67] rgb2rgb: rgb12tobgr12()
 
 Signed-off-by: Ronald S. Bultje <rsbultje@gmail.com>
 ---

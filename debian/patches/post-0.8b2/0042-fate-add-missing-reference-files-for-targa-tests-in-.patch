@@ -1,7 +1,7 @@
 From 502bf3b462e40ae64d088c3246ef48fa618e4572 Mon Sep 17 00:00:00 2001
 From: Janne Grunau <janne-libav@jannau.net>
 Date: Fri, 13 Jan 2012 23:52:59 +0100
-Subject: [PATCH 42/63] fate: add missing reference files for targa tests in
+Subject: [PATCH 42/67] fate: add missing reference files for targa tests in
  9c2f9b0e2
 
 Fixes fate-targa-conformance-CCM8 and fate-targa-conformance-UCM8.

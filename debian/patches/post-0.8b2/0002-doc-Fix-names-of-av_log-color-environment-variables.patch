@@ -1,7 +1,7 @@
 From 1466a5181b516a4d33cfd0da0c8222589742df27 Mon Sep 17 00:00:00 2001
 From: Diego Biurrun <diego@biurrun.de>
 Date: Wed, 11 Jan 2012 10:49:49 +0100
-Subject: [PATCH 02/63] doc: Fix names of av_log color environment variables.
+Subject: [PATCH 02/67] doc: Fix names of av_log color environment variables.
 
 ---
  doc/avtools-common-opts.texi |    4 ++--

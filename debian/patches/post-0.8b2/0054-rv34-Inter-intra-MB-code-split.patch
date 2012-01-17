@@ -1,7 +1,7 @@
 From 3eeb7557637e8e48fbc64e844a94775edb496906 Mon Sep 17 00:00:00 2001
 From: Christophe GISQUET <christophe.gisquet@gmail.com>
 Date: Mon, 2 Jan 2012 20:53:54 +0100
-Subject: [PATCH 54/63] rv34: Inter/intra MB code split
+Subject: [PATCH 54/67] rv34: Inter/intra MB code split
 
 Split inter/intra macroblock handling code. This will allow further
 optimizations such as performing inverse transform and block reconstruction

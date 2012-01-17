@@ -1,7 +1,7 @@
 From d859191322d8596b6d4219269db96456267f0d04 Mon Sep 17 00:00:00 2001
 From: Laurentiu Ion <ionlaurentiucristian@gmail.com>
 Date: Mon, 16 Jan 2012 04:47:07 +0200
-Subject: [PATCH 61/63] pictordec: Use bytestream2 functions
+Subject: [PATCH 61/67] pictordec: Use bytestream2 functions
 
 Signed-off-by: Justin Ruggles <justin.ruggles@gmail.com>
 ---

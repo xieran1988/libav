@@ -1,7 +1,7 @@
 From 2df5f59ad0710a0d85114b73bd6a5094c26d08bc Mon Sep 17 00:00:00 2001
 From: Diego Biurrun <diego@biurrun.de>
 Date: Fri, 13 Jan 2012 00:58:22 +0100
-Subject: [PATCH 53/63] fate: split ADPCM and DPCM test references into
+Subject: [PATCH 53/67] fate: split ADPCM and DPCM test references into
  separate files.
 
 ---

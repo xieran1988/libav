@@ -1,7 +1,7 @@
 From 0cc1a86dc34b020d857f946e47edf9e425274330 Mon Sep 17 00:00:00 2001
 From: Paul B Mahol <onemda@gmail.com>
 Date: Thu, 12 Jan 2012 20:28:47 +0000
-Subject: [PATCH 35/63] rgb2rgb: rgb12to15()
+Subject: [PATCH 35/67] rgb2rgb: rgb12to15()
 
 Signed-off-by: Ronald S. Bultje <rsbultje@gmail.com>
 ---

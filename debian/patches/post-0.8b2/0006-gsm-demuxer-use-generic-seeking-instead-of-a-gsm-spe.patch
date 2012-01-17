@@ -1,7 +1,7 @@
 From f01f6a847474755ee00a86c599cda3cbadef34fe Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Mon, 9 Jan 2012 13:49:52 -0500
-Subject: [PATCH 06/63] gsm demuxer: use generic seeking instead of a
+Subject: [PATCH 06/67] gsm demuxer: use generic seeking instead of a
  gsm-specific function.
 
 Since packets all contain only a single block, the generic seek function can

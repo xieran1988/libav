@@ -1,7 +1,7 @@
 From a29c25a9b27456367c7550364d5ba5d7e3798323 Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Thu, 12 Jan 2012 09:28:15 +0100
-Subject: [PATCH 19/63] lavc: ifdef out parse_only AVOption
+Subject: [PATCH 19/67] lavc: ifdef out parse_only AVOption
 
 ---
  libavcodec/options.c |    2 ++

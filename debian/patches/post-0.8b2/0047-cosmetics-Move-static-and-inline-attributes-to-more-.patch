@@ -1,7 +1,7 @@
 From e44c11e9fa505da3c54738ae2d21123338a28ca6 Mon Sep 17 00:00:00 2001
 From: Diego Biurrun <diego@biurrun.de>
 Date: Fri, 13 Jan 2012 16:35:54 +0100
-Subject: [PATCH 47/63] cosmetics: Move static and inline attributes to more
+Subject: [PATCH 47/67] cosmetics: Move static and inline attributes to more
  standard places.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

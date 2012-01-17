@@ -1,7 +1,7 @@
 From e6e7bfc11e93fe3499c576fa9466cb2e913b5965 Mon Sep 17 00:00:00 2001
 From: Kostya Shishkov <kostya.shishkov@gmail.com>
 Date: Sun, 15 Jan 2012 14:23:28 +0100
-Subject: [PATCH 50/63] wavpack: fix clipping for 32-bit lossy mode
+Subject: [PATCH 50/67] wavpack: fix clipping for 32-bit lossy mode
 
 Reference decoder clips data before shifting it to final range and also
 forces 32-bit lossy mode to be actually 24-bit lossy mode in order to be

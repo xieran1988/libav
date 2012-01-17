@@ -1,7 +1,7 @@
 From 68b94f8bc3a54735c360c6e72a3698fed8aba10b Mon Sep 17 00:00:00 2001
 From: Paul B Mahol <onemda@gmail.com>
 Date: Sat, 14 Jan 2012 16:47:07 +0000
-Subject: [PATCH 62/63] avformat: split out common SMJPEG code
+Subject: [PATCH 62/67] avformat: split out common SMJPEG code
 
 This is a preparation for adding SMJPEG muxer.
 

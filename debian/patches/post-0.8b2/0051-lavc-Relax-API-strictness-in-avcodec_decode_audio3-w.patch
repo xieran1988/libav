@@ -1,7 +1,7 @@
 From e2ff436ef64589de8486517352e17f513886e15b Mon Sep 17 00:00:00 2001
 From: Reinhard Tartler <siretart@tauware.de>
 Date: Sun, 15 Jan 2012 20:32:11 +0100
-Subject: [PATCH 51/63] lavc: Relax API strictness in avcodec_decode_audio3
+Subject: [PATCH 51/67] lavc: Relax API strictness in avcodec_decode_audio3
  with a custom get_buffer()
 
 Do not fail audio decoding with avcodec_decode_audio3 if user has set a

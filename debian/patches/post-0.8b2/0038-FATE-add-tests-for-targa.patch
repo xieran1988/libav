@@ -1,7 +1,7 @@
 From 68d6012c723bb520daac5336dcb046c0a5dd3826 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Wed, 11 Jan 2012 20:06:46 -0500
-Subject: [PATCH 38/63] FATE: add tests for targa
+Subject: [PATCH 38/67] FATE: add tests for targa
 
 Based on a patch by Oana Stratulat <oanaandreeastratulat@gmail.com>
 ---

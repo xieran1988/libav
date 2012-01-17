@@ -1,0 +1,26 @@
+From 01ed1c390d8376ba5fac278ceee044bb03a58804 Mon Sep 17 00:00:00 2001
+From: Justin Ruggles <justin.ruggles@gmail.com>
+Date: Sat, 7 Jan 2012 10:25:32 -0500
+Subject: [PATCH 67/67] tta: cast output data pointer to the correct type
+
+fixes "warning: assignment from incompatible pointer type"
+---
+ libavcodec/tta.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/tta.c b/libavcodec/tta.c
+index bc83bfd..4656ce1 100644
+--- a/libavcodec/tta.c
++++ b/libavcodec/tta.c
+@@ -314,7 +314,7 @@ static int tta_decode_frame(AVCodecContext *avctx, void *data,
+ 
+     // decode directly to output buffer for 24-bit sample format
+     if (s->bps == 3)
+-        s->decode_buffer = s->frame.data[0];
++        s->decode_buffer = (int32_t *)s->frame.data[0];
+ 
+     // init per channel states
+     for (i = 0; i < s->channels; i++) {
+-- 
+1.7.5.4
+

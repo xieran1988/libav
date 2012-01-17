@@ -1,7 +1,7 @@
 From 0a60780c7fe72e2f9cc41efc152b3807954b7820 Mon Sep 17 00:00:00 2001
 From: Diego Biurrun <diego@biurrun.de>
 Date: Thu, 12 Jan 2012 21:35:34 +0100
-Subject: [PATCH 31/63] cabac: Mark ff_h264_mps_state array as static, it is
+Subject: [PATCH 31/67] cabac: Mark ff_h264_mps_state array as static, it is
  only used within cabac.c.
 
 ---

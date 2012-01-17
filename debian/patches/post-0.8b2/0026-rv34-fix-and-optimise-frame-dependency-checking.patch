@@ -1,7 +1,7 @@
 From 3547f8e8f8418af0c578eba0de62ecba08e460c2 Mon Sep 17 00:00:00 2001
 From: Janne Grunau <janne-libav@jannau.net>
 Date: Wed, 11 Jan 2012 20:10:23 +0100
-Subject: [PATCH 26/63] rv34: fix and optimise frame dependency checking
+Subject: [PATCH 26/67] rv34: fix and optimise frame dependency checking
 
 The sporadic threading errors during fate-rv30 were caused by calling
 ff_thread_await_progress with mb row -1 as argument. That returns

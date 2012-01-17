@@ -1,7 +1,7 @@
 From b5fc571e4f730579f328ae9cf77435cb7fddc53d Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Wed, 11 Jan 2012 14:03:57 -0800
-Subject: [PATCH 09/63] latmdec: Check AudioSpecificConfig length before
+Subject: [PATCH 09/67] latmdec: Check AudioSpecificConfig length before
  decoding extradata.
 
 This is different than a normal get_bits() over read because

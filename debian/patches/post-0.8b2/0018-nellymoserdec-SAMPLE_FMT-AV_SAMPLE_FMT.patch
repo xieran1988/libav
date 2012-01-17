@@ -1,7 +1,7 @@
 From d54f1e640790b9690cdb4f543f374016615ec000 Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Thu, 12 Jan 2012 09:26:11 +0100
-Subject: [PATCH 18/63] nellymoserdec: SAMPLE_FMT -> AV_SAMPLE_FMT
+Subject: [PATCH 18/67] nellymoserdec: SAMPLE_FMT -> AV_SAMPLE_FMT
 
 ---
  libavcodec/nellymoserdec.c |    2 +-

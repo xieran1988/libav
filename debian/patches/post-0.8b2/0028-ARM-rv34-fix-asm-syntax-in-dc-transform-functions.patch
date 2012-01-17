@@ -1,7 +1,7 @@
 From 81dc6a2a3cefc1f1bbbc249052b3374e524d1ea0 Mon Sep 17 00:00:00 2001
 From: Mans Rullgard <mans@mansr.com>
 Date: Thu, 12 Jan 2012 19:37:31 +0000
-Subject: [PATCH 28/63] ARM: rv34: fix asm syntax in dc transform functions
+Subject: [PATCH 28/67] ARM: rv34: fix asm syntax in dc transform functions
 
 Signed-off-by: Mans Rullgard <mans@mansr.com>
 Signed-off-by: Janne Grunau <janne-libav@jannau.net>

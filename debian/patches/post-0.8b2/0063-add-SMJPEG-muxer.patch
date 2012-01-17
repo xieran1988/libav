@@ -1,7 +1,7 @@
 From ffa0923eee7707acf07a0847b6bac89b86e227dc Mon Sep 17 00:00:00 2001
 From: Paul B Mahol <onemda@gmail.com>
 Date: Sat, 14 Jan 2012 19:29:59 +0000
-Subject: [PATCH 63/63] add SMJPEG muxer
+Subject: [PATCH 63/67] add SMJPEG muxer
 
 Signed-off-by: Kostya Shishkov <kostya.shishkov@gmail.com>
 ---

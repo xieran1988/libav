@@ -1,7 +1,7 @@
 From 82390f57d1714fdc952c15ba91511d93f2e59bfc Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Sun, 8 Jan 2012 19:50:31 -0500
-Subject: [PATCH 04/63] avcodec: add GSM parser
+Subject: [PATCH 04/67] avcodec: add GSM parser
 
 The WAVE demuxer returns packets with many blocks per frame, which needs to be
 parsed into single blocks. This has a side-effect of fixing the timestamps.

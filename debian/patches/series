@@ -65,3 +65,7 @@ post-0.8b2/0060-avconv-use-avcodec_encode_audio2.patch
 post-0.8b2/0061-pictordec-Use-bytestream2-functions.patch
 post-0.8b2/0062-avformat-split-out-common-SMJPEG-code.patch
 post-0.8b2/0063-add-SMJPEG-muxer.patch
+post-0.8b2/0064-rv34-1-pass-inter-MB-reconstruction.patch
+post-0.8b2/0065-rv34-add-NEON-rv34_idct_add.patch
+post-0.8b2/0066-avconv-fix-frames-for-video-encoders-with-delay.patch
+post-0.8b2/0067-tta-cast-output-data-pointer-to-the-correct-type.patch
