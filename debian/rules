@@ -22,20 +22,23 @@ endif
 endif
 
 include debian/confflags
-OPT_FLAVOR := $(filter-out static shared, $(FLAVORS))
+OPT_FLAVORS := $(filter-out static shared, $(FLAVORS))
 
 $(info FLAVORS = $(FLAVORS))
 $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
 $(info CFLAGS = $(CFLAGS))
 $(info LDFLAGS = $(LDFLAGS))
 
+define dh_install_file_opt_flavor
+	  grep @DEB_HOST_MULTIARCH_OPT@ < $(1).in | \
+	  sed 's:@DEB_HOST_MULTIARCH_OPT@:$(DEB_HOST_MULTIARCH)/$($(2)_shlibdir):g' >> $(1)
+
+endef
+
 DH_INSTALL_FILES := $(foreach pkg, $(LIB_PKGS) $(DEV_PKGS), debian/$(pkg).install)
 $(DH_INSTALL_FILES):
 	sed 's/@DEB_HOST_MULTIARCH\(_OPT\)\?@/$(DEB_HOST_MULTIARCH)/g' $@.in > $@
-ifneq (,$(OPT_FLAVOR))
-	grep @DEB_HOST_MULTIARCH_OPT@ < $@.in | \
-	sed 's:@DEB_HOST_MULTIARCH_OPT@:$(DEB_HOST_MULTIARCH)/$($(OPT_FLAVOR)_shlibdir):g' >> $@
-endif
+	$(foreach opt_flavor,$(OPT_FLAVORS),$(call dh_install_file_opt_flavor,$@,$(opt_flavor)))
 
 configure-%: configure-stamp-%
 configure-stamp-%: $(QUILT_STAMPFN)
