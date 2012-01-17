@@ -1,3 +1,14 @@
+libav (4:0.8~beta2-3) unstable; urgency=low
+
+  [ Fabian Greffrath ]
+  * Fix debian/*.install file generation on archs (e.g. armel) that build
+    more than only one optimized shared library (Closes: #656184).
+
+  [ Reinhard Tartler ]
+  * add additional post-0.8b2 patches
+
+ -- Reinhard Tartler <siretart@tauware.de>  Tue, 17 Jan 2012 22:31:32 +0100
+
 libav (4:0.8~beta2-2) unstable; urgency=low
 
   [ Fabian Greffrath ]
