@@ -1,0 +1,59 @@
+From e2ff436ef64589de8486517352e17f513886e15b Mon Sep 17 00:00:00 2001
+From: Reinhard Tartler <siretart@tauware.de>
+Date: Sun, 15 Jan 2012 20:32:11 +0100
+Subject: [PATCH 51/63] lavc: Relax API strictness in avcodec_decode_audio3
+ with a custom get_buffer()
+
+Do not fail audio decoding with avcodec_decode_audio3 if user has set a
+custom get_buffer. Strictly speaking, this was never allowed by the API,
+but it seems that some software packages did so anyways. In order to
+unbreak applications (cf. http://bugs.debian.org/655890), this change
+clarifies the API and overrides the custom get_buffer() with the defaults.
+
+This change is inspired by a similar
+commit (c3846e3ebab610be691adb8b40d376dc2f675dc4) in FFmpeg.
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/avcodec.h |    5 +++++
+ libavcodec/utils.c   |    8 +++++---
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/libavcodec/avcodec.h b/libavcodec/avcodec.h
+index c195ad5..49d2a0f 100644
+--- a/libavcodec/avcodec.h
++++ b/libavcodec/avcodec.h
+@@ -4070,6 +4070,11 @@ int avcodec_open2(AVCodecContext *avctx, AVCodec *codec, AVDictionary **options)
+  * @warning The end of the input buffer avpkt->data should be set to 0 to ensure that
+  * no overreading happens for damaged MPEG streams.
+  *
++ * @warning You must not provide a custom get_buffer() when using
++ * avcodec_decode_audio3().  Doing so will override it with
++ * avcodec_default_get_buffer.  Use avcodec_decode_audio4() instead,
++ * which does allow the application to provide a custom get_buffer().
++ *
+  * @note You might have to align the input buffer avpkt->data and output buffer
+  * samples. The alignment requirements depend on the CPU: On some CPUs it isn't
+  * necessary at all, on others it won't work at all if not aligned and on others
+diff --git a/libavcodec/utils.c b/libavcodec/utils.c
+index 6f4d7e6..8473aac 100644
+--- a/libavcodec/utils.c
++++ b/libavcodec/utils.c
+@@ -933,9 +933,11 @@ int attribute_align_arg avcodec_decode_audio3(AVCodecContext *avctx, int16_t *sa
+     int ret, got_frame = 0;
+ 
+     if (avctx->get_buffer != avcodec_default_get_buffer) {
+-        av_log(avctx, AV_LOG_ERROR, "A custom get_buffer() cannot be used with "
+-               "avcodec_decode_audio3()\n");
+-        return AVERROR(EINVAL);
++        av_log(avctx, AV_LOG_ERROR, "Custom get_buffer() for use with"
++               "avcodec_decode_audio3() detected. Overriding with avcodec_default_get_buffer\n");
++        av_log(avctx, AV_LOG_ERROR, "Please port your application to "
++               "avcodec_decode_audio4()\n");
++        avctx->get_buffer = avcodec_default_get_buffer;
+     }
+ 
+     ret = avcodec_decode_audio4(avctx, &frame, &got_frame, avpkt);
+-- 
+1.7.5.4
+

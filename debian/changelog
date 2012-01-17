@@ -1,3 +1,20 @@
+libav (4:0.8~beta2-2) unstable; urgency=low
+
+  [ Fabian Greffrath ]
+  * Properly set the library paths for multiarch and shared libs in
+    debian/*.install instead of using brace expansion and asterisks.
+
+  [ Reinhard Tartler ]
+  * Fix upgrade path from earlier versions of the 'ffmpeg' package
+    (Closes: #655917)
+  * Sync post v0.8b2 commits
+  * extend package description to include a note what libav actuall is
+  * place transitional packages in oldlibs/extra section to assist package
+    managers
+  * drop unused lintian override in debian/control
+
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 15 Jan 2012 16:19:41 +0100
+
 libav (4:0.8~beta2-1) unstable; urgency=low
 
   * New Upstream version 0.8~beta2:

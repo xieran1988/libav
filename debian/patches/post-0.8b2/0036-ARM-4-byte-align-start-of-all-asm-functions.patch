@@ -1,0 +1,32 @@
+From 5c5e1ea3cdccc5af0b2d3de15a9c3739c30ec88c Mon Sep 17 00:00:00 2001
+From: Mans Rullgard <mans@mansr.com>
+Date: Fri, 13 Jan 2012 18:56:36 +0000
+Subject: [PATCH 36/63] ARM: 4-byte align start of all asm functions
+
+Due to apprent bugs in the GNU assembler and/or linker, relocations
+can be incorrectly processed if the alignment of a Thumb instruction
+is changed in the output file compared to the input object.
+
+This fixes crashes in h264 decoding with Thumb enabled. No effect in
+ARM mode since everything is 4-byte aligned there.
+
+Signed-off-by: Mans Rullgard <mans@mansr.com>
+---
+ libavcodec/arm/asm.S |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/libavcodec/arm/asm.S b/libavcodec/arm/asm.S
+index aaf497e..3b495a2 100644
+--- a/libavcodec/arm/asm.S
++++ b/libavcodec/arm/asm.S
+@@ -68,6 +68,7 @@ ELF     .size   \name, . - \name
+         .purgem endfunc
+     .endm
+         .text
++        .align          2
+     .if \export
+         .global EXTERN_ASM\name
+ EXTERN_ASM\name:
+-- 
+1.7.5.4
+

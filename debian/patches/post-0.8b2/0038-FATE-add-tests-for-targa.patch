@@ -1,0 +1,130 @@
+From 68d6012c723bb520daac5336dcb046c0a5dd3826 Mon Sep 17 00:00:00 2001
+From: Justin Ruggles <justin.ruggles@gmail.com>
+Date: Wed, 11 Jan 2012 20:06:46 -0500
+Subject: [PATCH 38/63] FATE: add tests for targa
+
+Based on a patch by Oana Stratulat <oanaandreeastratulat@gmail.com>
+---
+ tests/fate/image.mak                   |   28 ++++++++++++++++++++++++++++
+ tests/ref/fate/targa-conformance-CBW8  |    1 +
+ tests/ref/fate/targa-conformance-CTC16 |    1 +
+ tests/ref/fate/targa-conformance-CTC24 |    1 +
+ tests/ref/fate/targa-conformance-CTC32 |    1 +
+ tests/ref/fate/targa-conformance-UBW8  |    1 +
+ tests/ref/fate/targa-conformance-UTC16 |    1 +
+ tests/ref/fate/targa-conformance-UTC24 |    1 +
+ tests/ref/fate/targa-conformance-UTC32 |    1 +
+ tests/ref/fate/targa-top-to-bottom     |    1 +
+ 10 files changed, 37 insertions(+), 0 deletions(-)
+ create mode 100644 tests/ref/fate/targa-conformance-CBW8
+ create mode 100644 tests/ref/fate/targa-conformance-CTC16
+ create mode 100644 tests/ref/fate/targa-conformance-CTC24
+ create mode 100644 tests/ref/fate/targa-conformance-CTC32
+ create mode 100644 tests/ref/fate/targa-conformance-UBW8
+ create mode 100644 tests/ref/fate/targa-conformance-UTC16
+ create mode 100644 tests/ref/fate/targa-conformance-UTC24
+ create mode 100644 tests/ref/fate/targa-conformance-UTC32
+ create mode 100644 tests/ref/fate/targa-top-to-bottom
+
+diff --git a/tests/fate/image.mak b/tests/fate/image.mak
+index 9c5106f..153a4f3 100644
+--- a/tests/fate/image.mak
++++ b/tests/fate/image.mak
+@@ -30,3 +30,31 @@ fate-sunraster-24bit-raw: CMD = framecrc -i $(SAMPLES)/sunraster/lena-24bit-raw.
+ 
+ FATE_TESTS += fate-sunraster-24bit-rle
+ fate-sunraster-24bit-rle: CMD = framecrc -i $(SAMPLES)/sunraster/lena-24bit-rle.sun
++
++FATE_TARGA = CBW8       \
++             CTC16      \
++             CTC24      \
++             CTC32      \
++             UBW8       \
++             UTC16      \
++             UTC24      \
++             UTC32
++
++FATE_TARGA := $(FATE_TARGA:%=fate-targa-conformance-%)  \
++              fate-targa-top-to-bottom
++
++FATE_TESTS += $(FATE_TARGA)
++fate-targa: $(FATE_TARGA)
++
++fate-targa-conformance-CBW8:  CMD = framecrc -i $(SAMPLES)/targa-conformance/CBW8.TGA
++# fate-targa-conformance-CCM8:  CMD = framecrc -i $(SAMPLES)/targa-conformance/CCM8.TGA
++fate-targa-conformance-CTC16: CMD = framecrc -i $(SAMPLES)/targa-conformance/CTC16.TGA
++fate-targa-conformance-CTC24: CMD = framecrc -i $(SAMPLES)/targa-conformance/CTC24.TGA
++fate-targa-conformance-CTC32: CMD = framecrc -i $(SAMPLES)/targa-conformance/CTC32.TGA
++fate-targa-conformance-UBW8:  CMD = framecrc -i $(SAMPLES)/targa-conformance/UBW8.TGA
++# fate-targa-conformance-UCM8:  CMD = framecrc -i $(SAMPLES)/targa-conformance/UCM8.TGA
++fate-targa-conformance-UTC16: CMD = framecrc -i $(SAMPLES)/targa-conformance/UTC16.TGA
++fate-targa-conformance-UTC24: CMD = framecrc -i $(SAMPLES)/targa-conformance/UTC24.TGA
++fate-targa-conformance-UTC32: CMD = framecrc -i $(SAMPLES)/targa-conformance/UTC32.TGA
++
++fate-targa-top-to-bottom: CMD = framecrc -i $(SAMPLES)/targa/lena-top-to-bottom.tga
+diff --git a/tests/ref/fate/targa-conformance-CBW8 b/tests/ref/fate/targa-conformance-CBW8
+new file mode 100644
+index 0000000..4ff3a9d
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-CBW8
+@@ -0,0 +1 @@
++0, 0, 16384, 0x267e21ef
+diff --git a/tests/ref/fate/targa-conformance-CTC16 b/tests/ref/fate/targa-conformance-CTC16
+new file mode 100644
+index 0000000..d2c75f6
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-CTC16
+@@ -0,0 +1 @@
++0, 0, 32768, 0xa6b3d20d
+diff --git a/tests/ref/fate/targa-conformance-CTC24 b/tests/ref/fate/targa-conformance-CTC24
+new file mode 100644
+index 0000000..42e1271
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-CTC24
+@@ -0,0 +1 @@
++0, 0, 49152, 0xaca4bc29
+diff --git a/tests/ref/fate/targa-conformance-CTC32 b/tests/ref/fate/targa-conformance-CTC32
+new file mode 100644
+index 0000000..acc3068
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-CTC32
+@@ -0,0 +1 @@
++0, 0, 65536, 0xcf98bc29
+diff --git a/tests/ref/fate/targa-conformance-UBW8 b/tests/ref/fate/targa-conformance-UBW8
+new file mode 100644
+index 0000000..4ff3a9d
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-UBW8
+@@ -0,0 +1 @@
++0, 0, 16384, 0x267e21ef
+diff --git a/tests/ref/fate/targa-conformance-UTC16 b/tests/ref/fate/targa-conformance-UTC16
+new file mode 100644
+index 0000000..d2c75f6
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-UTC16
+@@ -0,0 +1 @@
++0, 0, 32768, 0xa6b3d20d
+diff --git a/tests/ref/fate/targa-conformance-UTC24 b/tests/ref/fate/targa-conformance-UTC24
+new file mode 100644
+index 0000000..42e1271
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-UTC24
+@@ -0,0 +1 @@
++0, 0, 49152, 0xaca4bc29
+diff --git a/tests/ref/fate/targa-conformance-UTC32 b/tests/ref/fate/targa-conformance-UTC32
+new file mode 100644
+index 0000000..acc3068
+--- /dev/null
++++ b/tests/ref/fate/targa-conformance-UTC32
+@@ -0,0 +1 @@
++0, 0, 65536, 0xcf98bc29
+diff --git a/tests/ref/fate/targa-top-to-bottom b/tests/ref/fate/targa-top-to-bottom
+new file mode 100644
+index 0000000..e9d53bb
+--- /dev/null
++++ b/tests/ref/fate/targa-top-to-bottom
+@@ -0,0 +1 @@
++0, 0, 196608, 0xb29ec51a
+-- 
+1.7.5.4
+

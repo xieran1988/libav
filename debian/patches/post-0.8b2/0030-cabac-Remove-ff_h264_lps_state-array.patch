@@ -1,0 +1,46 @@
+From 64d779f2f7607070a87b0a70edeba5e51834ce85 Mon Sep 17 00:00:00 2001
+From: Diego Biurrun <diego@biurrun.de>
+Date: Thu, 12 Jan 2012 21:11:27 +0100
+Subject: [PATCH 30/63] cabac: Remove ff_h264_lps_state array.
+
+It was only ever used in the cabac test program, but never initialized.
+---
+ libavcodec/cabac.c |    2 --
+ libavcodec/cabac.h |    1 -
+ 2 files changed, 0 insertions(+), 3 deletions(-)
+
+diff --git a/libavcodec/cabac.c b/libavcodec/cabac.c
+index 54414fa..1de4584 100644
+--- a/libavcodec/cabac.c
++++ b/libavcodec/cabac.c
+@@ -51,7 +51,6 @@ static const uint8_t lps_range[64][4]= {
+ 
+ uint8_t ff_h264_mlps_state[4*64];
+ uint8_t ff_h264_lps_range[4*2*64];
+-uint8_t ff_h264_lps_state[2*64];
+ uint8_t ff_h264_mps_state[2*64];
+ 
+ static const uint8_t mps_state[64]= {
+@@ -196,7 +195,6 @@ static void put_cabac(CABACContext *c, uint8_t * const state, int bit){
+     }else{
+         c->low += c->range - RangeLPS;
+         c->range = RangeLPS;
+-        *state= ff_h264_lps_state[*state];
+     }
+ 
+     renorm_cabac_encoder(c);
+diff --git a/libavcodec/cabac.h b/libavcodec/cabac.h
+index dda6348..f7d169a 100644
+--- a/libavcodec/cabac.h
++++ b/libavcodec/cabac.h
+@@ -50,7 +50,6 @@ typedef struct CABACContext{
+ extern uint8_t ff_h264_mlps_state[4*64];
+ extern uint8_t ff_h264_lps_range[4*2*64];  ///< rangeTabLPS
+ extern uint8_t ff_h264_mps_state[2*64];     ///< transIdxMPS
+-extern uint8_t ff_h264_lps_state[2*64];     ///< transIdxLPS
+ extern const uint8_t ff_h264_norm_shift[512];
+ 
+ #if ARCH_X86
+-- 
+1.7.5.4
+

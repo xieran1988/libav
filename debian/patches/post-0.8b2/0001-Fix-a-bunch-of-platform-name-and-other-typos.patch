@@ -1,0 +1,128 @@
+From 5ea20630b4cc96a6538a6a11b08698debe3a303a Mon Sep 17 00:00:00 2001
+From: Diego Biurrun <diego@biurrun.de>
+Date: Mon, 12 Dec 2011 21:21:24 +0100
+Subject: [PATCH 01/63] Fix a bunch of platform name and other typos.
+
+---
+ Doxyfile                      |    2 +-
+ avplay.c                      |    2 +-
+ configure                     |    2 +-
+ doc/platform.texi             |    6 +++---
+ libavcodec/error_resilience.c |    2 +-
+ libavcodec/msrle.c            |    4 ++--
+ tools/patcheck                |    2 +-
+ 7 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/Doxyfile b/Doxyfile
+index f28fb70..457cf51 100644
+--- a/Doxyfile
++++ b/Doxyfile
+@@ -864,7 +864,7 @@ HTML_DYNAMIC_SECTIONS  = NO
+ 
+ # If the GENERATE_DOCSET tag is set to YES, additional index files
+ # will be generated that can be used as input for Apple's Xcode 3
+-# integrated development environment, introduced with OSX 10.5 (Leopard).
++# integrated development environment, introduced with OS X 10.5 (Leopard).
+ # To create a documentation set, doxygen will generate a Makefile in the
+ # HTML output directory. Running make will produce the docset in that
+ # directory and running "make install" will install the docset in
+diff --git a/avplay.c b/avplay.c
+index 3bbb7ef..4d21234 100644
+--- a/avplay.c
++++ b/avplay.c
+@@ -2692,7 +2692,7 @@ static void toggle_full_screen(void)
+ {
+     is_full_screen = !is_full_screen;
+ #if defined(__APPLE__) && SDL_VERSION_ATLEAST(1, 2, 14)
+-    /* OSX needs to empty the picture_queue */
++    /* OS X needs to empty the picture_queue */
+     for (int i = 0; i < VIDEO_PICTURE_QUEUE_SIZE; i++) {
+         cur_stream->pictq[i].reallocate = 1;
+     }
+diff --git a/configure b/configure
+index 526aa77..3146641 100755
+--- a/configure
++++ b/configure
+@@ -239,7 +239,7 @@ Advanced options (experts only):
+   --disable-armvfp         disable ARM VFP optimizations
+   --disable-iwmmxt         disable iwmmxt optimizations
+   --disable-mmi            disable MMI optimizations
+-  --disable-neon           disable neon optimizations
++  --disable-neon           disable NEON optimizations
+   --disable-vis            disable VIS optimizations
+   --disable-yasm           disable use of yasm assembler
+   --enable-pic             build position-independent code
+diff --git a/doc/platform.texi b/doc/platform.texi
+index 6a44640..7ec7cb3 100644
+--- a/doc/platform.texi
++++ b/doc/platform.texi
+@@ -45,17 +45,17 @@ bash ./configure
+ @end example
+ 
+ @anchor{Darwin}
+-@section Darwin (OSX, iPhone)
++@section Darwin (OS X, iPhone)
+ 
+ The toolchain provided with Xcode is sufficient to build the basic
+ unacelerated code.
+ 
+-OSX on PowerPC or ARM (iPhone) requires a preprocessor from
++OS X on PowerPC or ARM (iPhone) requires a preprocessor from
+ @url{http://github.com/yuvi/gas-preprocessor} to build the optimized
+ assembler functions. Just download the Perl script and put it somewhere
+ in your PATH, Libav's configure will pick it up automatically.
+ 
+-OSX on amd64 and x86 requires @command{yasm} to build most of the
++OS X on AMD64 and x86 requires @command{yasm} to build most of the
+ optimized assembler functions @url{http://mxcl.github.com/homebrew/, Homebrew},
+ @url{http://www.gentoo.org/proj/en/gentoo-alt/prefix/bootstrap-macos.xml, Gentoo Prefix}
+ or @url{http://www.macports.org, MacPorts} can easily provide it.
+diff --git a/libavcodec/error_resilience.c b/libavcodec/error_resilience.c
+index 855ae77..6ffc4e9 100644
+--- a/libavcodec/error_resilience.c
++++ b/libavcodec/error_resilience.c
+@@ -50,7 +50,7 @@ static void decode_mb(MpegEncContext *s, int ref){
+         h->mb_xy= s->mb_x + s->mb_y*s->mb_stride;
+         memset(h->non_zero_count_cache, 0, sizeof(h->non_zero_count_cache));
+         assert(ref>=0);
+-        /* FIXME: It is posible albeit uncommon that slice references
++        /* FIXME: It is possible albeit uncommon that slice references
+          * differ between slices. We take the easy approach and ignore
+          * it for now. If this turns out to have any relevance in
+          * practice then correct remapping should be added. */
+diff --git a/libavcodec/msrle.c b/libavcodec/msrle.c
+index 11ac7be..41f1fd8 100644
+--- a/libavcodec/msrle.c
++++ b/libavcodec/msrle.c
+@@ -1,5 +1,5 @@
+ /*
+- * Micrsoft RLE Video Decoder
++ * Microsoft RLE video decoder
+  * Copyright (C) 2003 the ffmpeg project
+  *
+  * This file is part of Libav.
+@@ -21,7 +21,7 @@
+ 
+ /**
+  * @file
+- * MS RLE Video Decoder by Mike Melanson (melanson@pcisys.net)
++ * MS RLE video decoder by Mike Melanson (melanson@pcisys.net)
+  * For more information about the MS RLE format, visit:
+  *   http://www.pcisys.net/~melanson/codecs/
+  *
+diff --git a/tools/patcheck b/tools/patcheck
+index 3061716..94e1232 100755
+--- a/tools/patcheck
++++ b/tools/patcheck
+@@ -67,7 +67,7 @@ $EGREP $OPT '^\+ *(const *|)static' $*| $EGREP --color=always '[^=]= *(0|NULL)[^
+ cat $TMP
+ hiegrep '# *ifdef * (HAVE|CONFIG)_' 'ifdefs that should be #if' $*
+ 
+-hiegrep '\b(awnser|cant|dont|wont|usefull|successfull|occured|teh|alot|wether|skiped|heigth|informations|colums|loosy|loosing|seperate|preceed|upto|paket)\b' 'common typos' $*
++hiegrep '\b(awnser|cant|dont|wont|usefull|successfull|occured|teh|alot|wether|skiped|heigth|informations|colums|loosy|loosing|seperate|preceed|upto|paket|posible)\b' 'common typos' $*
+ 
+ hiegrep 'av_log\( *NULL' 'Missing context in av_log' $*
+ hiegrep '[^sn]printf' 'Please use av_log' $*
+-- 
+1.7.5.4
+

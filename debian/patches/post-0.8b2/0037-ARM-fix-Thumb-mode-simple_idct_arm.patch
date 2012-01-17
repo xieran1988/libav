@@ -1,0 +1,31 @@
+From 71b3a63e9c87057a1cc1431ac1edd6854e1e4e44 Mon Sep 17 00:00:00 2001
+From: Mans Rullgard <mans@mansr.com>
+Date: Fri, 13 Jan 2012 19:03:14 +0000
+Subject: [PATCH 37/63] ARM: fix Thumb-mode simple_idct_arm
+
+The alignment directive must obviously precede the label.
+This was never noticed in ARM mode since the location is
+already aligned there.
+
+Signed-off-by: Mans Rullgard <mans@mansr.com>
+---
+ libavcodec/arm/simple_idct_arm.S |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/arm/simple_idct_arm.S b/libavcodec/arm/simple_idct_arm.S
+index 1490f53..a9c3095 100644
+--- a/libavcodec/arm/simple_idct_arm.S
++++ b/libavcodec/arm/simple_idct_arm.S
+@@ -491,8 +491,8 @@ __end_bef_a_evaluation:
+         bal __end_a_evaluation
+ 
+ 
+-__constant_ptr__:  @@ see #defines at the beginning of the source code for values.
+         .align
++__constant_ptr__:  @@ see #defines at the beginning of the source code for values.
+         .word   W1
+         .word   W2
+         .word   W3
+-- 
+1.7.5.4
+

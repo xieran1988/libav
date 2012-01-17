@@ -1,0 +1,262 @@
+From 82390f57d1714fdc952c15ba91511d93f2e59bfc Mon Sep 17 00:00:00 2001
+From: Justin Ruggles <justin.ruggles@gmail.com>
+Date: Sun, 8 Jan 2012 19:50:31 -0500
+Subject: [PATCH 04/63] avcodec: add GSM parser
+
+The WAVE demuxer returns packets with many blocks per frame, which needs to be
+parsed into single blocks. This has a side-effect of fixing the timestamps.
+---
+ Changelog                    |    5 +++
+ libavcodec/Makefile          |    1 +
+ libavcodec/allcodecs.c       |    1 +
+ libavcodec/gsm.h             |   31 ++++++++++++++++
+ libavcodec/gsm_parser.c      |   79 ++++++++++++++++++++++++++++++++++++++++++
+ libavcodec/gsmdec_data.h     |    5 ---
+ libavcodec/gsmdec_template.c |    1 +
+ libavcodec/libgsm.c          |    7 +---
+ libavcodec/msgsmdec.c        |    1 +
+ libavcodec/version.h         |    4 +-
+ 10 files changed, 123 insertions(+), 12 deletions(-)
+ create mode 100644 libavcodec/gsm.h
+ create mode 100644 libavcodec/gsm_parser.c
+
+diff --git a/Changelog b/Changelog
+index e69bde5..cbe61f5 100644
+--- a/Changelog
++++ b/Changelog
+@@ -2,6 +2,11 @@ Entries are sorted chronologically from oldest to youngest within each release,
+ releases are sorted from youngest to oldest.
+ 
+ 
++version <next>:
++
++- GSM audio parser
++
++
+ version 0.8_beta2:
+ 
+ - Automatic thread count based on detection number of (available) CPU cores
+diff --git a/libavcodec/Makefile b/libavcodec/Makefile
+index 741df91..1e8d09b 100644
+--- a/libavcodec/Makefile
++++ b/libavcodec/Makefile
+@@ -608,6 +608,7 @@ OBJS-$(CONFIG_DNXHD_PARSER)            += dnxhd_parser.o
+ OBJS-$(CONFIG_DVBSUB_PARSER)           += dvbsub_parser.o
+ OBJS-$(CONFIG_DVDSUB_PARSER)           += dvdsub_parser.o
+ OBJS-$(CONFIG_FLAC_PARSER)             += flac_parser.o flacdata.o flac.o
++OBJS-$(CONFIG_GSM_PARSER)              += gsm_parser.o
+ OBJS-$(CONFIG_H261_PARSER)             += h261_parser.o
+ OBJS-$(CONFIG_H263_PARSER)             += h263_parser.o
+ OBJS-$(CONFIG_H264_PARSER)             += h264_parser.o h264.o            \
+diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
+index 3980982..5289692 100644
+--- a/libavcodec/allcodecs.c
++++ b/libavcodec/allcodecs.c
+@@ -399,6 +399,7 @@ void avcodec_register_all(void)
+     REGISTER_PARSER  (DVBSUB, dvbsub);
+     REGISTER_PARSER  (DVDSUB, dvdsub);
+     REGISTER_PARSER  (FLAC, flac);
++    REGISTER_PARSER  (GSM, gsm);
+     REGISTER_PARSER  (H261, h261);
+     REGISTER_PARSER  (H263, h263);
+     REGISTER_PARSER  (H264, h264);
+diff --git a/libavcodec/gsm.h b/libavcodec/gsm.h
+new file mode 100644
+index 0000000..c7c3e22
+--- /dev/null
++++ b/libavcodec/gsm.h
+@@ -0,0 +1,31 @@
++/*
++ * GSM common header
++ *
++ * This file is part of Libav.
++ *
++ * Libav is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * Libav is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with Libav; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#ifndef AVCODEC_GSM_H
++#define AVCODEC_GSM_H
++
++/* bytes per block */
++#define GSM_BLOCK_SIZE    33
++#define GSM_MS_BLOCK_SIZE 65
++
++/* samples per block */
++#define GSM_FRAME_SIZE 160
++
++#endif /* AVCODEC_GSM_H */
+diff --git a/libavcodec/gsm_parser.c b/libavcodec/gsm_parser.c
+new file mode 100644
+index 0000000..a2965d3
+--- /dev/null
++++ b/libavcodec/gsm_parser.c
+@@ -0,0 +1,79 @@
++/*
++ * Copyright (c) 2012  Justin Ruggles
++ *
++ * This file is part of Libav.
++ *
++ * Libav is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * Libav is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with Libav; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++/**
++ * @file
++ * GSM audio parser
++ *
++ * Splits packets into individual blocks.
++ */
++
++#include "parser.h"
++#include "gsm.h"
++
++typedef struct GSMParseContext {
++    ParseContext pc;
++    int block_size;
++    int remaining;
++} GSMParseContext;
++
++static int gsm_parse(AVCodecParserContext *s1, AVCodecContext *avctx,
++                     const uint8_t **poutbuf, int *poutbuf_size,
++                     const uint8_t *buf, int buf_size)
++{
++    GSMParseContext *s = s1->priv_data;
++    ParseContext *pc = &s->pc;
++    int next;
++
++    if (!s->block_size) {
++        switch (avctx->codec_id) {
++        case CODEC_ID_GSM:    s->block_size = GSM_BLOCK_SIZE;    break;
++        case CODEC_ID_GSM_MS: s->block_size = GSM_MS_BLOCK_SIZE; break;
++        default:
++            return AVERROR(EINVAL);
++        }
++    }
++
++    if (!s->remaining)
++        s->remaining = s->block_size;
++    if (s->remaining <= buf_size) {
++        next = s->remaining;
++        s->remaining = 0;
++    } else {
++        next = END_NOT_FOUND;
++        s->remaining -= buf_size;
++    }
++
++    if (ff_combine_frame(pc, next, &buf, &buf_size) < 0 || !buf_size) {
++        *poutbuf      = NULL;
++        *poutbuf_size = 0;
++        return buf_size;
++    }
++    *poutbuf      = buf;
++    *poutbuf_size = buf_size;
++    return next;
++}
++
++AVCodecParser ff_gsm_parser = {
++    .codec_ids      = { CODEC_ID_GSM, CODEC_ID_GSM_MS },
++    .priv_data_size = sizeof(GSMParseContext),
++    .parser_parse   = gsm_parse,
++    .parser_close   = ff_parse_close,
++};
+diff --git a/libavcodec/gsmdec_data.h b/libavcodec/gsmdec_data.h
+index 21789f7..2ff2322 100644
+--- a/libavcodec/gsmdec_data.h
++++ b/libavcodec/gsmdec_data.h
+@@ -25,11 +25,6 @@
+ #include <stdint.h>
+ #include "avcodec.h"
+ 
+-// input and output sizes in byte
+-#define GSM_BLOCK_SIZE    33
+-#define GSM_MS_BLOCK_SIZE 65
+-#define GSM_FRAME_SIZE   160
+-
+ typedef struct {
+     AVFrame frame;
+     // Contains first 120 elements from the previous frame
+diff --git a/libavcodec/gsmdec_template.c b/libavcodec/gsmdec_template.c
+index 7e57c71..b5222af 100644
+--- a/libavcodec/gsmdec_template.c
++++ b/libavcodec/gsmdec_template.c
+@@ -25,6 +25,7 @@
+  */
+ 
+ #include "get_bits.h"
++#include "gsm.h"
+ #include "gsmdec_data.h"
+ 
+ static void apcm_dequant_add(GetBitContext *gb, int16_t *dst)
+diff --git a/libavcodec/libgsm.c b/libavcodec/libgsm.c
+index 16d9972..1fa04cf 100644
+--- a/libavcodec/libgsm.c
++++ b/libavcodec/libgsm.c
+@@ -27,13 +27,10 @@
+ 
+ // The idiosyncrasies of GSM-in-WAV are explained at http://kbs.cs.tu-berlin.de/~jutta/toast.html
+ 
+-#include "avcodec.h"
+ #include <gsm/gsm.h>
+ 
+-// gsm.h misses some essential constants
+-#define GSM_BLOCK_SIZE 33
+-#define GSM_MS_BLOCK_SIZE 65
+-#define GSM_FRAME_SIZE 160
++#include "avcodec.h"
++#include "gsm.h"
+ 
+ static av_cold int libgsm_encode_init(AVCodecContext *avctx) {
+     if (avctx->channels > 1) {
+diff --git a/libavcodec/msgsmdec.c b/libavcodec/msgsmdec.c
+index 1a288ee..52b0f5d 100644
+--- a/libavcodec/msgsmdec.c
++++ b/libavcodec/msgsmdec.c
+@@ -22,6 +22,7 @@
+ #define BITSTREAM_READER_LE
+ #include "avcodec.h"
+ #include "msgsmdec.h"
++#include "gsm.h"
+ #include "gsmdec_template.c"
+ 
+ int ff_msgsm_decode_block(AVCodecContext *avctx, int16_t *samples,
+diff --git a/libavcodec/version.h b/libavcodec/version.h
+index 1317ef0..87838c0 100644
+--- a/libavcodec/version.h
++++ b/libavcodec/version.h
+@@ -21,8 +21,8 @@
+ #define AVCODEC_VERSION_H
+ 
+ #define LIBAVCODEC_VERSION_MAJOR 53
+-#define LIBAVCODEC_VERSION_MINOR 32
+-#define LIBAVCODEC_VERSION_MICRO  2
++#define LIBAVCODEC_VERSION_MINOR 33
++#define LIBAVCODEC_VERSION_MICRO  0
+ 
+ #define LIBAVCODEC_VERSION_INT  AV_VERSION_INT(LIBAVCODEC_VERSION_MAJOR, \
+                                                LIBAVCODEC_VERSION_MINOR, \
+-- 
+1.7.5.4
+

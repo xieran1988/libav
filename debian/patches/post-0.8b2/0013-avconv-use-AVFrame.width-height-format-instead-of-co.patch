@@ -1,0 +1,54 @@
+From b2ce3b998b90c9ec8dcefe4b2c45fcf5b2f0a903 Mon Sep 17 00:00:00 2001
+From: Anton Khirnov <anton@khirnov.net>
+Date: Sat, 31 Dec 2011 17:15:50 +0100
+Subject: [PATCH 13/63] avconv: use AVFrame.width/height/format instead of
+ corresponding AVCodecContext fields
+
+---
+ avconv.c |   15 +++++++--------
+ 1 files changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/avconv.c b/avconv.c
+index c96cc73..817c0cf 100644
+--- a/avconv.c
++++ b/avconv.c
+@@ -1262,19 +1262,18 @@ static void do_video_resample(OutputStream *ost,
+                               AVFrame **out_picture)
+ {
+     int resample_changed = 0;
+-    AVCodecContext *dec = ist->st->codec;
+     *out_picture = in_picture;
+ 
+-    resample_changed = ost->resample_width   != dec->width  ||
+-                       ost->resample_height  != dec->height ||
+-                       ost->resample_pix_fmt != dec->pix_fmt;
++    resample_changed = ost->resample_width   != in_picture->width  ||
++                       ost->resample_height  != in_picture->height ||
++                       ost->resample_pix_fmt != in_picture->format;
+ 
+     if (resample_changed) {
+         av_log(NULL, AV_LOG_INFO,
+                "Input stream #%d:%d frame changed from size:%dx%d fmt:%s to size:%dx%d fmt:%s\n",
+                ist->file_index, ist->st->index,
+                ost->resample_width, ost->resample_height, av_get_pix_fmt_name(ost->resample_pix_fmt),
+-               dec->width         , dec->height         , av_get_pix_fmt_name(dec->pix_fmt));
++               in_picture->width, in_picture->height, av_get_pix_fmt_name(in_picture->format));
+         if (!ost->video_resample)
+             ost->video_resample = 1;
+     }
+@@ -1301,9 +1300,9 @@ static void do_video_resample(OutputStream *ost,
+               0, ost->resample_height, (*out_picture)->data, (*out_picture)->linesize);
+     }
+     if (resample_changed) {
+-        ost->resample_width   = dec->width;
+-        ost->resample_height  = dec->height;
+-        ost->resample_pix_fmt = dec->pix_fmt;
++        ost->resample_width   = in_picture->width;
++        ost->resample_height  = in_picture->height;
++        ost->resample_pix_fmt = in_picture->format;
+     }
+ }
+ #endif
+-- 
+1.7.5.4
+
