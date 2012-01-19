@@ -41,7 +41,7 @@ $(DH_INSTALL_FILES):
 	$(foreach opt_flavor,$(OPT_FLAVORS),$(call dh_install_file_opt_flavor,$@,$(opt_flavor)))
 
 configure-%: configure-stamp-%
-configure-stamp-%: $(QUILT_STAMPFN)
+configure-stamp-%:
 	dh_testdir
 	mkdir -p debian-$*
 	cd debian-$* && CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" $(CURDIR)/configure \
@@ -58,7 +58,7 @@ debian-shared/tools/qt-faststart: build-stamp-shared
 	$(MAKE) -C debian-shared tools/qt-faststart V=1
 
 build-doxy: build-doxy-stamp
-build-doxy-stamp: $(QUILT_STAMPFN)
+build-doxy-stamp:
 	dh_testdir
 	doxygen
 	touch $@
