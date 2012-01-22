@@ -2138,10 +2138,18 @@ static int try_decode_frame(AVStream *st, AVPacket *avpkt, AVDictionary **option
     AVPacket pkt = *avpkt;
 
     if(!st->codec->codec){
+        AVDictionary *thread_opt = NULL;
+
         codec = avcodec_find_decoder(st->codec->codec_id);
         if (!codec)
             return -1;
-        ret = avcodec_open2(st->codec, codec, options);
+
+        /* force thread count to 1 since the h264 decoder will not extract SPS
+         *  and PPS to extradata during multi-threaded decoding */
+        av_dict_set(options ? options : &thread_opt, "threads", "1", 0);
+        ret = avcodec_open2(st->codec, codec, options ? options : &thread_opt);
+        if (!options)
+            av_dict_free(&thread_opt);
         if (ret < 0)
             return ret;
     }
@@ -2281,6 +2289,7 @@ int avformat_find_stream_info(AVFormatContext *ic, AVDictionary **options)
 
     for(i=0;i<ic->nb_streams;i++) {
         AVCodec *codec;
+        AVDictionary *thread_opt = NULL;
         st = ic->streams[i];
 
         if (st->codec->codec_type == AVMEDIA_TYPE_VIDEO ||
@@ -2300,16 +2309,24 @@ int avformat_find_stream_info(AVFormatContext *ic, AVDictionary **options)
         assert(!st->codec->codec);
         codec = avcodec_find_decoder(st->codec->codec_id);
 
+        /* force thread count to 1 since the h264 decoder will not extract SPS
+         *  and PPS to extradata during multi-threaded decoding */
+        av_dict_set(options ? &options[i] : &thread_opt, "threads", "1", 0);
+
         /* Ensure that subtitle_header is properly set. */
         if (st->codec->codec_type == AVMEDIA_TYPE_SUBTITLE
             && codec && !st->codec->codec)
-            avcodec_open2(st->codec, codec, options ? &options[i] : NULL);
+            avcodec_open2(st->codec, codec, options ? &options[i]
+                              : &thread_opt);
 
         //try to just open decoders, in case this is enough to get parameters
         if(!has_codec_parameters(st->codec)){
             if (codec && !st->codec->codec)
-                avcodec_open2(st->codec, codec, options ? &options[i] : NULL);
+                avcodec_open2(st->codec, codec, options ? &options[i]
+                              : &thread_opt);
         }
+        if (!options)
+            av_dict_free(&thread_opt);
     }
 
     for (i=0; i<ic->nb_streams; i++) {
@@ -2442,9 +2459,11 @@ int avformat_find_stream_info(AVFormatContext *ic, AVDictionary **options)
         }
         if(st->parser && st->parser->parser->split && !st->codec->extradata){
             int i= st->parser->parser->split(st->codec, pkt->data, pkt->size);
-            if(i){
+            if (i > 0 && i < FF_MAX_EXTRADATA_SIZE) {
                 st->codec->extradata_size= i;
                 st->codec->extradata= av_malloc(st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+                if (!st->codec->extradata)
+                    return AVERROR(ENOMEM);
                 memcpy(st->codec->extradata, pkt->data, st->codec->extradata_size);
                 memset(st->codec->extradata + i, 0, FF_INPUT_BUFFER_PADDING_SIZE);
             }
@@ -3216,9 +3235,12 @@ int av_interleave_packet_per_dts(AVFormatContext *s, AVPacket *out, AVPacket *pk
  *         < 0 if an error occurred
  */
 static int interleave_packet(AVFormatContext *s, AVPacket *out, AVPacket *in, int flush){
-    if(s->oformat->interleave_packet)
-        return s->oformat->interleave_packet(s, out, in, flush);
-    else
+    if (s->oformat->interleave_packet) {
+        int ret = s->oformat->interleave_packet(s, out, in, flush);
+        if (in)
+            av_free_packet(in);
+        return ret;
+    } else
         return av_interleave_packet_per_dts(s, out, in, flush);
 }
 

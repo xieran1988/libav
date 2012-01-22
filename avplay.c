@@ -1707,7 +1707,7 @@ static int configure_video_filters(AVFilterGraph *graph, VideoState *is, const c
 {
     char sws_flags_str[128];
     int ret;
-    FFSinkContext ffsink_ctx = { .pix_fmt = PIX_FMT_YUV420P };
+    AVSinkContext avsink_ctx = { .pix_fmt = PIX_FMT_YUV420P };
     AVFilterContext *filt_src = NULL, *filt_out = NULL;
     snprintf(sws_flags_str, sizeof(sws_flags_str), "flags=%d", sws_flags);
     graph->scale_sws_opts = av_strdup(sws_flags_str);
@@ -1715,8 +1715,8 @@ static int configure_video_filters(AVFilterGraph *graph, VideoState *is, const c
     if ((ret = avfilter_graph_create_filter(&filt_src, &input_filter, "src",
                                             NULL, is, graph)) < 0)
         return ret;
-    if ((ret = avfilter_graph_create_filter(&filt_out, &ffsink, "out",
-                                            NULL, &ffsink_ctx, graph)) < 0)
+    if ((ret = avfilter_graph_create_filter(&filt_out, &avsink, "out",
+                                            NULL, &avsink_ctx, graph)) < 0)
         return ret;
 
     if (vfilters) {
@@ -2194,6 +2194,8 @@ static int stream_component_open(VideoState *is, int stream_index)
     if (lowres) avctx->flags  |= CODEC_FLAG_EMU_EDGE;
     if (fast)   avctx->flags2 |= CODEC_FLAG2_FAST;
 
+    if (!av_dict_get(opts, "threads", NULL, 0))
+        av_dict_set(&opts, "threads", "auto", 0);
     if (!codec ||
         avcodec_open2(avctx, codec, &opts) < 0)
         return -1;
@@ -2692,7 +2694,7 @@ static void toggle_full_screen(void)
 {
     is_full_screen = !is_full_screen;
 #if defined(__APPLE__) && SDL_VERSION_ATLEAST(1, 2, 14)
-    /* OSX needs to empty the picture_queue */
+    /* OS X needs to empty the picture_queue */
     for (int i = 0; i < VIDEO_PICTURE_QUEUE_SIZE; i++) {
         cur_stream->pictq[i].reallocate = 1;
     }
