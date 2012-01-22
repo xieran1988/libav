@@ -183,6 +183,25 @@ void rgb16tobgr32(const uint8_t *src, uint8_t *dst, int src_size)
     }
 }
 
+void rgb12to15(const uint8_t *src, uint8_t *dst, int src_size)
+{
+    const uint16_t *end;
+    uint16_t *d = (uint16_t *)dst;
+    const uint16_t *s = (const uint16_t *)src;
+    uint16_t rgb, r, g, b;
+    end = s + src_size / 2;
+    while (s < end) {
+        rgb = *s++;
+        r = rgb & 0xF00;
+        g = rgb & 0x0F0;
+        b = rgb & 0x00F;
+        r = (r << 3) | ((r & 0x800) >> 1);
+        g = (g << 2) | ((g & 0x080) >> 2);
+        b = (b << 1) | ( b          >> 3);
+        *d++ = r | g | b;
+    }
+}
+
 void rgb16to24(const uint8_t *src, uint8_t *dst, int src_size)
 {
     const uint16_t *end;
@@ -279,6 +298,19 @@ void rgb15tobgr15(const uint8_t *src, uint8_t *dst, int src_size)
         unsigned rgb = ((const uint16_t*)src)[i];
         br = rgb&0x7c1F;
         ((uint16_t*)dst)[i] = (br>>10) | (rgb&0x3E0) | (br<<10);
+    }
+}
+
+void rgb12tobgr12(const uint8_t *src, uint8_t *dst, int src_size)
+{
+    uint16_t *d = (uint16_t*)dst;
+    uint16_t *s = (uint16_t*)src;
+    int i;
+    int num_pixels = src_size >> 1;
+
+    for (i = 0; i < num_pixels; i++) {
+        unsigned rgb = s[i];
+        d[i] = (rgb << 8 | rgb & 0xF0 | rgb >> 8) & 0xFFF;
     }
 }
 
