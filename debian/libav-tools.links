@@ -1,0 +1,3 @@
+usr/bin/avserver usr/bin/ffserver
+usr/bin/avplay   usr/bin/ffplay
+usr/bin/avprobe  usr/bin/ffprobe
