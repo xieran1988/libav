@@ -4,7 +4,7 @@ EPOCH=4:
 DEB_SOURCE := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
 DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
-SHLIBS_VERSION := 4:0.8~beta2-2
+SHLIBS_VERSION := 4:0.8-1~
 
 LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-extra-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 DEV_PKGS := $(shell echo $(LIB_PKGS) | sed 's/[0-9]\+\>/-dev/g')
