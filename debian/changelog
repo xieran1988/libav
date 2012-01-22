@@ -1,8 +1,23 @@
-libav (4:0.8-1) UNRELEASED; urgency=low
+libav (4:0.8-1) unstable; urgency=medium
 
-  * 
+  [ Fabian Greffrath ]
+  * Remove the last remainders of explicit quilt usage in
+    pre-3.0 source formats.
+  * Urgency bumped to medium because of RC bugs and unfixed security
+    issues in testing.
+  * Imported Upstream version 0.8
+    - Bug fix: "Segfaults when using vaapi", thanks to Andrey Rahmatullin
+      (Closes: #656572). That crash is most likely caused by auto-enabling
+      multi-threading. This behavior got reverted just before this release.
+  * Drop post-0.8b2 patches
+  * Bump shlibs for addition of new audio encoding API
+  * Extend package descriptions to include a note what libav actually is
+  * debian/watch: fix mangling of '_' characters.
+  * drop unused lintian override in debian/control
+  * provide compatibility links for ffserver, ffplay and ffprobe
+    (Closes: #655683)
 
- -- Reinhard Tartler <siretart@tauware.de>  Sun, 22 Jan 2012 21:02:38 +0100
+ -- Reinhard Tartler <siretart@tauware.de>  Sun, 22 Jan 2012 21:24:22 +0100
 
 libav (4:0.8~beta2-3) unstable; urgency=low
 
