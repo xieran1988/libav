@@ -1,3 +1,9 @@
+libav (4:0.8-2) unstable; urgency=low
+
+  * 
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri, 27 Jan 2012 14:14:45 +0100
+
 libav (4:0.8-1) unstable; urgency=medium
 
   [ Fabian Greffrath ]
