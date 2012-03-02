@@ -153,7 +153,7 @@ endif
 # Enable hardened build flags through dpkg-buildflags
 CFLAGS := $(shell dpkg-buildflags --get CFLAGS)
 CFLAGS += $(shell dpkg-buildflags --get CPPFLAGS)
-LDFLAGS := $(shell dpkg-buildflags --get LDFLAGS)
+LDFLAGS := $(filter-out %-Bsymbolic-functions,$(shell dpkg-buildflags --get LDFLAGS))
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 # Various parts of Libav (and swscale) FTBFS when compiling with -fPIC
