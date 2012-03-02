@@ -1,0 +1,23 @@
+Description: Fix format string vulnerability detected by -Wformat-security.
+Author: Fabian Greffrath <fabian+debian@greffrath.com>
+
+--- libav.orig/libavcodec/srtdec.c
++++ libav/libavcodec/srtdec.c
+@@ -110,7 +110,7 @@ static const char *srt_to_ass(AVCodecCon
+                                     for (j=sptr-2; j>=0; j--)
+                                         if (stack[j].param[i][0]) {
+                                             out += snprintf(out, out_end-out,
+-                                                            stack[j].param[i]);
++                                                            "%s", stack[j].param[i]);
+                                             break;
+                                         }
+                         } else {
+@@ -146,7 +146,7 @@ static const char *srt_to_ass(AVCodecCon
+                             for (i=0; i<PARAM_NUMBER; i++)
+                                 if (stack[sptr].param[i][0])
+                                     out += snprintf(out, out_end-out,
+-                                                    stack[sptr].param[i]);
++                                                    "%s", stack[sptr].param[i]);
+                         }
+                     } else if (!buffer[1] && strspn(buffer, "bisu") == 1) {
+                         out += snprintf(out, out_end-out,
