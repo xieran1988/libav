@@ -1,4 +1,5 @@
 01-Tweak-doxygen-config.patch
+02-fix-avpreset-extension.patch
 03-disable-configuration-warnings.patch
 
 # post-0.8 patches

@@ -1,0 +1,68 @@
+Author: Reinhard Tartler <siretart@tauware.de>
+Subject: ffmpeg-0.8 expects wrong preset file extension (.ffpreset instead of .avpreset)
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=660978
+
+diff --git a/cmdutils.c b/cmdutils.c
+index a489a0f..e96fa81 100644
+--- a/cmdutils.c
++++ b/cmdutils.c
+@@ -883,12 +883,12 @@ FILE *get_preset_file(char *filename, size_t filename_size,
+         for (i = 0; i < 3 && !f; i++) {
+             if (!base[i])
+                 continue;
+-            snprintf(filename, filename_size, "%s%s/%s.ffpreset", base[i],
++            snprintf(filename, filename_size, "%s%s/%s.avpreset", base[i],
+                      i != 1 ? "" : "/.avconv", preset_name);
+             f = fopen(filename, "r");
+             if (!f && codec_name) {
+                 snprintf(filename, filename_size,
+-                         "%s%s/%s-%s.ffpreset",
++                         "%s%s/%s-%s.avpreset",
+                          base[i], i != 1 ? "" : "/.avconv", codec_name,
+                          preset_name);
+                 f = fopen(filename, "r");
+diff --git a/cmdutils.h b/cmdutils.h
+index eb96645..c69bb02 100644
+--- a/cmdutils.h
++++ b/cmdutils.h
+@@ -345,11 +345,11 @@ int64_t guess_correct_pts(PtsCorrectionContext *ctx, int64_t pts, int64_t dts);
+  * Get a file corresponding to a preset file.
+  *
+  * If is_path is non-zero, look for the file in the path preset_name.
+- * Otherwise search for a file named arg.ffpreset in the directories
++ * Otherwise search for a file named arg.avpreset in the directories
+  * $AVCONV_DATADIR (if set), $HOME/.avconv, and in the datadir defined
+  * at configuration time, in that order. If no such file is found and
+  * codec_name is defined, then search for a file named
+- * codec_name-preset_name.ffpreset in the above-mentioned directories.
++ * codec_name-preset_name.avpreset in the above-mentioned directories.
+  *
+  * @param filename buffer where the name of the found filename is written
+  * @param filename_size size in bytes of the filename buffer
+diff --git a/doc/ffmpeg.texi b/doc/ffmpeg.texi
+index 968d4f6..0e0c646 100644
+--- a/doc/ffmpeg.texi
++++ b/doc/ffmpeg.texi
+@@ -805,18 +805,18 @@ The argument passed to the @code{vpre}, @code{apre}, and @code{spre}
+ preset options identifies the preset file to use according to the
+ following rules:
+ 
+-First ffmpeg searches for a file named @var{arg}.ffpreset in the
++First ffmpeg searches for a file named @var{arg}.avpreset in the
+ directories @file{$AVCONV_DATADIR} (if set), and @file{$HOME/.avconv}, and in
+ the datadir defined at configuration time (usually @file{PREFIX/share/avconv})
+ in that order. For example, if the argument is @code{libx264-max}, it will
+-search for the file @file{libx264-max.ffpreset}.
++search for the file @file{libx264-max.avpreset}.
+ 
+ If no such file is found, then ffmpeg will search for a file named
+-@var{codec_name}-@var{arg}.ffpreset in the above-mentioned
++@var{codec_name}-@var{arg}.avpreset in the above-mentioned
+ directories, where @var{codec_name} is the name of the codec to which
+ the preset file options will be applied. For example, if you select
+ the video codec with @code{-vcodec libx264} and use @code{-vpre max},
+-then it will search for the file @file{libx264-max.ffpreset}.
++then it will search for the file @file{libx264-max.avpreset}.
+ @c man end
+ 
+ @chapter Tips
