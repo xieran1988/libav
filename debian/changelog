@@ -1,8 +1,21 @@
 libav (4:0.8-2) unstable; urgency=low
 
-  * 
+  [ Reinhard Tartler ]
+  * confflags: use --enable-pic instead of manually messing with cflags
+  * Import post 0.8 patches
+  * Bugfix: expects wrong preset file extension (Closes: #660978)
+    Thanks to Laurento <laurento.frittella@gmail.com> for spotting this.
 
- -- Reinhard Tartler <siretart@tauware.de>  Fri, 27 Jan 2012 14:14:45 +0100
+  [ Alessio Treglia ]
+  * Fix maintainer's name.
+
+  [ Fabian Greffrath ]
+  * Enable hardened build flags through dpkg-buildflags (Closes: #658929).
+  * Fix format string vulnerability detected by -Wformat-security.
+  * Filter out system-wide setting of -Bsymbolic-functions to avoid FTBFS.
+  * Set CPPFLAGS separately.
+
+ -- Reinhard Tartler <siretart@tauware.de>  Mon, 05 Mar 2012 19:47:54 +0100
 
 libav (4:0.8-1) unstable; urgency=medium
 
