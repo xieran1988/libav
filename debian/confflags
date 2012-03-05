@@ -150,9 +150,10 @@ ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
   lib1394-dev += libraw1394-dev, libdc1394-22-dev
 endif
 
-# Sanitize injected compiler in linker flags
-CFLAGS :=
-LDFLAGS :=
+# Enable hardened build flags through dpkg-buildflags
+CFLAGS := $(shell dpkg-buildflags --get CFLAGS)
+CPPFLAGS := $(shell dpkg-buildflags --get CPPFLAGS)
+LDFLAGS := $(filter-out %-Bsymbolic-functions,$(shell dpkg-buildflags --get LDFLAGS))
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 # Various parts of Libav (and swscale) FTBFS when compiling with -fPIC

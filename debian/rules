@@ -27,6 +27,7 @@ OPT_FLAVORS := $(filter-out static shared, $(FLAVORS))
 $(info FLAVORS = $(FLAVORS))
 $(info DEB_BUILD_OPTIONS = $(DEB_BUILD_OPTIONS))
 $(info CFLAGS = $(CFLAGS))
+$(info CPPFLAGS = $(CPPFLAGS))
 $(info LDFLAGS = $(LDFLAGS))
 
 define dh_install_file_opt_flavor
@@ -44,7 +45,7 @@ configure-%: configure-stamp-%
 configure-stamp-%:
 	dh_testdir
 	mkdir -p debian-$*
-	cd debian-$* && CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" $(CURDIR)/configure \
+	cd debian-$* && CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" $(CURDIR)/configure \
 		$($*_build_confflags) $(extra_$*_build_confflags)
 	touch $@
 
