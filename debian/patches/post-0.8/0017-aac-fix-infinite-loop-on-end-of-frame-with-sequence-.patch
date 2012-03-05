@@ -1,0 +1,56 @@
+From 683213230e6978302109253a48610a6b069ea43d Mon Sep 17 00:00:00 2001
+From: Alex Converse <alex.converse@gmail.com>
+Date: Wed, 22 Feb 2012 11:05:42 -0800
+Subject: [PATCH 17/80] aac: fix infinite loop on end-of-frame with sequence
+ of 1-bits.
+
+Based-on-work-by: Ronald S. Bultje <rsbultje@gmail.com>
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 1cd9a6154bc1ac1193c703cea980ed21c3e53792)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/aacdec.c |   25 +++++++++++++------------
+ 1 files changed, 13 insertions(+), 12 deletions(-)
+
+diff --git a/libavcodec/aacdec.c b/libavcodec/aacdec.c
+index ca1a876..2b9b45c 100644
+--- a/libavcodec/aacdec.c
++++ b/libavcodec/aacdec.c
+@@ -807,19 +807,20 @@ static int decode_band_types(AACContext *ac, enum BandType band_type[120],
+                 av_log(ac->avctx, AV_LOG_ERROR, "invalid band type\n");
+                 return -1;
+             }
+-            while ((sect_len_incr = get_bits(gb, bits)) == (1 << bits) - 1)
++            do {
++                sect_len_incr = get_bits(gb, bits);
+                 sect_end += sect_len_incr;
+-            sect_end += sect_len_incr;
+-            if (get_bits_left(gb) < 0) {
+-                av_log(ac->avctx, AV_LOG_ERROR, overread_err);
+-                return -1;
+-            }
+-            if (sect_end > ics->max_sfb) {
+-                av_log(ac->avctx, AV_LOG_ERROR,
+-                       "Number of bands (%d) exceeds limit (%d).\n",
+-                       sect_end, ics->max_sfb);
+-                return -1;
+-            }
++                if (get_bits_left(gb) < 0) {
++                    av_log(ac->avctx, AV_LOG_ERROR, overread_err);
++                    return -1;
++                }
++                if (sect_end > ics->max_sfb) {
++                    av_log(ac->avctx, AV_LOG_ERROR,
++                           "Number of bands (%d) exceeds limit (%d).\n",
++                           sect_end, ics->max_sfb);
++                    return -1;
++                }
++            } while (sect_len_incr == (1 << bits) - 1);
+             for (; k < sect_end; k++) {
+                 band_type        [idx]   = sect_band_type;
+                 band_type_run_end[idx++] = sect_end;
+-- 
+1.7.5.4
+

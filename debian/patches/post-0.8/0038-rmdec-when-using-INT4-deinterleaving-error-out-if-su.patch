@@ -1,0 +1,34 @@
+From 0312969b9ea7fa7027bca665bfded88690c4caa0 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Tue, 21 Feb 2012 10:36:27 -0800
+Subject: [PATCH 38/80] rmdec: when using INT4 deinterleaving, error out if
+ sub_packet_h <= 1.
+
+We read sub_packet_h / 2 packets per line of data (during deinterleaving),
+which equals zero if sub_packet_h <= 1, thus causing us to not read any
+data, leading to an infinite loop.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit e30b3e59a4f3004337cb1623b2aac988ce52b93f)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavformat/rmdec.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/libavformat/rmdec.c b/libavformat/rmdec.c
+index 75e4833..3d92253 100644
+--- a/libavformat/rmdec.c
++++ b/libavformat/rmdec.c
+@@ -265,6 +265,7 @@ static int rm_read_audio_stream_info(AVFormatContext *s, AVIOContext *pb,
+         switch (ast->deint_id) {
+         case DEINT_ID_INT4:
+             if (ast->coded_framesize > ast->audio_framesize ||
++                sub_packet_h <= 1 ||
+                 ast->coded_framesize * sub_packet_h > (2 + (sub_packet_h & 1)) * ast->audio_framesize)
+                 return AVERROR_INVALIDDATA;
+             break;
+-- 
+1.7.5.4
+

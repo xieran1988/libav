@@ -1,0 +1,40 @@
+From b5331b979bfb31ec1715618b2712429764b6a9b5 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Wed, 29 Feb 2012 13:55:09 -0800
+Subject: [PATCH 80/80] cscd: use negative error values to indicate
+ decode_init() failures.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 8a9faf33f2b4f40afbc3393b2be49867cea0c92d)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/cscd.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/cscd.c b/libavcodec/cscd.c
+index 00921bc..1edab91 100644
+--- a/libavcodec/cscd.c
++++ b/libavcodec/cscd.c
+@@ -228,7 +228,7 @@ static av_cold int decode_init(AVCodecContext *avctx) {
+             av_log(avctx, AV_LOG_ERROR,
+                    "CamStudio codec error: invalid depth %i bpp\n",
+                    avctx->bits_per_coded_sample);
+-            return 1;
++            return AVERROR_INVALIDDATA;
+     }
+     c->bpp = avctx->bits_per_coded_sample;
+     c->pic.data[0] = NULL;
+@@ -241,7 +241,7 @@ static av_cold int decode_init(AVCodecContext *avctx) {
+     c->decomp_buf = av_malloc(c->decomp_size + AV_LZO_OUTPUT_PADDING);
+     if (!c->decomp_buf) {
+         av_log(avctx, AV_LOG_ERROR, "Can't allocate decompression buffer.\n");
+-        return 1;
++        return AVERROR(ENOMEM);
+     }
+     return 0;
+ }
+-- 
+1.7.5.4
+

@@ -1,0 +1,30 @@
+From 5ab9294a8db5b3a796871e403b1a779a413a494c Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Fri, 17 Feb 2012 12:28:26 -0800
+Subject: [PATCH 29/80] als: prevent infinite loop in zero_remaining().
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit af468015d972c0dec5c8c37b2685ffa5cbe4ae87)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/alsdec.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/alsdec.c b/libavcodec/alsdec.c
+index dc4961c..26496bf 100644
+--- a/libavcodec/alsdec.c
++++ b/libavcodec/alsdec.c
+@@ -1011,7 +1011,7 @@ static void zero_remaining(unsigned int b, unsigned int b_max,
+ {
+     unsigned int count = 0;
+ 
+-    while (b < b_max)
++    for (; b < b_max; b++)
+         count += div_blocks[b];
+ 
+     if (count)
+-- 
+1.7.5.4
+

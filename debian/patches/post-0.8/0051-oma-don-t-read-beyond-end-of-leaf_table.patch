@@ -1,0 +1,30 @@
+From 71a939fee47d8b59ba1258b481322d16378e556f Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Tue, 28 Feb 2012 11:35:36 -0800
+Subject: [PATCH 51/80] oma: don't read beyond end of leaf_table.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 934cd18a43151ba4b819d9270d539cdb26f6e079)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavformat/omadec.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/omadec.c b/libavformat/omadec.c
+index 0beed71..cc37397 100644
+--- a/libavformat/omadec.c
++++ b/libavformat/omadec.c
+@@ -231,7 +231,7 @@ static int decrypt_init(AVFormatContext *s, ID3v2ExtraMeta *em, uint8_t *header)
+         rprobe(s, gdata, oc->r_val) < 0 &&
+         nprobe(s, gdata, oc->n_val) < 0) {
+         int i;
+-        for (i = 0; i < sizeof(leaf_table); i += 2) {
++        for (i = 0; i < FF_ARRAY_ELEMS(leaf_table); i += 2) {
+             uint8_t buf[16];
+             AV_WL64(buf, leaf_table[i]);
+             AV_WL64(&buf[8], leaf_table[i+1]);
+-- 
+1.7.5.4
+

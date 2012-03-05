@@ -1,0 +1,39 @@
+From fe710f2074a711b5b07b76fe9ecf11b4068b32ef Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Fri, 17 Feb 2012 16:57:00 -0800
+Subject: [PATCH 35/80] wma: don't return 0 on invalid packets.
+
+Return 0 means "please return the same data again", i.e. it causes an
+infinite loop. Instead, return an error.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 9d3050d3e95e307ebc34a943484c7add838d1220)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/wmadec.c |    8 ++++++--
+ 1 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/wmadec.c b/libavcodec/wmadec.c
+index 5600f9b..afc0658 100644
+--- a/libavcodec/wmadec.c
++++ b/libavcodec/wmadec.c
+@@ -817,8 +817,12 @@ static int wma_decode_superframe(AVCodecContext *avctx, void *data,
+         s->last_superframe_len = 0;
+         return 0;
+     }
+-    if (buf_size < s->block_align)
+-        return 0;
++    if (buf_size < s->block_align) {
++        av_log(avctx, AV_LOG_ERROR,
++               "Input packet size too small (%d < %d)\n",
++               buf_size, s->block_align);
++        return AVERROR_INVALIDDATA;
++    }
+     buf_size = s->block_align;
+ 
+     init_get_bits(&s->gb, buf, buf_size*8);
+-- 
+1.7.5.4
+

@@ -1,0 +1,36 @@
+From b68470707bf2e010136c6debd25051afdf198466 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Sat, 11 Feb 2012 08:42:28 -0800
+Subject: [PATCH 24/80] swscale: enforce a minimum filtersize.
+
+At very small dimensions, this calculation could lead to zero-sized
+filters, which leads to uninitialized output, zero-sized allocations,
+loop overflows in SIMD that uses do{..}while(i++<filtersize); instead
+of for(i=0;i<filtersize;i++){..} and several other similar failures.
+Therefore, require a minimum filtersize of 1.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit dae2ce361a2b5fd9be1d43e5e8c00bdbc5f03e3d)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libswscale/utils.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libswscale/utils.c b/libswscale/utils.c
+index b49f924..9d72196 100644
+--- a/libswscale/utils.c
++++ b/libswscale/utils.c
+@@ -263,7 +263,7 @@ static int initFilter(int16_t **outFilter, int16_t **filterPos, int *outFilterSi
+         if (xInc <= 1<<16)      filterSize= 1 + sizeFactor; // upscale
+         else                    filterSize= 1 + (sizeFactor*srcW + dstW - 1)/ dstW;
+ 
+-        if (filterSize > srcW-2) filterSize=srcW-2;
++        filterSize = av_clip(filterSize, 1, srcW - 2);
+ 
+         FF_ALLOC_OR_GOTO(NULL, filter, dstW*sizeof(*filter)*filterSize, fail);
+ 
+-- 
+1.7.5.4
+

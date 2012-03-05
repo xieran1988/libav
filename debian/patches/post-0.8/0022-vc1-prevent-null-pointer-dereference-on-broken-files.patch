@@ -1,0 +1,29 @@
+From d19e3e19d67b50cb5614ead2e0f125678e1c257d Mon Sep 17 00:00:00 2001
+From: Janne Grunau <janne-libav@jannau.net>
+Date: Wed, 25 Jan 2012 15:49:54 +0100
+Subject: [PATCH 22/80] vc1: prevent null pointer dereference on broken files
+
+CC: libav-stable@libav.org
+(cherry picked from commit 510ef04a461b3b54a762c6141ad880cbed85981f)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/vc1dec.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/vc1dec.c b/libavcodec/vc1dec.c
+index fa95273..0425a87 100644
+--- a/libavcodec/vc1dec.c
++++ b/libavcodec/vc1dec.c
+@@ -5708,7 +5708,7 @@ static int vc1_decode_frame(AVCodecContext *avctx, void *data,
+             if (!v->field_mode || v->second_field)
+                 s->end_mb_y = (i == n_slices     ) ? mb_height : FFMIN(mb_height, slices[i].mby_start % mb_height);
+             else
+-                s->end_mb_y = (i == n_slices1 + 1) ? mb_height : FFMIN(mb_height, slices[i].mby_start % mb_height);
++                s->end_mb_y = (i <= n_slices1 + 1) ? mb_height : FFMIN(mb_height, slices[i].mby_start % mb_height);
+             vc1_decode_blocks(v);
+             if (i != n_slices)
+                 s->gb = slices[i].gb;
+-- 
+1.7.5.4
+

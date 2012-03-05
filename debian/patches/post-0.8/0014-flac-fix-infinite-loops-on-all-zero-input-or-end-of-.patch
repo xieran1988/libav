@@ -1,0 +1,53 @@
+From 6dcbbdc0116a50370d66f0f20d74a70d56568382 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Wed, 15 Feb 2012 09:52:11 -0800
+Subject: [PATCH 14/80] flac: fix infinite loops on all-zero input or
+ end-of-stream.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 52e4018be47697a60f4f18f83551766df31f5adf)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/flacdec.c |    9 +++++++++
+ libavcodec/golomb.h  |    2 +-
+ 2 files changed, 10 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/flacdec.c b/libavcodec/flacdec.c
+index 58eb66d..440a55d 100644
+--- a/libavcodec/flacdec.c
++++ b/libavcodec/flacdec.c
+@@ -422,7 +422,16 @@ static inline int decode_subframe(FLACContext *s, int channel)
+     type = get_bits(&s->gb, 6);
+ 
+     if (get_bits1(&s->gb)) {
++        int left = get_bits_left(&s->gb);
+         wasted = 1;
++        if ( left < 0 ||
++            (left < s->curr_bps && !show_bits_long(&s->gb, left)) ||
++                                   !show_bits_long(&s->gb, s->curr_bps)) {
++            av_log(s->avctx, AV_LOG_ERROR,
++                   "Invalid number of wasted bits > available bits (%d) - left=%d\n",
++                   s->curr_bps, left);
++            return AVERROR_INVALIDDATA;
++        }
+         while (!get_bits1(&s->gb))
+             wasted++;
+         s->curr_bps -= wasted;
+diff --git a/libavcodec/golomb.h b/libavcodec/golomb.h
+index 0deab87..1712540 100644
+--- a/libavcodec/golomb.h
++++ b/libavcodec/golomb.h
+@@ -301,7 +301,7 @@ static inline int get_ur_golomb_jpegls(GetBitContext *gb, int k, int limit, int
+         return buf;
+     }else{
+         int i;
+-        for(i=0; SHOW_UBITS(re, gb, 1) == 0; i++){
++        for (i = 0; i < limit && SHOW_UBITS(re, gb, 1) == 0; i++) {
+             LAST_SKIP_BITS(re, gb, 1);
+             UPDATE_CACHE(re, gb);
+         }
+-- 
+1.7.5.4
+

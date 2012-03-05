@@ -1,0 +1,30 @@
+From 5f896773e07126dd66f5b83e604e99adb30617cb Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Tue, 28 Feb 2012 18:21:31 -0800
+Subject: [PATCH 58/80] swscale: fix another integer overflow.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 791de61bbb0d2bceb1037597b310e2a4a94494fd)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libswscale/utils.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libswscale/utils.c b/libswscale/utils.c
+index 2d7029e..51bc384 100644
+--- a/libswscale/utils.c
++++ b/libswscale/utils.c
+@@ -1013,7 +1013,7 @@ int sws_init_context(SwsContext *c, SwsFilter *srcFilter, SwsFilter *dstFilter)
+     c->vLumBufSize= c->vLumFilterSize;
+     c->vChrBufSize= c->vChrFilterSize;
+     for (i=0; i<dstH; i++) {
+-        int chrI= i*c->chrDstH / dstH;
++        int chrI = (int64_t) i * c->chrDstH / dstH;
+         int nextSlice= FFMAX(c->vLumFilterPos[i   ] + c->vLumFilterSize - 1,
+                            ((c->vChrFilterPos[chrI] + c->vChrFilterSize - 1)<<c->chrSrcVSubSample));
+ 
+-- 
+1.7.5.4
+

@@ -1,0 +1,44 @@
+From 19da1a39e861968c27504b67d481d32339669e2a Mon Sep 17 00:00:00 2001
+From: Alex Converse <alex.converse@gmail.com>
+Date: Thu, 1 Mar 2012 14:07:22 -0800
+Subject: [PATCH 66/80] rv10/20: Fix a buffer overread caused by losing track
+ of the remaining buffer size.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 2f6528537fdd88820f3a4683d5e595d7b3a62689)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/rv10.c |    6 +++++-
+ 1 files changed, 5 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/rv10.c b/libavcodec/rv10.c
+index ccc0944..d7d7ed2 100644
+--- a/libavcodec/rv10.c
++++ b/libavcodec/rv10.c
+@@ -642,8 +642,12 @@ static int rv10_decode_frame(AVCodecContext *avctx,
+ 
+     if(!avctx->slice_count){
+         slice_count = (*buf++) + 1;
++        buf_size--;
+         slices_hdr = buf + 4;
+         buf += 8 * slice_count;
++        buf_size -= 8 * slice_count;
++        if (buf_size <= 0)
++            return AVERROR_INVALIDDATA;
+     }else
+         slice_count = avctx->slice_count;
+ 
+@@ -682,7 +686,7 @@ static int rv10_decode_frame(AVCodecContext *avctx,
+         s->current_picture_ptr= NULL; //so we can detect if frame_end wasnt called (find some nicer solution...)
+     }
+ 
+-    return buf_size;
++    return avpkt->size;
+ }
+ 
+ AVCodec ff_rv10_decoder = {
+-- 
+1.7.5.4
+

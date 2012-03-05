@@ -1,0 +1,84 @@
+From 7e88df99e1d26accc56b0da52d271a57995ecde7 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Wed, 29 Feb 2012 17:50:28 -0800
+Subject: [PATCH 65/80] lcl: return negative error codes on decode_init()
+ errors.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit bd17a40a7e0eba21b5d27c67aff795e2910766e4)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/lcldec.c |   14 +++++++-------
+ 1 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/libavcodec/lcldec.c b/libavcodec/lcldec.c
+index 5b18418..679824c 100644
+--- a/libavcodec/lcldec.c
++++ b/libavcodec/lcldec.c
+@@ -476,7 +476,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
+ 
+     if (avctx->extradata_size < 8) {
+         av_log(avctx, AV_LOG_ERROR, "Extradata size too small.\n");
+-        return 1;
++        return AVERROR_INVALIDDATA;
+     }
+ 
+     /* Check codec type */
+@@ -525,7 +525,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
+         break;
+     default:
+         av_log(avctx, AV_LOG_ERROR, "Unsupported image format %d.\n", c->imgtype);
+-        return 1;
++        return AVERROR_INVALIDDATA;
+     }
+ 
+     /* Detect compression method */
+@@ -542,7 +542,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
+             break;
+         default:
+             av_log(avctx, AV_LOG_ERROR, "Unsupported compression format for MSZH (%d).\n", c->compression);
+-            return 1;
++            return AVERROR_INVALIDDATA;
+         }
+         break;
+ #if CONFIG_ZLIB_DECODER
+@@ -560,7 +560,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
+         default:
+             if (c->compression < Z_NO_COMPRESSION || c->compression > Z_BEST_COMPRESSION) {
+                 av_log(avctx, AV_LOG_ERROR, "Unsupported compression level for ZLIB: (%d).\n", c->compression);
+-                return 1;
++                return AVERROR_INVALIDDATA;
+             }
+             av_log(avctx, AV_LOG_DEBUG, "Compression level for ZLIB: (%d).\n", c->compression);
+         }
+@@ -568,14 +568,14 @@ static av_cold int decode_init(AVCodecContext *avctx)
+ #endif
+     default:
+         av_log(avctx, AV_LOG_ERROR, "BUG! Unknown codec in compression switch.\n");
+-        return 1;
++        return AVERROR_INVALIDDATA;
+     }
+ 
+     /* Allocate decompression buffer */
+     if (c->decomp_size) {
+         if ((c->decomp_buf = av_malloc(max_decomp_size)) == NULL) {
+             av_log(avctx, AV_LOG_ERROR, "Can't allocate decompression buffer.\n");
+-            return 1;
++            return AVERROR(ENOMEM);
+         }
+     }
+ 
+@@ -601,7 +601,7 @@ static av_cold int decode_init(AVCodecContext *avctx)
+         if (zret != Z_OK) {
+             av_log(avctx, AV_LOG_ERROR, "Inflate init error: %d\n", zret);
+             av_freep(&c->decomp_buf);
+-            return 1;
++            return AVERROR_UNKNOWN;
+         }
+     }
+ #endif
+-- 
+1.7.5.4
+

@@ -1,0 +1,40 @@
+From e1f2a6a32b86fef0916338e21851c9b4f499f706 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Tue, 14 Feb 2012 11:50:57 -0800
+Subject: [PATCH 11/80] golomb: avoid infinite loop on all-zero input (or end
+ of buffer).
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit c6643fddba73560f26f90d327c84d8832222a720)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/golomb.h |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/golomb.h b/libavcodec/golomb.h
+index 503aa14..e19064c 100644
+--- a/libavcodec/golomb.h
++++ b/libavcodec/golomb.h
+@@ -123,7 +123,7 @@ static inline int svq3_get_ue_golomb(GetBitContext *gb){
+     }else{
+         int ret = 1;
+ 
+-        while (1) {
++        do {
+             buf >>= 32 - 8;
+             LAST_SKIP_BITS(re, gb, FFMIN(ff_interleaved_golomb_vlc_len[buf], 8));
+ 
+@@ -135,7 +135,7 @@ static inline int svq3_get_ue_golomb(GetBitContext *gb){
+             ret = (ret << 4) | ff_interleaved_dirac_golomb_vlc_code[buf];
+             UPDATE_CACHE(re, gb);
+             buf = GET_CACHE(re, gb);
+-        }
++        } while (ret);
+ 
+         CLOSE_READER(re, gb);
+         return ret - 1;
+-- 
+1.7.5.4
+

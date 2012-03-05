@@ -1,0 +1,40 @@
+From 3f7e90cf0c12d739c5b9cd548c1916f23d691185 Mon Sep 17 00:00:00 2001
+From: Alex Converse <alex.converse@gmail.com>
+Date: Fri, 2 Mar 2012 10:13:07 -0800
+Subject: [PATCH 72/80] mpegts: Pad the packet buffer in handle_packet().
+
+This allows it to be used with get_bits without the thread of overreads.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 1aa708988ac131cf7d5c8bd59aca256a7c974df9)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavformat/mpegts.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/mpegts.c b/libavformat/mpegts.c
+index 15688a9..85e0952 100644
+--- a/libavformat/mpegts.c
++++ b/libavformat/mpegts.c
+@@ -1772,7 +1772,7 @@ static int read_packet(AVFormatContext *s, uint8_t *buf, int raw_packet_size)
+ static int handle_packets(MpegTSContext *ts, int nb_packets)
+ {
+     AVFormatContext *s = ts->stream;
+-    uint8_t packet[TS_PACKET_SIZE];
++    uint8_t packet[TS_PACKET_SIZE+FF_INPUT_BUFFER_PADDING_SIZE];
+     int packet_num, ret = 0;
+ 
+     if (avio_tell(s->pb) != ts->last_pos) {
+@@ -1794,6 +1794,7 @@ static int handle_packets(MpegTSContext *ts, int nb_packets)
+ 
+     ts->stop_parse = 0;
+     packet_num = 0;
++    memset(packet + TS_PACKET_SIZE, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+     for(;;) {
+         if (ts->stop_parse>0)
+             break;
+-- 
+1.7.5.4
+

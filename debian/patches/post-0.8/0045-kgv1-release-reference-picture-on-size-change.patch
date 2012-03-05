@@ -1,0 +1,34 @@
+From a0473085f3e2300908b1bf7ecf2ed7177eef0d4f Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Fri, 24 Feb 2012 16:27:53 -0800
+Subject: [PATCH 45/80] kgv1: release reference picture on size change.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 6c4c27adb61b2881a94ce5c7d97ee1c8adadb5fe)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/kgv1dec.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/kgv1dec.c b/libavcodec/kgv1dec.c
+index 4526bf9..c4c3dac 100644
+--- a/libavcodec/kgv1dec.c
++++ b/libavcodec/kgv1dec.c
+@@ -61,8 +61,11 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
+     if (av_image_check_size(w, h, 0, avctx))
+         return -1;
+ 
+-    if (w != avctx->width || h != avctx->height)
++    if (w != avctx->width || h != avctx->height) {
++        if (c->prev.data[0])
++            avctx->release_buffer(avctx, &c->prev);
+         avcodec_set_dimensions(avctx, w, h);
++    }
+ 
+     maxcnt = w * h;
+ 
+-- 
+1.7.5.4
+

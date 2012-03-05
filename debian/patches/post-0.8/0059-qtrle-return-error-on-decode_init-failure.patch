@@ -1,0 +1,30 @@
+From e904e9b7204b6ebd3433dd49a6c978ffb293cbdc Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Tue, 28 Feb 2012 19:00:39 -0800
+Subject: [PATCH 59/80] qtrle: return error on decode_init() failure.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit e54ae60e46f737b8e9a96548971091f7ab6b8f7c)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/qtrle.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/qtrle.c b/libavcodec/qtrle.c
+index 0c74798..6e7b3c2 100644
+--- a/libavcodec/qtrle.c
++++ b/libavcodec/qtrle.c
+@@ -407,7 +407,7 @@ static av_cold int qtrle_decode_init(AVCodecContext *avctx)
+     default:
+         av_log (avctx, AV_LOG_ERROR, "Unsupported colorspace: %d bits/sample?\n",
+             avctx->bits_per_coded_sample);
+-        break;
++        return AVERROR_INVALIDDATA;
+     }
+ 
+     s->frame.data[0] = NULL;
+-- 
+1.7.5.4
+

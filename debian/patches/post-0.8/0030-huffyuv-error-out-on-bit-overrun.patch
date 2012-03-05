@@ -1,0 +1,33 @@
+From 27558bd87e7e67b83ddefb9176f1729c2291c7a0 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Fri, 17 Feb 2012 15:00:47 -0800
+Subject: [PATCH 30/80] huffyuv: error out on bit overrun.
+
+On EOF, get_bits() will continuously return 0, causing an infinite
+loop.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 84c202cc37024bd78261e4222e46631ea73c48dd)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/huffyuv.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/huffyuv.c b/libavcodec/huffyuv.c
+index 57b5f32..efa87de 100644
+--- a/libavcodec/huffyuv.c
++++ b/libavcodec/huffyuv.c
+@@ -184,7 +184,7 @@ static int read_len_table(uint8_t *dst, GetBitContext *gb){
+         if(repeat==0)
+             repeat= get_bits(gb, 8);
+ //printf("%d %d\n", val, repeat);
+-        if(i+repeat > 256) {
++        if(i+repeat > 256 || get_bits_left(gb) < 0) {
+             av_log(NULL, AV_LOG_ERROR, "Error reading huffman table\n");
+             return -1;
+         }
+-- 
+1.7.5.4
+

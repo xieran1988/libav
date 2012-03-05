@@ -1,0 +1,61 @@
+From abe35728786d79cd8230dffe41205b28ad6b7678 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Wed, 22 Feb 2012 11:33:24 -0800
+Subject: [PATCH 47/80] rm: prevent infinite loops for index parsing.
+
+Specifically, prevent jumping back in the file for the next index, since
+this can lead to infinite loops where we jump between indexes referring
+to each other, and don't read indexes that don't fit in the file.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit aac07a7a4c2c7a4a29cf6dbc88c1b9fdd191b99d)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavformat/rmdec.c |   20 +++++++++++++++++---
+ 1 files changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/libavformat/rmdec.c b/libavformat/rmdec.c
+index 3d92253..405162e 100644
+--- a/libavformat/rmdec.c
++++ b/libavformat/rmdec.c
+@@ -370,8 +370,19 @@ static int rm_read_index(AVFormatContext *s)
+                 st = s->streams[n];
+                 break;
+             }
+-        if (n == s->nb_streams)
++        if (n == s->nb_streams) {
++            av_log(s, AV_LOG_ERROR,
++                   "Invalid stream index %d for index at pos %"PRId64"\n",
++                   str_id, avio_tell(pb));
+             goto skip;
++        } else if ((avio_size(pb) - avio_tell(pb)) / 14 < n_pkts) {
++            av_log(s, AV_LOG_ERROR,
++                   "Nr. of packets in packet index for stream index %d "
++                   "exceeds filesize (%"PRId64" at %"PRId64" = %d)\n",
++                   str_id, avio_size(pb), avio_tell(pb),
++                   (avio_size(pb) - avio_tell(pb)) / 14);
++            goto skip;
++        }
+ 
+         for (n = 0; n < n_pkts; n++) {
+             avio_skip(pb, 2);
+@@ -383,9 +394,12 @@ static int rm_read_index(AVFormatContext *s)
+         }
+ 
+ skip:
+-        if (next_off && avio_tell(pb) != next_off &&
+-            avio_seek(pb, next_off, SEEK_SET) < 0)
++        if (next_off && avio_tell(pb) < next_off &&
++            avio_seek(pb, next_off, SEEK_SET) < 0) {
++            av_log(s, AV_LOG_ERROR,
++                   "Non-linear index detected, not supported\n");
+             return -1;
++        }
+     } while (next_off);
+ 
+     return 0;
+-- 
+1.7.5.4
+

@@ -1,0 +1,69 @@
+From 0c60d5c59fe05de80fc45e097c61b6f5487431de Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Wed, 22 Feb 2012 16:48:38 -0800
+Subject: [PATCH 26/80] swscale: take first/lastline over/underflows into
+ account for MMX.
+
+Fixes crashes for extremely large resizes (several 100-fold).
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 1d8c4af396b6ed84c84b5ebf0bf1163c4a7a3017)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libswscale/x86/swscale_mmx.c |   38 ++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 38 insertions(+), 0 deletions(-)
+
+diff --git a/libswscale/x86/swscale_mmx.c b/libswscale/x86/swscale_mmx.c
+index 867a9f1..0853e12 100644
+--- a/libswscale/x86/swscale_mmx.c
++++ b/libswscale/x86/swscale_mmx.c
+@@ -132,6 +132,44 @@ void updateMMXDitherTables(SwsContext *c, int dstY, int lumBufIndex, int chrBufI
+         const int16_t **chrUSrcPtr= (const int16_t **) chrUPixBuf + chrBufIndex + firstChrSrcY - lastInChrBuf + vChrBufSize;
+         const int16_t **alpSrcPtr= (CONFIG_SWSCALE_ALPHA && alpPixBuf) ? (const int16_t **) alpPixBuf + lumBufIndex + firstLumSrcY - lastInLumBuf + vLumBufSize : NULL;
+         int i;
++
++        if (firstLumSrcY < 0 || firstLumSrcY + vLumFilterSize > c->srcH) {
++            const int16_t **tmpY = (const int16_t **) lumPixBuf + 2 * vLumBufSize;
++            int neg = -firstLumSrcY, i, end = FFMIN(c->srcH - firstLumSrcY, vLumFilterSize);
++            for (i = 0; i < neg;            i++)
++                tmpY[i] = lumSrcPtr[neg];
++            for (     ; i < end;            i++)
++                tmpY[i] = lumSrcPtr[i];
++            for (     ; i < vLumFilterSize; i++)
++                tmpY[i] = tmpY[i-1];
++            lumSrcPtr = tmpY;
++
++            if (alpSrcPtr) {
++                const int16_t **tmpA = (const int16_t **) alpPixBuf + 2 * vLumBufSize;
++                for (i = 0; i < neg;            i++)
++                    tmpA[i] = alpSrcPtr[neg];
++                for (     ; i < end;            i++)
++                    tmpA[i] = alpSrcPtr[i];
++                for (     ; i < vLumFilterSize; i++)
++                    tmpA[i] = tmpA[i - 1];
++                alpSrcPtr = tmpA;
++            }
++        }
++        if (firstChrSrcY < 0 || firstChrSrcY + vChrFilterSize > c->chrSrcH) {
++            const int16_t **tmpU = (const int16_t **) chrUPixBuf + 2 * vChrBufSize;
++            int neg = -firstChrSrcY, i, end = FFMIN(c->chrSrcH - firstChrSrcY, vChrFilterSize);
++            for (i = 0; i < neg;            i++) {
++                tmpU[i] = chrUSrcPtr[neg];
++            }
++            for (     ; i < end;            i++) {
++                tmpU[i] = chrUSrcPtr[i];
++            }
++            for (     ; i < vChrFilterSize; i++) {
++                tmpU[i] = tmpU[i - 1];
++            }
++            chrUSrcPtr = tmpU;
++        }
++
+         if (flags & SWS_ACCURATE_RND) {
+             int s= APCK_SIZE / 8;
+             for (i=0; i<vLumFilterSize; i+=2) {
+-- 
+1.7.5.4
+

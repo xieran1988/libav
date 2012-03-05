@@ -1,0 +1,69 @@
+From 750f5baf3036d5a4c488a60d1cd6e872e4a871c4 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Thu, 1 Mar 2012 11:56:05 -0800
+Subject: [PATCH 63/80] h264: error out on invalid bitdepth.
+
+Fixes invalid reads while initializing the dequant tables, which uses
+the bit depth to determine the QP table size.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 0ce4fe482c27abfa7eac503a52fdc50b70ccd871)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/h264.c |   17 +++++++++++------
+ 1 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/libavcodec/h264.c b/libavcodec/h264.c
+index e92acbd..449c634 100644
+--- a/libavcodec/h264.c
++++ b/libavcodec/h264.c
+@@ -2707,11 +2707,6 @@ static int decode_slice_header(H264Context *h, H264Context *h0){
+     s->avctx->level   = h->sps.level_idc;
+     s->avctx->refs    = h->sps.ref_frame_count;
+ 
+-    if(h == h0 && h->dequant_coeff_pps != pps_id){
+-        h->dequant_coeff_pps = pps_id;
+-        init_dequant_tables(h);
+-    }
+-
+     s->mb_width= h->sps.mb_width;
+     s->mb_height= h->sps.mb_height * (2 - h->sps.frame_mbs_only_flag);
+ 
+@@ -2786,7 +2781,7 @@ static int decode_slice_header(H264Context *h, H264Context *h0){
+                 else
+                     s->avctx->pix_fmt = PIX_FMT_YUV420P10;
+                 break;
+-            default:
++            case 8:
+                 if (CHROMA444){
+                     if (s->avctx->colorspace == AVCOL_SPC_RGB) {
+                         s->avctx->pix_fmt = PIX_FMT_GBRP;
+@@ -2802,6 +2797,11 @@ static int decode_slice_header(H264Context *h, H264Context *h0){
+                                                              hwaccel_pixfmt_list_h264_jpeg_420 :
+                                                              ff_hwaccel_pixfmt_list_420);
+                 }
++                break;
++            default:
++                av_log(s->avctx, AV_LOG_ERROR,
++                       "Unsupported bit depth: %d\n", h->sps.bit_depth_luma);
++                return AVERROR_INVALIDDATA;
+         }
+ 
+         s->avctx->hwaccel = ff_find_hwaccel(s->avctx->codec->id, s->avctx->pix_fmt);
+@@ -2846,6 +2846,11 @@ static int decode_slice_header(H264Context *h, H264Context *h0){
+         }
+     }
+ 
++    if(h == h0 && h->dequant_coeff_pps != pps_id){
++        h->dequant_coeff_pps = pps_id;
++        init_dequant_tables(h);
++    }
++
+     h->frame_num= get_bits(&s->gb, h->sps.log2_max_frame_num);
+ 
+     h->mb_mbaff = 0;
+-- 
+1.7.5.4
+

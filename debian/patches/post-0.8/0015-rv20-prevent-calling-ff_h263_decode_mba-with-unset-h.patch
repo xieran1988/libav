@@ -1,0 +1,34 @@
+From ba418ad4005a2cc2f18cdfa089d0bcd55225b30e Mon Sep 17 00:00:00 2001
+From: Janne Grunau <janne-libav@jannau.net>
+Date: Tue, 24 Jan 2012 21:50:50 +0100
+Subject: [PATCH 15/80] rv20: prevent calling ff_h263_decode_mba() with unset
+ height/width
+
+Prevents a crash of VLC during playback of a invalid matroska file,
+found by John Villamil <johnv@matasano.com>.
+
+CC: libav-stable@libav.org
+(cherry picked from commit c3e10ae4127c998b809066926a410f40ebd47593)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavcodec/rv10.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/rv10.c b/libavcodec/rv10.c
+index 1d78c92..ccc0944 100644
+--- a/libavcodec/rv10.c
++++ b/libavcodec/rv10.c
+@@ -362,7 +362,8 @@ static int rv20_decode_picture_header(MpegEncContext *s)
+         if(s->avctx->debug & FF_DEBUG_PICT_INFO){
+             av_log(s->avctx, AV_LOG_DEBUG, "F %d/%d\n", f, rpr_bits);
+         }
+-    }
++    } else if (av_image_check_size(s->width, s->height, 0, s->avctx) < 0)
++        return AVERROR_INVALIDDATA;
+ 
+     mb_pos = ff_h263_decode_mba(s);
+ 
+-- 
+1.7.5.4
+

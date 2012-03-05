@@ -1,0 +1,37 @@
+From 2e341bc99af72f1ae7c9812985635cbfeeb50269 Mon Sep 17 00:00:00 2001
+From: Justin Ruggles <justin.ruggles@gmail.com>
+Date: Fri, 2 Mar 2012 16:33:33 -0500
+Subject: [PATCH 74/80] wmaenc: require a large enough output buffer to
+ prevent overwrites
+
+The maximum theoretical frame size is around 17000 bytes. Although in
+practice it will generally be much smaller, we require a larger buffer
+just to be safe.
+
+CC: libav-stable@libav.org
+(cherry picked from commit dfc4fdedf8cfc56a505579b1f2c1c5efbce4b97e)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/wmaenc.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
+
+diff --git a/libavcodec/wmaenc.c b/libavcodec/wmaenc.c
+index c762a72..a9053bb 100644
+--- a/libavcodec/wmaenc.c
++++ b/libavcodec/wmaenc.c
+@@ -355,6 +355,11 @@ static int encode_superframe(AVCodecContext *avctx,
+         }
+     }
+ 
++    if (buf_size < 2 * MAX_CODED_SUPERFRAME_SIZE) {
++        av_log(avctx, AV_LOG_ERROR, "output buffer size is too small\n");
++        return AVERROR(EINVAL);
++    }
++
+ #if 1
+     total_gain= 128;
+     for(i=64; i; i>>=1){
+-- 
+1.7.5.4
+

@@ -1,0 +1,56 @@
+From 0f839cff6bf4569393cd0594f0f300af1c488723 Mon Sep 17 00:00:00 2001
+From: Reinhard Tartler <siretart@tauware.de>
+Date: Sun, 26 Feb 2012 10:50:45 +0100
+Subject: [PATCH 48/80] Fix parser not to clobber has_b_frames when extradata
+ is set.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Because in contrast to the decoder, the parser does not setup low_delay.
+The code in parse_nal_units would always end up setting has_b_frames
+to "1", except when stream is explicitly marked as low delay.
+Since the parser itself would create 'extradata', simply reopening
+the parser would cause this.
+
+This happens for instance in estimate_timings_from_pts(), which causes the
+parser to be reopened on the same stream.
+
+This fixes Libav #22 and FFmpeg (trac) #360
+
+CC: libav-stable@libav.org
+
+Based on a patch by Reimar Döffinger <Reimar.Doeffinger@gmx.de>
+(commit 31ac0ac29b6bba744493f7d1040757a3f51b9ad7)
+
+Comments and description adapted by Reinhard Tartler.
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+(cherry picked from commit 790a367d9ecd04360f78616765ee723f3fe65645)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/h264_parser.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+diff --git a/libavcodec/h264_parser.c b/libavcodec/h264_parser.c
+index bcaa04a..48215c5 100644
+--- a/libavcodec/h264_parser.c
++++ b/libavcodec/h264_parser.c
+@@ -251,6 +251,13 @@ static int h264_parse(AVCodecParserContext *s,
+         h->got_first = 1;
+         if (avctx->extradata_size) {
+             h->s.avctx = avctx;
++            // must be done like in the decoder.
++            // otherwise opening the parser, creating extradata,
++            // and then closing and opening again
++            // will cause has_b_frames to be always set.
++            // NB: estimate_timings_from_pts behaves exactly like this.
++            if (!avctx->has_b_frames)
++                h->s.low_delay = 1;
+             ff_h264_decode_extradata(h);
+         }
+     }
+-- 
+1.7.5.4
+

@@ -1,0 +1,56 @@
+From de2656ec2518cae65a2b2823470a3ebe15934ba9 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Thu, 1 Mar 2012 13:51:21 -0800
+Subject: [PATCH 70/80] amrwb: error out early if mode is invalid.
+
+Prevents using the invalid mode as an index in a static array, which
+would generate invalid reads.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 154b8bb80029e71d562e8936164266300dd35a0e)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/amrwbdec.c |   12 ++++++++----
+ 1 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/libavcodec/amrwbdec.c b/libavcodec/amrwbdec.c
+index 6ea5d22..0ebaf47 100644
+--- a/libavcodec/amrwbdec.c
++++ b/libavcodec/amrwbdec.c
+@@ -1095,23 +1095,27 @@ static int amrwb_decode_frame(AVCodecContext *avctx, void *data,
+     buf_out = (float *)ctx->avframe.data[0];
+ 
+     header_size      = decode_mime_header(ctx, buf);
++    if (ctx->fr_cur_mode > MODE_SID) {
++        av_log(avctx, AV_LOG_ERROR,
++               "Invalid mode %d\n", ctx->fr_cur_mode);
++        return AVERROR_INVALIDDATA;
++    }
+     expected_fr_size = ((cf_sizes_wb[ctx->fr_cur_mode] + 7) >> 3) + 1;
+ 
+     if (buf_size < expected_fr_size) {
+         av_log(avctx, AV_LOG_ERROR,
+             "Frame too small (%d bytes). Truncated file?\n", buf_size);
+         *got_frame_ptr = 0;
+-        return buf_size;
++        return AVERROR_INVALIDDATA;
+     }
+ 
+     if (!ctx->fr_quality || ctx->fr_cur_mode > MODE_SID)
+         av_log(avctx, AV_LOG_ERROR, "Encountered a bad or corrupted frame\n");
+ 
+-    if (ctx->fr_cur_mode == MODE_SID) /* Comfort noise frame */
++    if (ctx->fr_cur_mode == MODE_SID) { /* Comfort noise frame */
+         av_log_missing_feature(avctx, "SID mode", 1);
+-
+-    if (ctx->fr_cur_mode >= MODE_SID)
+         return -1;
++    }
+ 
+     ff_amr_bit_reorder((uint16_t *) &ctx->frame, sizeof(AMRWBFrame),
+         buf + header_size, amr_bit_orderings_by_mode[ctx->fr_cur_mode]);
+-- 
+1.7.5.4
+

@@ -1,0 +1,31 @@
+From be0b3137d02e2e19bd470f2de888bdeb281b0214 Mon Sep 17 00:00:00 2001
+From: Alex Converse <alex.converse@gmail.com>
+Date: Wed, 25 Jan 2012 14:34:21 -0800
+Subject: [PATCH 18/80] matroskadec: Pad AAC extradata.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+
+CC: libav-stable@libav.org
+(cherry picked from commit d2ee8c17793201ce969afd1f433ba1580c143cd2)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavformat/matroskadec.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavformat/matroskadec.c b/libavformat/matroskadec.c
+index e5fbd43..5b91944 100644
+--- a/libavformat/matroskadec.c
++++ b/libavformat/matroskadec.c
+@@ -1440,7 +1440,7 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
+         } else if (codec_id == CODEC_ID_AAC && !track->codec_priv.size) {
+             int profile = matroska_aac_profile(track->codec_id);
+             int sri = matroska_aac_sri(track->audio.samplerate);
+-            extradata = av_malloc(5);
++            extradata = av_mallocz(5 + FF_INPUT_BUFFER_PADDING_SIZE);
+             if (extradata == NULL)
+                 return AVERROR(ENOMEM);
+             extradata[0] = (profile << 3) | ((sri&0x0E) >> 1);
+-- 
+1.7.5.4
+

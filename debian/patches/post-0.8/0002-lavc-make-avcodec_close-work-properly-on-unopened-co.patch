@@ -1,0 +1,78 @@
+From bafd38a352126385ec0dcea51017229373b1c2f3 Mon Sep 17 00:00:00 2001
+From: Anton Khirnov <anton@khirnov.net>
+Date: Sun, 29 Jan 2012 12:17:30 +0100
+Subject: [PATCH 02/80] lavc: make avcodec_close() work properly on unopened
+ codecs.
+
+I.e. free the priv_data and other stuff allocated in
+avcodec_alloc_context3() and not segfault.
+
+(cherry picked from commit 0e72ad95f9fef6a6b8ae55e47339a5c40526502f)
+---
+ libavcodec/avcodec.h |   12 +++++++++++-
+ libavcodec/utils.c   |   19 +++++++++++--------
+ 2 files changed, 22 insertions(+), 9 deletions(-)
+
+diff --git a/libavcodec/avcodec.h b/libavcodec/avcodec.h
+index 6db34fa..95e14d7 100644
+--- a/libavcodec/avcodec.h
++++ b/libavcodec/avcodec.h
+@@ -3912,7 +3912,8 @@ AVCodecContext *avcodec_alloc_context2(enum AVMediaType);
+ 
+ /**
+  * Allocate an AVCodecContext and set its fields to default values.  The
+- * resulting struct can be deallocated by simply calling av_free().
++ * resulting struct can be deallocated by calling avcodec_close() on it followed
++ * by av_free().
+  *
+  * @param codec if non-NULL, allocate private data and initialize defaults
+  *              for the given codec. It is illegal to then call avcodec_open2()
+@@ -4343,6 +4344,15 @@ int avcodec_encode_video(AVCodecContext *avctx, uint8_t *buf, int buf_size,
+ int avcodec_encode_subtitle(AVCodecContext *avctx, uint8_t *buf, int buf_size,
+                             const AVSubtitle *sub);
+ 
++/**
++ * Close a given AVCodecContext and free all the data associated with it
++ * (but not the AVCodecContext itself).
++ *
++ * Calling this function on an AVCodecContext that hasn't been opened will free
++ * the codec-specific data allocated in avcodec_alloc_context3() /
++ * avcodec_get_context_defaults3() with a non-NULL codec. Subsequent calls will
++ * do nothing.
++ */
+ int avcodec_close(AVCodecContext *avctx);
+ 
+ /**
+diff --git a/libavcodec/utils.c b/libavcodec/utils.c
+index b097c9b..b2bd702 100644
+--- a/libavcodec/utils.c
++++ b/libavcodec/utils.c
+@@ -1281,14 +1281,17 @@ av_cold int avcodec_close(AVCodecContext *avctx)
+         return -1;
+     }
+ 
+-    if (HAVE_THREADS && avctx->thread_opaque)
+-        ff_thread_free(avctx);
+-    if (avctx->codec && avctx->codec->close)
+-        avctx->codec->close(avctx);
+-    avcodec_default_free_buffers(avctx);
+-    avctx->coded_frame = NULL;
+-    av_freep(&avctx->internal);
+-    if (avctx->codec && avctx->codec->priv_class)
++    if (avcodec_is_open(avctx)) {
++        if (HAVE_THREADS && avctx->thread_opaque)
++            ff_thread_free(avctx);
++        if (avctx->codec && avctx->codec->close)
++            avctx->codec->close(avctx);
++        avcodec_default_free_buffers(avctx);
++        avctx->coded_frame = NULL;
++        av_freep(&avctx->internal);
++    }
++
++    if (avctx->priv_data && avctx->codec && avctx->codec->priv_class)
+         av_opt_free(avctx->priv_data);
+     av_opt_free(avctx);
+     av_freep(&avctx->priv_data);
+-- 
+1.7.5.4
+

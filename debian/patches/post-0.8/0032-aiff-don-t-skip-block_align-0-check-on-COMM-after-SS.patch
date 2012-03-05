@@ -1,0 +1,39 @@
+From 5c365dc9792a6a91637498e2ee1fdcb90c9c7640 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Fri, 17 Feb 2012 15:51:27 -0800
+Subject: [PATCH 32/80] aiff: don't skip block_align==0 check on
+ COMM-after-SSND files.
+
+This prevents SIGFPEs when using block_align for divisions.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 32a659c758bf2ddd8ad48f18c06fa77444341286)
+
+Signed-off-by: Anton Khirnov <anton@khirnov.net>
+---
+ libavformat/aiffdec.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libavformat/aiffdec.c b/libavformat/aiffdec.c
+index 0e69d02..88e1e68 100644
+--- a/libavformat/aiffdec.c
++++ b/libavformat/aiffdec.c
+@@ -264,12 +264,12 @@ static int aiff_read_header(AVFormatContext *s,
+         }
+     }
+ 
++got_sound:
+     if (!st->codec->block_align) {
+-        av_log(s, AV_LOG_ERROR, "could not find COMM tag\n");
++        av_log(s, AV_LOG_ERROR, "could not find COMM tag or invalid block_align value\n");
+         return -1;
+     }
+ 
+-got_sound:
+     /* Now positioned, get the sound data start and end */
+     avpriv_set_pts_info(st, 64, 1, st->codec->sample_rate);
+     st->start_time = 0;
+-- 
+1.7.5.4
+

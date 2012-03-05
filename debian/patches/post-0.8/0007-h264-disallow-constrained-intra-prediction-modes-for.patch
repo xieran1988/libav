@@ -1,0 +1,125 @@
+From 4c7879775e81ccca8f0f1d2a7b70524ee47b16ca Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Thu, 9 Feb 2012 22:57:01 -0800
+Subject: [PATCH 07/80] h264: disallow constrained intra prediction modes for
+ luma.
+
+Conversion of the luma intra prediction mode to one of the constrained
+("alzheimer") ones can happen by crafting special bitstreams, causing
+a crash because we'll call a NULL function pointer for 16x16 block intra
+prediction, since constrained intra prediction functions are only
+implemented for chroma (8x8 blocks).
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 45b7bd7c53b41bc5ff6fc2158831f2b1b1256113)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/h264.c       |    4 ++--
+ libavcodec/h264.h       |    2 +-
+ libavcodec/h264_cabac.c |    4 ++--
+ libavcodec/h264_cavlc.c |    4 ++--
+ libavcodec/svq3.c       |    4 ++--
+ 5 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/libavcodec/h264.c b/libavcodec/h264.c
+index 581848b..e92acbd 100644
+--- a/libavcodec/h264.c
++++ b/libavcodec/h264.c
+@@ -105,7 +105,7 @@ int ff_h264_check_intra4x4_pred_mode(H264Context *h){
+  * Check if the top & left blocks are available if needed and
+  * change the dc mode so it only uses the available blocks.
+  */
+-int ff_h264_check_intra_pred_mode(H264Context *h, int mode){
++int ff_h264_check_intra_pred_mode(H264Context *h, int mode, int is_chroma){
+     MpegEncContext * const s = &h->s;
+     static const int8_t top [7]= {LEFT_DC_PRED8x8, 1,-1,-1};
+     static const int8_t left[7]= { TOP_DC_PRED8x8,-1, 2,-1,DC_128_PRED8x8};
+@@ -125,7 +125,7 @@ int ff_h264_check_intra_pred_mode(H264Context *h, int mode){
+ 
+     if((h->left_samples_available&0x8080) != 0x8080){
+         mode= left[ mode ];
+-        if(h->left_samples_available&0x8080){ //mad cow disease mode, aka MBAFF + constrained_intra_pred
++        if(is_chroma && (h->left_samples_available&0x8080)){ //mad cow disease mode, aka MBAFF + constrained_intra_pred
+             mode= ALZHEIMER_DC_L0T_PRED8x8 + (!(h->left_samples_available&0x8000)) + 2*(mode == DC_128_PRED8x8);
+         }
+         if(mode<0){
+diff --git a/libavcodec/h264.h b/libavcodec/h264.h
+index 5025538..8680f5f 100644
+--- a/libavcodec/h264.h
++++ b/libavcodec/h264.h
+@@ -657,7 +657,7 @@ int ff_h264_check_intra4x4_pred_mode(H264Context *h);
+ /**
+  * Check if the top & left blocks are available if needed & change the dc mode so it only uses the available blocks.
+  */
+-int ff_h264_check_intra_pred_mode(H264Context *h, int mode);
++int ff_h264_check_intra_pred_mode(H264Context *h, int mode, int is_chroma);
+ 
+ void ff_h264_hl_decode_mb(H264Context *h);
+ int ff_h264_frame_start(H264Context *h);
+diff --git a/libavcodec/h264_cabac.c b/libavcodec/h264_cabac.c
+index a49ac6d..75fb02c 100644
+--- a/libavcodec/h264_cabac.c
++++ b/libavcodec/h264_cabac.c
+@@ -2040,14 +2040,14 @@ decode_intra_mb:
+             write_back_intra_pred_mode(h);
+             if( ff_h264_check_intra4x4_pred_mode(h) < 0 ) return -1;
+         } else {
+-            h->intra16x16_pred_mode= ff_h264_check_intra_pred_mode( h, h->intra16x16_pred_mode );
++            h->intra16x16_pred_mode= ff_h264_check_intra_pred_mode( h, h->intra16x16_pred_mode, 0 );
+             if( h->intra16x16_pred_mode < 0 ) return -1;
+         }
+         if(decode_chroma){
+             h->chroma_pred_mode_table[mb_xy] =
+             pred_mode                        = decode_cabac_mb_chroma_pre_mode( h );
+ 
+-            pred_mode= ff_h264_check_intra_pred_mode( h, pred_mode );
++            pred_mode= ff_h264_check_intra_pred_mode( h, pred_mode, 1 );
+             if( pred_mode < 0 ) return -1;
+             h->chroma_pred_mode= pred_mode;
+         } else {
+diff --git a/libavcodec/h264_cavlc.c b/libavcodec/h264_cavlc.c
+index db74602..da9e1cb 100644
+--- a/libavcodec/h264_cavlc.c
++++ b/libavcodec/h264_cavlc.c
+@@ -822,12 +822,12 @@ decode_intra_mb:
+             if( ff_h264_check_intra4x4_pred_mode(h) < 0)
+                 return -1;
+         }else{
+-            h->intra16x16_pred_mode= ff_h264_check_intra_pred_mode(h, h->intra16x16_pred_mode);
++            h->intra16x16_pred_mode= ff_h264_check_intra_pred_mode(h, h->intra16x16_pred_mode, 0);
+             if(h->intra16x16_pred_mode < 0)
+                 return -1;
+         }
+         if(decode_chroma){
+-            pred_mode= ff_h264_check_intra_pred_mode(h, get_ue_golomb_31(&s->gb));
++            pred_mode= ff_h264_check_intra_pred_mode(h, get_ue_golomb_31(&s->gb), 1);
+             if(pred_mode < 0)
+                 return -1;
+             h->chroma_pred_mode= pred_mode;
+diff --git a/libavcodec/svq3.c b/libavcodec/svq3.c
+index 3cd95ba..5cc57a7 100644
+--- a/libavcodec/svq3.c
++++ b/libavcodec/svq3.c
+@@ -612,7 +612,7 @@ static int svq3_decode_mb(SVQ3Context *svq3, unsigned int mb_type)
+         dir = i_mb_type_info[mb_type - 8].pred_mode;
+         dir = (dir >> 1) ^ 3*(dir & 1) ^ 1;
+ 
+-        if ((h->intra16x16_pred_mode = ff_h264_check_intra_pred_mode(h, dir)) == -1){
++        if ((h->intra16x16_pred_mode = ff_h264_check_intra_pred_mode(h, dir, 0)) == -1){
+             av_log(h->s.avctx, AV_LOG_ERROR, "check_intra_pred_mode = -1\n");
+             return -1;
+         }
+@@ -711,7 +711,7 @@ static int svq3_decode_mb(SVQ3Context *svq3, unsigned int mb_type)
+     s->current_picture.f.mb_type[mb_xy] = mb_type;
+ 
+     if (IS_INTRA(mb_type)) {
+-        h->chroma_pred_mode = ff_h264_check_intra_pred_mode(h, DC_PRED8x8);
++        h->chroma_pred_mode = ff_h264_check_intra_pred_mode(h, DC_PRED8x8, 1);
+     }
+ 
+     return 0;
+-- 
+1.7.5.4
+

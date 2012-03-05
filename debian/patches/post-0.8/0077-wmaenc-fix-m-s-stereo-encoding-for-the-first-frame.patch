@@ -1,0 +1,68 @@
+From 1128b10247739900174991b4e013429a1b8ceaa4 Mon Sep 17 00:00:00 2001
+From: Justin Ruggles <justin.ruggles@gmail.com>
+Date: Fri, 2 Mar 2012 17:11:25 -0500
+Subject: [PATCH 77/80] wmaenc: fix m/s stereo encoding for the first frame
+
+We need to set ms_stereo in encode_init() in order to avoid incorrectly
+encoding the first frame as non-m/s while flagging it as m/s. Fixes an
+uncomfortable pop in the left channel at the start of playback.
+
+CC:libav-stable@libav.org
+(cherry picked from commit 51ddf35c9017018e58c15275ff5b129647a0c94d)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/wmaenc.c    |    4 +++-
+ tests/ref/acodec/wmav1 |    6 +++---
+ tests/ref/acodec/wmav2 |    6 +++---
+ 3 files changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/libavcodec/wmaenc.c b/libavcodec/wmaenc.c
+index 5135b98..df59cab 100644
+--- a/libavcodec/wmaenc.c
++++ b/libavcodec/wmaenc.c
+@@ -70,6 +70,8 @@ static int encode_init(AVCodecContext * avctx){
+     s->use_exp_vlc = flags2 & 0x0001;
+     s->use_bit_reservoir = flags2 & 0x0002;
+     s->use_variable_block_len = flags2 & 0x0004;
++    if (avctx->channels == 2)
++        s->ms_stereo = 1;
+ 
+     ff_wma_init(avctx, flags2);
+ 
+@@ -191,7 +193,7 @@ static int encode_block(WMACodecContext *s, float (*src_coefs)[BLOCK_MAX_SIZE],
+     }
+ 
+     if (s->nb_channels == 2) {
+-        put_bits(&s->pb, 1, s->ms_stereo= 1);
++        put_bits(&s->pb, 1, !!s->ms_stereo);
+     }
+ 
+     for(ch = 0; ch < s->nb_channels; ch++) {
+diff --git a/tests/ref/acodec/wmav1 b/tests/ref/acodec/wmav1
+index 916e4a8..117aa12 100644
+--- a/tests/ref/acodec/wmav1
++++ b/tests/ref/acodec/wmav1
+@@ -1,4 +1,4 @@
+-26a7f6b0f0b7181df8df3fa589f6bf81 *./tests/data/acodec/wmav1.asf
++0260385b8a54df11ad349f9ba8240fd8 *./tests/data/acodec/wmav1.asf
+ 106004 ./tests/data/acodec/wmav1.asf
+-stddev:12245.52 PSNR: 14.57 MAXDIFF:65521 bytes:  1064960/  1058400
+-stddev: 2095.89 PSNR: 29.90 MAXDIFF:27658 bytes:  1056768/  1058400
++stddev:12241.90 PSNR: 14.57 MAXDIFF:65521 bytes:  1064960/  1058400
++stddev: 2074.79 PSNR: 29.99 MAXDIFF:27658 bytes:  1056768/  1058400
+diff --git a/tests/ref/acodec/wmav2 b/tests/ref/acodec/wmav2
+index 622b6fc..43b19b7 100644
+--- a/tests/ref/acodec/wmav2
++++ b/tests/ref/acodec/wmav2
+@@ -1,4 +1,4 @@
+-7c6c0cb692af01b312ae345723674b5f *./tests/data/acodec/wmav2.asf
++bdb4c312fb109f990be83a70f8ec9bdc *./tests/data/acodec/wmav2.asf
+ 106044 ./tests/data/acodec/wmav2.asf
+-stddev:12249.93 PSNR: 14.57 MAXDIFF:65521 bytes:  1064960/  1058400
+-stddev: 2089.21 PSNR: 29.93 MAXDIFF:27650 bytes:  1056768/  1058400
++stddev:12246.35 PSNR: 14.57 MAXDIFF:65521 bytes:  1064960/  1058400
++stddev: 2068.08 PSNR: 30.02 MAXDIFF:27650 bytes:  1056768/  1058400
+-- 
+1.7.5.4
+

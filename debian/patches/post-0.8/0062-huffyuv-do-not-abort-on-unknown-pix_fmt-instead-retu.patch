@@ -1,0 +1,31 @@
+From a63f3f714c014b3fcaffd45943bc089167b3fe61 Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Thu, 1 Mar 2012 09:41:22 -0800
+Subject: [PATCH 62/80] huffyuv: do not abort on unknown pix_fmt; instead,
+ return an error.
+
+Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
+CC: libav-stable@libav.org
+(cherry picked from commit 63c9de6469005974288f4e4d89fc79a590e38c06)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/huffyuv.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/huffyuv.c b/libavcodec/huffyuv.c
+index efa87de..412fe4b 100644
+--- a/libavcodec/huffyuv.c
++++ b/libavcodec/huffyuv.c
+@@ -514,7 +514,7 @@ s->bgr32=1;
+         }
+         break;
+     default:
+-        assert(0);
++        return AVERROR_INVALIDDATA;
+     }
+ 
+     alloc_temp(s);
+-- 
+1.7.5.4
+
