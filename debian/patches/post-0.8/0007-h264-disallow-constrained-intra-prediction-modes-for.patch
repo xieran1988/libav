@@ -1,7 +1,7 @@
 From 4c7879775e81ccca8f0f1d2a7b70524ee47b16ca Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 9 Feb 2012 22:57:01 -0800
-Subject: [PATCH 07/80] h264: disallow constrained intra prediction modes for
+Subject: [PATCH 07/83] h264: disallow constrained intra prediction modes for
  luma.
 
 Conversion of the luma intra prediction mode to one of the constrained
@@ -121,5 +121,5 @@ index 3cd95ba..5cc57a7 100644
  
      return 0;
 -- 
-1.7.5.4
+1.7.9
 

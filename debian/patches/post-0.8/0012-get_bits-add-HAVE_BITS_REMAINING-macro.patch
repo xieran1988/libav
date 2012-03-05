@@ -1,7 +1,7 @@
 From 25b4ed053f0e4c48b4b4afdcf84306bbd7752314 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Wed, 22 Feb 2012 12:09:33 -0800
-Subject: [PATCH 12/80] get_bits: add HAVE_BITS_REMAINING macro.
+Subject: [PATCH 12/83] get_bits: add HAVE_BITS_REMAINING macro.
 
 (cherry picked from commit b44b41633f110e9d938165e0f79c9d32191fc135)
 
@@ -48,5 +48,5 @@ index 1668600..ee47441 100644
  
  #define SKIP_BITS(name, gb, num) do {           \
 -- 
-1.7.5.4
+1.7.9
 

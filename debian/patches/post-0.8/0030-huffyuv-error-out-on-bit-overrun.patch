@@ -1,7 +1,7 @@
 From 27558bd87e7e67b83ddefb9176f1729c2291c7a0 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 17 Feb 2012 15:00:47 -0800
-Subject: [PATCH 30/80] huffyuv: error out on bit overrun.
+Subject: [PATCH 30/83] huffyuv: error out on bit overrun.
 
 On EOF, get_bits() will continuously return 0, causing an infinite
 loop.
@@ -29,5 +29,5 @@ index 57b5f32..efa87de 100644
              return -1;
          }
 -- 
-1.7.5.4
+1.7.9
 

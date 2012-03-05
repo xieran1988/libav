@@ -1,7 +1,7 @@
 From 3f7e90cf0c12d739c5b9cd548c1916f23d691185 Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Fri, 2 Mar 2012 10:13:07 -0800
-Subject: [PATCH 72/80] mpegts: Pad the packet buffer in handle_packet().
+Subject: [PATCH 72/83] mpegts: Pad the packet buffer in handle_packet().
 
 This allows it to be used with get_bits without the thread of overreads.
 
@@ -36,5 +36,5 @@ index 15688a9..85e0952 100644
          if (ts->stop_parse>0)
              break;
 -- 
-1.7.5.4
+1.7.9
 

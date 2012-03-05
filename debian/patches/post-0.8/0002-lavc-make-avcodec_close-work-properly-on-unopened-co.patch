@@ -1,7 +1,7 @@
 From bafd38a352126385ec0dcea51017229373b1c2f3 Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Sun, 29 Jan 2012 12:17:30 +0100
-Subject: [PATCH 02/80] lavc: make avcodec_close() work properly on unopened
+Subject: [PATCH 02/83] lavc: make avcodec_close() work properly on unopened
  codecs.
 
 I.e. free the priv_data and other stuff allocated in
@@ -74,5 +74,5 @@ index b097c9b..b2bd702 100644
      av_opt_free(avctx);
      av_freep(&avctx->priv_data);
 -- 
-1.7.5.4
+1.7.9
 

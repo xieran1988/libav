@@ -1,7 +1,7 @@
 From 7046ae55932f8fae83269871847cea9fd84c23f5 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 10 Feb 2012 10:51:43 -0800
-Subject: [PATCH 23/80] tta: error out if samplerate is zero.
+Subject: [PATCH 23/83] tta: error out if samplerate is zero.
 
 Prevents a division by zero later on.
 
@@ -29,5 +29,5 @@ index 4656ce1..c8daff2 100644
  
          switch(s->bps) {
 -- 
-1.7.5.4
+1.7.9
 

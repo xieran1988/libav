@@ -1,7 +1,7 @@
 From 5bcd47cf63cb719e1c650d08cdfb7f4ede351367 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 14 Feb 2012 12:40:19 -0800
-Subject: [PATCH 27/80] vc1: prevent using last_frame as a reference for I/P
+Subject: [PATCH 27/83] vc1: prevent using last_frame as a reference for I/P
  first frame.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -50,5 +50,5 @@ index 0425a87..3869d92 100644
      s->current_picture.f.motion_val[1][s->block_index[0] + v->blocks_off][1] = ty;
      uvmx = (tx + ((tx & 3) == 3)) >> 1;
 -- 
-1.7.5.4
+1.7.9
 

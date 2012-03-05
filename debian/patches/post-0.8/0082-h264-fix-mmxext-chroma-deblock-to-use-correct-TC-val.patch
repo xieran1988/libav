@@ -1,0 +1,28 @@
+From 85eb76a23fbba2d26e3742e8163d3994b2972b4b Mon Sep 17 00:00:00 2001
+From: "Ronald S. Bultje" <rsbultje@gmail.com>
+Date: Sun, 26 Feb 2012 08:57:14 -0800
+Subject: [PATCH 82/83] h264: fix mmxext chroma deblock to use correct TC
+ values. (cherry picked from commit
+ b0c4f04338234ee011d7b704621347ef232294fe)
+
+Signed-off-by: Reinhard Tartler <siretart@tauware.de>
+---
+ libavcodec/x86/h264_deblock_10bit.asm |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/libavcodec/x86/h264_deblock_10bit.asm b/libavcodec/x86/h264_deblock_10bit.asm
+index baac725..6744661 100644
+--- a/libavcodec/x86/h264_deblock_10bit.asm
++++ b/libavcodec/x86/h264_deblock_10bit.asm
+@@ -870,7 +870,7 @@ cglobal deblock_v_chroma_10_%1, 5,7-(mmsize/16),8*(mmsize/16)
+ %if mmsize < 16
+     add         r0, mmsize
+     add         r5, mmsize
+-    add         r4, mmsize/8
++    add         r4, mmsize/4
+     dec         r6
+     jg .loop
+     REP_RET
+-- 
+1.7.9
+

@@ -1,7 +1,7 @@
 From cd17195d1c0e0f7385946506a5ad2510cf44471b Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 28 Feb 2012 18:48:27 -0800
-Subject: [PATCH 78/80] h264: prevent overreads in intra PCM decoding.
+Subject: [PATCH 78/83] h264: prevent overreads in intra PCM decoding.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -26,5 +26,5 @@ index 75fb02c..2ee4bc0 100644
  
          ff_init_cabac_decoder(&h->cabac, ptr, h->cabac.bytestream_end - ptr);
 -- 
-1.7.5.4
+1.7.9
 

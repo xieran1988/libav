@@ -1,7 +1,7 @@
 From 71a939fee47d8b59ba1258b481322d16378e556f Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 28 Feb 2012 11:35:36 -0800
-Subject: [PATCH 51/80] oma: don't read beyond end of leaf_table.
+Subject: [PATCH 51/83] oma: don't read beyond end of leaf_table.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -26,5 +26,5 @@ index 0beed71..cc37397 100644
              AV_WL64(buf, leaf_table[i]);
              AV_WL64(&buf[8], leaf_table[i+1]);
 -- 
-1.7.5.4
+1.7.9
 

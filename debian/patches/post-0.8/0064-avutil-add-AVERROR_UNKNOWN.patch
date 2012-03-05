@@ -1,7 +1,7 @@
 From 7f3f85544ca7804fde2210c129a4458536330dc6 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Fri, 24 Feb 2012 23:27:14 -0500
-Subject: [PATCH 64/80] avutil: add AVERROR_UNKNOWN
+Subject: [PATCH 64/83] avutil: add AVERROR_UNKNOWN
 
 Useful to return instead of -1 when the cause of the error is unknown,
 typically from an external library.
@@ -72,5 +72,5 @@ index 2db65cb..11bcc5c 100644
  /**
   * Put a description of the AVERROR code errnum in errbuf.
 -- 
-1.7.5.4
+1.7.9
 

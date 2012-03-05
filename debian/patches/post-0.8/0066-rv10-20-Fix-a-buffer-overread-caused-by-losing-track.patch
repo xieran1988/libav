@@ -1,7 +1,7 @@
 From 19da1a39e861968c27504b67d481d32339669e2a Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Thu, 1 Mar 2012 14:07:22 -0800
-Subject: [PATCH 66/80] rv10/20: Fix a buffer overread caused by losing track
+Subject: [PATCH 66/83] rv10/20: Fix a buffer overread caused by losing track
  of the remaining buffer size.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -40,5 +40,5 @@ index ccc0944..d7d7ed2 100644
  
  AVCodec ff_rv10_decoder = {
 -- 
-1.7.5.4
+1.7.9
 

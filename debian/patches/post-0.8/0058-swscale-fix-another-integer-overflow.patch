@@ -1,7 +1,7 @@
 From 5f896773e07126dd66f5b83e604e99adb30617cb Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 28 Feb 2012 18:21:31 -0800
-Subject: [PATCH 58/80] swscale: fix another integer overflow.
+Subject: [PATCH 58/83] swscale: fix another integer overflow.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -26,5 +26,5 @@ index 2d7029e..51bc384 100644
                             ((c->vChrFilterPos[chrI] + c->vChrFilterSize - 1)<<c->chrSrcVSubSample));
  
 -- 
-1.7.5.4
+1.7.9
 

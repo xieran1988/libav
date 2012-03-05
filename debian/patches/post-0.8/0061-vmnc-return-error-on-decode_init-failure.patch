@@ -1,7 +1,7 @@
 From 1dd1ee00d54ba2a9f5d8ae2e82a22891300b6807 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 28 Feb 2012 19:00:48 -0800
-Subject: [PATCH 61/80] vmnc: return error on decode_init() failure.
+Subject: [PATCH 61/83] vmnc: return error on decode_init() failure.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -25,5 +25,5 @@ index a72c507..ca0ba82 100644
  
      return 0;
 -- 
-1.7.5.4
+1.7.9
 

@@ -1,7 +1,7 @@
 From a63f3f714c014b3fcaffd45943bc089167b3fe61 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 1 Mar 2012 09:41:22 -0800
-Subject: [PATCH 62/80] huffyuv: do not abort on unknown pix_fmt; instead,
+Subject: [PATCH 62/83] huffyuv: do not abort on unknown pix_fmt; instead,
  return an error.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -27,5 +27,5 @@ index efa87de..412fe4b 100644
  
      alloc_temp(s);
 -- 
-1.7.5.4
+1.7.9
 

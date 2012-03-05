@@ -1,7 +1,7 @@
 From 0d30e2c6f28dc0ae1bcb9bb40b26aedb5b5ce731 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 24 Feb 2012 14:11:04 -0800
-Subject: [PATCH 46/80] fraps: release reference buffer on pix_fmt change.
+Subject: [PATCH 46/83] fraps: release reference buffer on pix_fmt change.
 
 Prevents crash when trying to copy from a non-existing plane in e.g.
 a RGB32 reference image to a YUV420P target image
@@ -73,5 +73,5 @@ index 1444eda..d887cde 100644
          f->reference = 1;
          f->buffer_hints = FF_BUFFER_HINTS_VALID |
 -- 
-1.7.5.4
+1.7.9
 

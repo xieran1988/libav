@@ -1,7 +1,7 @@
 From 697a45d861b7cd6a96718383a44f41348487f844 Mon Sep 17 00:00:00 2001
 From: Michael Niedermayer <michaelni@gmx.at>
 Date: Sun, 25 Dec 2011 00:10:27 +0100
-Subject: [PATCH 08/80] ws_snd1: Fix wrong samples count and crash.
+Subject: [PATCH 08/83] ws_snd1: Fix wrong samples count and crash.
 
 Signed-off-by: Michael Niedermayer <michaelni@gmx.at>
 (cherry picked from commit 9fb7a5af97d8c084c3af2566070d09eae0ab49fc)
@@ -30,5 +30,5 @@ index b2d086e..15eb6f8 100644
          default: smp = count + 1;                      break;
          }
 -- 
-1.7.5.4
+1.7.9
 

@@ -1,7 +1,7 @@
 From fecd7468fcbf9115afdd8bf3dc3d08da0975e4d8 Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Fri, 27 Jan 2012 14:24:07 -0800
-Subject: [PATCH 67/80] wmadec: Verify bitstream size makes sense before
+Subject: [PATCH 67/83] wmadec: Verify bitstream size makes sense before
  calling init_get_bits.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -26,5 +26,5 @@ index afc0658..b9fc21f 100644
          len = pos & 7;
          if (len > 0)
 -- 
-1.7.5.4
+1.7.9
 

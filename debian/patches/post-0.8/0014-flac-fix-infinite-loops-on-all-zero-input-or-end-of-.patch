@@ -1,7 +1,7 @@
 From 6dcbbdc0116a50370d66f0f20d74a70d56568382 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Wed, 15 Feb 2012 09:52:11 -0800
-Subject: [PATCH 14/80] flac: fix infinite loops on all-zero input or
+Subject: [PATCH 14/83] flac: fix infinite loops on all-zero input or
  end-of-stream.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -49,5 +49,5 @@ index 0deab87..1712540 100644
              UPDATE_CACHE(re, gb);
          }
 -- 
-1.7.5.4
+1.7.9
 

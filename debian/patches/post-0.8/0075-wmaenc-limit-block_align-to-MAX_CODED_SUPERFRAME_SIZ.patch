@@ -1,7 +1,7 @@
 From 073891e8758d5b4ed9034b340fa24c687792e8f6 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Fri, 2 Mar 2012 16:10:00 -0500
-Subject: [PATCH 75/80] wmaenc: limit block_align to MAX_CODED_SUPERFRAME_SIZE
+Subject: [PATCH 75/83] wmaenc: limit block_align to MAX_CODED_SUPERFRAME_SIZE
 
 This is near the theoretical limit for wma frame size and is the most that
 our decoder can handle. Allowing higher bit rates will just end up padding
@@ -37,5 +37,5 @@ index a9053bb..bc17f5b 100644
      avctx->frame_size= s->frame_len;
  
 -- 
-1.7.5.4
+1.7.9
 

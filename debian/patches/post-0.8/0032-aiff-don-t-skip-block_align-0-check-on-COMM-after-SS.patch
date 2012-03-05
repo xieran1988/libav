@@ -1,7 +1,7 @@
 From 5c365dc9792a6a91637498e2ee1fdcb90c9c7640 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 17 Feb 2012 15:51:27 -0800
-Subject: [PATCH 32/80] aiff: don't skip block_align==0 check on
+Subject: [PATCH 32/83] aiff: don't skip block_align==0 check on
  COMM-after-SSND files.
 
 This prevents SIGFPEs when using block_align for divisions.
@@ -35,5 +35,5 @@ index 0e69d02..88e1e68 100644
      avpriv_set_pts_info(st, 64, 1, st->codec->sample_rate);
      st->start_time = 0;
 -- 
-1.7.5.4
+1.7.9
 

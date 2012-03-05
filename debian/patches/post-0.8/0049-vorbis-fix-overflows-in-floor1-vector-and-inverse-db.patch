@@ -1,7 +1,7 @@
 From 2510e1476e9a8bfcca0fe4e85a1380482aed0ab3 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 10 Jan 2012 17:01:26 -0800
-Subject: [PATCH 49/80] vorbis: fix overflows in floor1[] vector and inverse
+Subject: [PATCH 49/83] vorbis: fix overflows in floor1[] vector and inverse
  db table index.
 
 (cherry picked from commit 24947d4988012f1f0fd467c83418615adc11c3e8)
@@ -112,5 +112,5 @@ index bb69fed..22a2cf7 100644
  
          av_dlog(NULL, " Decoded floor(%d) = %u / val %u\n",
 -- 
-1.7.5.4
+1.7.9
 

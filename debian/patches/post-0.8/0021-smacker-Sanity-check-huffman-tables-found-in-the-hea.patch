@@ -1,7 +1,7 @@
 From 04597e25952d399a350062c1824587c230cdd5b4 Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Wed, 25 Jan 2012 16:12:42 -0800
-Subject: [PATCH 21/80] smacker: Sanity check huffman tables found in the
+Subject: [PATCH 21/83] smacker: Sanity check huffman tables found in the
  headers.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -85,5 +85,5 @@ index 0c7c405..4714fa0 100644
  
  static int decode_header_trees(SmackVContext *smk) {
 -- 
-1.7.5.4
+1.7.9
 

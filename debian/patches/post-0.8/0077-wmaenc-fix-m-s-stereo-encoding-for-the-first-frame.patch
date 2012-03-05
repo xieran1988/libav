@@ -1,7 +1,7 @@
 From 1128b10247739900174991b4e013429a1b8ceaa4 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Fri, 2 Mar 2012 17:11:25 -0500
-Subject: [PATCH 77/80] wmaenc: fix m/s stereo encoding for the first frame
+Subject: [PATCH 77/83] wmaenc: fix m/s stereo encoding for the first frame
 
 We need to set ms_stereo in encode_init() in order to avoid incorrectly
 encoding the first frame as non-m/s while flagging it as m/s. Fixes an
@@ -64,5 +64,5 @@ index 622b6fc..43b19b7 100644
 +stddev:12246.35 PSNR: 14.57 MAXDIFF:65521 bytes:  1064960/  1058400
 +stddev: 2068.08 PSNR: 30.02 MAXDIFF:27650 bytes:  1056768/  1058400
 -- 
-1.7.5.4
+1.7.9
 

@@ -1,7 +1,7 @@
 From 62beae313a4f91e8ff4e8dc0b2ec78baaa804b32 Mon Sep 17 00:00:00 2001
 From: Janne Grunau <janne-libav@jannau.net>
 Date: Tue, 21 Feb 2012 16:34:08 +0100
-Subject: [PATCH 37/80] avplay: fix -threads option
+Subject: [PATCH 37/83] avplay: fix -threads option
 
 The AVOptions based default to threads auto in 2473a45c8
 works only if avplay does not use custom option handling
@@ -60,5 +60,5 @@ index 432afc1..57fb864 100644
      { "exitonkeydown", OPT_BOOL | OPT_EXPERT, { (void*)&exit_on_keydown }, "exit on key down", "" },
      { "exitonmousedown", OPT_BOOL | OPT_EXPERT, { (void*)&exit_on_mousedown }, "exit on mouse down", "" },
 -- 
-1.7.5.4
+1.7.9
 

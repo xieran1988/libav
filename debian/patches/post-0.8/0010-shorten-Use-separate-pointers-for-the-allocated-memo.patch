@@ -1,7 +1,7 @@
 From 6fc3287b9ccece290c5881b92948772bbf72e68c Mon Sep 17 00:00:00 2001
 From: Michael Niedermayer <michaelni@gmx.at>
 Date: Sun, 25 Dec 2011 12:28:50 +0100
-Subject: [PATCH 10/80] shorten: Use separate pointers for the allocated
+Subject: [PATCH 10/83] shorten: Use separate pointers for the allocated
  memory for decoded samples.
 
 Fixes invalid free() if any of the buffers are not allocated due to either
@@ -62,5 +62,5 @@ index eb67df7..83777fb 100644
      }
      av_freep(&s->bitstream);
 -- 
-1.7.5.4
+1.7.9
 

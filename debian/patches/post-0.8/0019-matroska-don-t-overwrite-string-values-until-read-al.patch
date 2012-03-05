@@ -1,7 +1,7 @@
 From 183e0eb5b9a8780b9879bd78b20ad9156d756a01 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 24 Feb 2012 16:12:18 -0800
-Subject: [PATCH 19/80] matroska: don't overwrite string values until
+Subject: [PATCH 19/83] matroska: don't overwrite string values until
  read/alloc was succesful.
 
 This prevents certain tags with a default value assigned to them (as per
@@ -50,5 +50,5 @@ index 5b91944..1987b50 100644
      return 0;
  }
 -- 
-1.7.5.4
+1.7.9
 

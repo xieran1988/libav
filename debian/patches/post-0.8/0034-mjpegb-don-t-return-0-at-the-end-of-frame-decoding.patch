@@ -1,7 +1,7 @@
 From bba43a1ea07392f14c508aeff2ee13a4cfc425b5 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 17 Feb 2012 16:27:36 -0800
-Subject: [PATCH 34/80] mjpegb: don't return 0 at the end of frame decoding.
+Subject: [PATCH 34/83] mjpegb: don't return 0 at the end of frame decoding.
 
 Return 0 indicates "please return the same data again", i.e. it causes
 an infinite loop. Instead, return that we consumed the buffer if we
@@ -39,5 +39,5 @@ index 4ad17ab..9f71f50 100644
  
  AVCodec ff_mjpegb_decoder = {
 -- 
-1.7.5.4
+1.7.9
 

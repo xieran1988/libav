@@ -1,7 +1,7 @@
 From bf6d1a1ca792e4207e5d9b71c5020befb2296ae3 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 23 Feb 2012 12:22:40 -0800
-Subject: [PATCH 42/80] mjpeg: abort decoding if packet is too large.
+Subject: [PATCH 42/83] mjpeg: abort decoding if packet is too large.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -28,5 +28,5 @@ index 2ae502d..49d334b 100644
              av_log(avctx, AV_LOG_DEBUG, "marker=%x avail_size_in_buf=%td\n",
                     start_code, buf_end - buf_ptr);
 -- 
-1.7.5.4
+1.7.9
 

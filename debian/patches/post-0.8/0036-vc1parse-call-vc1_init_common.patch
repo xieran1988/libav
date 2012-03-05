@@ -1,7 +1,7 @@
 From 8011a29fa8875aa4de54199bdfcd4e5331d532dd Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 17 Feb 2012 14:18:22 -0800
-Subject: [PATCH 36/80] vc1parse: call vc1_init_common().
+Subject: [PATCH 36/83] vc1parse: call vc1_init_common().
 
 The parser uses VLC tables initialized in vc1_common_init(), therefore
 we should call this function on parser init also.
@@ -68,5 +68,5 @@ index 3869d92..3e84464 100644
      ff_vc1dsp_init(&v->vc1dsp);
  
 -- 
-1.7.5.4
+1.7.9
 

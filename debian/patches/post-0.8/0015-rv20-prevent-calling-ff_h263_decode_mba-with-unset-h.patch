@@ -1,7 +1,7 @@
 From ba418ad4005a2cc2f18cdfa089d0bcd55225b30e Mon Sep 17 00:00:00 2001
 From: Janne Grunau <janne-libav@jannau.net>
 Date: Tue, 24 Jan 2012 21:50:50 +0100
-Subject: [PATCH 15/80] rv20: prevent calling ff_h263_decode_mba() with unset
+Subject: [PATCH 15/83] rv20: prevent calling ff_h263_decode_mba() with unset
  height/width
 
 Prevents a crash of VLC during playback of a invalid matroska file,
@@ -30,5 +30,5 @@ index 1d78c92..ccc0944 100644
      mb_pos = ff_h263_decode_mba(s);
  
 -- 
-1.7.5.4
+1.7.9
 

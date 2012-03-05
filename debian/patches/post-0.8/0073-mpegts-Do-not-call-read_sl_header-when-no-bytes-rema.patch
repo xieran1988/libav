@@ -1,7 +1,7 @@
 From b7c8fff80351249d448b93608bfac832c1ee3b4b Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Fri, 2 Mar 2012 10:12:11 -0800
-Subject: [PATCH 73/80] mpegts: Do not call read_sl_header() when no bytes
+Subject: [PATCH 73/83] mpegts: Do not call read_sl_header() when no bytes
  remain in the buffer.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -27,5 +27,5 @@ index 85e0952..cc36e65 100644
                      pes->pes_header_size += sl_header_bytes;
                      p += sl_header_bytes;
 -- 
-1.7.5.4
+1.7.9
 

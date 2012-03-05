@@ -1,7 +1,7 @@
 From 0312969b9ea7fa7027bca665bfded88690c4caa0 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 21 Feb 2012 10:36:27 -0800
-Subject: [PATCH 38/80] rmdec: when using INT4 deinterleaving, error out if
+Subject: [PATCH 38/83] rmdec: when using INT4 deinterleaving, error out if
  sub_packet_h <= 1.
 
 We read sub_packet_h / 2 packets per line of data (during deinterleaving),
@@ -30,5 +30,5 @@ index 75e4833..3d92253 100644
                  return AVERROR_INVALIDDATA;
              break;
 -- 
-1.7.5.4
+1.7.9
 

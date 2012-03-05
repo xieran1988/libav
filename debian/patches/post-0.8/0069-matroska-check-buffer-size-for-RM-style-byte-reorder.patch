@@ -1,7 +1,7 @@
 From 9686a2c2cfdb103784bd9153042da4f9656b56c6 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 1 Mar 2012 17:01:22 -0800
-Subject: [PATCH 69/80] matroska: check buffer size for RM-style byte
+Subject: [PATCH 69/83] matroska: check buffer size for RM-style byte
  reordering.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -53,5 +53,5 @@ index 1987b50..59e0e1f 100644
                      if (++track->audio.sub_packet_cnt >= h) {
                          if (st->codec->codec_id == CODEC_ID_SIPR)
 -- 
-1.7.5.4
+1.7.9
 

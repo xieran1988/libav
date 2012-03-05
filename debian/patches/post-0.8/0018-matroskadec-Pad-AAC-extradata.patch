@@ -1,7 +1,7 @@
 From be0b3137d02e2e19bd470f2de888bdeb281b0214 Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Wed, 25 Jan 2012 14:34:21 -0800
-Subject: [PATCH 18/80] matroskadec: Pad AAC extradata.
+Subject: [PATCH 18/83] matroskadec: Pad AAC extradata.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 
@@ -27,5 +27,5 @@ index e5fbd43..5b91944 100644
                  return AVERROR(ENOMEM);
              extradata[0] = (profile << 3) | ((sri&0x0E) >> 1);
 -- 
-1.7.5.4
+1.7.9
 

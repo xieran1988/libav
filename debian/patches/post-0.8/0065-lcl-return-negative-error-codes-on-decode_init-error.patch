@@ -1,7 +1,7 @@
 From 7e88df99e1d26accc56b0da52d271a57995ecde7 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Wed, 29 Feb 2012 17:50:28 -0800
-Subject: [PATCH 65/80] lcl: return negative error codes on decode_init()
+Subject: [PATCH 65/83] lcl: return negative error codes on decode_init()
  errors.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -80,5 +80,5 @@ index 5b18418..679824c 100644
      }
  #endif
 -- 
-1.7.5.4
+1.7.9
 

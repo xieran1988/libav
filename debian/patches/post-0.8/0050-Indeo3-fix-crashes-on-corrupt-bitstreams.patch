@@ -1,7 +1,7 @@
 From 9dbd437da2bafbec540e38cb51bc7ce2b0101ee5 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 28 Feb 2012 10:22:28 -0800
-Subject: [PATCH 50/80] Indeo3: fix crashes on corrupt bitstreams.
+Subject: [PATCH 50/83] Indeo3: fix crashes on corrupt bitstreams.
 
 Splits at borders of cells are invalid, since it leaves one of the
 cells with a width/height of zero. Also, propagate errors on buffer
@@ -57,5 +57,5 @@ index d2b01f4..55b4ec7 100644
      }
  
 -- 
-1.7.5.4
+1.7.9
 

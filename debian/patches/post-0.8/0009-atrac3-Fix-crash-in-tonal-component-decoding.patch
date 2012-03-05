@@ -1,7 +1,7 @@
 From f43b6e2b1ed47a1254a5d44c700a7fad5e9784be Mon Sep 17 00:00:00 2001
 From: Michael Niedermayer <michaelni@gmx.at>
 Date: Sat, 17 Dec 2011 03:18:58 +0100
-Subject: [PATCH 09/80] atrac3: Fix crash in tonal component decoding.
+Subject: [PATCH 09/83] atrac3: Fix crash in tonal component decoding.
 
 Add a check to avoid writing past the end of the channel_unit.components[]
 array.
@@ -33,5 +33,5 @@ index 6dec6a3..107c6ff 100644
                  max_coded_values = SAMPLES_PER_FRAME - pComponent[component_count].pos;
                  coded_values = coded_values_per_component + 1;
 -- 
-1.7.5.4
+1.7.9
 

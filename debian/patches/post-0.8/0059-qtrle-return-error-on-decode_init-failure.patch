@@ -1,7 +1,7 @@
 From e904e9b7204b6ebd3433dd49a6c978ffb293cbdc Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 28 Feb 2012 19:00:39 -0800
-Subject: [PATCH 59/80] qtrle: return error on decode_init() failure.
+Subject: [PATCH 59/83] qtrle: return error on decode_init() failure.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -26,5 +26,5 @@ index 0c74798..6e7b3c2 100644
  
      s->frame.data[0] = NULL;
 -- 
-1.7.5.4
+1.7.9
 

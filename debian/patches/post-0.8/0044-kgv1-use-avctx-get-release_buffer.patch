@@ -1,7 +1,7 @@
 From e537dc230b2e123be8aebdaeee5a7d7787328b0b Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 29 Dec 2011 09:07:32 -0800
-Subject: [PATCH 44/80] kgv1: use avctx->get/release_buffer().
+Subject: [PATCH 44/83] kgv1: use avctx->get/release_buffer().
 
 Also fixes crashes on corrupt bitstreams.
 
@@ -160,5 +160,5 @@ index 2d6fa73..4526bf9 100644
      .long_name = NULL_IF_CONFIG_SMALL("Kega Game Video"),
  };
 -- 
-1.7.5.4
+1.7.9
 

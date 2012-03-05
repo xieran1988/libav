@@ -1,7 +1,7 @@
 From 750f5baf3036d5a4c488a60d1cd6e872e4a871c4 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 1 Mar 2012 11:56:05 -0800
-Subject: [PATCH 63/80] h264: error out on invalid bitdepth.
+Subject: [PATCH 63/83] h264: error out on invalid bitdepth.
 
 Fixes invalid reads while initializing the dequant tables, which uses
 the bit depth to determine the QP table size.
@@ -65,5 +65,5 @@ index e92acbd..449c634 100644
  
      h->mb_mbaff = 0;
 -- 
-1.7.5.4
+1.7.9
 

@@ -1,7 +1,7 @@
 From 2e341bc99af72f1ae7c9812985635cbfeeb50269 Mon Sep 17 00:00:00 2001
 From: Justin Ruggles <justin.ruggles@gmail.com>
 Date: Fri, 2 Mar 2012 16:33:33 -0500
-Subject: [PATCH 74/80] wmaenc: require a large enough output buffer to
+Subject: [PATCH 74/83] wmaenc: require a large enough output buffer to
  prevent overwrites
 
 The maximum theoretical frame size is around 17000 bytes. Although in
@@ -33,5 +33,5 @@ index c762a72..a9053bb 100644
      total_gain= 128;
      for(i=64; i; i>>=1){
 -- 
-1.7.5.4
+1.7.9
 

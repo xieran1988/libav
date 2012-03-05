@@ -1,7 +1,7 @@
 From 350d06d63fc758d047c050e0835f540277799f60 Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Thu, 8 Dec 2011 06:57:44 +0100
-Subject: [PATCH 01/80] lavc: add avcodec_is_open().
+Subject: [PATCH 01/83] lavc: add avcodec_is_open().
 
 It allows to check whether an AVCodecContext is open in a documented
 way. Right now the undocumented way this check is done in lavf/lavc is
@@ -124,5 +124,5 @@ index 22ee13b..3733a50 100644
      for(i=0;i<ic->nb_streams;i++) {
          st = ic->streams[i];
 -- 
-1.7.5.4
+1.7.9
 

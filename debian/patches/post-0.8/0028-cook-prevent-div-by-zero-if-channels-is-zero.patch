@@ -1,7 +1,7 @@
 From cfd7d166e2ae68302329c059afa7c4778a70e9b5 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 17 Feb 2012 12:10:33 -0800
-Subject: [PATCH 28/80] cook: prevent div-by-zero if channels is zero.
+Subject: [PATCH 28/83] cook: prevent div-by-zero if channels is zero.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -28,5 +28,5 @@ index d2ed819..dc4c2ab 100644
      /* Initialize RNG. */
      av_lfg_init(&q->random_state, 0);
 -- 
-1.7.5.4
+1.7.9
 

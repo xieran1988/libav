@@ -1,7 +1,7 @@
 From a0473085f3e2300908b1bf7ecf2ed7177eef0d4f Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 24 Feb 2012 16:27:53 -0800
-Subject: [PATCH 45/80] kgv1: release reference picture on size change.
+Subject: [PATCH 45/83] kgv1: release reference picture on size change.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -30,5 +30,5 @@ index 4526bf9..c4c3dac 100644
      maxcnt = w * h;
  
 -- 
-1.7.5.4
+1.7.9
 

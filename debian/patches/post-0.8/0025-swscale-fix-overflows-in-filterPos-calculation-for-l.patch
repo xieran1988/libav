@@ -1,7 +1,7 @@
 From cd9bdc639588067732b53bb47a01f7b9b902b9ef Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Wed, 22 Feb 2012 16:46:31 -0800
-Subject: [PATCH 25/80] swscale: fix overflows in filterPos[] calculation for
+Subject: [PATCH 25/83] swscale: fix overflows in filterPos[] calculation for
  large sizes.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -60,5 +60,5 @@ index 9d72196..2d7029e 100644
      }
  
 -- 
-1.7.5.4
+1.7.9
 

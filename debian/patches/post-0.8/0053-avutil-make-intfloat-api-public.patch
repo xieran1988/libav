@@ -1,7 +1,7 @@
 From a1556d37b85328fda3c4010bc2f49e1a93273128 Mon Sep 17 00:00:00 2001
 From: Paul B Mahol <onemda@gmail.com>
 Date: Sun, 29 Jan 2012 20:09:22 +0000
-Subject: [PATCH 53/80] avutil: make intfloat api public
+Subject: [PATCH 53/83] avutil: make intfloat api public
 
 The functions are already av_ prefixed and intfloat header is already provided.
 Install libavutil/intfloat.h
@@ -62,5 +62,5 @@ index f0be5c1..0e62b4a 100644
  
  #define LIBAVUTIL_VERSION_INT   AV_VERSION_INT(LIBAVUTIL_VERSION_MAJOR, \
 -- 
-1.7.5.4
+1.7.9
 

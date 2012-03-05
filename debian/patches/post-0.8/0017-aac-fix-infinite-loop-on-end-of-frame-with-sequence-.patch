@@ -1,7 +1,7 @@
 From 683213230e6978302109253a48610a6b069ea43d Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Wed, 22 Feb 2012 11:05:42 -0800
-Subject: [PATCH 17/80] aac: fix infinite loop on end-of-frame with sequence
+Subject: [PATCH 17/83] aac: fix infinite loop on end-of-frame with sequence
  of 1-bits.
 
 Based-on-work-by: Ronald S. Bultje <rsbultje@gmail.com>
@@ -52,5 +52,5 @@ index ca1a876..2b9b45c 100644
                  band_type        [idx]   = sect_band_type;
                  band_type_run_end[idx++] = sect_end;
 -- 
-1.7.5.4
+1.7.9
 

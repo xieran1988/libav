@@ -1,7 +1,7 @@
 From 424b6edd1944cf02261109edb5913417cf8e5dfb Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Thu, 23 Feb 2012 10:47:50 -0800
-Subject: [PATCH 41/80] tiff: Prevent overreads in the type_sizes array.
+Subject: [PATCH 41/83] tiff: Prevent overreads in the type_sizes array.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -46,5 +46,5 @@ index a88d0f9..6810f81 100644
  
      if(buf && (buf < start || buf > end_buf)){
 -- 
-1.7.5.4
+1.7.9
 

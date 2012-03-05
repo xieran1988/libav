@@ -1,7 +1,7 @@
 From a2c8db1b792670f8987c0580bb71ca0f29708d8b Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 7 Feb 2012 11:33:20 -0800
-Subject: [PATCH 06/80] swscale: fix V plane memory location in
+Subject: [PATCH 06/83] swscale: fix V plane memory location in
  bilinear/unscaled RGB/YUYV case.
 
 Fixes bug 221.
@@ -95,5 +95,5 @@ index e38f58b..5db166b 100644
      "paddw             %%mm5, %%mm4     \n\t" /* uvbuf0[eax+2048] + uvbuf1[eax+2048]*/\
      "psrlw                $8, %%mm3     \n\t" \
 -- 
-1.7.5.4
+1.7.9
 

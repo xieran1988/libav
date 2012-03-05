@@ -1,7 +1,7 @@
 From abe35728786d79cd8230dffe41205b28ad6b7678 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Wed, 22 Feb 2012 11:33:24 -0800
-Subject: [PATCH 47/80] rm: prevent infinite loops for index parsing.
+Subject: [PATCH 47/83] rm: prevent infinite loops for index parsing.
 
 Specifically, prevent jumping back in the file for the next index, since
 this can lead to infinite loops where we jump between indexes referring
@@ -57,5 +57,5 @@ index 3d92253..405162e 100644
  
      return 0;
 -- 
-1.7.5.4
+1.7.9
 

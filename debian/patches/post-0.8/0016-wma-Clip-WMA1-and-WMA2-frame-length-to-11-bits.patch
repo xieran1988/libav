@@ -1,7 +1,7 @@
 From ad0ee682b3cf663eb319020086f64da11d17dd82 Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Tue, 24 Jan 2012 18:43:43 -0800
-Subject: [PATCH 16/80] wma: Clip WMA1 and WMA2 frame length to 11 bits.
+Subject: [PATCH 16/83] wma: Clip WMA1 and WMA2 frame length to 11 bits.
 
 The MDCT buffers in the decoder are only sized for up to 11 bits. The
 reverse engineered documentation for WMA1/2 headers say that that for
@@ -33,5 +33,5 @@ index 4cdffcd..d82fde7 100644
      } else if (sample_rate <= 96000) {
          frame_len_bits = 12;
 -- 
-1.7.5.4
+1.7.9
 

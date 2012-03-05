@@ -1,7 +1,7 @@
 From de2656ec2518cae65a2b2823470a3ebe15934ba9 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 1 Mar 2012 13:51:21 -0800
-Subject: [PATCH 70/80] amrwb: error out early if mode is invalid.
+Subject: [PATCH 70/83] amrwb: error out early if mode is invalid.
 
 Prevents using the invalid mode as an index in a static array, which
 would generate invalid reads.
@@ -52,5 +52,5 @@ index 6ea5d22..0ebaf47 100644
      ff_amr_bit_reorder((uint16_t *) &ctx->frame, sizeof(AMRWBFrame),
          buf + header_size, amr_bit_orderings_by_mode[ctx->fr_cur_mode]);
 -- 
-1.7.5.4
+1.7.9
 

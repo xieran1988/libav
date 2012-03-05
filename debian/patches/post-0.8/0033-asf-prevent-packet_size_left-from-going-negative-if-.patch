@@ -1,7 +1,7 @@
 From f947e965beb858b67ab6e49f9e24e8d12d9b5a7d Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 17 Feb 2012 12:21:18 -0800
-Subject: [PATCH 33/80] asf: prevent packet_size_left from going negative if
+Subject: [PATCH 33/83] asf: prevent packet_size_left from going negative if
  hdrlen > pktlen.
 
 This prevents failed assertions further down in the packet processing
@@ -35,5 +35,5 @@ index 91d285e..eb93f14 100644
      if (packet_length < asf->hdr.min_pktsize)
          padsize += asf->hdr.min_pktsize - packet_length;
 -- 
-1.7.5.4
+1.7.9
 

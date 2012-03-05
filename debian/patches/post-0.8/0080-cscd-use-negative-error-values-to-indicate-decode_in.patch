@@ -1,7 +1,7 @@
 From b5331b979bfb31ec1715618b2712429764b6a9b5 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Wed, 29 Feb 2012 13:55:09 -0800
-Subject: [PATCH 80/80] cscd: use negative error values to indicate
+Subject: [PATCH 80/83] cscd: use negative error values to indicate
  decode_init() failures.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -36,5 +36,5 @@ index 00921bc..1edab91 100644
      return 0;
  }
 -- 
-1.7.5.4
+1.7.9
 

@@ -1,7 +1,7 @@
 From d16653c3d437ff7843c111d9fffa3e8c3e186db7 Mon Sep 17 00:00:00 2001
 From: Janne Grunau <janne-libav@jannau.net>
 Date: Wed, 18 Jan 2012 10:59:32 +0100
-Subject: [PATCH 20/80] lavf: prevent infinite loops while flushing in
+Subject: [PATCH 20/83] lavf: prevent infinite loops while flushing in
  avformat_find_stream_info
 
 If no data was seen for a stream decoder are returning 0 when fed with
@@ -67,5 +67,5 @@ index f2d5502..e6b4f40 100644
                      ret = 0;
                  }
 -- 
-1.7.5.4
+1.7.9
 

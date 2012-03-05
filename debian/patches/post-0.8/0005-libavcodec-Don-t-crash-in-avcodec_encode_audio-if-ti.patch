@@ -1,7 +1,7 @@
 From fc89f15497c2b5b78a992c98eaba9fca7cc82f8f Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Martin=20Storsj=C3=B6?= <martin@martin.st>
 Date: Thu, 26 Jan 2012 21:37:38 +0200
-Subject: [PATCH 05/80] libavcodec: Don't crash in avcodec_encode_audio if
+Subject: [PATCH 05/83] libavcodec: Don't crash in avcodec_encode_audio if
  time_base isn't set
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -41,5 +41,5 @@ index 5109bf8..f64bff8 100644
          ret = ff_thread_init(avctx);
          if (ret < 0) {
 -- 
-1.7.5.4
+1.7.9
 

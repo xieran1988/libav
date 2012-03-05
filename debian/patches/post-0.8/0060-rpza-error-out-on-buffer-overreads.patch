@@ -1,7 +1,7 @@
 From 4493af756b8f8346b1e7671b487afc34c72bc16e Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 28 Feb 2012 17:04:33 -0800
-Subject: [PATCH 60/80] rpza: error out on buffer overreads.
+Subject: [PATCH 60/83] rpza: error out on buffer overreads.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -35,5 +35,5 @@ index 7350ef2..59c3a7b 100644
              for (pixel_y = 0; pixel_y < 4; pixel_y++) {
                  for (pixel_x = 0; pixel_x < 4; pixel_x++){
 -- 
-1.7.5.4
+1.7.9
 

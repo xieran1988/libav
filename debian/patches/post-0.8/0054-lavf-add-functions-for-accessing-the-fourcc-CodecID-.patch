@@ -1,7 +1,7 @@
 From 2ad77c60ef862baa2afcdcb7e6f43dedabab38ef Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Fri, 27 Jan 2012 13:33:09 +0100
-Subject: [PATCH 54/80] lavf: add functions for accessing the fourcc<->CodecID
+Subject: [PATCH 54/83] lavf: add functions for accessing the fourcc<->CodecID
  mapping tables.
 
 Fixes bug 212.
@@ -253,5 +253,5 @@ index cd774fb..009a60b 100644
  
  #define LIBAVFORMAT_VERSION_INT AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
 -- 
-1.7.5.4
+1.7.9
 

@@ -1,7 +1,7 @@
 From 78d4f8cc56554e5d19c3f5688902278c3b795a04 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 1 Mar 2012 15:44:25 -0800
-Subject: [PATCH 71/80] amrwb: remove duplicate arguments from
+Subject: [PATCH 71/83] amrwb: remove duplicate arguments from
  extrapolate_isf().
 
 Prevents warnings because the dst and src overlap (are the same) in the
@@ -90,5 +90,5 @@ index 0ebaf47..b9ae9ec 100644
          e_isf[LP_ORDER_16k - 1] *= 2.0;
          ff_acelp_lsf2lspd(e_isp, e_isf, LP_ORDER_16k);
 -- 
-1.7.5.4
+1.7.9
 

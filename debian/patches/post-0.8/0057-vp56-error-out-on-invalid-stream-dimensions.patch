@@ -1,7 +1,7 @@
 From b2dcac7141a2fb72074679efbefcb4d8bef24c41 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 23 Feb 2012 11:19:33 -0800
-Subject: [PATCH 57/80] vp56: error out on invalid stream dimensions.
+Subject: [PATCH 57/83] vp56: error out on invalid stream dimensions.
 
 Prevents crashes when playing corrupt vp5/6 streams.
 
@@ -56,5 +56,5 @@ index 9433983..e4783c6 100644
  
          if (separated_coeff || !s->filter_header) {
 -- 
-1.7.5.4
+1.7.9
 

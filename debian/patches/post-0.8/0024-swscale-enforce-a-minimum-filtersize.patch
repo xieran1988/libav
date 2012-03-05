@@ -1,7 +1,7 @@
 From b68470707bf2e010136c6debd25051afdf198466 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Sat, 11 Feb 2012 08:42:28 -0800
-Subject: [PATCH 24/80] swscale: enforce a minimum filtersize.
+Subject: [PATCH 24/83] swscale: enforce a minimum filtersize.
 
 At very small dimensions, this calculation could lead to zero-sized
 filters, which leads to uninitialized output, zero-sized allocations,
@@ -32,5 +32,5 @@ index b49f924..9d72196 100644
          FF_ALLOC_OR_GOTO(NULL, filter, dstW*sizeof(*filter)*filterSize, fail);
  
 -- 
-1.7.5.4
+1.7.9
 

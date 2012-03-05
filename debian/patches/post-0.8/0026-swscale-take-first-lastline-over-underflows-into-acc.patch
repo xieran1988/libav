@@ -1,7 +1,7 @@
 From 0c60d5c59fe05de80fc45e097c61b6f5487431de Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Wed, 22 Feb 2012 16:48:38 -0800
-Subject: [PATCH 26/80] swscale: take first/lastline over/underflows into
+Subject: [PATCH 26/83] swscale: take first/lastline over/underflows into
  account for MMX.
 
 Fixes crashes for extremely large resizes (several 100-fold).
@@ -65,5 +65,5 @@ index 867a9f1..0853e12 100644
              int s= APCK_SIZE / 8;
              for (i=0; i<vLumFilterSize; i+=2) {
 -- 
-1.7.5.4
+1.7.9
 

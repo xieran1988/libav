@@ -1,7 +1,7 @@
 From d19e3e19d67b50cb5614ead2e0f125678e1c257d Mon Sep 17 00:00:00 2001
 From: Janne Grunau <janne-libav@jannau.net>
 Date: Wed, 25 Jan 2012 15:49:54 +0100
-Subject: [PATCH 22/80] vc1: prevent null pointer dereference on broken files
+Subject: [PATCH 22/83] vc1: prevent null pointer dereference on broken files
 
 CC: libav-stable@libav.org
 (cherry picked from commit 510ef04a461b3b54a762c6141ad880cbed85981f)
@@ -25,5 +25,5 @@ index fa95273..0425a87 100644
              if (i != n_slices)
                  s->gb = slices[i].gb;
 -- 
-1.7.5.4
+1.7.9
 

@@ -1,7 +1,7 @@
 From e1f2a6a32b86fef0916338e21851c9b4f499f706 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Tue, 14 Feb 2012 11:50:57 -0800
-Subject: [PATCH 11/80] golomb: avoid infinite loop on all-zero input (or end
+Subject: [PATCH 11/83] golomb: avoid infinite loop on all-zero input (or end
  of buffer).
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -36,5 +36,5 @@ index 503aa14..e19064c 100644
          CLOSE_READER(re, gb);
          return ret - 1;
 -- 
-1.7.5.4
+1.7.9
 

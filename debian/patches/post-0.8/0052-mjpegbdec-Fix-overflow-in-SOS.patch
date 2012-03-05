@@ -1,7 +1,7 @@
 From 083a8a00373b12dc06b8ae4c49eec61fb5e55f4b Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Wed, 25 Jan 2012 13:39:24 -0800
-Subject: [PATCH 52/80] mjpegbdec: Fix overflow in SOS.
+Subject: [PATCH 52/83] mjpegbdec: Fix overflow in SOS.
 
 Based in part by a fix from Michael Niedermayer <michaelni@gmx.at>
 
@@ -41,5 +41,5 @@ index 9f71f50..10c5add 100644
          s->start_code = SOS;
          if (ff_mjpeg_decode_sos(s, NULL, NULL) < 0 &&
 -- 
-1.7.5.4
+1.7.9
 

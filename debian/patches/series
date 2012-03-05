@@ -82,3 +82,6 @@ post-0.8/0077-wmaenc-fix-m-s-stereo-encoding-for-the-first-frame.patch
 post-0.8/0078-h264-prevent-overreads-in-intra-PCM-decoding.patch
 post-0.8/0079-amrnbdec-check-frame-size-before-decoding.patch
 post-0.8/0080-cscd-use-negative-error-values-to-indicate-decode_in.patch
+post-0.8/0081-h264-change-underread-for-10bit-QPEL-to-overread.patch
+post-0.8/0082-h264-fix-mmxext-chroma-deblock-to-use-correct-TC-val.patch
+post-0.8/0083-Fix-format-string-vulnerability-detected-by-Wformat-.patch

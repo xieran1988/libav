@@ -1,7 +1,7 @@
 From b863979c0f36b565857c49cf6297810e22a9ba10 Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Thu, 1 Mar 2012 16:19:51 -0800
-Subject: [PATCH 68/80] wma: fix invalid buffer size assumptions causing
+Subject: [PATCH 68/83] wma: fix invalid buffer size assumptions causing
  random overreads.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -69,5 +69,5 @@ index b9fc21f..37feca1 100644
          if (len > 0)
              skip_bits(&s->gb, len);
 -- 
-1.7.5.4
+1.7.9
 

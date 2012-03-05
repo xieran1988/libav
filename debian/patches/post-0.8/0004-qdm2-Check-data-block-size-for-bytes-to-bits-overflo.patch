@@ -1,7 +1,7 @@
 From e364f507183634a9134eea0e004c8ae448e54469 Mon Sep 17 00:00:00 2001
 From: Alex Converse <alex.converse@gmail.com>
 Date: Wed, 25 Jan 2012 15:27:11 -0800
-Subject: [PATCH 04/80] qdm2: Check data block size for bytes to bits
+Subject: [PATCH 04/83] qdm2: Check data block size for bytes to bits
  overflow.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
@@ -30,5 +30,5 @@ index 91c47a8..6acb7d8 100644
      s->fft_order = av_log2(s->fft_size) + 1;
      s->fft_frame_size = 2 * s->fft_size; // complex has two floats
 -- 
-1.7.5.4
+1.7.9
 

@@ -1,7 +1,7 @@
 From 11f3173e1bae135eb18a10b0060a5dd4b9fdcc74 Mon Sep 17 00:00:00 2001
 From: Vitor Sessak <vitor1001@gmail.com>
 Date: Wed, 29 Feb 2012 22:09:10 +0100
-Subject: [PATCH 79/80] amrnbdec: check frame size before decoding.
+Subject: [PATCH 79/83] amrnbdec: check frame size before decoding.
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -40,5 +40,5 @@ index fff0e72..a7d0b4e 100644
          av_log_missing_feature(avctx, "dtx mode", 1);
          return -1;
 -- 
-1.7.5.4
+1.7.9
 

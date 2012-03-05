@@ -1,7 +1,7 @@
 From 5ab9294a8db5b3a796871e403b1a779a413a494c Mon Sep 17 00:00:00 2001
 From: "Ronald S. Bultje" <rsbultje@gmail.com>
 Date: Fri, 17 Feb 2012 12:28:26 -0800
-Subject: [PATCH 29/80] als: prevent infinite loop in zero_remaining().
+Subject: [PATCH 29/83] als: prevent infinite loop in zero_remaining().
 
 Found-by: Mateusz "j00ru" Jurczyk and Gynvael Coldwind
 CC: libav-stable@libav.org
@@ -26,5 +26,5 @@ index dc4961c..26496bf 100644
  
      if (count)
 -- 
-1.7.5.4
+1.7.9
 

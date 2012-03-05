@@ -1,7 +1,7 @@
 From 571a4cf273a84b6f7f38697b462e667d4f0fddc4 Mon Sep 17 00:00:00 2001
 From: Anton Khirnov <anton@khirnov.net>
 Date: Sat, 28 Jan 2012 19:15:15 +0100
-Subject: [PATCH 03/80] lavc: set AVCodecContext.codec in
+Subject: [PATCH 03/83] lavc: set AVCodecContext.codec in
  avcodec_get_context_defaults3().
 
 This way, if the AVCodecContext is allocated for a specific codec, the
@@ -110,5 +110,5 @@ index 3733a50..f2d5502 100644
          /* force thread count to 1 since the h264 decoder will not extract SPS
           *  and PPS to extradata during multi-threaded decoding */
 -- 
-1.7.5.4
+1.7.9
 
