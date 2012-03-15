@@ -1,8 +1,12 @@
-libav (4:0.8.1-1) UNRELEASED; urgency=low
+libav (4:0.8.1-1) unstable; urgency=medium
 
-  * New release.
+  * Bump shlibs (Closes: #662793)
+  * force upgrades of older libavcodec-extra-53 packages
+  * Imported Upstream version 0.8.1
+  * drop all post-0.8 patches, applied upstream
+  * bump standards version, no changes needed
 
- -- Andres Mejia <amejia@debian.org>  Sun, 18 Mar 2012 14:33:07 -0400
+ -- Reinhard Tartler <siretart@tauware.de>  Thu, 15 Mar 2012 19:57:12 +0100
 
 libav (4:0.8-2) unstable; urgency=low
 
