@@ -3912,7 +3912,8 @@ AVCodecContext *avcodec_alloc_context2(enum AVMediaType);
 
 /**
  * Allocate an AVCodecContext and set its fields to default values.  The
- * resulting struct can be deallocated by simply calling av_free().
+ * resulting struct can be deallocated by calling avcodec_close() on it followed
+ * by av_free().
  *
  * @param codec if non-NULL, allocate private data and initialize defaults
  *              for the given codec. It is illegal to then call avcodec_open2()
@@ -4058,6 +4059,11 @@ int avcodec_open(AVCodecContext *avctx, AVCodec *codec);
  * @endcode
  *
  * @param avctx The context to initialize.
+ * @param codec The codec to open this context for. If a non-NULL codec has been
+ *              previously passed to avcodec_alloc_context3() or
+ *              avcodec_get_context_defaults3() for this context, then this
+ *              parameter MUST be either NULL or equal to the previously passed
+ *              codec.
  * @param options A dictionary filled with AVCodecContext and codec-private options.
  *                On return this object will be filled with options that were not found.
  *
@@ -4343,6 +4349,15 @@ int avcodec_encode_video(AVCodecContext *avctx, uint8_t *buf, int buf_size,
 int avcodec_encode_subtitle(AVCodecContext *avctx, uint8_t *buf, int buf_size,
                             const AVSubtitle *sub);
 
+/**
+ * Close a given AVCodecContext and free all the data associated with it
+ * (but not the AVCodecContext itself).
+ *
+ * Calling this function on an AVCodecContext that hasn't been opened will free
+ * the codec-specific data allocated in avcodec_alloc_context3() /
+ * avcodec_get_context_defaults3() with a non-NULL codec. Subsequent calls will
+ * do nothing.
+ */
 int avcodec_close(AVCodecContext *avctx);
 
 /**
@@ -4736,5 +4751,11 @@ enum AVMediaType avcodec_get_type(enum CodecID codec_id);
  * @see av_opt_find().
  */
 const AVClass *avcodec_get_class(void);
+
+/**
+ * @return a positive value if s is open (i.e. avcodec_open2() was called on it
+ * with no corresponding avcodec_close()), 0 otherwise.
+ */
+int avcodec_is_open(AVCodecContext *s);
 
 #endif /* AVCODEC_AVCODEC_H */
