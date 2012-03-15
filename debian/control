@@ -10,7 +10,7 @@ Uploaders:
  Andres Mejia <amejia@debian.org>,
  Jonas Smedegaard <dr@jones.dk>
 DM-Upload-Allowed: yes
-Standards-Version: 3.9.2
+Standards-Version: 3.9.3
 Vcs-Git: git://git.debian.org/git/pkg-multimedia/libav.git
 Vcs-Browser: http://git.debian.org/?p=pkg-multimedia/libav.git;a=summary
 Homepage: http://libav.org/
