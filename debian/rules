@@ -128,7 +128,7 @@ binary-arch: build install codecs.txt formats.txt
 		-plibavformat-dev -plibavfilter-dev -plibpostproc-dev \
 		-plibswscale-dev -plibavutil-dev -plibav-doc \
 		doc/APIchanges
-	dh_installexamples -p libav doc/avserver.conf debian/recordshow.sh
+	dh_installexamples -p libav-tools doc/avserver.conf debian/recordshow.sh
 	dh_installexamples -p libavcodec-dev libavcodec/api-example.c
 	dh_installchangelogs Changelog
 	dh_lintian
