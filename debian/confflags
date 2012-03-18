@@ -138,7 +138,7 @@ gpl_confflags += $(call cond_enable,/usr/include/xvid.h,libxvid)
 
 confflags += $(call cond_enable,/usr/include/openjpeg.h,libopenjpeg)
 
-# Opencore-amr requires GPL v3
+# Features that require GPL v3
 v3_confflags += $(call cond_enable_v3,/usr/include/opencore-amrnb/interf_dec.h,libopencore-amrnb)
 v3_confflags += $(call cond_enable_v3,/usr/include/opencore-amrwb/dec_if.h,libopencore-amrwb)
 v3_confflags += $(call cond_enable_v3,/usr/include/vo-aacenc/voAAC.h,libvo-aacenc)
