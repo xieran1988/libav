@@ -99,6 +99,7 @@ confflags += --prefix=/usr
 confflags += --libdir=/usr/lib/$(DEB_HOST_MULTIARCH)
 confflags += --enable-vdpau
 confflags += --enable-bzlib
+confflags += --enable-frei0r
 confflags += --enable-libgsm
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
