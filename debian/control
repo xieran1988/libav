@@ -35,6 +35,7 @@ Build-Depends:
  libmp3lame-dev,
  libopencv-dev,
  libopenjpeg-dev,
+ libpulse-dev [!hurd-any],
  libraw1394-dev [linux-any],
  librtmp-dev (>= 2.2e-4),
  libschroedinger-dev,

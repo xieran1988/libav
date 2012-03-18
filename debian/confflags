@@ -128,6 +128,9 @@ confflags += $(extra_common_confflags)
 # vaapi is not available on s390 and on the hurd
 confflags += $(call cond_enable,/usr/include/va/va.h,vaapi)
 
+# pulse is not available on the hurd
+confflags += $(call cond_enable,/usr/include/pulse/simple.h,libpulse)
+
 # this part below is intended for the 'Libav' package in ubuntu/multiverse
 gpl_confflags += $(call cond_enable,/usr/include/dirac/libdirac_decoder/dirac_parser.h,libdirac)
 gpl_confflags += $(call cond_enable,/usr/include/lame/lame.h,libmp3lame)
