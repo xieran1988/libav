@@ -97,6 +97,7 @@ confflags += --extra-version='$(DEB_VERSION)'
 confflags += --arch='$(DEB_HOST_ARCH_CPU)'
 confflags += --prefix=/usr
 confflags += --libdir=/usr/lib/$(DEB_HOST_MULTIARCH)
+confflags += --enable-vaapi
 confflags += --enable-vdpau
 confflags += --enable-bzlib
 confflags += --enable-frei0r
@@ -124,9 +125,6 @@ confflags += --enable-pic
 endif
 
 confflags += $(extra_common_confflags)
-
-# vaapi is not available on s390 and on the hurd
-confflags += $(call cond_enable,/usr/include/va/va.h,vaapi)
 
 # pulse is not available on the hurd
 confflags += $(call cond_enable,/usr/include/pulse/simple.h,libpulse)

@@ -43,7 +43,7 @@ Build-Depends:
  libspeex-dev,
  libtheora-dev (>> 0.0.0.alpha4),
  libtiff4-dev | libtiff-dev,
- libva-dev [!hurd-i386],
+ libva-dev,
  libvdpau-dev,
  libvorbis-dev,
  libvpx-dev,
