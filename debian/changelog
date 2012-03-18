@@ -1,3 +1,9 @@
+libav (4:0.8.1-1) UNRELEASED; urgency=low
+
+  * New release.
+
+ -- Andres Mejia <amejia@debian.org>  Sun, 18 Mar 2012 14:33:07 -0400
+
 libav (4:0.8-2) unstable; urgency=low
 
   [ Reinhard Tartler ]
