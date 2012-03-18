@@ -101,6 +101,7 @@ confflags += --enable-vdpau
 confflags += --enable-bzlib
 confflags += --enable-frei0r
 confflags += --enable-gnutls
+confflags += --enable-libcdio
 confflags += --enable-libgsm
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
