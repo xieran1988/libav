@@ -158,7 +158,7 @@ ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
 endif
 
 # Enable hardened build flags through dpkg-buildflags
-CFLAGS := $(shell dpkg-buildflags --get CFLAGS)
+CFLAGS := $(filter-out -g -O2,$(shell dpkg-buildflags --get CFLAGS))
 CPPFLAGS := $(shell dpkg-buildflags --get CPPFLAGS)
 LDFLAGS := $(filter-out %-Bsymbolic-functions,$(shell dpkg-buildflags --get LDFLAGS))
 
