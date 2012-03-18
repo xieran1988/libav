@@ -103,6 +103,7 @@ confflags += --enable-frei0r
 confflags += --enable-gnutls
 confflags += --enable-libcdio
 confflags += --enable-libgsm
+confflags += --enable-libopencv
 confflags += --enable-libschroedinger
 confflags += --enable-libspeex
 confflags += --enable-libtheora
