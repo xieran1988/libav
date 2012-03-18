@@ -144,7 +144,7 @@ v3_confflags += $(call cond_enable_v3,/usr/include/opencore-amrwb/dec_if.h,libop
 v3_confflags += $(call cond_enable_v3,/usr/include/vo-aacenc/voAAC.h,libvo-aacenc)
 v3_confflags += $(call cond_enable_v3,/usr/include/vo-amrwbenc/enc_if.h,libvo-amrwbenc)
 
-# AAC is considered non-free upstream
+# FAAC is considered non-free upstream
 confflags += $(call cond_enable_nf,/usr/include/faac.h,libfaac)
 
 # comment out following line for LGPL versions of the libraries
