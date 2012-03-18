@@ -1,12 +1,21 @@
-libav (4:0.8.1-1) unstable; urgency=medium
+libav (4:0.8.1-1) UNRELEASED; urgency=low
 
+  [ Reinhard Tartler ]
   * Bump shlibs (Closes: #662793)
   * force upgrades of older libavcodec-extra-53 packages
   * Imported Upstream version 0.8.1
   * drop all post-0.8 patches, applied upstream
   * bump standards version, no changes needed
 
- -- Reinhard Tartler <siretart@tauware.de>  Thu, 15 Mar 2012 19:57:12 +0100
+  [ Andres Mejia ]
+  * Enable frei0r support.
+  * Enable tls support through gnutls.
+  * Enable libcdio support.
+  * Enable opencv support.
+  * Enable pulse support.
+  * Enable vaapi for all architectures.
+
+ -- Andres Mejia <amejia@debian.org>  Sun, 18 Mar 2012 16:27:15 -0400
 
 libav (4:0.8-2) unstable; urgency=low
 
