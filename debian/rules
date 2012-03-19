@@ -78,7 +78,7 @@ build-doxy-stamp:
 build: build-stamp build-extra
 build-stamp: $(addprefix build-stamp-, $(FLAVORS)) debian-shared/tools/qt-faststart
 	touch $@
-build-extra: $(addprefix build-extra-stamp-, $(FLAVORS))
+build-extra: $(addprefix build-extra-stamp-, $(filter-out static,$(FLAVORS)))
 	touch $@
 
 clean:
@@ -139,7 +139,7 @@ install-common: build $(DH_INSTALL_FILES)
 install-extra: build $(DH_INSTALL_FILES)
 	dh_testdir
 	dh_testroot
-	$(foreach flavor,$(FLAVORS),$(call install_flavor_extra,$(flavor)))
+	$(foreach flavor,$(filter-out static,$(FLAVORS)),$(call install_flavor_extra,$(flavor)))
 	dh_install $(addprefix -p,$(LIB_EXTRA_PKGS)) -Xusr/share/doc/libav-doc \
 		-Xusr/share/doc/libav --fail-missing \
 		--sourcedir=debian/tmp/extra
