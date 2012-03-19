@@ -6,7 +6,8 @@ DEB_VERSION := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed -r 's/[^:]+://; s/-[^-]+$$//')
 SHLIBS_VERSION := 4:0.8-2~
 
-LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-extra-)?[0-9]+)[[:space:]]*$$/\1/p' debian/control)
+LIB_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)[0-9]+)[[:space:]]*$$/\1/p' debian/control)
+LIB_EXTRA_PKGS := $(shell sed -nr 's/^Package:[[:space:]]*(lib(avutil|avcodec|avdevice|avformat|avfilter|postproc|swscale)(-extra-)[0-9]+)[[:space:]]*$$/\1/p' debian/control)
 DEV_PKGS := $(shell echo $(LIB_PKGS) | sed 's/[0-9]\+\>/-dev/g')
 
 # Support multiple makes at once
@@ -36,7 +37,7 @@ define dh_install_file_opt_flavor
 
 endef
 
-DH_INSTALL_FILES := $(foreach pkg, $(LIB_PKGS) $(DEV_PKGS), debian/$(pkg).install)
+DH_INSTALL_FILES := $(foreach pkg, $(LIB_PKGS) $(LIB_EXTRA_PKGS) $(DEV_PKGS), debian/$(pkg).install)
 $(DH_INSTALL_FILES):
 	sed 's/@DEB_HOST_MULTIARCH\(_OPT\)\?@/$(DEB_HOST_MULTIARCH)/g' $@.in > $@
 	$(foreach opt_flavor,$(OPT_FLAVORS),$(call dh_install_file_opt_flavor,$@,$(opt_flavor)))
@@ -48,11 +49,21 @@ configure-stamp-%:
 	cd debian-$* && CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" $(CURDIR)/configure \
 		$($*_build_confflags) $(extra_$*_build_confflags)
 	touch $@
+configure-extra-stamp-%:
+	dh_testdir
+	mkdir -p debian-extra-$*
+	cd debian-extra-$* && CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" $(CURDIR)/configure \
+		$($*_build_confflags) $(v3_confflags) $(extra_$*_build_confflags)
+	touch $@
 
 build-%: build-stamp-%
 build-stamp-%: configure-stamp-%
 	dh_testdir
 	$(MAKE) -C debian-$* $(NUMJOBS) V=1
+	touch $@
+build-extra-stamp-%: configure-extra-stamp-%
+	dh_testdir
+	$(MAKE) -C debian-extra-$* $(NUMJOBS) V=1
 	touch $@
 
 debian-shared/tools/qt-faststart: build-stamp-shared
@@ -64,16 +75,21 @@ build-doxy-stamp:
 	doxygen
 	touch $@
 
-build: build-stamp
+build: build-stamp build-extra
 build-stamp: $(addprefix build-stamp-, $(FLAVORS)) debian-shared/tools/qt-faststart
+	touch $@
+build-extra: $(addprefix build-extra-stamp-, $(FLAVORS))
 	touch $@
 
 clean:
 	dh_testdir
-	rm -f build-stamp $(addprefix build-stamp-, $(FLAVORS)) \
+	rm -f build-stamp build-extra $(addprefix build-stamp-, $(FLAVORS)) \
+	    $(addprefix build-extra-stamp-, $(FLAVORS)) \
 	    $(addprefix configure-stamp-, $(FLAVORS)) \
+	    $(addprefix configure-extra-stamp-, $(FLAVORS)) \
 	    build-doxy-stamp
-	rm -rf $(addprefix debian-, $(FLAVORS)) doxy
+	rm -rf $(addprefix debian-, $(FLAVORS)) \
+		$(addprefix debian-extra-, $(FLAVORS)) doxy
 	dh_clean $(DH_INSTALL_FILES)
 
 get-orig-source:
@@ -87,7 +103,15 @@ define install_flavor
 
 endef
 
-install: build $(DH_INSTALL_FILES)
+# The trailing newline is important!
+define install_flavor_extra
+	$(MAKE) -C debian-extra-$(1) install DESTDIR=$(CURDIR)/debian/tmp/extra \
+	    mandir=$(CURDIR)/debian/tmp/usr/share/man
+
+endef
+
+install: install-common install-extra
+install-common: build $(DH_INSTALL_FILES)
 	dh_testdir
 	dh_testroot
 	dh_prep
@@ -103,27 +127,37 @@ install: build $(DH_INSTALL_FILES)
 	install -m 644 -D debian-shared/doc/*.html debian/tmp/usr/share/doc/libav/html/
 	install -m 644 -D doc/avserver.conf debian/tmp/etc/
 	install -m 644 -D debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
-	dh_install -Xusr/share/doc/libav-doc -Xusr/share/doc/libav \
-		--fail-missing --sourcedir=debian/tmp
-
-formats.txt: install
+	dh_install $(addprefix -N,$(LIB_EXTRA_PKGS)) -Xusr/share/doc/libav-doc \
+		-Xusr/share/doc/libav --fail-missing --sourcedir=debian/tmp
+	dh_strip --dbg-package=libav-dbg
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)" \
-	debian/tmp/usr/bin/avconv -formats | tee $@
-
-codecs.txt: install
+	debian/tmp/usr/bin/avconv -formats | tee formats.txt
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)" \
-	debian/tmp/usr/bin/avconv -codecs | tee $@
+	debian/tmp/usr/bin/avconv -codecs | tee codecs.txt
+	dh_installdocs -plibavformat53 formats.txt
+	dh_installdocs -plibavcodec53 codecs.txt
+install-extra: build $(DH_INSTALL_FILES)
+	dh_testdir
+	dh_testroot
+	$(foreach flavor,$(FLAVORS),$(call install_flavor_extra,$(flavor)))
+	dh_install $(addprefix -p,$(LIB_EXTRA_PKGS)) -Xusr/share/doc/libav-doc \
+		-Xusr/share/doc/libav --fail-missing \
+		--sourcedir=debian/tmp/extra
+	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/extra/usr/lib/$(DEB_HOST_MULTIARCH)" \
+	debian/tmp/usr/bin/avconv -formats | tee formats.txt
+	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/extra/usr/lib/$(DEB_HOST_MULTIARCH)" \
+	debian/tmp/usr/bin/avconv -codecs | tee codecs.txt
+	dh_installdocs -plibavformat-extra-53 formats.txt
+	dh_installdocs -plibavcodec-extra-53 codecs.txt
 
 binary-indep: build-doxy install
 
-binary-arch: build install codecs.txt formats.txt
+binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_installman -plibav-tools debian/qt-faststart.1
 	dh_installdocs doc/optimization.txt
 	dh_installdocs -A debian/README.Debian
-	dh_installdocs -p libavcodec53 codecs.txt
-	dh_installdocs -p libavformat53 formats.txt
 	dh_installdocs -p libavcodec-dev -plibavdevice-dev \
 		-plibavformat-dev -plibavfilter-dev -plibpostproc-dev \
 		-plibswscale-dev -plibavutil-dev -plibav-doc \
@@ -135,19 +169,27 @@ binary-arch: build install codecs.txt formats.txt
 	dh_link
 	dh_compress
 	dh_fixperms
-	dh_strip --dbg-package=libav-dbg
+	dh_strip
 
 # strict internal dependencies
 	for pkg in $(LIB_PKGS); do \
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-extra-\1/'); \
-	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(DEB_VERSION)) | $$upkg (>= $(EPOCH)$(UPSTREAM_VERSION)), $$pkg (<< $(EPOCH)$(UPSTREAM_VERSION)-99) | $$upkg (<< $(EPOCH)$(UPSTREAM_VERSION).99)"; \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(DEB_VERSION)) | $$upkg (>= $(DEB_VERSION)), $$pkg (<< $(EPOCH)$(UPSTREAM_VERSION)-99) | $$upkg (<< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
 	done
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)" \
-	dh_shlibdeps
+	dh_shlibdeps $(addprefix -N,$(LIB_EXTRA_PKGS)) $(addprefix -L,$(LIB_PKGS))
+	for pkg in $(LIB_EXTRA_PKGS); do \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(DEB_VERSION)), $$pkg (<< $(EPOCH)$(UPSTREAM_VERSION)-99)"; \
+	done
+	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/extra/usr/lib/$(DEB_HOST_MULTIARCH)" \
+	dh_shlibdeps $(addprefix -p,$(LIB_EXTRA_PKGS)) $(addprefix -L,$(LIB_EXTRA_PKGS))
 # target dependencies for external packages
 	for pkg in $(LIB_PKGS); do \
 	    upkg=$$(echo "$$pkg" | sed -r 's/([0-9]+)$$/-extra-\1/'); \
 	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION)) | $$upkg (>= $(SHLIBS_VERSION))"; \
+	done
+	for pkg in $(LIB_EXTRA_PKGS); do \
+	    dh_makeshlibs -p"$$pkg" -V"$$pkg (>= $(SHLIBS_VERSION))"; \
 	done
 	dh_installdeb
 	dh_gencontrol -- -Vlib1394-dev="$(lib1394-dev)"

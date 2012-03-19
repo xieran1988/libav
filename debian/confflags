@@ -149,7 +149,6 @@ confflags += $(call cond_enable_nf,/usr/include/faac.h,libfaac)
 
 # comment out following line for LGPL versions of the libraries
 confflags += $(gpl_confflags)
-confflags += $(v3_confflags)
 
 # Enable IEEE 1394 (FireWire) support on Linux only
 ifneq (,$(findstring linux,$(DEB_HOST_GNU_TYPE)))
