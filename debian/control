@@ -141,21 +141,6 @@ Description: Debug symbols for Libav related packages
  Most people will not need this package. Please install it to produce useful
  stacktraces to help debugging the Libav library.
 
-Package: libav-source
-Architecture: all
-Section: devel
-Depends:
- ${misc:Depends}
-Description: Patched Libav sources
- Libav is a complete, cross-platform solution to decode, encode, record,
- convert and stream audio and video.
- .
- This package contains a tarball the source file that were used to produce
- this package, containing all modifications that have been applied inline.
- .
- This package is used as build-dependency for 'libav-extra', which provides
- the "extra" variants of libav.
-
 Package: ffmpeg-doc
 Section: oldlibs
 Priority: extra

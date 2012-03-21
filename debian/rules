@@ -117,9 +117,6 @@ install-common: build $(DH_INSTALL_FILES)
 	dh_testroot
 	dh_prep
 	dh_installdirs -ptmp usr/src
-	tar czvf debian/tmp/usr/src/libav-source.tar.gz . \
-		 --exclude 'debian*' --exclude .git  --exclude .pc --exclude '*-stamp' \
-		 --transform 's,^./,libav/,'
 	dh_installdirs -ptmp usr/share/doc/libav/html etc
 	dh_installdirs -ptmp usr/share/doc/libav-doc/html
 	$(foreach flavor,$(FLAVORS),$(call install_flavor,$(flavor)))
