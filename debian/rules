@@ -127,7 +127,8 @@ install-common: build $(DH_INSTALL_FILES)
 	install -m 644 -D debian-shared/tools/qt-faststart debian/tmp/usr/bin/qt-faststart
 	dh_install $(addprefix -N,$(LIB_EXTRA_PKGS)) -Xusr/share/doc/libav-doc \
 		-Xusr/share/doc/libav --fail-missing --sourcedir=debian/tmp
-	dh_strip --dbg-package=libav-dbg
+	dh_strip $(addprefix -N,$(LIB_PKGS2)) --dbg-package=libav-dbg
+	dh_strip $(addprefix -p,$(LIB_PKGS2)) --dbg-package=libav-regular-dbg
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)" \
 	debian/tmp/usr/bin/avconv -formats | tee formats.txt
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)" \
@@ -141,6 +142,7 @@ install-extra: build $(DH_INSTALL_FILES)
 	dh_install $(addprefix -p,$(LIB_EXTRA_PKGS)) -Xusr/share/doc/libav-doc \
 		-Xusr/share/doc/libav --fail-missing \
 		--sourcedir=debian/tmp/extra
+	dh_strip $(addprefix -p,$(LIB_EXTRA_PKGS)) --dbg-package=libav-extra-dbg
 	env LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(CURDIR)/debian/tmp/extra/usr/lib/$(DEB_HOST_MULTIARCH)" \
 	debian/tmp/usr/bin/avconv -codecs | tee codecs.txt
 	dh_installdocs -plibavcodec-extra-53 codecs.txt

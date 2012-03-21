@@ -6,8 +6,9 @@ libav (5:0.8.1-2) UNRELEASED; urgency=low
   * Remove dependencies and suggests of FAAD, no longer needed.
   * Set Enhances field and update package description for libavcodec-extra
     package. (Closes: #653451)
+  * Fix issue with installation of debug symbols. (Closes: #642798)
 
- -- Andres Mejia <amejia@debian.org>  Tue, 20 Mar 2012 23:00:19 -0400
+ -- Andres Mejia <amejia@debian.org>  Tue, 20 Mar 2012 23:21:56 -0400
 
 libav (4:0.8.1-1) unstable; urgency=medium
 

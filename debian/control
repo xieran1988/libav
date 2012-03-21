@@ -125,7 +125,6 @@ Priority: extra
 Architecture: any
 Depends:
  libav-tools (= ${binary:Version}),
- libavcodec53 (= ${binary:Version}),
  libavdevice53 (= ${binary:Version}),
  libavformat53 (= ${binary:Version}),
  libavutil51 (= ${binary:Version}),
@@ -137,6 +136,38 @@ Description: Debug symbols for Libav related packages
  convert and stream audio and video.
  .
  This package contains debug data of the Libav related shared libraries.
+ .
+ Most people will not need this package. Please install it to produce useful
+ stacktraces to help debugging the Libav library.
+
+Package: libav-regular-dbg
+Section: debug
+Priority: extra
+Architecture: any
+Depends:
+ libavcodec53 (= ${binary:Version}),
+ ${misc:Depends}
+Description: Debug symbols for Libav related packages
+ Libav is a complete, cross-platform solution to decode, encode, record,
+ convert and stream audio and video.
+ .
+ This package contains debug data of the libavcodec regular shared library.
+ .
+ Most people will not need this package. Please install it to produce useful
+ stacktraces to help debugging the Libav library.
+
+Package: libav-extra-dbg
+Section: debug
+Priority: extra
+Architecture: any
+Depends:
+ libavcodec-extra-53 (= ${binary:Version}),
+ ${misc:Depends}
+Description: Debug symbols for Libav related packages
+ Libav is a complete, cross-platform solution to decode, encode, record,
+ convert and stream audio and video.
+ .
+ This package contains debug data of the libavcodec extra shared library.
  .
  Most people will not need this package. Please install it to produce useful
  stacktraces to help debugging the Libav library.
