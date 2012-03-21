@@ -511,6 +511,10 @@ Description: Libav codec library
   * OpenCORE Adaptive Multi-Rate (AMR) Wide-Band (Decoder)
   * Android VisualOn AAC (Encoder)
   * Android VisualOn Adaptive Multi-Rate (AMR) Wide-Band (Encoder)
+ .
+ Because this package links against libraries that are licensed
+ under Apache License 2.0, the resulting binaries are distributed under the
+ GPL version 3.
 
 Package: libavdevice-extra-53
 Section: oldlibs
