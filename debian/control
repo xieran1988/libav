@@ -198,6 +198,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
+Conflicts:
+ libavutil-extra-51
+Replaces:
+ libavutil-extra-51
+Breaks:
+ libavutil-extra-51 (<< 5:0.8.1-2)
 Description: Libav utility library
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
@@ -229,6 +235,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
+Conflicts:
+ libavdevice-extra-53
+Replaces:
+ libavdevice-extra-53
+Breaks:
+ libavdevice-extra-53 (<< 5:0.8.1-2)
 Description: Libav device handling library
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
@@ -242,6 +254,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
+Conflicts:
+ libavformat-extra-53
+Replaces:
+ libavformat-extra-53
+Breaks:
+ libavformat-extra-53 (<< 5:0.8.1-2)
 Description: Libav file format library
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
@@ -258,6 +276,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
+Conflicts:
+ libavfilter-extra-2
+Replaces:
+ libavfilter-extra-2
+Breaks:
+ libavfilter-extra-2 (<< 5:0.8.1-2)
 Description: Libav video filtering library
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
@@ -271,6 +295,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
+Conflicts:
+ libpostproc-extra-52
+Replaces:
+ libpostproc-extra-52
+Breaks:
+ libpostproc-extra-52 (<< 5:0.8.1-2)
 Description: Libav video postprocessing library
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
@@ -284,6 +314,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
+Conflicts:
+ libswscale-extra-2
+Replaces:
+ libswscale-extra-2
+Breaks:
+ libswscale-extra-2 (<< 5:0.8.1-2)
 Description: Libav video scaling library
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
@@ -294,8 +330,7 @@ Package: libavutil-dev
 Section: libdevel
 Architecture: any
 Depends:
- libavutil51 (<= ${source:Upstream-Version}-99) | libavutil-extra-51 (<= ${source:Upstream-Version}-99),
- libavutil51 (>= ${binary:Version}) | libavutil-extra-51 (>= ${binary:Version}),
+ libavutil51 (= ${binary:Version}),
  ${misc:Depends}
 Description: Development files for libavutil
  Libav is a complete, cross-platform solution to decode, encode, record,
@@ -340,8 +375,7 @@ Package: libavdevice-dev
 Section: libdevel
 Architecture: any
 Depends:
- libavdevice53 (<= ${source:Upstream-Version}-99) | libavdevice-extra-53 (<= ${source:Upstream-Version}-99),
- libavdevice53 (>= ${binary:Version}) | libavdevice-extra-53 (>= ${binary:Version}),
+ libavdevice53 (= ${binary:Version}),
  libavformat-dev (= ${binary:Version}),
  ${misc:Depends}
 Description: Development files for libavdevice
@@ -358,8 +392,7 @@ Section: libdevel
 Architecture: any
 Depends:
  libavcodec-dev (= ${binary:Version}),
- libavformat53 (<= ${source:Upstream-Version}-99) | libavformat-extra-53 (<= ${source:Upstream-Version}-99),
- libavformat53 (>= ${binary:Version}) | libavformat-extra-53 (>= ${binary:Version}),
+ libavformat53 (= ${binary:Version}),
  libavutil-dev (= ${binary:Version}),
  ${misc:Depends}
 Description: Development files for libavformat
@@ -377,8 +410,7 @@ Section: libdevel
 Architecture: any
 Depends:
  libavcodec-dev (= ${binary:Version}),
- libavfilter2 (<= ${source:Upstream-Version}-99) | libavfilter-extra-2 (<= ${source:Upstream-Version}-99),
- libavfilter2 (>= ${binary:Version}) | libavfilter-extra-2 (>= ${binary:Version}),
+ libavfilter2 (= ${binary:Version}),
  ${misc:Depends}
 Description: Development files for libavfilter
  Libav is a complete, cross-platform solution to decode, encode, record,
@@ -394,8 +426,7 @@ Section: libdevel
 Architecture: any
 Depends:
  libavutil-dev (= ${binary:Version}),
- libpostproc52 (<= ${source:Upstream-Version}-99) | libpostproc-extra-52 (<= ${source:Upstream-Version}-99),
- libpostproc52 (>= ${binary:Version}) | libpostproc-extra-52 (>= ${binary:Version}),
+ libpostproc52 (= ${binary:Version}),
  ${misc:Depends}
 Description: Development files for libpostproc
  Libav is a complete, cross-platform solution to decode, encode, record,
@@ -411,8 +442,7 @@ Section: libdevel
 Architecture: any
 Depends:
  libavutil-dev (= ${binary:Version}),
- libswscale2 (<= ${source:Upstream-Version}-99) | libswscale-extra-2 (<= ${source:Upstream-Version}-99),
- libswscale2 (>= ${binary:Version}) | libswscale-extra-2 (>= ${binary:Version}),
+ libswscale2 (= ${binary:Version}),
  ${misc:Depends}
 Description: Development files for libswscale
  Libav is a complete, cross-platform solution to decode, encode, record,
@@ -424,22 +454,19 @@ Description: Development files for libswscale
  compile applications or shared objects that use libswscale.
 
 Package: libavutil-extra-51
-Architecture: any
-Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
+Section: oldlibs
+Priority: extra
+Architecture: all
+Multi-Arch: foreign
 Depends:
+ libavutil51,
  ${misc:Depends},
- ${shlibs:Depends}
-Conflicts:
- libavutil51
-Replaces:
- libavutil51
-Description: Libav utility library
+Description: Libav utility library (transitional package)
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
  .
- This is the common utility library from Libav. It contains shared code
- used by all other Libav libraries.
+ This package is only used for transitional purposes and can be safely
+ removed when no other packages depend on this package.
 
 Package: libavcodec-extra-53
 Architecture: any
@@ -463,89 +490,76 @@ Description: Libav codec library
  This is the codec library from Libav (both encoding and decoding).
 
 Package: libavdevice-extra-53
-Architecture: any
-Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
+Section: oldlibs
+Priority: extra
+Architecture: all
+Multi-Arch: foreign
 Depends:
+ libavdevice53,
  ${misc:Depends},
- ${shlibs:Depends}
-Conflicts:
- libavdevice53
-Replaces:
- libavdevice53
-Description: Libav device handling library
+Description: Libav device handling library (transitional package)
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
  .
- This is the device handling library from Libav.
+ This package is only used for transitional purposes and can be safely
+ removed when no other packages depend on this package.
 
 Package: libavfilter-extra-2
-Architecture: any
-Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
+Section: oldlibs
+Priority: extra
+Architecture: all
+Multi-Arch: foreign
 Depends:
+ libavfilter2,
  ${misc:Depends},
- ${shlibs:Depends}
-Conflicts:
- libavfilter2
-Replaces:
- libavfilter2
-Description: Libav filter library
+Description: Libav filter library (transitional package)
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
  .
- This is the video filtering library from Libav.
+ This package is only used for transitional purposes and can be safely
+ removed when no other packages depend on this package.
 
 Package: libpostproc-extra-52
-Architecture: any
-Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
+Section: oldlibs
+Priority: extra
+Architecture: all
+Multi-Arch: foreign
 Depends:
+ libpostproc52,
  ${misc:Depends},
- ${shlibs:Depends}
-Conflicts:
- libpostproc52
-Replaces:
- libpostproc52
-Description: Libav video postprocessing library
+Description: Libav video postprocessing library (transitional package)
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
  .
- This is the video postprocessing library from Libav.
+ This package is only used for transitional purposes and can be safely
+ removed when no other packages depend on this package.
 
 Package: libavformat-extra-53
-Architecture: any
-Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
+Section: oldlibs
+Priority: extra
+Architecture: all
+Multi-Arch: foreign
 Depends:
+ libavformat53,
  ${misc:Depends},
- ${shlibs:Depends}
-Conflicts:
- libavformat53
-Replaces:
- libavformat53
-Description: Libav video postprocessing library
+Description: Libav video postprocessing library (transitional package)
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
  .
- This is the demuxer library from Libav. It supports most existing file
- formats (AVI, MPEG, OGG, Matroska, ASF...).
+ This package is only used for transitional purposes and can be safely
+ removed when no other packages depend on this package.
 
 Package: libswscale-extra-2
-Architecture: any
-Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
+Section: oldlibs
+Priority: extra
+Architecture: all
+Multi-Arch: foreign
 Depends:
+ libswscale2,
  ${misc:Depends},
- ${shlibs:Depends}
-Conflicts:
- libswscale-extra-1 (>> 4:0.7~),
- libswscale2
-Replaces:
- libswscale-extra-1 (>> 4:0.7~),
- libswscale2
-Description: Libav video software scaling library
+Description: Libav video software scaling library (transitional package)
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
  .
- This is the video software scaling library from Libav.
+ This package is only used for transitional purposes and can be safely
+ removed when no other packages depend on this package.
