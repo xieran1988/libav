@@ -1,5 +1,6 @@
 libav (5:0.8.1-2) UNRELEASED; urgency=low
 
+  [ Andres Mejia ]
   * Merge libav-extra packages to libav. (Closes: #658084)
   * Provide only libavcodec-extra package, the other packages are unnecessary.
   * Remove libav-source package. No longer necessary.
@@ -7,6 +8,9 @@ libav (5:0.8.1-2) UNRELEASED; urgency=low
   * Set Enhances field and update package description for libavcodec-extra
     package. (Closes: #653451)
   * Fix issue with installation of debug symbols. (Closes: #642798)
+
+  [ Fabian Greffrath ]
+  * Mention license impact in libavcodec-extra-53's package description.
 
  -- Andres Mejia <amejia@debian.org>  Tue, 20 Mar 2012 23:21:56 -0400
 
