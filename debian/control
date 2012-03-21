@@ -335,7 +335,6 @@ Depends:
  libavutil-dev (= ${binary:Version}),
  ${misc:Depends}
 Suggests:
- libfaad-dev,
  libgsm1-dev,
  libogg-dev,
  libschroedinger-dev,
@@ -460,8 +459,6 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
-Suggests:
- libfaad0
 Conflicts:
  libavcodec53
 Replaces:
