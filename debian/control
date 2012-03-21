@@ -465,11 +465,21 @@ Replaces:
  libavcodec53
 Breaks:
  mplayer (<< 2:1.0~rc4.dfsg1+svn34540-1~)
+Enhances:
+ libavcodec53
 Description: Libav codec library
  Libav is a complete, cross-platform solution to decode, encode, record,
  convert and stream audio and video.
  .
  This is the codec library from Libav (both encoding and decoding).
+ .
+ This package is an enhancement to the regular libavcodec library package.
+ This package contains the following additional codecs.
+ .
+  * OpenCORE Adaptive Multi-Rate (AMR) Narrow-Band (Encoder/Decoder)
+  * OpenCORE Adaptive Multi-Rate (AMR) Wide-Band (Decoder)
+  * Android VisualOn AAC (Encoder)
+  * Android VisualOn Adaptive Multi-Rate (AMR) Wide-Band (Encoder)
 
 Package: libavdevice-extra-53
 Section: oldlibs

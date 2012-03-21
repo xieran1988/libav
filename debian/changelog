@@ -4,8 +4,10 @@ libav (5:0.8.1-2) UNRELEASED; urgency=low
   * Provide only libavcodec-extra package, the other packages are unnecessary.
   * Remove libav-source package. No longer necessary.
   * Remove dependencies and suggests of FAAD, no longer needed.
+  * Set Enhances field and update package description for libavcodec-extra
+    package. (Closes: #653451)
 
- -- Andres Mejia <amejia@debian.org>  Tue, 20 Mar 2012 22:41:58 -0400
+ -- Andres Mejia <amejia@debian.org>  Tue, 20 Mar 2012 23:00:19 -0400
 
 libav (4:0.8.1-1) unstable; urgency=medium
 
